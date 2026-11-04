@@ -54,7 +54,12 @@ pub(crate) fn take_internal_options_path(args: &mut Vec<OsString>) {
 }
 
 pub(crate) fn command() -> Command {
-    let value = |name: &'static str| Arg::new(name).long(name).num_args(1).action(ArgAction::Append);
+    let value = |name: &'static str| {
+        Arg::new(name)
+            .long(name)
+            .num_args(1)
+            .action(ArgAction::Append)
+    };
     Command::new("serve")
         .arg(value("listen"))
         .arg(value("token"))
@@ -191,7 +196,9 @@ fn environment_or(name: &str, fallback: &str) -> Result<String, String> {
 
 /// Go `portFromListen`.
 fn port_from_listen(listen: &str) -> &str {
-    listen.rfind(':').map_or("8787", |index| &listen[index + 1..])
+    listen
+        .rfind(':')
+        .map_or("8787", |index| &listen[index + 1..])
 }
 
 struct Settings {

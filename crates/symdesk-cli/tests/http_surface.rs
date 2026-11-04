@@ -57,11 +57,17 @@ fn leak_scanner_flags_a_planted_secret_and_only_that() {
         stream.write_all(response.as_bytes()).unwrap();
     });
     let mut stream = TcpStream::connect(address).unwrap();
-    stream.write_all(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n").unwrap();
+    stream
+        .write_all(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
+        .unwrap();
     let mut wire = String::new();
     stream.read_to_string(&mut wire).unwrap();
     server.join().unwrap();
-    assert_eq!(secrets.leaks(&wire), vec!["PROVKEY".to_owned()], "planted key on the wire");
+    assert_eq!(
+        secrets.leaks(&wire),
+        vec!["PROVKEY".to_owned()],
+        "planted key on the wire"
+    );
 
     // Log lines and prefixes of a longer token are covered the same way.
     assert_eq!(
@@ -69,7 +75,11 @@ fn leak_scanner_flags_a_planted_secret_and_only_that() {
         vec!["PROVKEY".to_owned()]
     );
     // Clean traffic, and a truncated key, are not flagged.
-    assert!(secrets.leaks("HTTP/1.1 200 OK\r\n\r\n{\"status\":\"ok\"}").is_empty());
+    assert!(
+        secrets
+            .leaks("HTTP/1.1 200 OK\r\n\r\n{\"status\":\"ok\"}")
+            .is_empty()
+    );
     assert!(secrets.leaks(&key[..key.len() - 1]).is_empty());
 }
 
@@ -92,7 +102,10 @@ fn fixture_records_the_go_reflection_that_rust_redacts() {
         .collect::<Vec<_>>();
     assert_eq!(steps.len(), 1, "exactly one recorded Go reflection");
     let body = steps[0]["expect"]["body"].as_str().unwrap();
-    assert!(body.contains("$PROVKEY"), "Go's body carries the planted key: {body}");
+    assert!(
+        body.contains("$PROVKEY"),
+        "Go's body carries the planted key: {body}"
+    );
     assert_eq!(steps[0]["redacts"][0], "PROVKEY");
     // No recorded case may list a Go leak any more: reflections are explicit.
     for case in fixture["cases"].as_array().unwrap() {
@@ -142,7 +155,10 @@ fn invalid_content_length_is_refused_and_closed() {
             break url.to_owned();
         }
     };
-    for lengths in ["Content-Length: -1\r\n", "Content-Length: 2\r\nContent-Length: 3\r\n"] {
+    for lengths in [
+        "Content-Length: -1\r\n",
+        "Content-Length: 2\r\nContent-Length: 3\r\n",
+    ] {
         let mut stream = TcpStream::connect(&address).unwrap();
         stream
             .set_read_timeout(Some(std::time::Duration::from_secs(5)))

@@ -209,8 +209,8 @@ type httpStep struct {
 	StreamLines int `json:"stream_lines,omitempty"`
 	// StreamUntil ends the early read at the first line containing the text.
 	StreamUntil string `json:"stream_until,omitempty"`
-	Release     bool `json:"release,omitempty"`
-	Abort       bool `json:"abort,omitempty"`
+	Release     bool   `json:"release,omitempty"`
+	Abort       bool   `json:"abort,omitempty"`
 	// Args are the `serve` arguments of a "launch" step.
 	Args []string `json:"args,omitempty"`
 	// Plain sends the request in plaintext to a TLS listener; TLSVersion pins
@@ -256,7 +256,9 @@ type httpFixture struct {
 var (
 	httpRFC3339 = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})`)
 	httpHexRun  = regexp.MustCompile(`[0-9a-f]{24,}`)
-	httpBoundry = regexp.MustCompile(`boundary=[0-9a-f]+`)
+	// httpArchiveMonth matches the year/month folders of archived uploads.
+	httpArchiveMonth = regexp.MustCompile(`archive/\d{4}/\d{2}/`)
+	httpBoundry      = regexp.MustCompile(`boundary=[0-9a-f]+`)
 	// httpVersion hides the build version of the JSON status document: the Go
 	// test binary reports "(devel)", the Rust binary its package version.
 	httpVersion = regexp.MustCompile(`"version":"[^"]*"`)
@@ -520,6 +522,9 @@ func readChunked(reader *bufio.Reader) []byte {
 
 func (s *httpServer) maskText(text string, mask []string) string {
 	text = s.secrets.redact(text)
+	// Uploads are archived under the current year and month: keep the fixture
+	// independent of the day it is generated or checked on.
+	text = httpArchiveMonth.ReplaceAllString(text, "archive/$$YEAR/$$MONTH/")
 	text = strings.ReplaceAll(text, fmt.Sprintf("127.0.0.1:%d", s.port), "127.0.0.1:$PORT")
 	text = strings.ReplaceAll(text, s.vault, "$VAULT")
 	text = strings.ReplaceAll(text, s.root, "$ROOT")

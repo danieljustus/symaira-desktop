@@ -284,8 +284,7 @@ pub fn sha256_hex(data: &[u8]) -> String {
 }
 
 fn base64_std(data: &[u8]) -> String {
-    const ALPHABET: &[u8; 64] =
-        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::new();
     for chunk in data.chunks(3) {
         let b = [
@@ -312,6 +311,7 @@ fn base64_std(data: &[u8]) -> String {
 struct Patterns {
     rfc3339: Regex,
     hex_run: Regex,
+    archive_month: Regex,
     boundary: Regex,
     version: Regex,
     date: Regex,
@@ -322,6 +322,7 @@ fn patterns() -> Patterns {
         rfc3339: Regex::new(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})")
             .unwrap(),
         hex_run: Regex::new(r"[0-9a-f]{24,}").unwrap(),
+        archive_month: Regex::new(r"archive/\d{4}/\d{2}/").unwrap(),
         boundary: Regex::new(r"boundary=[0-9a-f]+").unwrap(),
         version: Regex::new(r#""version":"[^"]*""#).unwrap(),
         date: Regex::new(r"[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT")
@@ -423,7 +424,12 @@ impl Server {
         self.port = free_port();
         let (args, env) = self.serve_command()?;
         let mut command = Command::new(&self.binary);
-        command.args(&args).current_dir(&self.home).env_clear().envs(env).stdout(Stdio::null());
+        command
+            .args(&args)
+            .current_dir(&self.home)
+            .env_clear()
+            .envs(env)
+            .stdout(Stdio::null());
         let stderr = fs::OpenOptions::new()
             .create(true)
             .append(true)
@@ -482,13 +488,30 @@ impl Server {
 
     fn mask_text(&self, text: &str, mask: &[String]) -> String {
         let mut out = self.secrets.redact(text);
+        out = self
+            .patterns
+            .archive_month
+            .replace_all(&out, "archive/$$YEAR/$$MONTH/")
+            .into_owned();
         out = out.replace(&format!("127.0.0.1:{}", self.port), "127.0.0.1:$PORT");
         out = out.replace(&self.vault.to_string_lossy().into_owned(), "$VAULT");
         out = out.replace(&self.root.to_string_lossy().into_owned(), "$ROOT");
         for class in mask {
             match class.as_str() {
-                "time" => out = self.patterns.rfc3339.replace_all(&out, "$$TIME").into_owned(),
-                "hex" => out = self.patterns.hex_run.replace_all(&out, "$$HEX").into_owned(),
+                "time" => {
+                    out = self
+                        .patterns
+                        .rfc3339
+                        .replace_all(&out, "$$TIME")
+                        .into_owned()
+                }
+                "hex" => {
+                    out = self
+                        .patterns
+                        .hex_run
+                        .replace_all(&out, "$$HEX")
+                        .into_owned()
+                }
                 "version" => {
                     out = self
                         .patterns
@@ -666,7 +689,11 @@ impl Server {
         mask: &[String],
         volatile_length: bool,
     ) -> Result<Observed, String> {
-        let read_ms = if step.read_ms == 0 { 5000 } else { step.read_ms };
+        let read_ms = if step.read_ms == 0 {
+            5000
+        } else {
+            step.read_ms
+        };
         let tcp = TcpStream::connect_timeout(
             &format!("127.0.0.1:{}", self.port).parse().unwrap(),
             Duration::from_secs(5),
@@ -707,7 +734,8 @@ impl Server {
                 wire: Vec::new(),
             },
         );
-        let mut observed = self.read_response(&tcp, &mut reader, head_only, mask, volatile_length)?;
+        let mut observed =
+            self.read_response(&tcp, &mut reader, head_only, mask, volatile_length)?;
         if step.ignore_closed {
             observed.closed = false;
         }
@@ -724,7 +752,11 @@ impl Server {
         Ok(observed)
     }
 
-    fn tree(&self, include: &[String], mask: &[String]) -> Result<BTreeMap<String, String>, String> {
+    fn tree(
+        &self,
+        include: &[String],
+        mask: &[String],
+    ) -> Result<BTreeMap<String, String>, String> {
         let mut out = BTreeMap::new();
         // users.json carries per-run random token hashes: always compare it masked.
         let mut include = include.to_vec();
@@ -771,7 +803,10 @@ impl Server {
                 continue;
             }
             if kind.is_dir() {
-                out.insert(format!("{rel}/"), format!("dir {:04o}", meta.permissions().mode() & 0o777));
+                out.insert(
+                    format!("{rel}/"),
+                    format!("dir {:04o}", meta.permissions().mode() & 0o777),
+                );
                 self.walk(&path, include, mask, out)?;
                 continue;
             }
@@ -795,13 +830,24 @@ impl Server {
     }
 
     fn build_request(&self, step: &Step) -> (Vec<u8>, bool) {
-        let method = if step.method.is_empty() { "GET" } else { &step.method };
-        let version = if step.version.is_empty() { "HTTP/1.1" } else { &step.version };
+        let method = if step.method.is_empty() {
+            "GET"
+        } else {
+            &step.method
+        };
+        let version = if step.version.is_empty() {
+            "HTTP/1.1"
+        } else {
+            &step.version
+        };
         let mut body = self.secrets.expand(&step.body);
         if let Some(repeat) = &step.body_repeat {
             body.push_str(&repeat.text.repeat(repeat.count));
         }
-        let mut head = format!("{method} {} {version}\r\n", self.secrets.expand(&step.target));
+        let mut head = format!(
+            "{method} {} {version}\r\n",
+            self.secrets.expand(&step.target)
+        );
         let (mut has_host, mut has_length) = (false, false);
         for (name, value) in &step.headers {
             match name.to_lowercase().as_str() {
@@ -830,8 +876,16 @@ impl Server {
         match step.op.as_str() {
             "write" => {
                 make_dirs(target.parent().unwrap())?;
-                write_file(&target, self.secrets.expand(&step.content).as_bytes(), 0o600)?;
-                let mtime = if step.mtime == 0 { default_mtime } else { step.mtime };
+                write_file(
+                    &target,
+                    self.secrets.expand(&step.content).as_bytes(),
+                    0o600,
+                )?;
+                let mtime = if step.mtime == 0 {
+                    default_mtime
+                } else {
+                    step.mtime
+                };
                 set_mtime(&target, mtime)?;
             }
             "symlink" => {
@@ -839,7 +893,12 @@ impl Server {
                 symlink(&step.content, &target).map_err(|e| e.to_string())?;
             }
             "remove" => {
-                if target.is_dir() && !fs::symlink_metadata(&target).unwrap().file_type().is_symlink() {
+                if target.is_dir()
+                    && !fs::symlink_metadata(&target)
+                        .unwrap()
+                        .file_type()
+                        .is_symlink()
+                {
                     fs::remove_dir_all(&target).map_err(|e| e.to_string())?;
                 } else if fs::symlink_metadata(&target).is_ok() {
                     fs::remove_file(&target).map_err(|e| e.to_string())?;
@@ -934,7 +993,13 @@ impl Server {
                 raw = raw.replace("{{FILL}}", &"a".repeat(step.raw_fill));
                 raw = raw.replace("{{PORT}}", &self.port.to_string());
                 let head_only = raw.split(' ').next() == Some("HEAD");
-                self.exchange(raw.as_bytes(), head_only, step, &step.mask, step.volatile_length)
+                self.exchange(
+                    raw.as_bytes(),
+                    head_only,
+                    step,
+                    &step.mask,
+                    step.volatile_length,
+                )
             }
             _ => {
                 let (raw, head_only) = self.build_request(step);
@@ -1007,20 +1072,39 @@ impl Server {
             }
         } else {
             let (token, worker) = if self.rotated {
-                (&self.secrets.values["ADMIN2"], &self.secrets.values["WORKER2"])
+                (
+                    &self.secrets.values["ADMIN2"],
+                    &self.secrets.values["WORKER2"],
+                )
             } else {
-                (&self.secrets.values["ADMIN"], &self.secrets.values["WORKER"])
+                (
+                    &self.secrets.values["ADMIN"],
+                    &self.secrets.values["WORKER"],
+                )
             };
-            args.extend(["serve".to_owned(), "--listen".to_owned(), format!("127.0.0.1:{}", self.port)]);
-            args.extend(["--vault".to_owned(), self.vault.to_string_lossy().into_owned()]);
+            args.extend([
+                "serve".to_owned(),
+                "--listen".to_owned(),
+                format!("127.0.0.1:{}", self.port),
+            ]);
+            args.extend([
+                "--vault".to_owned(),
+                self.vault.to_string_lossy().into_owned(),
+            ]);
             args.extend(["--token".to_owned(), token.clone()]);
             if !self.no_worker {
                 args.extend(["--worker-token".to_owned(), worker.clone()]);
             }
             if self.case.tls {
                 let dir = self.root.join("tls");
-                args.extend(["--tls-cert".to_owned(), dir.join("cert.pem").to_string_lossy().into_owned()]);
-                args.extend(["--tls-key".to_owned(), dir.join("key.pem").to_string_lossy().into_owned()]);
+                args.extend([
+                    "--tls-cert".to_owned(),
+                    dir.join("cert.pem").to_string_lossy().into_owned(),
+                ]);
+                args.extend([
+                    "--tls-key".to_owned(),
+                    dir.join("key.pem").to_string_lossy().into_owned(),
+                ]);
             }
         }
         for (name, value) in &self.case.env {
@@ -1029,7 +1113,10 @@ impl Server {
         if let Some(provider) = &self.provider {
             env.push(("SYMDESK_LLM_PROVIDER".to_owned(), "ollama".to_owned()));
             env.push(("SYMDESK_OLLAMA_URL".to_owned(), provider.url.clone()));
-            env.push(("SYMDESK_OLLAMA_MODEL".to_owned(), "fixture-model".to_owned()));
+            env.push((
+                "SYMDESK_OLLAMA_MODEL".to_owned(),
+                "fixture-model".to_owned(),
+            ));
         }
         Ok((args, env))
     }
@@ -1038,13 +1125,20 @@ impl Server {
         &self,
         tcp: &TcpStream,
         version: &str,
-    ) -> Result<(rustls::StreamOwned<rustls::ClientConnection, TcpStream>, String), String> {
+    ) -> Result<
+        (
+            rustls::StreamOwned<rustls::ClientConnection, TcpStream>,
+            String,
+        ),
+        String,
+    > {
         let material = self.tls_certificate.as_ref().ok_or("no TLS material")?;
         let config = tls::client_config(material, version);
         let name = rustls::pki_types::ServerName::try_from("127.0.0.1")
             .map_err(|error| error.to_string())?
             .to_owned();
-        let connection = rustls::ClientConnection::new(config, name).map_err(|error| error.to_string())?;
+        let connection =
+            rustls::ClientConnection::new(config, name).map_err(|error| error.to_string())?;
         let socket = tcp.try_clone().map_err(|error| error.to_string())?;
         let _ = socket.set_read_timeout(Some(Duration::from_secs(5)));
         let _ = socket.set_write_timeout(Some(Duration::from_secs(5)));
@@ -1104,11 +1198,12 @@ impl Server {
         while Instant::now() < deadline {
             let (raw, head_only) = self.build_request(&request);
             if let Ok(observed) = self.exchange(&raw, head_only, &request, &[], true)
-                && let Ok(serde_json::Value::Array(jobs)) = serde_json::from_str::<serde_json::Value>(&observed.body)
+                && let Ok(serde_json::Value::Array(jobs)) =
+                    serde_json::from_str::<serde_json::Value>(&observed.body)
                 && !jobs.is_empty()
-                && !jobs.iter().any(|job| {
-                    matches!(job["status"].as_str(), Some("pending" | "processing"))
-                })
+                && !jobs
+                    .iter()
+                    .any(|job| matches!(job["status"].as_str(), Some("pending" | "processing")))
             {
                 return Ok(Observed {
                     exit: "settled".to_owned(),
@@ -1124,7 +1219,10 @@ impl Server {
     }
 
     fn observe_provider(&self, step: &Step) -> Result<Observed, String> {
-        let provider = self.provider.as_ref().ok_or("provider step without a provider")?;
+        let provider = self
+            .provider
+            .as_ref()
+            .ok_or("provider step without a provider")?;
         let deadline = Instant::now() + Duration::from_secs(4);
         while Instant::now() < deadline && provider.cancelled() < step.count {
             thread::sleep(Duration::from_millis(20));
@@ -1192,7 +1290,9 @@ impl Server {
         let text = fs::read_to_string(&log).unwrap_or_default();
         let kept: Vec<&str> = text
             .lines()
-            .filter(|line| !line.is_empty() && !line.starts_with("time=") && !line.starts_with("LISTENING"))
+            .filter(|line| {
+                !line.is_empty() && !line.starts_with("time=") && !line.starts_with("LISTENING")
+            })
             .collect();
         for name in self.secrets.leaks(&text) {
             self.leaked.insert(name);
@@ -1231,12 +1331,25 @@ impl Server {
                 }
             }
         } else {
-            (Conn::Plain(tcp.try_clone().map_err(|error| error.to_string())?), String::new())
+            (
+                Conn::Plain(tcp.try_clone().map_err(|error| error.to_string())?),
+                String::new(),
+            )
         };
         conn.write_all(&raw).map_err(|error| error.to_string())?;
-        let read_ms = if step.read_ms == 0 { 8000 } else { step.read_ms };
+        let read_ms = if step.read_ms == 0 {
+            8000
+        } else {
+            step.read_ms
+        };
         let _ = tcp.set_read_timeout(Some(Duration::from_millis(read_ms)));
-        let mut reader = BufReader::with_capacity(1 << 20, Tee { inner: conn, wire: Vec::new() });
+        let mut reader = BufReader::with_capacity(
+            1 << 20,
+            Tee {
+                inner: conn,
+                wire: Vec::new(),
+            },
+        );
         let mut observed = Observed {
             tls: label,
             ..Observed::default()
@@ -1245,7 +1358,10 @@ impl Server {
         let line = line.trim_end_matches(['\r', '\n']).to_owned();
         let mut parts = line.splitn(3, ' ');
         let _ = parts.next();
-        observed.status = parts.next().and_then(|code| code.parse().ok()).ok_or("bad status line")?;
+        observed.status = parts
+            .next()
+            .and_then(|code| code.parse().ok())
+            .ok_or("bad status line")?;
         observed.reason = parts.next().unwrap_or("").to_owned();
         let mut headers = Vec::new();
         let mut chunked = false;
@@ -1314,7 +1430,6 @@ impl Server {
         Ok(observed)
     }
 }
-
 
 mod ext {
     use std::io::{self, BufRead, Read, Write};
@@ -1569,7 +1684,11 @@ mod provider {
             loop {
                 if let Some(line_end) = rest.windows(2).position(|window| window == b"\r\n") {
                     let size = usize::from_str_radix(
-                        String::from_utf8_lossy(&rest[..line_end]).trim().split(';').next().unwrap_or("0"),
+                        String::from_utf8_lossy(&rest[..line_end])
+                            .trim()
+                            .split(';')
+                            .next()
+                            .unwrap_or("0"),
                         16,
                     )
                     .ok()?;
@@ -1787,7 +1906,11 @@ fn set_mtime(path: &Path, seconds: i64) -> Result<(), String> {
 fn compare(label: &str, expected: &Observed, actual: &Observed, problems: &mut Vec<String>) {
     fn clip(text: &str) -> String {
         if text.len() > 400 {
-            format!("{}…({} bytes)", &text[..text.floor_char_boundary(400)], text.len())
+            format!(
+                "{}…({} bytes)",
+                &text[..text.floor_char_boundary(400)],
+                text.len()
+            )
         } else {
             text.to_owned()
         }
@@ -1822,7 +1945,12 @@ fn compare(label: &str, expected: &Observed, actual: &Observed, problems: &mut V
     field!(early);
     field!(tls);
     if expected.tree != actual.tree {
-        for key in expected.tree.keys().chain(actual.tree.keys()).collect::<BTreeSet<_>>() {
+        for key in expected
+            .tree
+            .keys()
+            .chain(actual.tree.keys())
+            .collect::<BTreeSet<_>>()
+        {
             if expected.tree.get(key) != actual.tree.get(key) {
                 diffs.push(format!(
                     "  tree[{key}]: go={:?} rust={:?}",
@@ -1868,11 +1996,17 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
         patterns: patterns(),
         case: case.clone(),
         vault2: root.join("vault2"),
-        provider: case.provider.then(|| provider::Provider::start(&planted_key)),
+        provider: case
+            .provider
+            .then(|| provider::Provider::start(&planted_key)),
         tls_certificate: (case.tls || case.no_server).then(tls::mint),
         capture: Mutex::new(BTreeMap::new()),
     };
-    let mtime = if case.mtime == 0 { 1_767_323_045 } else { case.mtime };
+    let mtime = if case.mtime == 0 {
+        1_767_323_045
+    } else {
+        case.mtime
+    };
     let setup = (|| -> Result<(), String> {
         for (name, content) in &case.files {
             let step = Step {
@@ -1885,9 +2019,10 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
             server.apply_fs(&step, mtime)?;
         }
         for (name, target) in &case.symlinks {
-            let target = target
-                .strip_prefix("$ROOT/")
-                .map_or_else(|| target.clone(), |rest| root.join(rest).to_string_lossy().into_owned());
+            let target = target.strip_prefix("$ROOT/").map_or_else(
+                || target.clone(),
+                |rest| root.join(rest).to_string_lossy().into_owned(),
+            );
             let step = Step {
                 op: "symlink".to_owned(),
                 path: name.clone(),
@@ -1912,7 +2047,11 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
             write_file(&dir.join("cert.pem"), material.cert_pem.as_bytes(), 0o600)?;
             write_file(&dir.join("key.pem"), material.key_pem.as_bytes(), 0o600)?;
         }
-        if case.no_server { Ok(()) } else { server.start() }
+        if case.no_server {
+            Ok(())
+        } else {
+            server.start()
+        }
     })();
     if let Err(error) = setup {
         problems.push(format!("[{}] setup: {error}", case.name));
@@ -1932,7 +2071,12 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
                     // The length recorded by Go includes the reflected secret.
                     actual.body_len = 0;
                 }
-                compare(&format!("[{}] {}", case.name, step.label), &expected, &actual, &mut problems);
+                compare(
+                    &format!("[{}] {}", case.name, step.label),
+                    &expected,
+                    &actual,
+                    &mut problems,
+                );
             }
             Err(error) => problems.push(format!("[{}] {}: {error}", case.name, step.label)),
         }
@@ -1961,7 +2105,8 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
 /// Replays every case of `fixture_json` against `binary`. The recorded case
 /// and step totals are asserted so a changed or skipped fixture cannot pass.
 pub fn replay(binary: &str, fixture_json: &str, expected_cases: usize, expected_steps: usize) {
-    let fixture: Fixture = serde_json::from_str(fixture_json).expect("decode Go-owned HTTP fixture");
+    let fixture: Fixture =
+        serde_json::from_str(fixture_json).expect("decode Go-owned HTTP fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), expected_cases, "recorded case count");
     let steps: usize = fixture.cases.iter().map(|case| case.steps.len()).sum();
@@ -1985,7 +2130,11 @@ pub fn replay(binary: &str, fixture_json: &str, expected_cases: usize, expected_
             });
         }
     });
-    assert_eq!(executed.load(Ordering::SeqCst), expected_steps, "executed steps");
+    assert_eq!(
+        executed.load(Ordering::SeqCst),
+        expected_steps,
+        "executed steps"
+    );
     let problems = problems.into_inner().unwrap();
     assert!(
         problems.is_empty(),

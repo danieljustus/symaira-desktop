@@ -410,11 +410,15 @@ async fn bind_listener(address: &str) -> Result<tokio::net::TcpListener, String>
     let go_error = |detail: String| format!("listen tcp {address}: {detail}");
     // Go's `net.SplitHostPort` and port lookup wording.
     let Some(colon) = address.rfind(':') else {
-        return Err(format!("listen tcp: address {address}: missing port in address"));
+        return Err(format!(
+            "listen tcp: address {address}: missing port in address"
+        ));
     };
     let (host, port) = (&address[..colon], &address[colon + 1..]);
     if !host.starts_with('[') && host.contains(':') {
-        return Err(format!("listen tcp: address {address}: too many colons in address"));
+        return Err(format!(
+            "listen tcp: address {address}: too many colons in address"
+        ));
     }
     let port_number: u16 = if port.chars().all(|c| c.is_ascii_digit()) && !port.is_empty() {
         port.parse()
@@ -669,8 +673,11 @@ async fn serve(
                                 } else {
                                     40 // handshake_failure
                                 };
-                                write_raw(socket, &[0x15, 0x03, 0x03, 0x00, 0x02, 0x02, description])
-                                    .await;
+                                write_raw(
+                                    socket,
+                                    &[0x15, 0x03, 0x03, 0x00, 0x02, 0x02, description],
+                                )
+                                .await;
                             }
                             // Unread handshake bytes would turn the close into a
                             // reset and destroy the alert the client is owed.
@@ -825,7 +832,10 @@ async fn invalidate_snapshot_after_write(
     request: Request<Body>,
     next: Next,
 ) -> Response {
-    let reads = matches!(*request.method(), Method::GET | Method::HEAD | Method::OPTIONS);
+    let reads = matches!(
+        *request.method(),
+        Method::GET | Method::HEAD | Method::OPTIONS
+    );
     let response = next.run(request).await;
     if !reads {
         state.snapshot_cache.mark_dirty();
@@ -1186,9 +1196,9 @@ fn ai_secret_values(state: &AppState, config: &symdesk_core::config::Config) -> 
 }
 
 fn redact_ai_secrets(secrets: &[String], text: &str) -> String {
-    secrets
-        .iter()
-        .fold(text.to_owned(), |text, secret| text.replace(secret, "[redacted]"))
+    secrets.iter().fold(text.to_owned(), |text, secret| {
+        text.replace(secret, "[redacted]")
+    })
 }
 
 async fn handle_ai_transform(
@@ -1759,20 +1769,18 @@ async fn handle_ai_ask(
     if let Some(response) = ai_rate_limit_response(&state, &request) {
         return response;
     }
-    let body = match read_ai_request_body(
-        request.into_body(),
-        MAX_AI_ASK_BODY_BYTES.saturating_add(1),
-    )
-    .await
-    {
-        Ok(body) => body,
-        Err(AiBodyReadError::Invalid(error)) => {
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
-        }
-        Err(AiBodyReadError::Timeout) => {
-            return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
-        }
-    };
+    let body =
+        match read_ai_request_body(request.into_body(), MAX_AI_ASK_BODY_BYTES.saturating_add(1))
+            .await
+        {
+            Ok(body) => body,
+            Err(AiBodyReadError::Invalid(error)) => {
+                return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+            }
+            Err(AiBodyReadError::Timeout) => {
+                return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
+            }
+        };
     let decoded = match go_json::decode(&go_json::AI_ASK, &body) {
         Ok(decoded) => decoded,
         Err(failure) => {
@@ -3895,8 +3903,8 @@ fn initialise_share_store(vault_root: &Path) -> Result<(), String> {
     };
     symdesk_vault::go_json_validate_syntax(&data)
         .map_err(|message| wrap(format!("parse store: {message}")))?;
-    let value: serde_json::Value = serde_json::from_slice(&data)
-        .map_err(|error| wrap(format!("parse store: {error}")))?;
+    let value: serde_json::Value =
+        serde_json::from_slice(&data).map_err(|error| wrap(format!("parse store: {error}")))?;
     let items = match value {
         serde_json::Value::Null => return Ok(()),
         serde_json::Value::Array(items) => items,
@@ -3915,21 +3923,27 @@ fn initialise_share_store(vault_root: &Path) -> Result<(), String> {
     let has_legacy_token = items.iter().any(|item| {
         item.as_object().is_some_and(|object| {
             object.iter().any(|(key, value)| {
-                key.eq_ignore_ascii_case("token") && value.as_str().is_some_and(|text| !text.is_empty())
+                key.eq_ignore_ascii_case("token")
+                    && value.as_str().is_some_and(|text| !text.is_empty())
             })
         })
     });
     if !has_legacy_token {
         return Ok(());
     }
-    let links: Vec<ShareLink> = serde_json::from_slice(&data)
-        .map_err(|error| wrap(format!("parse store: {error}")))?;
+    let links: Vec<ShareLink> =
+        serde_json::from_slice(&data).map_err(|error| wrap(format!("parse store: {error}")))?;
     let rewritten = serde_json::to_vec_pretty(&links)
         .map_err(|error| wrap(format!("marshal store: {error}")))?;
     let root = cap_std::fs::Dir::open_ambient_dir(vault_root, cap_std::ambient_authority())
         .map_err(|error| format!("open vault root: {error}"))?;
-    write_atomic_root(&root, Path::new(".symdesk/server/shares.json"), &rewritten, 0o600)
-        .map_err(|error| wrap(format!("create temp file: {error}")))
+    write_atomic_root(
+        &root,
+        Path::new(".symdesk/server/shares.json"),
+        &rewritten,
+        0o600,
+    )
+    .map_err(|error| wrap(format!("create temp file: {error}")))
 }
 
 fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
@@ -5374,10 +5388,7 @@ fn serve_vault_file_as(
             send_size = size;
             status = StatusCode::PARTIAL_CONTENT;
             segments = vec![Segment::File(start, size)];
-            common.push((
-                header::CONTENT_RANGE,
-                range_label(start, size, length),
-            ));
+            common.push((header::CONTENT_RANGE, range_label(start, size, length)));
         }
         _ => {
             status = StatusCode::PARTIAL_CONTENT;
@@ -7970,7 +7981,10 @@ mod tests {
         assert!(parse_range("bytes=18446744073709551616-", 5).is_err());
         assert!(parse_range("bytes=-18446744073709551616", 5).is_err());
         assert!(parse_range("bytes=0-18446744073709551615", 5).is_err());
-        assert_eq!(parse_range("bytes=0-9223372036854775807", 5), Ok(vec![(0, 5)]));
+        assert_eq!(
+            parse_range("bytes=0-9223372036854775807", 5),
+            Ok(vec![(0, 5)])
+        );
     }
 
     #[test]
@@ -8192,9 +8206,14 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
-        let server = tokio::spawn(serve(listener, app, async {
-            let _ = stop_rx.await;
-        }, None));
+        let server = tokio::spawn(serve(
+            listener,
+            app,
+            async {
+                let _ = stop_rx.await;
+            },
+            None,
+        ));
         let client = tokio::task::spawn_blocking(move || {
             use std::io::{BufRead, BufReader, Read, Write};
             let socket = std::net::TcpStream::connect(address).unwrap();
@@ -8284,9 +8303,14 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
-        let server = tokio::spawn(serve(listener, app, async {
-            let _ = stop_rx.await;
-        }, None));
+        let server = tokio::spawn(serve(
+            listener,
+            app,
+            async {
+                let _ = stop_rx.await;
+            },
+            None,
+        ));
 
         let client = tokio::task::spawn_blocking(move || {
             let token = if authorized { token } else { "" };

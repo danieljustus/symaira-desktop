@@ -207,7 +207,11 @@ pub(crate) fn decode(spec: &Spec, data: &[u8]) -> Result<Decoded, Failure> {
             .fields
             .iter()
             .find(|(name, _)| *name == key)
-            .or_else(|| spec.fields.iter().find(|(name, _)| name.eq_ignore_ascii_case(&key)));
+            .or_else(|| {
+                spec.fields
+                    .iter()
+                    .find(|(name, _)| name.eq_ignore_ascii_case(&key))
+            });
         let Some((name, kind)) = field else {
             if !spec.strict {
                 continue;
@@ -336,9 +340,15 @@ mod tests {
         );
         assert_eq!(
             text(b"[1]"),
-            Some("json: cannot unmarshal array into Go value of type selfhost.aiTransformRequest".to_owned())
+            Some(
+                "json: cannot unmarshal array into Go value of type selfhost.aiTransformRequest"
+                    .to_owned()
+            )
         );
-        assert_eq!(text(b"{]"), Some("invalid character ']' looking for beginning of object key string".to_owned()));
+        assert_eq!(
+            text(b"{]"),
+            Some("invalid character ']' looking for beginning of object key string".to_owned())
+        );
         // The cut-off document wins over an earlier unknown field.
         assert_eq!(text(br#"{"x":"aaa"#), Some("unexpected EOF".to_owned()));
         let decoded = decode(&AI_TRANSFORM, br#"{"TEXT":"a","text":"b"} trailing"#).unwrap();

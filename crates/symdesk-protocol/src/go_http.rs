@@ -90,13 +90,16 @@ struct CloseDelimited(String);
 /// status line, `Content-Type`, `Connection: close`, no `Date`, no length.
 pub(crate) fn close_delimited_wire(response: &Response) -> Option<Vec<u8>> {
     let body = response.extensions().get::<CloseDelimited>()?;
-    let reason = response
-        .extensions()
-        .get::<ReasonPhrase>()
-        .map_or_else(
-            || response.status().canonical_reason().unwrap_or("").to_owned(),
-            |phrase| String::from_utf8_lossy(phrase.as_bytes()).into_owned(),
-        );
+    let reason = response.extensions().get::<ReasonPhrase>().map_or_else(
+        || {
+            response
+                .status()
+                .canonical_reason()
+                .unwrap_or("")
+                .to_owned()
+        },
+        |phrase| String::from_utf8_lossy(phrase.as_bytes()).into_owned(),
+    );
     let mut wire = format!(
         "HTTP/1.1 {} {reason}\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n",
         response.status().as_u16()

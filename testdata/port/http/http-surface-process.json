@@ -58670,7 +58670,7 @@
                 "nosniff"
               ]
             ],
-            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
+            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
             "closed": true
           }
         },
@@ -58729,7 +58729,7 @@
                 "nosniff"
               ]
             ],
-            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"failed\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"worker_id\":\"server-local-worker\",\"error\":\"OCR failed: extract text: tesseract not found on PATH: exec: \\\"tesseract\\\": executable file not found in $PATH\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
+            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"failed\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"worker_id\":\"server-local-worker\",\"error\":\"OCR failed: extract text: tesseract not found on PATH: exec: \\\"tesseract\\\": executable file not found in $PATH\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
             "closed": true
           }
         }
@@ -58802,7 +58802,7 @@
                 "nosniff"
               ]
             ],
-            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
+            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
             "closed": true
           }
         },
@@ -58860,7 +58860,7 @@
                 "nosniff"
               ]
             ],
-            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
+            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
             "closed": true
           }
         }
@@ -58936,7 +58936,7 @@
                 "nosniff"
               ]
             ],
-            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
+            "body": "{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}\n",
             "closed": true
           }
         },
@@ -58995,7 +58995,7 @@
                 "nosniff"
               ]
             ],
-            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"failed\",\"source_path\":\"archive/2026/11/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"worker_id\":\"server-local-worker\",\"error\":\"unsupported OCR engine \\\"bogus-engine\\\"; supported engines are tesseract and ollama\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
+            "body": "[{\"id\":\"$HEX\",\"schema_version\":1,\"status\":\"failed\",\"source_path\":\"archive/$YEAR/$MONTH/$HEX-scan.png\",\"original_name\":\"scan.png\",\"content_type\":\"image/png\",\"capability\":\"ocr\",\"worker_id\":\"server-local-worker\",\"error\":\"unsupported OCR engine \\\"bogus-engine\\\"; supported engines are tesseract and ollama\",\"created_at\":\"$TIME\",\"updated_at\":\"$TIME\"}]\n",
             "closed": true
           }
         }

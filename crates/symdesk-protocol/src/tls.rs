@@ -12,7 +12,8 @@
 use std::{fs, io, path::Path, sync::Arc, time::Duration};
 
 use rustls::{
-    ServerConfig, crypto::ring,
+    ServerConfig,
+    crypto::ring,
     pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
 };
 use tokio::io::AsyncWriteExt;

@@ -207,7 +207,14 @@ fn clap_arguments(
             }
         } else if flag.kind == pflag::FlagKind::Bool {
             dropped.extend(occurrences.iter().flat_map(covered));
-            if state.bool_value(name) {
+            if name == "local-worker" && state.changed(name) {
+                // `serve` lets an explicit `--local-worker=false` beat the Home
+                // Assistant options, so the flag keeps its "changed" state.
+                bools.push(OsString::from(format!(
+                    "--{name}={}",
+                    state.bool_value(name)
+                )));
+            } else if state.bool_value(name) {
                 bools.push(OsString::from(format!("--{name}")));
             }
         } else {

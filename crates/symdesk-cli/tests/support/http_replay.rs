@@ -28,6 +28,8 @@ use std::{
 use regex::Regex;
 use serde::Deserialize;
 
+pub use ext::Conn;
+
 #[derive(Deserialize, Clone)]
 pub struct Repeat {
     pub text: String,
@@ -60,6 +62,10 @@ pub struct Observed {
     pub tree: BTreeMap<String, String>,
     #[serde(default)]
     pub exit: String,
+    #[serde(default)]
+    pub early: String,
+    #[serde(default)]
+    pub tls: String,
 }
 
 #[derive(Deserialize, Clone, Default)]
@@ -96,6 +102,8 @@ pub struct Step {
     #[serde(default)]
     pub volatile_length: bool,
     #[serde(default)]
+    pub ignore_closed: bool,
+    #[serde(default)]
     pub op: String,
     #[serde(default)]
     pub path: String,
@@ -111,7 +119,39 @@ pub struct Step {
     pub tree_include: Vec<String>,
     #[serde(default)]
     pub stall: String,
+    #[serde(default)]
+    pub capture: BTreeMap<String, String>,
+    #[serde(default)]
+    pub count: usize,
+    #[serde(default)]
+    pub stream_lines: usize,
+    #[serde(default)]
+    pub stream_until: String,
+    #[serde(default)]
+    pub release: bool,
+    #[serde(default)]
+    pub abort: bool,
+    #[serde(default)]
+    pub args: Vec<String>,
+    #[serde(default)]
+    pub plain: bool,
+    #[serde(default)]
+    pub tls_version: String,
+    #[serde(default)]
+    pub time_class: bool,
+    #[serde(default)]
+    pub wait_ms: u64,
     pub expect: Option<Observed>,
+}
+
+#[derive(Deserialize, Clone, Default)]
+pub struct Serve {
+    #[serde(default)]
+    pub args: Vec<String>,
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+    #[serde(default)]
+    pub options: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -125,6 +165,18 @@ pub struct Case {
     pub mtime: i64,
     #[serde(default)]
     pub no_worker: bool,
+    #[serde(default)]
+    pub serve: Option<Serve>,
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+    #[serde(default)]
+    pub tls: bool,
+    #[serde(default)]
+    pub provider: bool,
+    #[serde(default)]
+    pub empty_path: bool,
+    #[serde(default)]
+    pub no_server: bool,
     pub steps: Vec<Step>,
     #[serde(default)]
     pub stderr_leaks: Vec<String>,
@@ -138,23 +190,45 @@ pub struct Fixture {
 
 pub struct Secrets {
     values: BTreeMap<String, String>,
+    /// Captured response values (share ids/tokens): expanded and redacted like
+    /// secrets, but expected in responses, so never leak-scanned.
+    vars: Mutex<BTreeMap<String, String>>,
 }
 
 impl Secrets {
     fn new() -> Self {
         let mut values = BTreeMap::new();
-        for name in ["ADMIN", "WORKER", "ADMIN2", "WORKER2", "NAMED", "WNAMED"] {
+        for name in [
+            "ADMIN", "WORKER", "ADMIN2", "WORKER2", "NAMED", "WNAMED", "NAMEDADM", "SHARE",
+            "SHARE2", "PROVKEY",
+        ] {
             values.insert(name.to_owned(), random_hex(20));
         }
-        for name in ["NAMED", "WNAMED"] {
+        for name in ["NAMED", "WNAMED", "NAMEDADM", "SHARE", "SHARE2"] {
             let hash = sha256_hex(values[name].as_bytes());
             values.insert(format!("{name}_HASH"), hash);
         }
-        Self { values }
+        Self {
+            values,
+            vars: Mutex::new(BTreeMap::new()),
+        }
     }
 
-    fn order(&self) -> Vec<&String> {
-        let mut names: Vec<&String> = self.values.keys().collect();
+    fn set_var(&self, name: &str, value: String) {
+        self.vars.lock().unwrap().insert(name.to_owned(), value);
+    }
+
+    fn lookup(&self, name: &str) -> String {
+        self.values
+            .get(name)
+            .cloned()
+            .or_else(|| self.vars.lock().unwrap().get(name).cloned())
+            .unwrap_or_default()
+    }
+
+    fn order(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.values.keys().cloned().collect();
+        names.extend(self.vars.lock().unwrap().keys().cloned());
         names.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
         names
     }
@@ -162,7 +236,7 @@ impl Secrets {
     fn expand(&self, text: &str) -> String {
         let mut out = text.to_owned();
         for name in self.order() {
-            out = out.replace(&format!("${name}"), &self.values[name]);
+            out = out.replace(&format!("${name}"), &self.lookup(&name));
         }
         out
     }
@@ -170,13 +244,18 @@ impl Secrets {
     fn redact(&self, text: &str) -> String {
         let mut out = text.to_owned();
         for name in self.order() {
-            out = out.replace(&self.values[name], &format!("${name}"));
+            let value = self.lookup(&name);
+            if !value.is_empty() {
+                out = out.replace(&value, &format!("${name}"));
+            }
         }
         out
     }
 
     fn leaks(&self, text: &str) -> Vec<String> {
-        self.order()
+        let mut names: Vec<&String> = self.values.keys().collect();
+        names.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
+        names
             .into_iter()
             .filter(|name| text.contains(&self.values[*name]))
             .cloned()
@@ -238,7 +317,7 @@ fn patterns() -> Patterns {
     Patterns {
         rfc3339: Regex::new(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})")
             .unwrap(),
-        hex_run: Regex::new(r"[0-9a-f]{32,}").unwrap(),
+        hex_run: Regex::new(r"[0-9a-f]{24,}").unwrap(),
         boundary: Regex::new(r"boundary=[0-9a-f]+").unwrap(),
         version: Regex::new(r#""version":"[^"]*""#).unwrap(),
         date: Regex::new(r"[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT")
@@ -258,6 +337,11 @@ struct Server {
     no_worker: bool,
     leaked: BTreeSet<String>,
     patterns: Patterns,
+    case: Case,
+    vault2: PathBuf,
+    provider: Option<provider::Provider>,
+    tls_certificate: Option<tls::Material>,
+    capture: Mutex<BTreeMap<String, String>>,
 }
 
 fn free_port() -> u16 {
@@ -333,44 +417,9 @@ fn read_chunked(reader: &mut impl BufRead) -> Vec<u8> {
 impl Server {
     fn start(&mut self) -> Result<(), String> {
         self.port = free_port();
-        let (token, worker) = if self.rotated {
-            (&self.secrets.values["ADMIN2"], &self.secrets.values["WORKER2"])
-        } else {
-            (&self.secrets.values["ADMIN"], &self.secrets.values["WORKER"])
-        };
+        let (args, env) = self.serve_command()?;
         let mut command = Command::new(&self.binary);
-        command
-            .arg("serve")
-            .arg("--listen")
-            .arg(format!("127.0.0.1:{}", self.port))
-            .arg("--vault")
-            .arg(&self.vault)
-            .arg("--token")
-            .arg(token);
-        if !self.no_worker {
-            command.arg("--worker-token").arg(worker);
-        }
-        let tmp = self.home.join("tmp");
-        command
-            .current_dir(&self.home)
-            .env_clear()
-            .env("HOME", &self.home)
-            .env("USERPROFILE", &self.home)
-            .env("XDG_CONFIG_HOME", self.home.join(".config"))
-            .env("XDG_DATA_HOME", self.home.join(".local/share"))
-            .env("XDG_CACHE_HOME", self.home.join(".cache"))
-            .env("TMPDIR", &tmp)
-            .env("TMP", &tmp)
-            .env("TEMP", &tmp)
-            .env("LANG", "C")
-            .env("LC_ALL", "C")
-            .env("TZ", "UTC")
-            .env("TERM", "dumb")
-            .env("NO_COLOR", "1")
-            .env("SYMDESK_VAULT", &self.vault)
-            .env("SYMDESK_VERSION", "0.12.2")
-            .env("PATH", std::env::var_os("PATH").unwrap_or_default())
-            .stdout(Stdio::null());
+        command.args(&args).current_dir(&self.home).env_clear().envs(env).stdout(Stdio::null());
         let stderr = fs::OpenOptions::new()
             .create(true)
             .append(true)
@@ -479,6 +528,9 @@ impl Server {
     }
 
     fn record_body(&self, observed: &mut Observed, body: &[u8], mask: &[String]) {
+        if mask.iter().any(|class| class == "nobody") {
+            return;
+        }
         observed.body_len = body.len();
         if body.len() > 16 << 10 {
             observed.body_sha256 = sha256_hex(body);
@@ -501,7 +553,7 @@ impl Server {
     fn read_response(
         &self,
         stream: &TcpStream,
-        reader: &mut BufReader<Tee<&TcpStream>>,
+        reader: &mut BufReader<Tee<Conn>>,
         head_only: bool,
         mask: &[String],
         volatile_length: bool,
@@ -519,6 +571,12 @@ impl Server {
             let version = parts.next().unwrap_or("");
             let code = parts.next().unwrap_or("");
             if !version.starts_with("HTTP/") || code.is_empty() {
+                if line.starts_with("\u{15}\u{3}") {
+                    // A TLS alert record: the alert bytes differ between TLS stacks.
+                    observed.exit = "tls alert".to_owned();
+                    observed.closed = true;
+                    return Ok(observed);
+                }
                 return Err(format!("unparsable status line {line:?}"));
             }
             observed.status = code
@@ -587,6 +645,7 @@ impl Server {
                 }
                 body
             };
+            self.apply_capture(&body, &headers);
             self.record_body(&mut observed, &body, mask);
             let _ = stream.set_read_timeout(Some(Duration::from_millis(400)));
             let mut probe = [0_u8; 1];
@@ -599,36 +658,62 @@ impl Server {
         &mut self,
         raw: &[u8],
         head_only: bool,
-        read_ms: u64,
+        step: &Step,
         mask: &[String],
         volatile_length: bool,
     ) -> Result<Observed, String> {
-        let read_ms = if read_ms == 0 { 5000 } else { read_ms };
-        let stream = TcpStream::connect_timeout(
+        let read_ms = if step.read_ms == 0 { 5000 } else { step.read_ms };
+        let tcp = TcpStream::connect_timeout(
             &format!("127.0.0.1:{}", self.port).parse().unwrap(),
             Duration::from_secs(5),
         )
         .map_err(|error| error.to_string())?;
-        // Large requests are written concurrently so a server answering early
-        // (and closing) cannot deadlock the client.
-        let mut writer = stream.try_clone().map_err(|error| error.to_string())?;
-        let raw = raw.to_vec();
-        let write = thread::spawn(move || {
-            let _ = writer.write_all(&raw);
-        });
-        let _ = stream.set_read_timeout(Some(Duration::from_millis(read_ms)));
+        let mut write_thread = None;
+        let (conn, label) = if self.case.tls && !step.plain {
+            match self.tls_connect(&tcp, &step.tls_version) {
+                Ok((mut session, label)) => {
+                    session.write_all(raw).map_err(|error| error.to_string())?;
+                    (Conn::Tls(Box::new(session)), label)
+                }
+                Err(failure) => {
+                    return Ok(Observed {
+                        exit: failure,
+                        ..Observed::default()
+                    });
+                }
+            }
+        } else {
+            // Large requests are written concurrently so a server answering
+            // early (and closing) cannot deadlock the client.
+            let mut writer = tcp.try_clone().map_err(|error| error.to_string())?;
+            let raw = raw.to_vec();
+            write_thread = Some(thread::spawn(move || {
+                let _ = writer.write_all(&raw);
+            }));
+            (
+                Conn::Plain(tcp.try_clone().map_err(|error| error.to_string())?),
+                String::new(),
+            )
+        };
+        let _ = tcp.set_read_timeout(Some(Duration::from_millis(read_ms)));
         let mut reader = BufReader::with_capacity(
             1 << 20,
             Tee {
-                inner: &stream,
+                inner: conn,
                 wire: Vec::new(),
             },
         );
-        let observed = self.read_response(&stream, &mut reader, head_only, mask, volatile_length)?;
+        let mut observed = self.read_response(&tcp, &mut reader, head_only, mask, volatile_length)?;
+        if step.ignore_closed {
+            observed.closed = false;
+        }
+        observed.tls = label;
         let wire = String::from_utf8_lossy(&reader.get_ref().wire).into_owned();
         drop(reader);
-        let _ = stream.shutdown(std::net::Shutdown::Both);
-        let _ = write.join();
+        let _ = tcp.shutdown(std::net::Shutdown::Both);
+        if let Some(handle) = write_thread {
+            let _ = handle.join();
+        }
         for name in self.secrets.leaks(&wire) {
             self.leaked.insert(name);
         }
@@ -637,7 +722,10 @@ impl Server {
 
     fn tree(&self, include: &[String], mask: &[String]) -> Result<BTreeMap<String, String>, String> {
         let mut out = BTreeMap::new();
-        self.walk(&self.vault, include, mask, &mut out)?;
+        // users.json carries per-run random token hashes: always compare it masked.
+        let mut include = include.to_vec();
+        include.push(".symdesk/users.json".to_owned());
+        self.walk(&self.vault, &include, mask, &mut out)?;
         Ok(out)
     }
 
@@ -786,9 +874,39 @@ impl Server {
     }
 
     fn observe_step(&mut self, step: &Step, mtime: i64) -> Result<Observed, String> {
+        *self.capture.lock().unwrap() = step.capture.clone();
+        let started = Instant::now();
+        let mut observed = self.observe_step_inner(step, mtime)?;
+        if step.time_class {
+            let elapsed = started.elapsed();
+            observed.exit = if elapsed < Duration::from_secs(3) {
+                "fast"
+            } else if (Duration::from_secs(9)..=Duration::from_secs(14)).contains(&elapsed) {
+                "after the 10 s header timeout"
+            } else {
+                "slow"
+            }
+            .to_owned();
+        }
+        self.capture.lock().unwrap().clear();
+        Ok(observed)
+    }
+
+    fn observe_step_inner(&mut self, step: &Step, mtime: i64) -> Result<Observed, String> {
         match step.kind.as_str() {
+            "sleep" => {
+                thread::sleep(Duration::from_millis(step.wait_ms));
+                Ok(Observed::default())
+            }
+            "wait_jobs" => self.wait_jobs(step),
+            "provider" => self.observe_provider(step),
+            "launch" => self.launch(step),
+            "stream" => self.stream(step),
             "fs" => {
                 self.apply_fs(step, mtime)?;
+                // Let the vault watcher (FSEvents/inotify) deliver the change:
+                // the snapshot cache trusts notifications, not metadata.
+                std::thread::sleep(Duration::from_millis(500));
                 Ok(Observed::default())
             }
             "tree" => Ok(Observed {
@@ -812,13 +930,797 @@ impl Server {
                 raw = raw.replace("{{FILL}}", &"a".repeat(step.raw_fill));
                 raw = raw.replace("{{PORT}}", &self.port.to_string());
                 let head_only = raw.split(' ').next() == Some("HEAD");
-                self.exchange(raw.as_bytes(), head_only, step.read_ms, &step.mask, step.volatile_length)
+                self.exchange(raw.as_bytes(), head_only, step, &step.mask, step.volatile_length)
             }
             _ => {
                 let (raw, head_only) = self.build_request(step);
-                self.exchange(&raw, head_only, step.read_ms, &step.mask, step.volatile_length)
+                self.exchange(&raw, head_only, step, &step.mask, step.volatile_length)
             }
         }
+    }
+}
+
+impl Server {
+    fn expand_paths(&self, text: &str) -> String {
+        let tls_dir = self.root.join("tls");
+        let text = text
+            .replace("$PORT", &self.port.to_string())
+            .replace("$VAULT2", &self.vault2.to_string_lossy())
+            .replace("$VAULT", &self.vault.to_string_lossy())
+            .replace("$ROOT", &self.root.to_string_lossy())
+            .replace("$TLSCERT", &tls_dir.join("cert.pem").to_string_lossy())
+            .replace("$TLSKEY", &tls_dir.join("key.pem").to_string_lossy());
+        self.secrets.expand(&text)
+    }
+
+    fn base_env(&self) -> Vec<(String, String)> {
+        let home = self.home.to_string_lossy().into_owned();
+        let tmp = self.home.join("tmp").to_string_lossy().into_owned();
+        let path = if self.case.empty_path {
+            self.root.join("emptybin").to_string_lossy().into_owned()
+        } else {
+            std::env::var("PATH").unwrap_or_default()
+        };
+        let pair = |key: &str, value: String| (key.to_owned(), value);
+        vec![
+            pair("HOME", home.clone()),
+            pair("USERPROFILE", home.clone()),
+            pair("XDG_CONFIG_HOME", format!("{home}/.config")),
+            pair("XDG_DATA_HOME", format!("{home}/.local/share")),
+            pair("XDG_CACHE_HOME", format!("{home}/.cache")),
+            pair("TMPDIR", tmp.clone()),
+            pair("TMP", tmp.clone()),
+            pair("TEMP", tmp),
+            pair("LANG", "C".to_owned()),
+            pair("LC_ALL", "C".to_owned()),
+            pair("TZ", "UTC".to_owned()),
+            pair("TERM", "dumb".to_owned()),
+            pair("NO_COLOR", "1".to_owned()),
+            pair("SYMDESK_VAULT", self.vault.to_string_lossy().into_owned()),
+            pair("SYMDESK_VERSION", "0.12.2".to_owned()),
+            pair("PATH", path),
+        ]
+    }
+
+    /// Mirrors the Go harness: arguments (including `serve`) and environment.
+    fn serve_command(&self) -> Result<(Vec<String>, Vec<(String, String)>), String> {
+        let mut env = self.base_env();
+        let mut args: Vec<String> = Vec::new();
+        if let Some(serve) = &self.case.serve {
+            // The internal, environment-free options path for the HA file.
+            let options = self.root.join("ha-options.json");
+            args.push(format!("--internal-ha-options={}", options.display()));
+            args.push("serve".to_owned());
+            args.extend(serve.args.iter().map(|arg| self.expand_paths(arg)));
+            for (name, value) in &serve.env {
+                env.push((name.clone(), self.expand_paths(value)));
+            }
+            if serve.options.is_empty() {
+                let _ = fs::remove_file(&options);
+            } else {
+                fs::write(&options, self.expand_paths(&serve.options))
+                    .map_err(|error| error.to_string())?;
+            }
+        } else {
+            let (token, worker) = if self.rotated {
+                (&self.secrets.values["ADMIN2"], &self.secrets.values["WORKER2"])
+            } else {
+                (&self.secrets.values["ADMIN"], &self.secrets.values["WORKER"])
+            };
+            args.extend(["serve".to_owned(), "--listen".to_owned(), format!("127.0.0.1:{}", self.port)]);
+            args.extend(["--vault".to_owned(), self.vault.to_string_lossy().into_owned()]);
+            args.extend(["--token".to_owned(), token.clone()]);
+            if !self.no_worker {
+                args.extend(["--worker-token".to_owned(), worker.clone()]);
+            }
+            if self.case.tls {
+                let dir = self.root.join("tls");
+                args.extend(["--tls-cert".to_owned(), dir.join("cert.pem").to_string_lossy().into_owned()]);
+                args.extend(["--tls-key".to_owned(), dir.join("key.pem").to_string_lossy().into_owned()]);
+            }
+        }
+        for (name, value) in &self.case.env {
+            env.push((name.clone(), self.expand_paths(value)));
+        }
+        if let Some(provider) = &self.provider {
+            env.push(("SYMDESK_LLM_PROVIDER".to_owned(), "ollama".to_owned()));
+            env.push(("SYMDESK_OLLAMA_URL".to_owned(), provider.url.clone()));
+            env.push(("SYMDESK_OLLAMA_MODEL".to_owned(), "fixture-model".to_owned()));
+        }
+        Ok((args, env))
+    }
+
+    fn tls_connect(
+        &self,
+        tcp: &TcpStream,
+        version: &str,
+    ) -> Result<(rustls::StreamOwned<rustls::ClientConnection, TcpStream>, String), String> {
+        let material = self.tls_certificate.as_ref().ok_or("no TLS material")?;
+        let config = tls::client_config(material, version);
+        let name = rustls::pki_types::ServerName::try_from("127.0.0.1")
+            .map_err(|error| error.to_string())?
+            .to_owned();
+        let connection = rustls::ClientConnection::new(config, name).map_err(|error| error.to_string())?;
+        let socket = tcp.try_clone().map_err(|error| error.to_string())?;
+        let _ = socket.set_read_timeout(Some(Duration::from_secs(5)));
+        let _ = socket.set_write_timeout(Some(Duration::from_secs(5)));
+        let mut stream = rustls::StreamOwned::new(connection, socket);
+        while stream.conn.is_handshaking() {
+            if stream.conn.complete_io(&mut stream.sock).is_err() {
+                return Err("tls handshake failed".to_owned());
+            }
+        }
+        let protocol = match stream.conn.protocol_version() {
+            Some(rustls::ProtocolVersion::TLSv1_3) => "TLS1.3",
+            Some(rustls::ProtocolVersion::TLSv1_2) => "TLS1.2",
+            _ => "TLS?",
+        };
+        let alpn = stream
+            .conn
+            .alpn_protocol()
+            .map(|bytes| String::from_utf8_lossy(bytes).into_owned())
+            .unwrap_or_default();
+        Ok((stream, format!("{protocol} {alpn}")))
+    }
+
+    /// Stores `header:<name>` response headers and top-level string members of
+    /// a JSON body as variables.
+    fn apply_capture(&self, body: &[u8], headers: &[(String, String)]) {
+        let capture = self.capture.lock().unwrap().clone();
+        if capture.is_empty() {
+            return;
+        }
+        let object = match serde_json::from_slice::<serde_json::Value>(body) {
+            Ok(serde_json::Value::Object(object)) => object,
+            _ => serde_json::Map::new(),
+        };
+        for (name, key) in capture {
+            if let Some(header) = key.strip_prefix("header:") {
+                for (field, value) in headers {
+                    if field == header {
+                        self.secrets.set_var(&name, value.clone());
+                    }
+                }
+            } else if let Some(serde_json::Value::String(value)) = object.get(&key) {
+                self.secrets.set_var(&name, value.clone());
+            }
+        }
+    }
+
+    /// Polls the job list until nothing is pending or processing.
+    fn wait_jobs(&mut self, step: &Step) -> Result<Observed, String> {
+        let token = self.secrets.expand(&step.body);
+        let request = Step {
+            method: "GET".to_owned(),
+            target: "/api/v1/jobs".to_owned(),
+            headers: vec![("Authorization".to_owned(), format!("Bearer {token}"))],
+            ..Step::default()
+        };
+        let deadline = Instant::now() + Duration::from_secs(40);
+        while Instant::now() < deadline {
+            let (raw, head_only) = self.build_request(&request);
+            if let Ok(observed) = self.exchange(&raw, head_only, &request, &[], true)
+                && let Ok(serde_json::Value::Array(jobs)) = serde_json::from_str::<serde_json::Value>(&observed.body)
+                && !jobs.is_empty()
+                && !jobs.iter().any(|job| {
+                    matches!(job["status"].as_str(), Some("pending" | "processing"))
+                })
+            {
+                return Ok(Observed {
+                    exit: "settled".to_owned(),
+                    ..Observed::default()
+                });
+            }
+            thread::sleep(Duration::from_millis(200));
+        }
+        Ok(Observed {
+            exit: "timeout".to_owned(),
+            ..Observed::default()
+        })
+    }
+
+    fn observe_provider(&self, step: &Step) -> Result<Observed, String> {
+        let provider = self.provider.as_ref().ok_or("provider step without a provider")?;
+        let deadline = Instant::now() + Duration::from_secs(4);
+        while Instant::now() < deadline && provider.cancelled() < step.count {
+            thread::sleep(Duration::from_millis(20));
+        }
+        Ok(Observed {
+            body: self.mask_text(&provider.report(), &step.mask),
+            ..Observed::default()
+        })
+    }
+
+    /// Runs `serve <args>` to completion and records its exit and stderr.
+    fn launch(&mut self, step: &Step) -> Result<Observed, String> {
+        self.port = free_port();
+        let mut args = Vec::new();
+        if let Some(serve) = &self.case.serve {
+            let options = self.root.join("ha-options.json");
+            args.push(format!("--internal-ha-options={}", options.display()));
+            if serve.options.is_empty() {
+                let _ = fs::remove_file(&options);
+            } else {
+                fs::write(&options, self.expand_paths(&serve.options))
+                    .map_err(|error| error.to_string())?;
+            }
+        }
+        args.push("serve".to_owned());
+        args.extend(step.args.iter().map(|arg| self.expand_paths(arg)));
+        let log = self.root.join("launch.log");
+        let stderr = fs::File::create(&log).map_err(|error| error.to_string())?;
+        let mut command = Command::new(&self.binary);
+        command
+            .args(&args)
+            .current_dir(&self.home)
+            .env_clear()
+            .envs(self.base_env())
+            .stdout(Stdio::null())
+            .stderr(stderr);
+        for (name, value) in &self.case.env {
+            command.env(name, self.expand_paths(value));
+        }
+        let mut child = command.spawn().map_err(|error| error.to_string())?;
+        let deadline = Instant::now() + Duration::from_secs(8);
+        let exit = loop {
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    break if status.signal().is_some() {
+                        "exit -1".to_owned()
+                    } else {
+                        describe_exit(status.code())
+                    };
+                }
+                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(20)),
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    break "still running after 8s".to_owned();
+                }
+            }
+        };
+        let text = fs::read_to_string(&log).unwrap_or_default();
+        let kept: Vec<&str> = text
+            .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with("time=") && !line.starts_with("LISTENING"))
+            .collect();
+        for name in self.secrets.leaks(&text) {
+            self.leaked.insert(name);
+        }
+        Ok(Observed {
+            exit,
+            body: self.mask_text(&kept.join("\n"), &step.mask),
+            ..Observed::default()
+        })
+    }
+
+    /// Two-phase read of a streamed response (see the Go `stream`).
+    fn stream(&mut self, step: &Step) -> Result<Observed, String> {
+        let (raw, _) = self.build_request(step);
+        let tcp = TcpStream::connect_timeout(
+            &format!("127.0.0.1:{}", self.port).parse().unwrap(),
+            Duration::from_secs(5),
+        )
+        .map_err(|error| error.to_string())?;
+        let (mut conn, label) = if self.case.tls && !step.plain {
+            match self.tls_connect(&tcp, &step.tls_version) {
+                Ok((session, label)) => (Conn::Tls(Box::new(session)), label),
+                Err(failure) => {
+                    return Ok(Observed {
+                        exit: failure,
+                        ..Observed::default()
+                    });
+                }
+            }
+        } else {
+            (Conn::Plain(tcp.try_clone().map_err(|error| error.to_string())?), String::new())
+        };
+        conn.write_all(&raw).map_err(|error| error.to_string())?;
+        let read_ms = if step.read_ms == 0 { 8000 } else { step.read_ms };
+        let _ = tcp.set_read_timeout(Some(Duration::from_millis(read_ms)));
+        let mut reader = BufReader::with_capacity(1 << 20, Tee { inner: conn, wire: Vec::new() });
+        let mut observed = Observed {
+            tls: label,
+            ..Observed::default()
+        };
+        let (line, _, _) = read_line(&mut reader);
+        let line = line.trim_end_matches(['\r', '\n']).to_owned();
+        let mut parts = line.splitn(3, ' ');
+        let _ = parts.next();
+        observed.status = parts.next().and_then(|code| code.parse().ok()).ok_or("bad status line")?;
+        observed.reason = parts.next().unwrap_or("").to_owned();
+        let mut headers = Vec::new();
+        let mut chunked = false;
+        loop {
+            let (header, eof, error) = read_line(&mut reader);
+            if eof && header.is_empty() || error {
+                return Err("stream: read headers".to_owned());
+            }
+            let header = header.trim_end_matches(['\r', '\n']);
+            if header.is_empty() {
+                break;
+            }
+            let (name, value) = header.split_once(':').unwrap_or((header, ""));
+            let (name, value) = (name.trim().to_lowercase(), value.trim().to_owned());
+            if name == "transfer-encoding" && value.eq_ignore_ascii_case("chunked") {
+                chunked = true;
+            }
+            headers.push((name, value));
+        }
+        observed.headers = self.normalize_headers(&headers, &step.mask, true);
+        let body: Box<dyn Read + '_> = if chunked {
+            Box::new(ext::ChunkedReader::new(&mut reader))
+        } else {
+            Box::new(&mut reader)
+        };
+        let mut lines = BufReader::with_capacity(8 << 20, body);
+        let mut early = String::new();
+        let mut index = 0;
+        while index < step.stream_lines || !step.stream_until.is_empty() {
+            let mut text = Vec::new();
+            let read = lines.read_until(b'\n', &mut text).unwrap_or(0);
+            let text = String::from_utf8_lossy(&text).into_owned();
+            early.push_str(&text);
+            index += 1;
+            if read == 0
+                || (!step.stream_until.is_empty() && text.contains(&step.stream_until))
+                || index > 200
+            {
+                break;
+            }
+        }
+        observed.early = self.mask_text(&early, &step.mask);
+        if step.abort {
+            drop(lines);
+            let _ = tcp.shutdown(std::net::Shutdown::Both);
+            observed.closed = true;
+            return Ok(observed);
+        }
+        if step.release
+            && let Some(provider) = &self.provider
+        {
+            provider.release();
+        }
+        let mut rest = Vec::new();
+        let _ = lines.read_to_end(&mut rest);
+        let mut full = early.into_bytes();
+        full.extend_from_slice(&rest);
+        drop(lines);
+        let wire = String::from_utf8_lossy(&reader.get_ref().wire).into_owned();
+        for name in self.secrets.leaks(&wire) {
+            self.leaked.insert(name);
+        }
+        self.apply_capture(&full, &headers);
+        self.record_body(&mut observed, &full, &step.mask);
+        observed.closed = true;
+        Ok(observed)
+    }
+}
+
+
+mod ext {
+    use std::io::{self, BufRead, Read, Write};
+    use std::net::TcpStream;
+
+    /// A plaintext or TLS client connection.
+    pub enum Conn {
+        Plain(TcpStream),
+        Tls(Box<rustls::StreamOwned<rustls::ClientConnection, TcpStream>>),
+    }
+
+    impl Read for Conn {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            match self {
+                Self::Plain(stream) => stream.read(buf),
+                // A peer that closes without close_notify is a closed connection.
+                Self::Tls(stream) => match stream.read(buf) {
+                    Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => Ok(0),
+                    other => other,
+                },
+            }
+        }
+    }
+
+    impl Write for Conn {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            match self {
+                Self::Plain(stream) => stream.write(buf),
+                Self::Tls(stream) => stream.write(buf),
+            }
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            match self {
+                Self::Plain(stream) => stream.flush(),
+                Self::Tls(stream) => stream.flush(),
+            }
+        }
+    }
+
+    /// Incremental HTTP/1.1 chunked-body decoder.
+    pub struct ChunkedReader<R> {
+        inner: R,
+        remaining: usize,
+        done: bool,
+    }
+
+    impl<R: BufRead> ChunkedReader<R> {
+        pub fn new(inner: R) -> Self {
+            Self {
+                inner,
+                remaining: 0,
+                done: false,
+            }
+        }
+    }
+
+    impl<R: BufRead> Read for ChunkedReader<R> {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.done || buf.is_empty() {
+                return Ok(0);
+            }
+            if self.remaining == 0 {
+                let mut line = String::new();
+                if self.inner.read_line(&mut line)? == 0 {
+                    return Ok(0);
+                }
+                let size_text = line.trim().split(';').next().unwrap_or("");
+                let Ok(size) = usize::from_str_radix(size_text, 16) else {
+                    self.done = true;
+                    return Ok(0);
+                };
+                if size == 0 {
+                    self.done = true;
+                    return Ok(0);
+                }
+                self.remaining = size;
+            }
+            let want = buf.len().min(self.remaining);
+            let read = self.inner.read(&mut buf[..want])?;
+            self.remaining -= read;
+            if self.remaining == 0 {
+                let mut crlf = String::new();
+                let _ = self.inner.read_line(&mut crlf);
+            }
+            Ok(read)
+        }
+    }
+}
+
+mod tls {
+    use std::sync::Arc;
+
+    use rustls::{ClientConfig, RootCertStore, crypto::ring, pki_types::CertificateDer};
+
+    pub struct Material {
+        pub cert_pem: String,
+        pub key_pem: String,
+        pub cert_der: Vec<u8>,
+    }
+
+    /// Mints a fresh self-signed pair for 127.0.0.1 / localhost (per run).
+    pub fn mint() -> Material {
+        let certified = rcgen::generate_simple_self_signed(vec![
+            "127.0.0.1".to_owned(),
+            "localhost".to_owned(),
+        ])
+        .expect("mint test certificate");
+        Material {
+            cert_pem: certified.cert.pem(),
+            key_pem: certified.signing_key.serialize_pem(),
+            cert_der: certified.cert.der().to_vec(),
+        }
+    }
+
+    pub fn client_config(material: &Material, version: &str) -> Arc<ClientConfig> {
+        let mut roots = RootCertStore::empty();
+        roots
+            .add(CertificateDer::from(material.cert_der.clone()))
+            .expect("trust the minted certificate");
+        let provider = Arc::new(ring::default_provider());
+        let builder = match version {
+            "1.2" => ClientConfig::builder_with_provider(provider)
+                .with_protocol_versions(&[&rustls::version::TLS12])
+                .expect("TLS 1.2 only"),
+            "1.3" => ClientConfig::builder_with_provider(provider)
+                .with_protocol_versions(&[&rustls::version::TLS13])
+                .expect("TLS 1.3 only"),
+            _ => ClientConfig::builder_with_provider(provider)
+                .with_safe_default_protocol_versions()
+                .expect("default protocol versions"),
+        };
+        let mut config = builder.with_root_certificates(roots).with_no_client_auth();
+        config.alpn_protocols = vec![b"http/1.1".to_vec()];
+        Arc::new(config)
+    }
+}
+
+/// The fake loopback Ollama endpoint; the Go harness implements the same script
+/// (`httpProvider` in cmd/symdesk/http_process_ext_port_test.go).
+mod provider {
+    use std::{
+        io::{ErrorKind, Read, Write},
+        net::{TcpListener, TcpStream},
+        sync::{
+            Arc, Condvar, Mutex,
+            atomic::{AtomicBool, Ordering},
+        },
+        thread,
+        time::{Duration, Instant},
+    };
+
+    #[derive(Default)]
+    struct State {
+        requests: Mutex<Vec<String>>,
+        cancellations: Mutex<usize>,
+        gate: (Mutex<usize>, Condvar),
+        stop: AtomicBool,
+    }
+
+    pub struct Provider {
+        pub url: String,
+        state: Arc<State>,
+    }
+
+    impl Provider {
+        pub fn start() -> Self {
+            let listener = TcpListener::bind("127.0.0.1:0").expect("bind provider");
+            let url = format!("http://{}", listener.local_addr().unwrap());
+            let state = Arc::new(State::default());
+            let accept_state = Arc::clone(&state);
+            thread::spawn(move || {
+                for stream in listener.incoming() {
+                    if accept_state.stop.load(Ordering::SeqCst) {
+                        break;
+                    }
+                    let Ok(stream) = stream else { continue };
+                    let state = Arc::clone(&accept_state);
+                    thread::spawn(move || {
+                        let _ = handle(stream, &state);
+                    });
+                }
+            });
+            Self { url, state }
+        }
+
+        pub fn release(&self) {
+            *self.state.gate.0.lock().unwrap() += 1;
+            self.state.gate.1.notify_all();
+        }
+
+        pub fn cancelled(&self) -> usize {
+            *self.state.cancellations.lock().unwrap()
+        }
+
+        pub fn report(&self) -> String {
+            let mut out = String::new();
+            for line in self.state.requests.lock().unwrap().iter() {
+                out.push_str(line);
+                out.push('\n');
+            }
+            out.push_str(&format!("cancellations={}", self.cancelled()));
+            out
+        }
+    }
+
+    impl Drop for Provider {
+        fn drop(&mut self) {
+            self.state.stop.store(true, Ordering::SeqCst);
+            let _ = TcpStream::connect(self.url.trim_start_matches("http://"));
+        }
+    }
+
+    fn read_request(stream: &mut TcpStream) -> Option<(String, String, Vec<u8>)> {
+        let mut data = Vec::new();
+        let mut chunk = [0_u8; 8192];
+        let head_end = loop {
+            let read = stream.read(&mut chunk).ok()?;
+            if read == 0 {
+                return None;
+            }
+            data.extend_from_slice(&chunk[..read]);
+            if let Some(position) = data.windows(4).position(|window| window == b"\r\n\r\n") {
+                break position + 4;
+            }
+        };
+        let head = String::from_utf8_lossy(&data[..head_end]).into_owned();
+        let mut lines = head.lines();
+        let mut request_line = lines.next()?.split(' ');
+        let method = request_line.next()?.to_owned();
+        let path = request_line.next()?.to_owned();
+        let mut length = 0_usize;
+        let mut chunked = false;
+        for line in lines {
+            let lower = line.to_ascii_lowercase();
+            if let Some(value) = lower.strip_prefix("content-length:") {
+                length = value.trim().parse().unwrap_or(0);
+            } else if lower.starts_with("transfer-encoding:") && lower.contains("chunked") {
+                chunked = true;
+            }
+        }
+        let mut body = data[head_end..].to_vec();
+        if chunked {
+            // Decode chunk framing until the terminating chunk.
+            let mut decoded = Vec::new();
+            let mut rest = body;
+            loop {
+                if let Some(line_end) = rest.windows(2).position(|window| window == b"\r\n") {
+                    let size = usize::from_str_radix(
+                        String::from_utf8_lossy(&rest[..line_end]).trim().split(';').next().unwrap_or("0"),
+                        16,
+                    )
+                    .ok()?;
+                    if size == 0 {
+                        break;
+                    }
+                    while rest.len() < line_end + 2 + size + 2 {
+                        let read = stream.read(&mut chunk).ok()?;
+                        if read == 0 {
+                            return None;
+                        }
+                        rest.extend_from_slice(&chunk[..read]);
+                    }
+                    decoded.extend_from_slice(&rest[line_end + 2..line_end + 2 + size]);
+                    rest.drain(..line_end + 2 + size + 2);
+                } else {
+                    let read = stream.read(&mut chunk).ok()?;
+                    if read == 0 {
+                        return None;
+                    }
+                    rest.extend_from_slice(&chunk[..read]);
+                }
+            }
+            body = decoded;
+        } else {
+            while body.len() < length {
+                let read = stream.read(&mut chunk).ok()?;
+                if read == 0 {
+                    return None;
+                }
+                body.extend_from_slice(&chunk[..read]);
+            }
+        }
+        Some((method, path, body))
+    }
+
+    fn chunk(stream: &mut TcpStream, bytes: &[u8]) -> std::io::Result<()> {
+        stream.write_all(format!("{:x}\r\n", bytes.len()).as_bytes())?;
+        stream.write_all(bytes)?;
+        stream.write_all(b"\r\n")?;
+        stream.flush()
+    }
+
+    /// Waits until the peer closes its end (the request context ends in Go).
+    fn wait_closed(stream: &mut TcpStream, until: Option<&dyn Fn() -> bool>) -> bool {
+        let _ = stream.set_nonblocking(true);
+        let deadline = Instant::now() + Duration::from_secs(25);
+        let mut sink = [0_u8; 64];
+        while Instant::now() < deadline {
+            if let Some(done) = until
+                && done()
+            {
+                return false;
+            }
+            match stream.read(&mut sink) {
+                Ok(0) => return true,
+                Ok(_) => {}
+                Err(error) if error.kind() == ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(_) => return true,
+            }
+        }
+        false
+    }
+
+    fn handle(mut stream: TcpStream, state: &State) -> std::io::Result<()> {
+        let Some((method, path, body)) = read_request(&mut stream) else {
+            return Ok(());
+        };
+        if method != "POST" || path != "/api/generate" {
+            return stream.write_all(
+                b"HTTP/1.1 404 Not Found\r\nContent-Length: 24\r\nConnection: close\r\n\r\nunexpected provider route",
+            );
+        }
+        let Ok(request) = serde_json::from_slice::<serde_json::Value>(&body) else {
+            return stream.write_all(
+                b"HTTP/1.1 400 Bad Request\r\nContent-Length: 23\r\nConnection: close\r\n\r\ninvalid provider request",
+            );
+        };
+        let prompt = request["prompt"].as_str().unwrap_or("").to_owned();
+        let recorded = serde_json::json!({
+            "model": request["model"].as_str().unwrap_or(""),
+            "prompt": prompt,
+            "stream": request["stream"].as_bool().unwrap_or(false),
+        });
+        state
+            .requests
+            .lock()
+            .unwrap()
+            .push(format!("POST /api/generate {recorded}"));
+        let cancelled = || *state.cancellations.lock().unwrap() += 1;
+        let ndjson = b"HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nTransfer-Encoding: chunked\r\n\r\n";
+        if prompt.contains("provider error input") {
+            return stream.write_all(
+                b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 24\r\nConnection: close\r\n\r\nfixture provider failure",
+            );
+        }
+        if prompt.contains("disconnect provider input") {
+            stream.write_all(ndjson)?;
+            chunk(&mut stream, b"{\"response\":\"partial\",\"done\":false}\n")?;
+            if wait_closed(&mut stream, None) {
+                cancelled();
+            }
+            return Ok(());
+        }
+        if prompt.contains("oversized provider input") {
+            stream.write_all(ndjson)?;
+            chunk(&mut stream, b"{\"response\":\"")?;
+            let block = vec![b'x'; 1 << 20];
+            for _ in 0..4 {
+                chunk(&mut stream, &block)?;
+            }
+            chunk(&mut stream, b"\"}\n")?;
+            return stream.write_all(b"0\r\n\r\n");
+        }
+        if prompt.contains("split provider input") {
+            stream.write_all(ndjson)?;
+            chunk(&mut stream, b"{\"response\":\"spl")?;
+            thread::sleep(Duration::from_millis(150));
+            chunk(
+                &mut stream,
+                b"it\",\"done\":false}\n{\"response\":\"\",\"done\":true}\n",
+            )?;
+            return stream.write_all(b"0\r\n\r\n");
+        }
+        if prompt.contains("hang provider input") {
+            stream.write_all(ndjson)?;
+            if wait_closed(&mut stream, None) {
+                cancelled();
+            }
+            return Ok(());
+        }
+        stream.write_all(ndjson)?;
+        chunk(&mut stream, b"{\"response\":\"first\",\"done\":false}\n")?;
+        if prompt.contains("gated provider input") {
+            let deadline = Instant::now() + Duration::from_secs(20);
+            let released = || {
+                let mut count = state.gate.0.lock().unwrap();
+                if *count > 0 {
+                    *count -= 1;
+                    true
+                } else {
+                    false
+                }
+            };
+            let _ = stream.set_nonblocking(true);
+            let mut sink = [0_u8; 64];
+            loop {
+                if released() {
+                    break;
+                }
+                match stream.read(&mut sink) {
+                    Ok(0) => {
+                        cancelled();
+                        return Ok(());
+                    }
+                    Err(error) if error.kind() == ErrorKind::WouldBlock => {}
+                    Err(_) => {
+                        cancelled();
+                        return Ok(());
+                    }
+                    Ok(_) => {}
+                }
+                if Instant::now() >= deadline {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(10));
+            }
+            let _ = stream.set_nonblocking(false);
+        }
+        chunk(&mut stream, b"{\"response\":\" second\",\"done\":false}\n")?;
+        chunk(&mut stream, b"{\"response\":\"\",\"done\":true}\n")?;
+        stream.write_all(b"0\r\n\r\n")
     }
 }
 
@@ -884,6 +1786,8 @@ fn compare(label: &str, expected: &Observed, actual: &Observed, problems: &mut V
     field!(closed);
     field!(silent);
     field!(exit);
+    field!(early);
+    field!(tls);
     if expected.tree != actual.tree {
         for key in expected.tree.keys().chain(actual.tree.keys()).collect::<BTreeSet<_>>() {
             if expected.tree.get(key) != actual.tree.get(key) {
@@ -927,6 +1831,11 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
         no_worker: case.no_worker,
         leaked: BTreeSet::new(),
         patterns: patterns(),
+        case: case.clone(),
+        vault2: root.join("vault2"),
+        provider: case.provider.then(provider::Provider::start),
+        tls_certificate: (case.tls || case.no_server).then(tls::mint),
+        capture: Mutex::new(BTreeMap::new()),
     };
     let mtime = if case.mtime == 0 { 1_767_323_045 } else { case.mtime };
     let setup = (|| -> Result<(), String> {
@@ -953,7 +1862,22 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
             server.apply_fs(&step, mtime)?;
         }
         write_file(&root.join("outside.md"), b"outside", 0o600)?;
-        server.start()
+        make_dirs(&server.vault2)?;
+        write_file(
+            &server.vault2.join("Second.md"),
+            b"---\ntitle: Second\n---\nsecond vault",
+            0o600,
+        )?;
+        if case.empty_path {
+            make_dirs(&root.join("emptybin"))?;
+        }
+        if let Some(material) = &server.tls_certificate {
+            let dir = root.join("tls");
+            make_dirs(&dir)?;
+            write_file(&dir.join("cert.pem"), material.cert_pem.as_bytes(), 0o600)?;
+            write_file(&dir.join("key.pem"), material.key_pem.as_bytes(), 0o600)?;
+        }
+        if case.no_server { Ok(()) } else { server.start() }
     })();
     if let Err(error) = setup {
         problems.push(format!("[{}] setup: {error}", case.name));
@@ -970,9 +1894,11 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
             Err(error) => problems.push(format!("[{}] {}: {error}", case.name, step.label)),
         }
     }
-    let exit = server.stop();
-    if exit != "exit 0" && exit != "exit 1" {
-        problems.push(format!("[{}] server stop: {exit}", case.name));
+    if !case.no_server {
+        let exit = server.stop();
+        if exit != "exit 0" && exit != "exit 1" && exit != "not running" {
+            problems.push(format!("[{}] server stop: {exit}", case.name));
+        }
     }
     let log = fs::read(root.join("stderr.log")).unwrap_or_default();
     for name in server.secrets.leaks(&String::from_utf8_lossy(&log)) {

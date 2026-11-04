@@ -358,7 +358,7 @@ impl Worker {
         let runner = ocr::Runner::default_runner(&self.config.ocr_language);
         let result = runner
             .extract(&self.context, &input.to_string_lossy(), kind)
-            .map_err(|error| format!("OCR failed: {error}"))?;
+            .map_err(|error| format!("OCR failed: extract text: {error}"))?;
         let engine = result.engine.trim();
         let engine = if engine.is_empty() { mode } else { engine };
         Ok((result.text, engine.to_owned(), String::new()))

@@ -108,7 +108,7 @@ func (s *httpSecrets) redact(text string) string {
 func (s *httpSecrets) leaks(text string) []string {
 	var found []string
 	for _, name := range s.order() {
-		if strings.Contains(text, s.values[name]) {
+		if value, ok := s.values[name]; ok && strings.Contains(text, value) {
 			found = append(found, name)
 		}
 	}
@@ -172,6 +172,10 @@ type httpStep struct {
 	Mask []string `json:"mask,omitempty"`
 	// VolatileLength drops Content-Length from the comparison.
 	VolatileLength bool `json:"volatile_length,omitempty"`
+	// IgnoreClosed drops the "connection closed" observation of the step: after
+	// an unread multi-megabyte body the Go server's close is a kernel race
+	// between FIN (EOF) and RST (connection reset), not a protocol behavior.
+	IgnoreClosed bool `json:"ignore_closed,omitempty"`
 	// Filesystem operations (kind "fs").
 	Op      string `json:"op,omitempty"`
 	Path    string `json:"path,omitempty"`
@@ -192,8 +196,10 @@ type httpStep struct {
 	// Count is the number of provider cancellations a "provider" step waits
 	// for. StreamLines/Release/Abort drive a "stream" step: read that many
 	// body lines, then release the provider gate (or drop the connection).
-	Count       int  `json:"count,omitempty"`
-	StreamLines int  `json:"stream_lines,omitempty"`
+	Count       int `json:"count,omitempty"`
+	StreamLines int `json:"stream_lines,omitempty"`
+	// StreamUntil ends the early read at the first line containing the text.
+	StreamUntil string `json:"stream_until,omitempty"`
 	Release     bool `json:"release,omitempty"`
 	Abort       bool `json:"abort,omitempty"`
 	// Args are the `serve` arguments of a "launch" step.
@@ -240,7 +246,7 @@ type httpFixture struct {
 
 var (
 	httpRFC3339 = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})`)
-	httpHexRun  = regexp.MustCompile(`[0-9a-f]{32,}`)
+	httpHexRun  = regexp.MustCompile(`[0-9a-f]{24,}`)
 	httpBoundry = regexp.MustCompile(`boundary=[0-9a-f]+`)
 	// httpVersion hides the build version of the JSON status document: the Go
 	// test binary reports "(devel)", the Rust binary its package version.
@@ -371,6 +377,9 @@ func (s *httpServer) exchange(raw []byte, headOnly bool, step httpStep, readMS i
 	var wire bytes.Buffer
 	reader := bufio.NewReaderSize(io.TeeReader(conn, &wire), 1<<20)
 	observed := s.readResponse(conn, reader, headOnly, mask, volatileLength)
+	if step.IgnoreClosed {
+		observed.Closed = false
+	}
 	observed.TLS = tlsState()
 	<-writeDone
 	for _, name := range s.secrets.leaks(wire.String()) {
@@ -391,6 +400,12 @@ func (s *httpServer) readResponse(conn net.Conn, reader *bufio.Reader, headOnly 
 		line = strings.TrimRight(line, "\r\n")
 		parts := strings.SplitN(line, " ", 3)
 		if len(parts) < 2 || !strings.HasPrefix(parts[0], "HTTP/") {
+			if strings.HasPrefix(line, "\x15\x03") {
+				// A TLS alert record: the alert bytes differ between TLS stacks.
+				observed.Exit = "tls alert"
+				observed.Closed = true
+				return observed
+			}
 			s.t.Fatalf("unparsable status line %q", line)
 		}
 		status, convErr := strconv.Atoi(parts[1])
@@ -446,7 +461,7 @@ func (s *httpServer) readResponse(conn net.Conn, reader *bufio.Reader, headOnly 
 		default:
 			body, _ = io.ReadAll(reader)
 		}
-		s.applyCapture(body)
+		s.applyCapture(body, headers)
 		s.recordBody(&observed, body, mask)
 		// Does the server close the connection once the response is complete?
 		_ = conn.SetReadDeadline(time.Now().Add(400 * time.Millisecond))
@@ -531,6 +546,11 @@ func (s *httpServer) normalizeHeaders(headers [][2]string, mask []string, volati
 }
 
 func (s *httpServer) recordBody(observed *httpObserved, body []byte, mask []string) {
+	for _, class := range mask {
+		if class == "nobody" {
+			return
+		}
+	}
 	observed.BodyLen = len(body)
 	if len(body) > 16<<10 {
 		sum := sha256.Sum256(body)
@@ -562,6 +582,8 @@ func isValidUTF8(b []byte) bool {
 // have their (masked) text recorded, everything else its SHA-256 and mode.
 func (s *httpServer) tree(include []string, mask []string) map[string]string {
 	s.t.Helper()
+	// users.json carries per-run random token hashes: always compare it masked.
+	include = append(append([]string{}, include...), ".symdesk/users.json")
 	out := map[string]string{}
 	err := filepath.WalkDir(s.vault, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -750,7 +772,7 @@ func observeHTTPCase(t *testing.T, binary string, c httpCase) httpCase {
 	}
 	if !c.NoServer {
 		exit := s.stop()
-		if exit != "exit 0" && exit != "exit 1" {
+		if exit != "exit 0" && exit != "exit 1" && exit != "not running" {
 			t.Fatalf("case %s: server stop: %s", c.Name, exit)
 		}
 	}
@@ -777,6 +799,8 @@ func observeHTTPStep(t *testing.T, s *httpServer, step httpStep, mtime int64) ht
 	switch step.Kind {
 	case "fs":
 		httpApplyFS(t, s, step, mtime)
+		// Let the vault watcher deliver the change before the next request.
+		time.Sleep(300 * time.Millisecond)
 		return httpObserved{}
 	case "tree":
 		return httpObserved{Tree: s.tree(step.TreeInclude, step.Mask)}

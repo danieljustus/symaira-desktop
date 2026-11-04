@@ -113,13 +113,7 @@ func (s *httpServer) serveCommand() ([]string, []string) {
 		for name, value := range s.c.Serve.Env {
 			env = append(env, name+"="+s.expandPaths(value))
 		}
-		if s.c.Serve.Options != "" {
-			if err := os.WriteFile(haOptionsFile(), []byte(s.expandPaths(s.c.Serve.Options)), 0o600); err != nil {
-				s.t.Fatal(err)
-			}
-		} else {
-			_ = os.Remove(haOptionsFile())
-		}
+		s.writeOptions()
 	} else {
 		token, worker := s.secrets.values["ADMIN"], s.secrets.values["WORKER"]
 		if s.rotated {
@@ -141,6 +135,20 @@ func (s *httpServer) serveCommand() ([]string, []string) {
 		env = append(env, "SYMDESK_LLM_PROVIDER=ollama", "SYMDESK_OLLAMA_URL="+s.provider.server.URL, "SYMDESK_OLLAMA_MODEL=fixture-model")
 	}
 	return args, env
+}
+
+// writeOptions installs (or removes) the Home Assistant options file.
+func (s *httpServer) writeOptions() {
+	if s.c.Serve == nil {
+		return
+	}
+	if s.c.Serve.Options == "" {
+		_ = os.Remove(haOptionsFile())
+		return
+	}
+	if err := os.WriteFile(haOptionsFile(), []byte(s.expandPaths(s.c.Serve.Options)), 0o600); err != nil {
+		s.t.Fatal(err)
+	}
 }
 
 // prepareExt creates the extension fixtures of a case before the server starts.
@@ -247,15 +255,23 @@ func (s *httpServer) dialStep(plain bool, version string) (net.Conn, func() stri
 	return client, func() string { return label }, ""
 }
 
-func (s *httpServer) applyCapture(body []byte) {
+// applyCapture stores `header:<name>` response headers and top-level string
+// members of a JSON body as variables.
+func (s *httpServer) applyCapture(body []byte, headers [][2]string) {
 	if len(s.capture) == 0 {
 		return
 	}
 	var object map[string]any
-	if json.Unmarshal(body, &object) != nil {
-		return
-	}
+	_ = json.Unmarshal(body, &object)
 	for name, key := range s.capture {
+		if header, ok := strings.CutPrefix(key, "header:"); ok {
+			for _, h := range headers {
+				if h[0] == header {
+					s.secrets.vars[name] = h[1]
+				}
+			}
+			continue
+		}
 		if value, ok := object[key].(string); ok {
 			s.secrets.vars[name] = value
 		}
@@ -336,6 +352,7 @@ func (s *httpServer) waitJobs(step httpStep) httpObserved {
 // launch runs `serve <args>` to completion and records its exit and stderr.
 func (s *httpServer) launch(step httpStep) httpObserved {
 	s.port = httpFreePort(s.t)
+	s.writeOptions()
 	args := []string{"serve"}
 	for _, arg := range step.Args {
 		args = append(args, s.expandPaths(arg))
@@ -432,10 +449,10 @@ func (s *httpServer) stream(step httpStep) httpObserved {
 	}
 	lines := bufio.NewReaderSize(body, 8<<20)
 	var early strings.Builder
-	for i := 0; i < step.StreamLines; i++ {
+	for i := 0; i < step.StreamLines || step.StreamUntil != ""; i++ {
 		text, err := lines.ReadString('\n')
 		early.WriteString(text)
-		if err != nil {
+		if err != nil || (step.StreamUntil != "" && strings.Contains(text, step.StreamUntil)) || i >= 200 {
 			break
 		}
 	}
@@ -450,7 +467,7 @@ func (s *httpServer) stream(step httpStep) httpObserved {
 	}
 	rest, _ := io.ReadAll(lines)
 	full := append([]byte(early.String()), rest...)
-	s.applyCapture(full)
+	s.applyCapture(full, headers)
 	s.recordBody(&observed, full, step.Mask)
 	observed.Closed = true
 	return observed

@@ -7,6 +7,7 @@
 //! file ranges are all tested at the HTTP boundary.
 
 mod go_http;
+mod go_json;
 #[cfg(any(test, unix, target_os = "windows"))]
 mod mime;
 #[cfg(target_os = "windows")]
@@ -69,7 +70,7 @@ use hyper_util::{
     service::TowerToHyperService,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::json;
 use symdesk_index::{IndexedDocument, Sidecar, SourceRegistry};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -376,6 +377,7 @@ pub fn prepare(config: HttpConfig) -> Result<PreparedServer, String> {
     // legacy admin migration, share store, then the index refresh.
     server_state::create_job_store(&root)?;
     server_state::initialise_permissions(&root, &config.token)?;
+    initialise_share_store(&root)?;
     refresh_server_index(&root)?;
     let listen_address = if config.listen_address.is_empty() {
         "127.0.0.1:8787".to_owned()
@@ -653,6 +655,26 @@ async fn serve(
                         Ok(Ok(session)) => drive!(session),
                         Ok(Err(error)) => {
                             eprintln!("http: TLS handshake error from {remote_addr}: {error}");
+                            // Go answers a failed handshake with a fatal alert
+                            // record (rustls does not flush one for malformed
+                            // records); the alert bytes differ between stacks.
+                            let text = error.to_string();
+                            if !text.contains("received fatal alert")
+                                && let Some(socket) = linger_socket.as_ref()
+                            {
+                                let description: u8 = if text.contains("corrupt message") {
+                                    50 // decode_error
+                                } else if text.contains("protocol version") {
+                                    70 // protocol_version
+                                } else {
+                                    40 // handshake_failure
+                                };
+                                write_raw(socket, &[0x15, 0x03, 0x03, 0x00, 0x02, 0x02, description])
+                                    .await;
+                            }
+                            // Unread handshake bytes would turn the close into a
+                            // reset and destroy the alert the client is owed.
+                            unread_body.set();
                         }
                         Err(_) => {
                             eprintln!("http: TLS handshake error from {remote_addr}: timeout");
@@ -795,6 +817,22 @@ fn refresh_server_index(vault_root: &Path) -> Result<(), String> {
         .map_err(|error| format!("index vault: {error}"))
 }
 
+/// A write through the API changes the vault, so the next snapshot must not
+/// wait for the file watcher to say so (Go's watcher event arrives before the
+/// next request; FSEvents can lag behind it).
+async fn invalidate_snapshot_after_write(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    let reads = matches!(*request.method(), Method::GET | Method::HEAD | Method::OPTIONS);
+    let response = next.run(request).await;
+    if !reads {
+        state.snapshot_cache.mark_dirty();
+    }
+    response
+}
+
 fn router(state: Arc<AppState>) -> Router {
     let protected = Router::new()
         .route("/api/v1/status", get(handle_status))
@@ -833,6 +871,10 @@ fn router(state: Arc<AppState>) -> Router {
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
+        ))
+        .layer(middleware::from_fn_with_state(
+            Arc::clone(&state),
+            invalidate_snapshot_after_write,
         ));
     let routes = Router::new()
         .route("/healthz", get(handle_health))
@@ -1145,11 +1187,18 @@ async fn handle_ai_transform(
             return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
         }
     };
-    let mut input: AiTransformRequest = match decode_first_json_value(&body) {
-        Ok(input) => input,
-        Err(error) => {
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+    let decoded = match go_json::decode(&go_json::AI_TRANSFORM, &body) {
+        Ok(decoded) => decoded,
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
+    };
+    let mut input = AiTransformRequest {
+        text: decoded.text("text"),
+        intent: decoded.text("intent"),
     };
     input.text = input.text.trim().to_owned();
     input.intent = input.intent.trim().to_owned();
@@ -1681,7 +1730,12 @@ async fn handle_ai_ask(
     if let Some(response) = ai_rate_limit_response(&state, &request) {
         return response;
     }
-    let body = match read_ai_request_body(request.into_body(), MAX_AI_ASK_BODY_BYTES).await {
+    let body = match read_ai_request_body(
+        request.into_body(),
+        MAX_AI_ASK_BODY_BYTES.saturating_add(1),
+    )
+    .await
+    {
         Ok(body) => body,
         Err(AiBodyReadError::Invalid(error)) => {
             return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
@@ -1690,16 +1744,18 @@ async fn handle_ai_ask(
             return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
         }
     };
-    let mut input: AiAskRequest = match decode_first_json_value(&body) {
-        Ok(input) => input,
-        Err(error) => {
-            let detail = if error.is_eof() {
-                "unexpected EOF".to_owned()
-            } else {
-                error.to_string()
-            };
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {detail}"));
+    let decoded = match go_json::decode(&go_json::AI_ASK, &body) {
+        Ok(decoded) => decoded,
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
+    };
+    let mut input = AiAskRequest {
+        query: decoded.text("query"),
+        notebook: decoded.text("notebook"),
     };
     input.query = input.query.trim().to_owned();
     input.notebook = input.notebook.trim().to_owned();
@@ -2874,89 +2930,15 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
 /// ignored), case-insensitive keys, last duplicate wins, `null` is a no-op
 /// and the first saved type/unknown-field error is reported.
 fn parse_command_request(body: &[u8]) -> Result<RemoteCommandRequest, CommandParseError> {
-    let mut decoder = serde_json::Deserializer::from_slice(body);
-    let value = Value::deserialize(&mut decoder).map_err(|error| {
-        if error.is_eof() {
-            CommandParseError::Incomplete
-        } else {
-            CommandParseError::Go(error.to_string())
+    match go_json::decode(&go_json::COMMAND, body) {
+        Ok(decoded) => Ok(RemoteCommandRequest {
+            arguments: decoded.list("arguments"),
+            stdin: decoded.is_set("stdin").then(|| decoded.text("stdin")),
+        }),
+        Err(go_json::Failure::Empty | go_json::Failure::Incomplete) => {
+            Err(CommandParseError::Incomplete)
         }
-    })?;
-    fn kind(value: &Value) -> &'static str {
-        match value {
-            Value::Null => "null",
-            Value::Bool(_) => "bool",
-            Value::Number(_) => "number",
-            Value::String(_) => "string",
-            Value::Array(_) => "array",
-            Value::Object(_) => "object",
-        }
-    }
-    let field_error = |field: &str, value: &Value, go_type: &str| {
-        CommandParseError::Go(format!(
-            "json: cannot unmarshal {} into Go struct field commandRequest.{field} of type {go_type}",
-            kind(value)
-        ))
-    };
-    let mut request = RemoteCommandRequest {
-        arguments: None,
-        stdin: None,
-    };
-    let map = match &value {
-        Value::Null => return Ok(request),
-        Value::Object(map) => map,
-        other => {
-            return Err(CommandParseError::Go(format!(
-                "json: cannot unmarshal {} into Go value of type selfhost.commandRequest",
-                kind(other)
-            )));
-        }
-    };
-    let mut first_error = None;
-    for (key, item) in map {
-        if key.eq_ignore_ascii_case("arguments") {
-            match item {
-                Value::Null => request.arguments = None,
-                Value::Array(items) => {
-                    let mut arguments = Vec::with_capacity(items.len());
-                    for element in items {
-                        match element {
-                            Value::String(text) => arguments.push(text.clone()),
-                            Value::Null => arguments.push(String::new()),
-                            other => {
-                                first_error.get_or_insert_with(|| {
-                                    field_error("arguments", other, "string")
-                                });
-                                arguments.push(String::new());
-                            }
-                        }
-                    }
-                    request.arguments = Some(arguments);
-                }
-                other => {
-                    first_error.get_or_insert_with(|| field_error("arguments", other, "[]string"));
-                }
-            }
-        } else if key.eq_ignore_ascii_case("stdin") {
-            match item {
-                Value::Null => {}
-                Value::String(text) => request.stdin = Some(text.clone()),
-                other => {
-                    first_error.get_or_insert_with(|| field_error("stdin", other, "string"));
-                }
-            }
-        } else {
-            first_error.get_or_insert_with(|| {
-                CommandParseError::Go(format!(
-                    "json: unknown field {}",
-                    serde_json::to_string(key).unwrap_or_default()
-                ))
-            });
-        }
-    }
-    match first_error {
-        Some(error) => Err(error),
-        None => Ok(request),
+        Err(go_json::Failure::Message(message)) => Err(CommandParseError::Go(message)),
     }
 }
 
@@ -3576,11 +3558,8 @@ struct ShareLink {
     revoked_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
 struct CreateShareRequest {
-    #[serde(default)]
     path: String,
-    #[serde(default)]
     expiry: i64,
 }
 
@@ -3606,8 +3585,11 @@ async fn handle_create_share(
         Ok(body) => body,
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
     };
-    let request = match serde_json::from_slice::<CreateShareRequest>(&body) {
-        Ok(request) => request,
+    let request = match go_json::decode(&go_json::SHARE_CREATE, &body) {
+        Ok(decoded) => CreateShareRequest {
+            path: decoded.text("path"),
+            expiry: decoded.int("expiry"),
+        },
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
     };
     if request.path.is_empty() {
@@ -3853,6 +3835,68 @@ fn share_lookup_failure(state: &AppState, request: &Request<Body>) -> Response {
         return response;
     }
     json_error(StatusCode::NOT_FOUND, "not found")
+}
+
+/// Go `NewShareStore`: creates the server state directory and rewrites a store
+/// that still carries plain-text `token` fields (a legacy format) without them.
+/// A store that does not parse stops the server from starting.
+fn initialise_share_store(vault_root: &Path) -> Result<(), String> {
+    let wrap = |detail: String| format!("shares: shares: {detail}");
+    let directory = vault_root.join(".symdesk/server");
+    let mut builder = fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder
+        .create(&directory)
+        .map_err(|error| format!("shares: create config dir: {error}"))
+        .map_err(|error| format!("shares: {error}"))?;
+    let path = directory.join("shares.json");
+    let data = match fs::read(&path) {
+        Ok(data) => data,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(wrap(format!("read store: {error}"))),
+    };
+    symdesk_vault::go_json_validate_syntax(&data)
+        .map_err(|message| wrap(format!("parse store: {message}")))?;
+    let value: serde_json::Value = serde_json::from_slice(&data)
+        .map_err(|error| wrap(format!("parse store: {error}")))?;
+    let items = match value {
+        serde_json::Value::Null => return Ok(()),
+        serde_json::Value::Array(items) => items,
+        other => {
+            let kind = match other {
+                serde_json::Value::Bool(_) => "bool",
+                serde_json::Value::Number(_) => "number",
+                serde_json::Value::String(_) => "string",
+                _ => "object",
+            };
+            return Err(wrap(format!(
+                "parse store: json: cannot unmarshal {kind} into Go value of type []selfhost.ShareLink"
+            )));
+        }
+    };
+    let has_legacy_token = items.iter().any(|item| {
+        item.as_object().is_some_and(|object| {
+            object.iter().any(|(key, value)| {
+                key.eq_ignore_ascii_case("token") && value.as_str().is_some_and(|text| !text.is_empty())
+            })
+        })
+    });
+    if !has_legacy_token {
+        return Ok(());
+    }
+    let links: Vec<ShareLink> = serde_json::from_slice(&data)
+        .map_err(|error| wrap(format!("parse store: {error}")))?;
+    let rewritten = serde_json::to_vec_pretty(&links)
+        .map_err(|error| wrap(format!("marshal store: {error}")))?;
+    let root = cap_std::fs::Dir::open_ambient_dir(vault_root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))?;
+    write_atomic_root(&root, Path::new(".symdesk/server/shares.json"), &rewritten, 0o600)
+        .map_err(|error| wrap(format!("create temp file: {error}")))
 }
 
 fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
@@ -4121,24 +4165,30 @@ async fn handle_worker_fail(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
-    let body = match to_bytes(
+    // Go reads limit+1 bytes, so an oversized body is a cut-off document.
+    let body = match read_capped_body(
         request.into_body(),
         MAX_WORKER_FAIL_BODY_BYTES.saturating_add(1),
     )
     .await
     {
-        Ok(body) if body.len() <= MAX_WORKER_FAIL_BODY_BYTES => body,
-        _ => {
-            return json_error(
-                StatusCode::BAD_REQUEST,
-                "invalid JSON: request body too large",
-            );
-        }
-    };
-    let request: WorkerFailRequest = match serde_json::from_slice(&body) {
-        Ok(request) => request,
+        Ok(body) => body,
         Err(error) => {
             return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    let request = match go_json::decode(&go_json::WORKER_FAIL, &body) {
+        Ok(decoded) => WorkerFailRequest {
+            job_id: decoded.text("job_id"),
+            worker_id: decoded.text("worker_id"),
+            error: decoded.text("error"),
+            retry: decoded.flag("retry"),
+        },
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
     };
     if !valid_job_id(&request.job_id) {
@@ -4313,15 +4363,19 @@ async fn handle_worker_complete(
     let parse_body = &body[..body
         .len()
         .min(MAX_WORKER_COMPLETE_BODY_BYTES.saturating_add(1))];
-    let request: WorkerCompleteRequest = match decode_first_json_value(parse_body) {
-        Ok(request) => request,
-        Err(error) => {
-            let message = if error.is_eof() {
-                "unexpected EOF".to_owned()
-            } else {
-                error.to_string()
-            };
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {message}"));
+    let request = match go_json::decode(&go_json::WORKER_COMPLETE, parse_body) {
+        Ok(decoded) => WorkerCompleteRequest {
+            job_id: decoded.text("job_id"),
+            worker_id: decoded.text("worker_id"),
+            text: decoded.text("text"),
+            engine: decoded.text("engine"),
+            model: decoded.text("model"),
+        },
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
     };
     if !valid_job_id(&request.job_id) {
@@ -5230,88 +5284,334 @@ fn serve_vault_file_as(
         .modified()
         .map(|value| value.into_std())
         .unwrap_or(UNIX_EPOCH);
+    let zero_time = modified == UNIX_EPOCH;
     let last_modified = fmt_http_date(modified);
+    let disposition = format!("{disposition}; filename={filename:?}");
+    // Go `http.ServeContent`: Last-Modified, then RFC 7232 preconditions (the
+    // vault files carry no ETag), then the content type and ranges.
+    let mut early = vec![(header::CONTENT_DISPOSITION, disposition.clone())];
+    if !zero_time {
+        early.push((header::LAST_MODIFIED, last_modified.clone()));
+    }
+    let range_header = match check_preconditions(headers, &method, modified, zero_time) {
+        Preconditions::Failed => {
+            return bytes_response(StatusCode::PRECONDITION_FAILED, early, Vec::new());
+        }
+        Preconditions::NotModified => {
+            return bytes_response(StatusCode::NOT_MODIFIED, early, Vec::new());
+        }
+        Preconditions::Proceed(range) => range,
+    };
     let sample = match read_sample(&mut file, length) {
         Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let disposition = format!("{disposition}; filename={filename:?}");
+    let content_type = content_type(relative, &sample);
     let mut common = vec![
-        (header::CONTENT_TYPE, content_type(relative, &sample)),
-        (header::CONTENT_DISPOSITION, disposition.clone()),
-        (header::ACCEPT_RANGES, "bytes".to_owned()),
-        (header::LAST_MODIFIED, last_modified.clone()),
+        (header::CONTENT_TYPE, content_type.clone()),
+        (header::CONTENT_DISPOSITION, disposition),
     ];
-    if let Some(value) = headers
-        .get(header::IF_MODIFIED_SINCE)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| parse_http_date(value).ok())
-        && modified <= value
-    {
-        return bytes_response(
-            StatusCode::NOT_MODIFIED,
-            vec![
-                (header::CONTENT_DISPOSITION, disposition),
-                (header::LAST_MODIFIED, last_modified),
-            ],
-            Vec::new(),
-        );
+    if !zero_time {
+        common.push((header::LAST_MODIFIED, last_modified));
     }
-
-    let if_range_matches = headers.get(header::IF_RANGE).is_none_or(|value| {
-        value
-            .to_str()
-            .ok()
-            .and_then(|value| parse_http_date(value).ok())
-            .is_some_and(|value| fmt_http_date(value) == last_modified)
-    });
-    let range = if length == 0 || !if_range_matches {
-        None
-    } else {
-        match headers
-            .get(header::RANGE)
-            .and_then(|value| value.to_str().ok())
-            .map(|value| parse_range(value, length))
-        {
-            Some(Ok(range)) => Some(range),
-            Some(Err(RangeError::Invalid)) => {
-                return range_error_response(relative, "invalid range", None);
-            }
-            Some(Err(RangeError::NoOverlap)) => {
-                return range_error_response(
-                    relative,
-                    "invalid range: failed to overlap",
-                    Some(format!("bytes */{length}")),
-                );
-            }
-            None => None,
+    let mut ranges = match parse_range(&range_header, length) {
+        Ok(ranges) => ranges,
+        Err(RangeError::NoOverlap) if length == 0 => Vec::new(),
+        Err(RangeError::NoOverlap) => {
+            return range_error_response(
+                relative,
+                "invalid range: failed to overlap",
+                Some(format!("bytes */{length}")),
+            );
+        }
+        Err(RangeError::Invalid) => {
+            return range_error_response(relative, "invalid range", None);
         }
     };
-    let (status, body_length, content_range) = if let Some((start, end)) = range {
-        (
-            StatusCode::PARTIAL_CONTENT,
-            end - start + 1,
-            Some(format!("bytes {start}-{end}/{length}")),
-        )
-    } else {
-        (StatusCode::OK, length, None)
-    };
-    if let Some(content_range) = content_range {
-        common.push((header::CONTENT_RANGE, content_range));
+    if ranges.iter().map(|(_, size)| *size).sum::<u64>() > length {
+        ranges.clear();
     }
-    common.push((header::CONTENT_LENGTH, body_length.to_string()));
+    let mut status = StatusCode::OK;
+    let mut send_size = length;
+    let mut segments = vec![Segment::File(0, length)];
+    match ranges.len() {
+        0 => {}
+        1 => {
+            let (start, size) = ranges[0];
+            send_size = size;
+            status = StatusCode::PARTIAL_CONTENT;
+            segments = vec![Segment::File(start, size)];
+            common.push((
+                header::CONTENT_RANGE,
+                range_label(start, size, length),
+            ));
+        }
+        _ => {
+            status = StatusCode::PARTIAL_CONTENT;
+            let mut boundary = [0_u8; 30];
+            if getrandom::fill(&mut boundary).is_err() {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, "multipart boundary");
+            }
+            let boundary = hex_lower(&boundary);
+            segments = Vec::new();
+            for (index, (start, size)) in ranges.iter().enumerate() {
+                let lead = if index == 0 { "" } else { "\r\n" };
+                segments.push(Segment::Text(format!(
+                    "{lead}--{boundary}\r\nContent-Range: {}\r\nContent-Type: {content_type}\r\n\r\n",
+                    range_label(*start, *size, length)
+                )));
+                segments.push(Segment::File(*start, *size));
+            }
+            segments.push(Segment::Text(format!("\r\n--{boundary}--\r\n")));
+            send_size = segments
+                .iter()
+                .map(|segment| match segment {
+                    Segment::Text(text) => text.len() as u64,
+                    Segment::File(_, size) => *size,
+                })
+                .sum();
+            common.retain(|(name, _)| *name != header::CONTENT_TYPE);
+            common.push((
+                header::CONTENT_TYPE,
+                format!("multipart/byteranges; boundary={boundary}"),
+            ));
+        }
+    }
+    common.push((header::ACCEPT_RANGES, "bytes".to_owned()));
+    common.push((header::CONTENT_LENGTH, send_size.to_string()));
     if method == Method::HEAD {
         return bytes_response(status, common, Vec::new());
     }
-    let start = range.map_or(0, |(start, _)| start);
-    if body_length > MAX_NOTE_BYTES {
-        return bytes_response(status, common, stream_file(file, start, body_length));
+    if send_size > MAX_NOTE_BYTES {
+        return bytes_response(status, common, stream_segments(file, segments));
     }
-    let body = match read_at(&mut file, start, body_length) {
-        Ok(body) => body,
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
-    };
+    let mut body = Vec::with_capacity(send_size as usize);
+    for segment in segments {
+        match segment {
+            Segment::Text(text) => body.extend_from_slice(text.as_bytes()),
+            Segment::File(start, size) => match read_at(&mut file, start, size) {
+                Ok(part) => body.extend_from_slice(&part),
+                Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
+            },
+        }
+    }
     bytes_response(status, common, body)
+}
+
+/// One piece of a (possibly multipart) file response.
+enum Segment {
+    Text(String),
+    File(u64, u64),
+}
+
+/// Go `httpRange.contentRange` (an empty range prints `bytes 0--1/0`).
+fn range_label(start: u64, size: u64, length: u64) -> String {
+    format!(
+        "bytes {start}-{}/{length}",
+        i128::from(start) + i128::from(size) - 1
+    )
+}
+
+fn hex_lower(bytes: &[u8]) -> String {
+    use std::fmt::Write as _;
+    bytes.iter().fold(String::new(), |mut out, byte| {
+        let _ = write!(out, "{byte:02x}");
+        out
+    })
+}
+
+enum Preconditions {
+    Failed,
+    NotModified,
+    Proceed(String),
+}
+
+/// Go `net/http.checkPreconditions` for a resource without an ETag.
+fn check_preconditions(
+    headers: &HeaderMap,
+    method: &Method,
+    modified: SystemTime,
+    zero_time: bool,
+) -> Preconditions {
+    fn trim(text: &str) -> &str {
+        text.trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
+    }
+    fn value<'a>(headers: &'a HeaderMap, name: header::HeaderName) -> &'a str {
+        headers
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or_default()
+    }
+    // `scanETag`: returns the entity tag and the text after it.
+    fn scan_etag(text: &str) -> Option<(&str, &str)> {
+        let text = trim(text);
+        let start = if text.starts_with("W/") { 2 } else { 0 };
+        let bytes = text.as_bytes();
+        if bytes.len() < start + 2 || bytes[start] != b'"' {
+            return None;
+        }
+        for index in start + 1..bytes.len() {
+            match bytes[index] {
+                0x21 | 0x23..=0x7e | 0x80..=0xff => {}
+                b'"' => return Some((&text[..=index], &text[index + 1..])),
+                _ => return None,
+            }
+        }
+        None
+    }
+    let seconds = |time: SystemTime| {
+        time.duration_since(UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_secs())
+    };
+    let get_or_head = method == Method::GET || method == Method::HEAD;
+    let parse_time = |text: &str| parse_http_date(text).ok();
+
+    // If-Match: no ETag exists, so only `*` can match.
+    let mut if_match = None;
+    let header_value = value(headers, header::IF_MATCH);
+    if !header_value.is_empty() {
+        let mut rest = header_value;
+        let mut matched = false;
+        loop {
+            rest = trim(rest);
+            if rest.is_empty() {
+                break;
+            }
+            if let Some(after) = rest.strip_prefix(',') {
+                rest = after;
+                continue;
+            }
+            if rest.starts_with('*') {
+                matched = true;
+                break;
+            }
+            match scan_etag(rest) {
+                Some((_, remain)) => rest = remain,
+                None => break,
+            }
+        }
+        if_match = Some(matched);
+    }
+    let mut failed = if_match == Some(false);
+    if if_match.is_none() {
+        let header_value = value(headers, header::IF_UNMODIFIED_SINCE);
+        if !header_value.is_empty()
+            && !zero_time
+            && let Some(time) = parse_time(header_value)
+        {
+            failed = seconds(modified) > seconds(time);
+        }
+    }
+    if failed {
+        return Preconditions::Failed;
+    }
+    // If-None-Match.
+    let header_value = value(headers, header::IF_NONE_MATCH);
+    if header_value.is_empty() {
+        if get_or_head {
+            let header_value = value(headers, header::IF_MODIFIED_SINCE);
+            if !header_value.is_empty()
+                && !zero_time
+                && let Some(time) = parse_time(header_value)
+                && seconds(modified) <= seconds(time)
+            {
+                return Preconditions::NotModified;
+            }
+        }
+    } else {
+        let mut rest = header_value;
+        let mut matches_any = false;
+        loop {
+            rest = trim(rest);
+            if rest.is_empty() {
+                break;
+            }
+            if let Some(after) = rest.strip_prefix(',') {
+                rest = after;
+                continue;
+            }
+            if rest.starts_with('*') {
+                matches_any = true;
+                break;
+            }
+            match scan_etag(rest) {
+                Some((etag, remain)) => {
+                    // The weak comparison against the missing ETag.
+                    if etag.strip_prefix("W/").unwrap_or(etag).is_empty() {
+                        matches_any = true;
+                        break;
+                    }
+                    rest = remain;
+                }
+                None => break,
+            }
+        }
+        if matches_any {
+            return if get_or_head {
+                Preconditions::NotModified
+            } else {
+                Preconditions::Failed
+            };
+        }
+    }
+    let mut range = value(headers, header::RANGE).to_owned();
+    if !range.is_empty() && get_or_head {
+        let if_range = value(headers, header::IF_RANGE);
+        if !if_range.is_empty() {
+            // An entity tag never matches (there is none); a date must be the
+            // modification time to the second.
+            let matches_date = scan_etag(if_range).is_none()
+                && parse_time(if_range).is_some_and(|time| seconds(time) == seconds(modified));
+            if !matches_date {
+                range.clear();
+            }
+        }
+    }
+    Preconditions::Proceed(range)
+}
+
+fn stream_segments(file: cap_std::fs::File, segments: Vec<Segment>) -> Body {
+    let (sender, receiver) = tokio::sync::mpsc::channel(2);
+    tokio::task::spawn_blocking(move || {
+        let mut file = file;
+        for segment in segments {
+            let (start, mut remaining) = match segment {
+                Segment::Text(text) => {
+                    if sender.blocking_send(Ok(text.into_bytes())).is_err() {
+                        return;
+                    }
+                    continue;
+                }
+                Segment::File(start, size) => (start, size),
+            };
+            if let Err(error) = file.seek(SeekFrom::Start(start)) {
+                let _ = sender.blocking_send(Err(error));
+                return;
+            }
+            while remaining > 0 {
+                let mut chunk = vec![0; remaining.min(64 * 1024) as usize];
+                match file.read(&mut chunk) {
+                    Ok(0) => {
+                        let _ = sender
+                            .blocking_send(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
+                        return;
+                    }
+                    Ok(read) => {
+                        remaining -= read as u64;
+                        chunk.truncate(read);
+                        if sender.blocking_send(Ok(chunk)).is_err() {
+                            return;
+                        }
+                    }
+                    Err(error) => {
+                        let _ = sender.blocking_send(Err(error));
+                        return;
+                    }
+                }
+            }
+        }
+    });
+    Body::from_stream(BodyReceiver(receiver))
 }
 
 async fn handle_put_file(
@@ -5409,6 +5709,19 @@ fn extension_is_markdown(path: &Path) -> bool {
 }
 
 fn create_parent_directories(root: &cap_std::fs::Dir, path: &Path) -> io::Result<()> {
+    // Go `os.Root.MkdirAll` reports an existing last component that is a
+    // symlink leaving the root as `mkdirat X: statat X: path escapes from parent`.
+    if root
+        .symlink_metadata(path)
+        .is_ok_and(|metadata| metadata.is_symlink())
+        && let Err(error) = root.metadata(path)
+        && error.kind() == io::ErrorKind::PermissionDenied
+    {
+        let name = path.to_string_lossy();
+        return Err(io::Error::other(format!(
+            "mkdirat {name}: statat {name}: path escapes from parent"
+        )));
+    }
     let mut builder = cap_std::fs::DirBuilder::new();
     builder.recursive(true);
     #[cfg(unix)]
@@ -5494,40 +5807,6 @@ fn read_at(file: &mut cap_std::fs::File, start: u64, length: u64) -> io::Result<
     let mut body = vec![0; length];
     file.read_exact(&mut body)?;
     Ok(body)
-}
-
-fn stream_file(file: cap_std::fs::File, start: u64, length: u64) -> Body {
-    let (sender, receiver) = tokio::sync::mpsc::channel(2);
-    tokio::task::spawn_blocking(move || {
-        let mut file = file;
-        if let Err(error) = file.seek(SeekFrom::Start(start)) {
-            let _ = sender.blocking_send(Err(error));
-            return;
-        }
-        let mut remaining = length;
-        while remaining > 0 {
-            let mut chunk = vec![0; remaining.min(64 * 1024) as usize];
-            match file.read(&mut chunk) {
-                Ok(0) => {
-                    let _ =
-                        sender.blocking_send(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
-                    return;
-                }
-                Ok(read) => {
-                    remaining -= read as u64;
-                    chunk.truncate(read);
-                    if sender.blocking_send(Ok(chunk)).is_err() {
-                        return;
-                    }
-                }
-                Err(error) => {
-                    let _ = sender.blocking_send(Err(error));
-                    return;
-                }
-            }
-        }
-    });
-    Body::from_stream(BodyReceiver(receiver))
 }
 
 struct BodyReceiver<T>(tokio::sync::mpsc::Receiver<T>);
@@ -5770,34 +6049,67 @@ fn confined_path(_state: &AppState, requested: &str) -> Result<PathBuf, PathErro
     Ok(relative.to_path_buf())
 }
 
-fn parse_range(value: &str, length: u64) -> Result<(u64, u64), RangeError> {
-    let value = value.strip_prefix("bytes=").ok_or(RangeError::Invalid)?;
-    if value.contains(',') {
-        return Err(RangeError::Invalid);
+/// Go `net/http.parseRange`: `(start, length)` pairs, empty when the header is
+/// absent, empty or lists more than 200 ranges.
+fn parse_range(value: &str, size: u64) -> Result<Vec<(u64, u64)>, RangeError> {
+    const MAX_RANGES: usize = 200;
+    fn trim(text: &str) -> &str {
+        text.trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
     }
-    let (start, end) = value.split_once('-').ok_or(RangeError::Invalid)?;
-    if start.is_empty() {
-        let suffix = end.parse::<u64>().map_err(|_| RangeError::Invalid)?;
-        if suffix == 0 || length == 0 {
-            return Err(RangeError::Invalid);
+    // strconv.ParseInt(text, 10, 64) as a non-negative number.
+    fn parse_int(text: &str) -> Option<i64> {
+        text.parse::<i64>().ok()
+    }
+    if value.is_empty() {
+        return Ok(Vec::new());
+    }
+    let list = value.strip_prefix("bytes=").ok_or(RangeError::Invalid)?;
+    if list.matches(',').count() + 1 > MAX_RANGES {
+        return Ok(Vec::new());
+    }
+    let size_signed = i64::try_from(size).unwrap_or(i64::MAX);
+    let mut ranges = Vec::new();
+    let mut no_overlap = false;
+    for item in list.split(',') {
+        let item = trim(item);
+        if item.is_empty() {
+            continue;
         }
-        return Ok((length.saturating_sub(suffix), length - 1));
+        let (start, end) = item.split_once('-').ok_or(RangeError::Invalid)?;
+        let (start, end) = (trim(start), trim(end));
+        if start.is_empty() {
+            if end.is_empty() || end.starts_with('-') {
+                return Err(RangeError::Invalid);
+            }
+            let suffix = parse_int(end)
+                .filter(|value| *value >= 0)
+                .ok_or(RangeError::Invalid)?
+                .min(size_signed);
+            let begin = size_signed - suffix;
+            ranges.push((begin as u64, (size_signed - begin) as u64));
+        } else {
+            let begin = parse_int(start)
+                .filter(|value| *value >= 0)
+                .ok_or(RangeError::Invalid)?;
+            if begin >= size_signed {
+                no_overlap = true;
+                continue;
+            }
+            let length = if end.is_empty() {
+                size_signed - begin
+            } else {
+                let last = parse_int(end)
+                    .filter(|value| begin <= *value)
+                    .ok_or(RangeError::Invalid)?;
+                last.min(size_signed - 1) - begin + 1
+            };
+            ranges.push((begin as u64, length as u64));
+        }
     }
-    let start = start.parse::<u64>().map_err(|_| RangeError::Invalid)?;
-    if start >= length {
+    if no_overlap && ranges.is_empty() {
         return Err(RangeError::NoOverlap);
     }
-    let end = if end.is_empty() {
-        length - 1
-    } else {
-        end.parse::<u64>()
-            .map_err(|_| RangeError::Invalid)?
-            .min(length - 1)
-    };
-    if start > end {
-        return Err(RangeError::Invalid);
-    }
-    Ok((start, end))
+    Ok(ranges)
 }
 
 fn content_type(path: &Path, sample: &[u8]) -> String {
@@ -7264,11 +7576,12 @@ mod tests {
 
     #[test]
     fn ranges_are_bounded_and_support_suffixes() {
-        assert_eq!(parse_range("bytes=0-2", 5), Ok((0, 2)));
-        assert_eq!(parse_range("bytes=2-", 5), Ok((2, 4)));
-        assert_eq!(parse_range("bytes=-2", 5), Ok((3, 4)));
-        assert!(parse_range("bytes=9-", 5).is_err());
-        assert!(parse_range("bytes=0-1,2-3", 5).is_err());
+        assert_eq!(parse_range("bytes=0-2", 5), Ok(vec![(0, 3)]));
+        assert_eq!(parse_range("bytes=2-", 5), Ok(vec![(2, 3)]));
+        assert_eq!(parse_range("bytes=-2", 5), Ok(vec![(3, 2)]));
+        assert_eq!(parse_range("bytes=9-", 5), Err(RangeError::NoOverlap));
+        assert_eq!(parse_range("bytes=0-1,2-3", 5), Ok(vec![(0, 2), (2, 2)]));
+        assert_eq!(parse_range("bytes=", 5), Ok(Vec::new()));
     }
 
     #[test]
@@ -7620,9 +7933,11 @@ mod tests {
 
     #[test]
     fn range_parser_rejects_overflow_without_unbounded_allocation() {
+        // Go parses with ParseInt(…, 10, 64): anything above i64::MAX is invalid.
         assert!(parse_range("bytes=18446744073709551616-", 5).is_err());
         assert!(parse_range("bytes=-18446744073709551616", 5).is_err());
-        assert_eq!(parse_range("bytes=0-18446744073709551615", 5), Ok((0, 4)));
+        assert!(parse_range("bytes=0-18446744073709551615", 5).is_err());
+        assert_eq!(parse_range("bytes=0-9223372036854775807", 5), Ok(vec![(0, 5)]));
     }
 
     #[test]

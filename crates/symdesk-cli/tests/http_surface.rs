@@ -12,8 +12,8 @@ mod http_replay;
 
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected.
-const EXPECTED_CASES: usize = 25;
-const EXPECTED_STEPS: usize = 613;
+const EXPECTED_CASES: usize = 84;
+const EXPECTED_STEPS: usize = 1128;
 
 #[test]
 fn rust_server_replays_the_go_http_surface() {

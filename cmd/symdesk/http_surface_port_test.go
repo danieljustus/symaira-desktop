@@ -139,5 +139,12 @@ func httpSurfaceCases() []httpCase {
 	var cases []httpCase
 	cases = append(cases, httpRouteCases()...)
 	cases = append(cases, httpPathCases()...)
+	cases = append(cases, httpAuthCases()...)
+	cases = append(cases, httpFileCases()...)
+	cases = append(cases, httpCommandCases()...)
+	cases = append(cases, httpShareCases()...)
+	cases = append(cases, httpAICases()...)
+	cases = append(cases, httpNetworkCases()...)
+	cases = append(cases, httpServeCases()...)
 	return cases
 }

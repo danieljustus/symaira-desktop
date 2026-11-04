@@ -93,6 +93,12 @@ impl SnapshotCache {
         self.read_failure.swap(false, Ordering::SeqCst)
     }
 
+    /// An in-process write: the next request rebuilds without waiting for the
+    /// watcher.
+    pub fn mark_dirty(&self) {
+        self.dirty.store(true, Ordering::SeqCst);
+    }
+
     pub fn new(root: &Path) -> Self {
         let mut cache = Self::uncached();
         let dirty = Arc::clone(&cache.dirty);

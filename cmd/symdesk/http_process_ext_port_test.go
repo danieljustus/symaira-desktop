@@ -12,6 +12,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -49,16 +50,44 @@ var haBinaryBuild struct {
 	out  []byte
 }
 
-// haOptionsFile is the file the HA-aware binary reads (see
-// homeAssistantOptionsPath in selfhost.go).
+// haOptionsFile is the file the HA-aware binary reads. The production source
+// stays untouched: the binary is built with a `go build -overlay` that replaces
+// the fixed "/data/options.json" literal of selfhost.go in memory.
 func haOptionsFile() string { return filepath.Join(processFixtureBuild.root, "ha-options.json") }
 
 func haBinary(t *testing.T) string {
 	t.Helper()
 	haBinaryBuild.Do(func() {
 		haBinaryBuild.path = filepath.Join(processFixtureBuild.root, "symdesk-ha")
+		source, err := os.ReadFile("selfhost.go")
+		if err != nil {
+			haBinaryBuild.err = err
+			return
+		}
+		const literal = `"/data/options.json"`
+		if !bytes.Contains(source, []byte(literal)) {
+			haBinaryBuild.err = errors.New("selfhost.go no longer names /data/options.json")
+			return
+		}
+		patched := bytes.ReplaceAll(source, []byte(literal), []byte(strconv.Quote(haOptionsFile())))
+		absolute, err := filepath.Abs("selfhost.go")
+		if err != nil {
+			haBinaryBuild.err = err
+			return
+		}
+		patchedPath := filepath.Join(processFixtureBuild.root, "selfhost-ha.go")
+		overlayPath := filepath.Join(processFixtureBuild.root, "ha-overlay.json")
+		overlay, _ := json.Marshal(map[string]map[string]string{"Replace": {absolute: patchedPath}})
+		if err := os.WriteFile(patchedPath, patched, 0o600); err != nil {
+			haBinaryBuild.err = err
+			return
+		}
+		if err := os.WriteFile(overlayPath, overlay, 0o600); err != nil {
+			haBinaryBuild.err = err
+			return
+		}
 		//nolint:gosec // fixed Go build of this package into the process-owned temporary root.
-		command := exec.Command("go", "build", "-ldflags", "-X main.homeAssistantOptionsPath="+haOptionsFile(), "-o", haBinaryBuild.path, ".")
+		command := exec.Command("go", "build", "-overlay", overlayPath, "-o", haBinaryBuild.path, ".")
 		command.Env = processFixtureBuild.environment
 		haBinaryBuild.out, haBinaryBuild.err = command.CombinedOutput()
 	})

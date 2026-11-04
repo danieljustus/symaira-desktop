@@ -245,10 +245,7 @@ impl Echo {
                 }
                 let mut request = Vec::new();
                 let mut chunk = [0_u8; 4096];
-                loop {
-                    let Ok(n) = stream.read(&mut chunk) else {
-                        break;
-                    };
+                while let Ok(n) = stream.read(&mut chunk) {
                     request.extend_from_slice(&chunk[..n]);
                     if n == 0 || request.windows(4).any(|window| window == b"\r\n\r\n") {
                         break;

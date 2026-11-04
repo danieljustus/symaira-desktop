@@ -138,10 +138,10 @@ fn dump_db(path: &Path, root: &str) -> Dump {
             let mut entry = BTreeMap::new();
             let mut raw_path = String::new();
             for (index, column) in columns.iter().enumerate() {
-                if column == "path" {
-                    if let ValueRef::Text(bytes) = row.get_ref(index).unwrap() {
-                        raw_path = String::from_utf8_lossy(bytes).into_owned();
-                    }
+                if column == "path"
+                    && let ValueRef::Text(bytes) = row.get_ref(index).unwrap()
+                {
+                    raw_path = String::from_utf8_lossy(bytes).into_owned();
                 }
                 let mut value = match row.get_ref(index).unwrap() {
                     ValueRef::Null => Value::Null,

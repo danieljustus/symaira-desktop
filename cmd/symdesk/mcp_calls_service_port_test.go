@@ -120,10 +120,16 @@ not json
 	for k, v := range vaultFiles {
 		bf[k] = v
 	}
-	bf["broken.md"] = "---\ntitle: [unclosed\n---\nbody\n"
 	bf["dup1.md"] = "---\ntitle: D\n---\nthe quick brown fox jumps over the lazy dog again and again\n"
 	bf["dup2.md"] = "---\ntitle: D2\n---\nthe quick brown fox jumps over the lazy dog again and again\n"
 	broken.Files = bf
+	// broken.md cannot be parsed, so the seed indexer must not see it: it is
+	// written below the root instead, where only the health scan reads it.
+	br := map[string]string{"vault/broken.md": "---\ntitle: [unclosed\n---\nbody\n"}
+	for k, v := range rootFiles {
+		br[k] = v
+	}
+	broken.RootFiles = br
 	cases = append(cases, broken)
 
 	// ---- desk_related ----

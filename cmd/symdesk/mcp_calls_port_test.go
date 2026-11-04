@@ -98,7 +98,15 @@ var (
 func mcpCallsNormalize(s, root string) string {
 	s = strings.ReplaceAll(s, root, "$ROOT")
 	s = mcpCallsTimestamp.ReplaceAllString(s, "<TIME>")
-	s = mcpCallsJournal.ReplaceAllString(s, "journal/<DATE>.ndjson")
+	// Only the journal of the run's own (UTC) day is clock-dependent: seeded
+	// journals of other days keep their names so they stay distinguishable.
+	today := "journal/" + time.Now().UTC().Format("2006-01-02") + ".ndjson"
+	s = mcpCallsJournal.ReplaceAllStringFunc(s, func(name string) string {
+		if name == today {
+			return "journal/<DATE>.ndjson"
+		}
+		return name
+	})
 	return mcpCallsAsset.ReplaceAllString(s, "pasted-<CLOCK>")
 }
 

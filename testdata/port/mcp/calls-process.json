@@ -32208,7 +32208,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -32559,7 +32560,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -32910,7 +32912,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -33261,7 +33264,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -33612,7 +33616,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -33963,7 +33968,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -34314,7 +34320,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -34665,7 +34672,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -35016,7 +35024,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -35367,7 +35376,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -35718,7 +35728,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -36069,7 +36080,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -36420,7 +36432,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -36771,7 +36784,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -37122,7 +37136,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -37473,7 +37488,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -37824,7 +37840,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -38175,7 +38192,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -38526,7 +38544,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -38877,7 +38896,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -39228,7 +39248,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -39579,7 +39600,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -39930,7 +39952,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -40281,7 +40304,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -40632,7 +40656,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -40983,7 +41008,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -41334,7 +41360,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -41685,7 +41712,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -42036,7 +42064,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -42387,7 +42416,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -42738,7 +42768,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -43089,7 +43120,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -43440,7 +43472,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -43791,7 +43824,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -44142,7 +44176,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -44493,7 +44528,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -44844,7 +44880,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -45196,7 +45233,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -45625,7 +45663,7 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "null",
         "vault/alpha.md": "---\ntitle: Alpha\ncreated: \u003cTIME\u003e\ntype: invoice\ndocument_date: 2026-03-05\nperson: Max\nstatus: open\ntags: [billing]\n---\nAlpha links to [[beta]] and [[missing-target]].\n",
         "vault/beta.md": "---\ntitle: Beta\ncreated: \u003cTIME\u003e\ntype: letter\ndocument_date: 2026-03-07\n---\nBeta body shared words for near duplicate detection in the vault health scan.\n",
@@ -46332,7 +46370,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -46683,7 +46722,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -47034,7 +47074,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -47385,7 +47426,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -47736,7 +47778,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -48087,7 +48130,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -48438,7 +48482,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -48789,7 +48834,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -49140,7 +49186,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -49491,7 +49538,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -49842,7 +49890,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -50193,7 +50242,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -50544,7 +50594,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -50895,7 +50946,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -51246,7 +51298,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -51598,7 +51651,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -52023,25 +52077,32 @@
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
         "vault/.symdesk/trash/old.md.1.trashinfo.json": "{\"name\":\"old.md.1\",\"original_path\":\"old.md\",\"deleted_at\":\"2026-03-05T12:00:00Z\",\"size\":5}",
-        "vault/broken.md": "---\ntitle: [unclosed\n---\nbody\n"
+        "vault/broken-dup.md": "---\ntitle: a\ntitle: b\n---\nbody\n",
+        "vault/broken-open.md": "---\ntitle: x\nbody without a closing delimiter\n",
+        "vault/broken-scalar.md": "---\njust text\n---\nbody\n",
+        "vault/broken-seq.md": "---\n- a\n- b\n---\nbody\n"
       },
       "steps": [
         {
           "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"vault_health\",\"arguments\":{}}}",
-          "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"vault\\\":\\\"$ROOT/vault\\\",\\\"files_scanned\\\":8,\\\"findings\\\":[{\\\"category\\\":\\\"parse_error\\\",\\\"severity\\\":\\\"error\\\",\\\"path\\\":\\\"broken.md\\\",\\\"message\\\":\\\"invalid frontmatter in $ROOT/vault/broken.md: yaml: line 1: did not find expected ',' or ']'\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"severity\\\":\\\"warning\\\",\\\"path\\\":\\\"plain.md\\\",\\\"message\\\":\\\"Markdown file has no frontmatter\\\"}],\\\"repair_plan\\\":[{\\\"category\\\":\\\"parse_error\\\",\\\"path\\\":\\\"broken.md\\\",\\\"action\\\":\\\"review\\\",\\\"reason\\\":\\\"The file could not be parsed safely\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"path\\\":\\\"plain.md\\\",\\\"action\\\":\\\"review-frontmatter\\\",\\\"reason\\\":\\\"Metadata is unavailable to the index and repair tools\\\"}],\\\"healthy\\\":false}\",\"type\":\"text\"}],\"isError\":false}}\n",
+          "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"vault\\\":\\\"$ROOT/vault\\\",\\\"files_scanned\\\":11,\\\"findings\\\":[{\\\"category\\\":\\\"parse_error\\\",\\\"severity\\\":\\\"error\\\",\\\"path\\\":\\\"broken-dup.md\\\",\\\"message\\\":\\\"invalid frontmatter in $ROOT/vault/broken-dup.md: yaml: unmarshal errors:\\\\n  line 2: mapping key \\\\\\\"title\\\\\\\" already defined at line 1\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"severity\\\":\\\"warning\\\",\\\"path\\\":\\\"broken-open.md\\\",\\\"message\\\":\\\"Markdown file has no frontmatter\\\"},{\\\"category\\\":\\\"parse_error\\\",\\\"severity\\\":\\\"error\\\",\\\"path\\\":\\\"broken-scalar.md\\\",\\\"message\\\":\\\"invalid frontmatter in $ROOT/vault/broken-scalar.md: yaml: unmarshal errors:\\\\n  line 1: cannot unmarshal !!str `just text` into map[string]interface {}\\\"},{\\\"category\\\":\\\"parse_error\\\",\\\"severity\\\":\\\"error\\\",\\\"path\\\":\\\"broken-seq.md\\\",\\\"message\\\":\\\"invalid frontmatter in $ROOT/vault/broken-seq.md: yaml: unmarshal errors:\\\\n  line 1: cannot unmarshal !!seq into map[string]interface {}\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"severity\\\":\\\"warning\\\",\\\"path\\\":\\\"plain.md\\\",\\\"message\\\":\\\"Markdown file has no frontmatter\\\"}],\\\"repair_plan\\\":[{\\\"category\\\":\\\"parse_error\\\",\\\"path\\\":\\\"broken-dup.md\\\",\\\"action\\\":\\\"review\\\",\\\"reason\\\":\\\"The file could not be parsed safely\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"path\\\":\\\"broken-open.md\\\",\\\"action\\\":\\\"review-frontmatter\\\",\\\"reason\\\":\\\"Metadata is unavailable to the index and repair tools\\\"},{\\\"category\\\":\\\"parse_error\\\",\\\"path\\\":\\\"broken-scalar.md\\\",\\\"action\\\":\\\"review\\\",\\\"reason\\\":\\\"The file could not be parsed safely\\\"},{\\\"category\\\":\\\"parse_error\\\",\\\"path\\\":\\\"broken-seq.md\\\",\\\"action\\\":\\\"review\\\",\\\"reason\\\":\\\"The file could not be parsed safely\\\"},{\\\"category\\\":\\\"missing_frontmatter\\\",\\\"path\\\":\\\"plain.md\\\",\\\"action\\\":\\\"review-frontmatter\\\",\\\"reason\\\":\\\"Metadata is unavailable to the index and repair tools\\\"}],\\\"healthy\\\":false}\",\"type\":\"text\"}],\"isError\":false}}\n",
           "stderr": "",
           "exit_code": 0
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
         "vault/.symdesk/trash/old.md.1.trashinfo.json": "{\"name\":\"old.md.1\",\"original_path\":\"old.md\",\"deleted_at\":\"\u003cTIME\u003e\",\"size\":5}",
         "vault/alpha.md": "---\ntitle: Alpha\ncreated: \u003cTIME\u003e\ntype: invoice\ndocument_date: 2026-03-05\nperson: Max\nstatus: open\ntags: [billing]\n---\nAlpha links to [[beta]] and [[missing-target]].\n",
         "vault/beta.md": "---\ntitle: Beta\ncreated: \u003cTIME\u003e\ntype: letter\ndocument_date: 2026-03-07\n---\nBeta body shared words for near duplicate detection in the vault health scan.\n",
-        "vault/broken.md": "---\ntitle: [unclosed\n---\nbody\n",
+        "vault/broken-dup.md": "---\ntitle: a\ntitle: b\n---\nbody\n",
+        "vault/broken-open.md": "---\ntitle: x\nbody without a closing delimiter\n",
+        "vault/broken-scalar.md": "---\njust text\n---\nbody\n",
+        "vault/broken-seq.md": "---\n- a\n- b\n---\nbody\n",
         "vault/dup1.md": "---\ntitle: D\n---\nthe quick brown fox jumps over the lazy dog again and again\n",
         "vault/dup2.md": "---\ntitle: D2\n---\nthe quick brown fox jumps over the lazy dog again and again\n",
         "vault/gamma.md": "---\ntitle: Gamma\ncreated: \u003cTIME\u003e\ntype: letter\ndocument_date: 2026-03-07\n---\nBeta body shared words for near duplicate detection in the vault health scan.\n",
@@ -52440,7 +52501,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -52791,7 +52853,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -53142,7 +53205,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -53493,7 +53557,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -53844,7 +53909,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -54195,7 +54261,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -54546,7 +54613,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -54897,7 +54965,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -55248,7 +55317,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -55599,7 +55669,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -55950,7 +56021,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -56301,7 +56373,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -56652,7 +56725,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -57003,7 +57077,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -57354,7 +57429,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -57705,7 +57781,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -58056,7 +58133,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -78392,7 +78470,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -78882,7 +78961,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -79372,7 +79452,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -79862,7 +79943,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -80352,7 +80434,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -80842,7 +80925,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -81332,7 +81416,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -81822,7 +81907,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -82312,7 +82398,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -82802,7 +82889,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -83292,7 +83380,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -83782,7 +83871,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -84272,7 +84362,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -84762,7 +84853,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -85252,7 +85344,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -85742,7 +85835,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -86232,7 +86326,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -86722,7 +86817,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -87212,7 +87308,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -87702,7 +87799,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -88192,7 +88290,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -88682,7 +88781,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -89172,7 +89272,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -89662,7 +89763,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -90152,7 +90254,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -90642,7 +90745,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -91112,7 +91216,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -91480,7 +91585,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -91872,7 +91978,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -92264,7 +92371,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -92656,7 +92764,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -93048,7 +93157,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -93440,7 +93550,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -93832,7 +93943,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -94224,7 +94336,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -94616,7 +94729,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -95008,7 +95122,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -95400,7 +95515,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -95792,7 +95908,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -96184,7 +96301,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -96576,7 +96694,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -96968,7 +97087,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -97360,7 +97480,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -97752,7 +97873,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -98144,7 +98266,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -98534,7 +98657,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",
@@ -98889,7 +99013,8 @@
         }
       ],
       "after_files": {
-        "vault/.symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-05.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"Alpha\",\"details\":\"created\"}\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_changed\",\"path\":\"beta.md\"}\nnot json\n{\"ts\":\"2026-03-05\",\"event\":\"date_only\",\"path\":\"gamma.md\",\"title\":\"Gamma\"}\n{\"ts\":1772700000,\"event\":\"unix\",\"path\":\"plain.md\"}\n{\"ts\":\"junk\",\"event\":\"junk_ts\",\"path\":\"plain.md\"}\n\n{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
+        "vault/.symdesk/journal/2026-03-06.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_removed\",\"path\":\"gone.md\",\"title\":\"Gone\",\"details\":\"removed\"}\n",
         "vault/.symdesk/retention/history.json": "[{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"old\",\"action\":\"archive\",\"path\":\"old.md\",\"title\":\"Old\"},{\"timestamp\":\"\u003cTIME\u003e\",\"rule_name\":\"r2\",\"action\":\"delete\",\"path\":\"x.md\",\"title\":\"X\"}]",
         "vault/.symdesk/trash/corrupt.trashinfo.json": "{",
         "vault/.symdesk/trash/old.md.1": "trash",

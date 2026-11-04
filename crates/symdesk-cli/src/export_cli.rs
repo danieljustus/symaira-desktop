@@ -15,7 +15,7 @@ use symdesk_vault::{go_quote, parse_dataset_handle, secure_path, slugify};
 use crate::{emit_error, write_go_json, write_stdout};
 
 #[derive(Serialize)]
-struct ExportResult {
+pub(crate) struct ExportResult {
     format: &'static str,
     path: String,
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -65,16 +65,16 @@ pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -
     ))
 }
 
-struct Request {
-    note: String,
-    view: String,
-    output: String,
-    format: String,
-    profile: String,
+pub(crate) struct Request {
+    pub(crate) note: String,
+    pub(crate) view: String,
+    pub(crate) output: String,
+    pub(crate) format: String,
+    pub(crate) profile: String,
 }
 
 /// Go `Service.Export`.
-fn export(
+pub(crate) fn export(
     root: &Path,
     sidecar: &symdesk_index::Sidecar,
     request: &Request,

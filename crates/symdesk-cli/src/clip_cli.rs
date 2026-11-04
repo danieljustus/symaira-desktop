@@ -134,7 +134,7 @@ fn execute(url: &str, vault: Option<&str>) -> Result<String, String> {
 }
 
 /// Go `Service.NoteClip`.
-fn note_clip(
+pub(crate) fn note_clip(
     root: &Path,
     sidecar: &mut symdesk_index::Sidecar,
     url: &str,

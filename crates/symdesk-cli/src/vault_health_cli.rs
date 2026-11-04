@@ -52,7 +52,7 @@ struct RepairAction {
 }
 
 #[derive(Serialize)]
-struct Report {
+pub(crate) struct Report {
     vault: String,
     files_scanned: usize,
     findings: Vec<Finding>,
@@ -160,7 +160,11 @@ fn text(report: &Report) -> String {
     )
 }
 
-fn scan(root: &Path, sidecar: &symdesk_index::Sidecar, threshold: i64) -> Result<Report, String> {
+pub(crate) fn scan(
+    root: &Path,
+    sidecar: &symdesk_index::Sidecar,
+    threshold: i64,
+) -> Result<Report, String> {
     let mut report = Report {
         vault: root.to_string_lossy().into_owned(),
         files_scanned: 0,

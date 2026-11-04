@@ -126,6 +126,35 @@ pub enum VaultError {
     Asn { path: String, reason: &'static str },
 }
 
+/// Go's yaml.v3 wording for a frontmatter document that is a sequence or a
+/// scalar instead of a mapping (`map[string]interface{}` target); `None` when
+/// the document is anything else.
+fn go_not_a_mapping(frontmatter: &[u8]) -> Option<String> {
+    let kind = match noyalib::from_slice::<Value>(frontmatter).ok()? {
+        Value::Sequence(_) => "!!seq".to_owned(),
+        Value::String(text) => format!("!!str `{text}`"),
+        Value::Bool(flag) => format!("!!bool `{flag}`"),
+        Value::Number(number) => {
+            let text = number.to_string();
+            let tag = if text.contains(['.', 'e', 'E']) {
+                "!!float"
+            } else {
+                "!!int"
+            };
+            format!("{tag} `{text}`")
+        }
+        _ => return None,
+    };
+    // The error carries the line of the node: the first line with content.
+    let line = String::from_utf8_lossy(frontmatter)
+        .lines()
+        .position(|line| !line.trim().is_empty() && !line.trim_start().starts_with('#'))?
+        + 1;
+    Some(format!(
+        "yaml: unmarshal errors:\n  line {line}: cannot unmarshal {kind} into map[string]interface {{}}"
+    ))
+}
+
 /// Parses exact bytes without touching the filesystem.
 ///
 /// # Errors
@@ -160,7 +189,7 @@ pub fn parse_bytes(path: &str, input: &[u8]) -> Result<Document, VaultError> {
         noyalib::from_slice::<BTreeMap<String, Value>>(&frontmatter_bytes).map_err(|error| {
             VaultError::Frontmatter {
                 path: path.to_owned(),
-                detail: error.to_string(),
+                detail: go_not_a_mapping(&frontmatter_bytes).unwrap_or_else(|| error.to_string()),
             }
         })?
     } else {

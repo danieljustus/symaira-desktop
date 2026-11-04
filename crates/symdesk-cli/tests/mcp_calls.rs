@@ -81,7 +81,16 @@ fn normalize(text: &str, root: &str) -> String {
     let asset = Regex::new(r"pasted-\d{4}-\d{2}-\d{2}-\d{6}").unwrap();
     let text = text.replace(root, "$ROOT");
     let text = timestamp.replace_all(&text, "<TIME>");
-    let text = journal.replace_all(&text, "journal/<DATE>.ndjson");
+    // Only the journal of the run's own (UTC) day is clock-dependent: seeded
+    // journals of other days keep their names (mirrors `mcpCallsNormalize`).
+    let today = format!("journal/{}.ndjson", time::OffsetDateTime::now_utc().date());
+    let text = journal.replace_all(&text, |found: &regex::Captures<'_>| {
+        if &found[0] == today.as_str() {
+            "journal/<DATE>.ndjson".to_owned()
+        } else {
+            found[0].to_owned()
+        }
+    });
     asset.replace_all(&text, "pasted-<CLOCK>").into_owned()
 }
 
@@ -172,7 +181,11 @@ fn dump_db(path: &Path, root: &str) -> Dump {
 // root path, which differ between runs and hosts. A row whose hash no longer
 // matches the file is recorded as "<STALE>".
 fn normalize_indexed_file(entry: &mut BTreeMap<String, Value>, raw_path: &str, root: &str) {
-    let Some(raw_sha) = entry.get("sha256").and_then(Value::as_str).map(str::to_owned) else {
+    let Some(raw_sha) = entry
+        .get("sha256")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+    else {
         return;
     };
     if raw_path.is_empty() {

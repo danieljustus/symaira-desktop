@@ -6,6 +6,8 @@ mod pdf;
 #[cfg(test)]
 mod pdf_tests;
 pub(crate) mod read;
+mod service_tools;
+mod strict;
 pub(crate) mod write;
 
 use std::{
@@ -439,6 +441,7 @@ where
         name,
         "desk_status" | "desk_ls" | "desk_search" | "desk_ask" | "search_documents"
     ) && !read::supports(name)
+        && !service_tools::supports(name, config.allow_write)
         && !ingest_tools::canonical(name)
             .is_some_and(|tool| config.allow_write || !ingest_tools::is_write(tool))
         && !(config.allow_write && (pdf::canonical_name(name).is_some() || write::supports(name)))
@@ -589,6 +592,9 @@ fn call_tool(
             write::call(name, raw_arguments, config)
         }
         _ if read::supports(name) => read::call(name, raw_arguments, config),
+        _ if service_tools::supports(name, config.allow_write) => {
+            service_tools::call(name, raw_arguments, config)
+        }
         _ if ingest_tools::canonical(name)
             .is_some_and(|tool| config.allow_write || !ingest_tools::is_write(tool)) =>
         {

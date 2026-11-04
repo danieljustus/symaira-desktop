@@ -274,97 +274,151 @@ pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode 
         }
         text = String::from_utf8_lossy(&bytes).into_owned();
     }
+    let intent = command
+        .get_one::<String>("intent")
+        .map(String::as_str)
+        .unwrap_or_default();
+    let delivered = transform_core(&text, intent, &mut |chunk| {
+        emit_transform_chunk(&mut io::stdout(), chunk, output_json)
+    });
+    super::process_exit(if delivered {
+        CoreExitCode::Ok
+    } else {
+        CoreExitCode::Generic
+    })
+}
 
+/// Go `Service` tool `desk_transform`: the aggregated chunks of `ai.Transform`.
+pub(crate) fn transform_to_string(text: &str, intent: &str) -> String {
+    let mut out = String::new();
+    transform_core(text, intent, &mut |chunk| {
+        out.push_str(chunk);
+        Ok(())
+    });
+    out
+}
+
+/// Chunk sink that remembers the first failed write.
+struct ChunkSink<'a> {
+    emit: &'a mut dyn FnMut(&str) -> io::Result<()>,
+    failed: bool,
+}
+
+impl ChunkSink<'_> {
+    fn push(&mut self, chunk: &str) {
+        if !self.failed && (self.emit)(chunk).is_err() {
+            self.failed = true;
+        }
+    }
+
+    fn write_failure() -> symaira_core_llm::Error {
+        symaira_core_llm::Error {
+            code: symaira_core_llm::ErrorCode::TransportError,
+            status_code: 0,
+            body: String::new(),
+            retry_after: String::new(),
+            detail: "transform output write failed".to_owned(),
+        }
+    }
+
+    fn stream(&mut self, chunk: &str) -> symaira_core_llm::Result<()> {
+        self.push(chunk);
+        if self.failed {
+            Err(Self::write_failure())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+/// Go `ai.Transform`; returns whether every chunk reached the sink.
+fn transform_core(text: &str, intent: &str, emit: &mut dyn FnMut(&str) -> io::Result<()>) -> bool {
+    let mut sink = ChunkSink {
+        emit,
+        failed: false,
+    };
+    transform_chunks(text, intent, &mut sink);
+    !sink.failed
+}
+
+fn transform_chunks(text: &str, intent: &str, sink: &mut ChunkSink<'_>) {
     if text.trim().is_empty() {
-        return emit_chunk(
-            "⚠️ No text provided – please select text first.\n",
-            output_json,
-        );
+        sink.push("⚠️ No text provided – please select text first.\n");
+        return;
     }
     let config = match load_config() {
         Ok(config) => config,
-        Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
+        Err(error) => {
+            sink.push(&format!("⚠️ Request failed: {error}\n"));
+            return;
+        }
     };
     if config.llm_provider == "anthropic" {
         let base_url = match symdesk_core::config::environment_value("SYMDESK_ANTHROPIC_URL") {
             Ok(value) => value.filter(|value| !value.is_empty()),
-            Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
+            Err(error) => {
+                sink.push(&format!("⚠️ Request failed: {error}\n"));
+                return;
+            }
         };
-        return run_anthropic_transform(
-            command,
-            &config,
-            text.trim(),
-            output_json,
-            base_url.as_deref(),
-        );
+        anthropic_transform_chunks(&config, text.trim(), intent, base_url.as_deref(), sink);
+        return;
     }
 
     if config.llm_provider != "hermes" {
         let Some(base_url) = ollama_endpoint(&config) else {
-            return emit_chunk(
+            sink.push(
                 "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n",
-                output_json,
             );
+            return;
         };
         let model_environment =
             match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
                 Ok(value) => value,
                 Err(error) => {
-                    return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json);
+                    sink.push(&format!("⚠️ Request failed: {error}\n"));
+                    return;
                 }
             };
         let model = ollama_model(model_environment.as_deref());
-        let intent = command
-            .get_one::<String>("intent")
-            .map(String::as_str)
-            .unwrap_or_default();
-        return run_ollama_transform(
-            &base_url,
-            model,
-            &build_transform_prompt(&config, text.trim(), intent),
-            output_json,
-        );
+        let prompt = build_transform_prompt(&config, text.trim(), intent);
+        let result = stream_ollama_transform(&base_url, model, &prompt, |chunk| sink.stream(chunk));
+        if sink.failed {
+            return;
+        }
+        if let Err(error) = result {
+            sink.push(&symdesk_service::gofmt::go_transport_error(
+                &ollama_failure_message(&error),
+                &base_url,
+            ));
+        }
+        return;
     }
 
-    run_hermes_transform(
-        &config,
-        &text,
-        command
-            .get_one::<String>("intent")
-            .map(String::as_str)
-            .unwrap_or_default(),
-        output_json,
-    )
+    hermes_transform_chunks(&config, text, intent, sink);
 }
 
 /// Go `ai.Transform` with the optional Hermes CLI backend, via the shared
 /// service composition.
-fn run_hermes_transform(
+fn hermes_transform_chunks(
     config: &symdesk_core::config::Config,
     text: &str,
     intent: &str,
-    output_json: bool,
-) -> ExitCode {
+    sink: &mut ChunkSink<'_>,
+) {
     let mut environment = match symdesk_core::config::environment_snapshot() {
         Ok(environment) => environment,
-        Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
+        Err(error) => {
+            sink.push(&format!("⚠️ Request failed: {error}\n"));
+            return;
+        }
     };
     if let Ok(path) = std::env::var("PATH") {
         environment.insert("PATH".to_owned(), path);
     }
     let mut resolve_key = |reference: &str| crate::ai_secrets::resolve_key(reference);
     let mut context = symdesk_service::ai::Context::new(config, &environment, &mut resolve_key);
-    let mut output_failed = false;
-    symdesk_service::ai::transform(&mut context, text, intent, &mut |chunk| {
-        if !output_failed && emit_transform_chunk(&mut io::stdout(), chunk, output_json).is_err() {
-            output_failed = true;
-        }
-    });
-    if output_failed {
-        super::process_exit(CoreExitCode::Generic)
-    } else {
-        super::process_exit(CoreExitCode::Ok)
-    }
+    symdesk_service::ai::transform(&mut context, text, intent, &mut |chunk| sink.push(chunk));
 }
 
 fn ollama_endpoint(config: &symdesk_core::config::Config) -> Option<String> {
@@ -385,39 +439,6 @@ fn ollama_model(environment_value: Option<&str>) -> &str {
     environment_value
         .filter(|value| !value.is_empty())
         .unwrap_or("llama3.2")
-}
-
-fn run_ollama_transform(base_url: &str, model: &str, prompt: &str, output_json: bool) -> ExitCode {
-    let writer = RefCell::new(io::stdout());
-    let mut output_failed = false;
-    let result = stream_ollama_transform(base_url, model, prompt, |chunk| {
-        if !output_failed
-            && emit_transform_chunk(&mut *writer.borrow_mut(), chunk, output_json).is_err()
-        {
-            output_failed = true;
-        }
-        if output_failed {
-            Err(symaira_core_llm::Error {
-                code: symaira_core_llm::ErrorCode::TransportError,
-                status_code: 0,
-                body: String::new(),
-                retry_after: String::new(),
-                detail: "transform output write failed".to_owned(),
-            })
-        } else {
-            Ok(())
-        }
-    });
-    if output_failed {
-        return super::process_exit(CoreExitCode::Generic);
-    }
-    match result {
-        Ok(()) => super::process_exit(CoreExitCode::Ok),
-        Err(error) => emit_chunk(
-            &symdesk_service::gofmt::go_transport_error(&ollama_failure_message(&error), base_url),
-            output_json,
-        ),
-    }
 }
 
 fn stream_ollama_transform(
@@ -491,51 +512,29 @@ pub(crate) fn search_for_ask(
     }
 }
 
-fn run_anthropic_transform(
-    command: &clap::ArgMatches,
+fn anthropic_transform_chunks(
     config: &symdesk_core::config::Config,
     text: &str,
-    output_json: bool,
+    intent: &str,
     base_url: Option<&str>,
-) -> ExitCode {
+    sink: &mut ChunkSink<'_>,
+) {
     let api_key = crate::ai_secrets::resolve_key(config.api_key_reference());
     if api_key.is_empty() {
-        return emit_chunk(
+        sink.push(
             "⚠️ **AI feature not configured.**\n\nAnthropic API key could not be resolved (missing secret via symvault or environment variable).\n",
-            output_json,
         );
+        return;
     }
-    let intent = command
-        .get_one::<String>("intent")
-        .map(String::as_str)
-        .unwrap_or_default();
     let prompt = build_transform_prompt(config, text, intent);
-    let writer = RefCell::new(io::stdout());
-    let mut output_failed = false;
     let result = stream_anthropic_transform(config, &api_key, base_url, &prompt, |chunk| {
-        if !output_failed
-            && emit_transform_chunk(&mut *writer.borrow_mut(), chunk, output_json).is_err()
-        {
-            output_failed = true;
-        }
-        if output_failed {
-            Err(symaira_core_llm::Error {
-                code: symaira_core_llm::ErrorCode::TransportError,
-                status_code: 0,
-                body: String::new(),
-                retry_after: String::new(),
-                detail: "transform output write failed".to_owned(),
-            })
-        } else {
-            Ok(())
-        }
+        sink.stream(chunk)
     });
-    if output_failed {
-        return super::process_exit(CoreExitCode::Generic);
+    if sink.failed {
+        return;
     }
-    match result {
-        Ok(()) => super::process_exit(CoreExitCode::Ok),
-        Err(error) => emit_chunk(&transform_failure_message(&error, &api_key), output_json),
+    if let Err(error) = result {
+        sink.push(&transform_failure_message(&error, &api_key));
     }
 }
 
@@ -679,13 +678,6 @@ pub(crate) fn load_config() -> Result<symdesk_core::config::Config, String> {
         Err(error) => return Err(format!("failed to read config file: {error}")),
     };
     symdesk_core::config::load(input.as_deref(), &environment)
-}
-
-fn emit_chunk(chunk: &str, output_json: bool) -> ExitCode {
-    match emit_transform_chunk(&mut io::stdout(), chunk, output_json) {
-        Ok(()) => super::process_exit(CoreExitCode::Ok),
-        Err(_) => super::process_exit(CoreExitCode::Generic),
-    }
 }
 
 fn emit_transform_chunk(writer: &mut impl Write, chunk: &str, output_json: bool) -> io::Result<()> {

@@ -895,7 +895,7 @@ fn parse_hex_quad(raw: &[u8]) -> u16 {
     })
 }
 
-fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
+pub(super) fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
     match parse_rfc3339_parts(value) {
         Ok(parts) => parts.into_datetime(),
         Err(error) => Err(error.render(value)),

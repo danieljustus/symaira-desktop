@@ -172,7 +172,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
 
 // Unlike citation paths, Go backlinks uses filepath.Rel even for indexed
 // sources outside the vault. Different volumes retain the original path.
-fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
+pub(crate) fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
     use std::path::{Component, PathBuf};
     let root_path = symdesk_index::document_storage_key(root).unwrap_or_else(|_| root.to_owned());
     let target_path = symdesk_index::document_storage_key(path).unwrap_or_else(|_| path.to_owned());

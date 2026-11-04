@@ -125,7 +125,15 @@ not json
 	broken.Files = bf
 	// broken.md cannot be parsed, so the seed indexer must not see it: it is
 	// written below the root instead, where only the health scan reads it.
-	br := map[string]string{"vault/broken.md": "---\ntitle: [unclosed\n---\nbody\n"}
+	// Only parse errors whose wording both YAML stacks share are recorded: the
+	// scanner wording of an unclosed flow sequence differs (declared limit,
+	// RUST-013), so the broken notes below are not YAML syntax errors.
+	br := map[string]string{
+		"vault/broken-seq.md":   "---\n- a\n- b\n---\nbody\n",
+		"vault/broken-open.md":  "---\ntitle: x\nbody without a closing delimiter\n",
+		"vault/broken-dup.md":   "---\ntitle: a\ntitle: b\n---\nbody\n",
+		"vault/broken-scalar.md": "---\njust text\n---\nbody\n",
+	}
 	for k, v := range rootFiles {
 		br[k] = v
 	}

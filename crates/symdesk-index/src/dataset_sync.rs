@@ -406,8 +406,22 @@ impl<'a> DatasetSyncService<'a> {
         let projected = dataset::project_rows(&slug, &materialized, "")?;
         sidecar.replace_dataset_rows(&slug, &projected)?;
 
-        if let Ok(document) = parse_bytes(&handle_path, &handle_bytes) {
-            let indexed = IndexedDocument::from_vault(&document, None)?;
+        // Go indexes `ParseFileInRoot(handleAbs)`: the absolute storage key and
+        // the file's modification time.
+        if let Ok(mut document) = parse_bytes(&handle_path, &handle_bytes) {
+            let mut mtime_ns = None;
+            if let Ok(absolute) = symdesk_vault::secure_path(vault_root, &handle_path) {
+                if let Ok(key) = crate::document_storage_key(&absolute) {
+                    document.path = key.to_string_lossy().into_owned();
+                }
+                mtime_ns = std::fs::metadata(&absolute)
+                    .and_then(|meta| meta.modified())
+                    .ok()
+                    .and_then(|modified| {
+                        i64::try_from(OffsetDateTime::from(modified).unix_timestamp_nanos()).ok()
+                    });
+            }
+            let indexed = IndexedDocument::from_vault(&document, mtime_ns)?;
             sidecar.index_document(&indexed)?;
         }
 

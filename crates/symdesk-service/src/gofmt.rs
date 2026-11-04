@@ -24,6 +24,19 @@ pub fn os_error_text(error: &io::Error) -> String {
 #[must_use]
 pub fn go_transport_error(message: &str, endpoint: &str) -> String {
     const REFUSED: &str = "transport_error: io: Connection refused";
+    const BAD_URL: &str = "provider_error: build url: invalid uri character";
+    if message.contains(BAD_URL) && !endpoint.contains("://") {
+        // An endpoint without a scheme: Go's `url.Parse` accepts it as a
+        // relative reference and `http.Client` rejects the request.
+        let scheme = go_url_scheme(endpoint);
+        return message.replace(
+            BAD_URL,
+            &format!(
+                "transport_error: Post \"{}/api/generate\": unsupported protocol scheme \"{scheme}\"",
+                go_escape_path(endpoint)
+            ),
+        );
+    }
     if !message.contains(REFUSED) {
         return message.to_owned();
     }
@@ -40,6 +53,33 @@ pub fn go_transport_error(message: &str, endpoint: &str) -> String {
             "transport_error: Post \"{scheme}://{authority}/api/generate\": dial tcp {authority}: connect: connection refused"
         ),
     )
+}
+
+/// Go `net/url.getScheme`: the leading `scheme:` of a reference, if any.
+fn go_url_scheme(raw: &str) -> &str {
+    for (index, byte) in raw.bytes().enumerate() {
+        match byte {
+            b'a'..=b'z' | b'A'..=b'Z' => {}
+            b'0'..=b'9' | b'+' | b'-' | b'.' if index > 0 => {}
+            b':' if index > 0 => return &raw[..index],
+            _ => return "",
+        }
+    }
+    ""
+}
+
+/// Go `url.URL.EscapedPath` for a relative path.
+fn go_escape_path(raw: &str) -> String {
+    use std::fmt::Write as _;
+    let mut out = String::new();
+    for byte in raw.bytes() {
+        if byte.is_ascii_alphanumeric() || b"-_.~$&+,/:;=@".contains(&byte) {
+            out.push(char::from(byte));
+        } else {
+            let _ = write!(out, "%{byte:02X}");
+        }
+    }
+    out
 }
 
 /// Go `*PathError` text: `op path: reason`.

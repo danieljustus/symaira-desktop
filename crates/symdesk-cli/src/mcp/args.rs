@@ -9,15 +9,12 @@ use serde_json::Value;
 use super::{go_json_type, go_raw_fields};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-#[allow(
-    dead_code,
-    reason = "Bool and Strings serve the dataset and autofill tools"
-)]
 pub(super) enum Kind {
     Str,
     I64,
+    /// Go `int` (64-bit): same decoding as `I64`, different type name in errors.
+    Int,
     Bool,
-    Strings,
 }
 
 impl Kind {
@@ -25,8 +22,8 @@ impl Kind {
         match self {
             Self::Str => "string",
             Self::I64 => "int64",
+            Self::Int => "int",
             Self::Bool => "bool",
-            Self::Strings => "[]string",
         }
     }
 }
@@ -44,10 +41,6 @@ pub(super) const fn field(key: &'static str, name: &'static str, kind: Kind) -> 
 #[derive(Default)]
 pub(super) struct Args(BTreeMap<&'static str, Value>);
 
-#[allow(
-    dead_code,
-    reason = "bool and strings serve the dataset and autofill tools"
-)]
 impl Args {
     pub(super) fn str(&self, key: &str) -> String {
         self.0
@@ -63,19 +56,6 @@ impl Args {
 
     pub(super) fn bool(&self, key: &str) -> bool {
         self.0.get(key).and_then(Value::as_bool).unwrap_or_default()
-    }
-
-    pub(super) fn strings(&self, key: &str) -> Vec<String> {
-        self.0
-            .get(key)
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .map(|item| item.as_str().unwrap_or_default().to_owned())
-                    .collect()
-            })
-            .unwrap_or_default()
     }
 }
 
@@ -130,36 +110,15 @@ pub(super) fn decode(raw: Option<&str>, fields: &[Field]) -> Result<Args, String
                 }
                 Value::Bool(token == "true")
             }
-            Kind::I64 => {
+            Kind::I64 | Kind::Int => {
+                let target = field.kind.go_type();
                 if value_type != "number" {
-                    return Err(mismatch(value_type, field.key, "int64"));
+                    return Err(mismatch(value_type, field.key, target));
                 }
                 let Ok(number) = token.parse::<i64>() else {
-                    return Err(mismatch(&format!("number {token}"), field.key, "int64"));
+                    return Err(mismatch(&format!("number {token}"), field.key, target));
                 };
                 Value::from(number)
-            }
-            Kind::Strings => {
-                if value_type != "array" {
-                    return Err(mismatch(value_type, field.key, "[]string"));
-                }
-                let items: Vec<Box<serde_json::value::RawValue>> =
-                    serde_json::from_str(token).map_err(|error| error.to_string())?;
-                let mut out = Vec::new();
-                for item in &items {
-                    let item = item.get();
-                    if item == "null" {
-                        out.push(Value::String(String::new()));
-                        continue;
-                    }
-                    if go_json_type(item) != "string" {
-                        return Err(mismatch(go_json_type(item), field.key, "string"));
-                    }
-                    out.push(
-                        serde_json::from_str::<Value>(item).map_err(|error| error.to_string())?,
-                    );
-                }
-                Value::Array(out)
             }
         };
         args.0.insert(field.key, value);

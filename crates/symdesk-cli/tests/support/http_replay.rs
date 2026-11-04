@@ -687,7 +687,7 @@ impl Server {
             };
             self.apply_capture(&body, &headers);
             self.record_body(&mut observed, &body, mask);
-            let _ = stream.set_read_timeout(Some(Duration::from_millis(400)));
+            let _ = stream.set_read_timeout(Some(Duration::from_millis(1500)));
             let mut probe = [0_u8; 1];
             observed.closed = matches!(reader.read(&mut probe), Ok(0));
             return Ok(observed);

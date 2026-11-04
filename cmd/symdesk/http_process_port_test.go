@@ -488,7 +488,7 @@ func (s *httpServer) readResponse(conn net.Conn, reader *bufio.Reader, headOnly 
 		s.applyCapture(body, headers)
 		s.recordBody(&observed, body, mask)
 		// Does the server close the connection once the response is complete?
-		_ = conn.SetReadDeadline(time.Now().Add(400 * time.Millisecond))
+		_ = conn.SetReadDeadline(time.Now().Add(1500 * time.Millisecond))
 		_, err = reader.ReadByte()
 		observed.Closed = errors.Is(err, io.EOF)
 		return observed

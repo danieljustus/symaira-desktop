@@ -196,6 +196,12 @@ func snapshotAdminTree(t *testing.T, dir, root string, volatile, hashFiles bool)
 		if entry.IsDir() || !entry.Type().IsRegular() {
 			return nil
 		}
+		if entry.Name() == ".DS_Store" {
+			// macOS Finder/Spotlight metadata dropped into the scratch tree is
+			// host state, not CLI output (it made the recorded demo-init-large
+			// digests count 10028 files instead of 10026).
+			return nil
+		}
 		rel, err := filepath.Rel(dir, path)
 		if err != nil {
 			return err
@@ -205,7 +211,7 @@ func snapshotAdminTree(t *testing.T, dir, root string, volatile, hashFiles bool)
 			return err
 		}
 		slash := filepath.ToSlash(rel)
-		key := normalizeAdminText(volatile, slash)
+		key := normalizeAdminText(volatile, maskJournalDay(slash))
 		if volatile && strings.HasPrefix(slash, ".symdesk/history/objects/") {
 			// Content ids embed the wall clock and identical contents of one
 			// second share an object, so neither names nor counts are stable;

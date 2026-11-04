@@ -422,7 +422,7 @@
           "stdout": "map[path:doc.txt.md]\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "doc.txt.md": "---\nsource_path: $ROOT/cwd/doc.txt\ningested_at: $TIME\nsha256: $RAND24$RAND2442733a530ece1993\nmime: text/plain\ntags:\n    - billing\ncategory: \"\"\nocr_engine: text\narchive_path: archive/ingest/$RAND24$RAND2442733a530ece1993.txt\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://archive/ingest/$RAND24$RAND2442733a530ece1993.txt)\n"
           },
@@ -440,7 +440,7 @@
           "stdout": "{\"path\":\"note.md.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "doc.txt.md": "---\nsource_path: $ROOT/cwd/doc.txt\ningested_at: $TIME\nsha256: $RAND24$RAND2442733a530ece1993\nmime: text/plain\ntags:\n    - billing\ncategory: \"\"\nocr_engine: text\narchive_path: archive/ingest/$RAND24$RAND2442733a530ece1993.txt\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://archive/ingest/$RAND24$RAND2442733a530ece1993.txt)\n",
@@ -460,7 +460,7 @@
           "stdout": "{\"path\":\"page.html.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -481,7 +481,7 @@
           "stdout": "",
           "stderr": "source already ingested: $ROOT/cwd/doc.txt (vault: $ROOT/vault, note: $ROOT/vault/doc.txt.md, archive: archive/ingest/$RAND24$RAND2442733a530ece1993.txt)\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -503,7 +503,7 @@
           "stdout": "{\"error\":\"source already ingested: $ROOT/cwd/doc.txt (vault: $ROOT/vault, note: $ROOT/vault/doc.txt.md, archive: archive/ingest/$RAND24$RAND2442733a530ece1993.txt)\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -525,7 +525,7 @@
           "stdout": "{\"error\":\"stat source: stat $ROOT/cwd/missing.txt: no such file or directory\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -546,7 +546,7 @@
           "stdout": "",
           "stderr": "stat source: stat $ROOT/cwd/missing.txt: no such file or directory\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -568,7 +568,7 @@
           "stdout": "{\"error\":\"source is a directory: $ROOT/cwd/dir\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
             "archive/ingest/$RAND24$RAND24fe94f449ec5f96dd.html": "\u003chtml\u003e\u003cbody\u003e\u003ch1\u003eTitle\u003c/h1\u003e\u003cp\u003ehello html world\u003c/p\u003e\u003c/body\u003e\u003c/html\u003e\n",
@@ -590,7 +590,7 @@
           "stdout": "{\"path\":\"empty.txt.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -614,7 +614,7 @@
           "stdout": "{\"path\":\"other.txt.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -641,7 +641,7 @@
           "stdout": "{\"error\":\"source already ingested: $ROOT/cwd/doc.txt (vault: $ROOT/vault, note: $ROOT/vault/doc.txt.md, archive: archive/ingest/$RAND24$RAND2442733a530ece1993.txt)\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -666,7 +666,7 @@
           "stdout": "Jobs 1-8 of 8\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\nJob ID: 6 | Status: completed | Source: $ROOT/cwd/empty.txt\nJob ID: 5 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 4 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/page.html\nJob ID: 2 | Status: completed | Source: $ROOT/cwd/note.md\nJob ID: 1 | Status: completed | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -692,7 +692,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 6,\n      \"document_id\": 4,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/empty.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 5,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 3,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/html\",\n      \"source_path\": \"$ROOT/cwd/page.html\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 2,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"$ROOT/cwd/note.md\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -719,7 +719,7 @@
           "stdout": "Jobs 1-2 of 8\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -747,7 +747,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 2,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -774,7 +774,7 @@
           "stdout": "Jobs 2-2 of 8\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -802,7 +802,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 1,\n  \"offset\": 1\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -829,7 +829,7 @@
           "stdout": "Jobs 1-8 of 8\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\nJob ID: 6 | Status: completed | Source: $ROOT/cwd/empty.txt\nJob ID: 5 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 4 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/page.html\nJob ID: 2 | Status: completed | Source: $ROOT/cwd/note.md\nJob ID: 1 | Status: completed | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -857,7 +857,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 6,\n      \"document_id\": 4,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/empty.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 5,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 3,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/html\",\n      \"source_path\": \"$ROOT/cwd/page.html\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 2,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"$ROOT/cwd/note.md\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -886,7 +886,7 @@
           "stdout": "Jobs 1-8 of 8\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\nJob ID: 6 | Status: completed | Source: $ROOT/cwd/empty.txt\nJob ID: 5 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 4 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/page.html\nJob ID: 2 | Status: completed | Source: $ROOT/cwd/note.md\nJob ID: 1 | Status: completed | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -916,7 +916,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 6,\n      \"document_id\": 4,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/empty.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 5,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 3,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/html\",\n      \"source_path\": \"$ROOT/cwd/page.html\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 2,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"$ROOT/cwd/note.md\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -943,7 +943,7 @@
           "stdout": "Jobs 100-99 of 8\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -971,7 +971,7 @@
           "stdout": "{\n  \"jobs\": [],\n  \"total\": 8,\n  \"limit\": 100,\n  \"offset\": 99\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -998,7 +998,7 @@
           "stdout": "",
           "stderr": "invalid argument \"x\" for \"--limit\" flag: strconv.ParseInt: parsing \"x\": invalid syntax\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1026,7 +1026,7 @@
           "stdout": "{\"error\":\"invalid argument \\\"x\\\" for \\\"--limit\\\" flag: strconv.ParseInt: parsing \\\"x\\\": invalid syntax\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1052,7 +1052,7 @@
           "stdout": "map[job_id:1 status:retried]\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1079,7 +1079,7 @@
           "stdout": "{\"job_id\":\"1\",\"status\":\"retried\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1105,7 +1105,7 @@
           "stdout": "map[job_id: 2  status:retried]\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1132,7 +1132,7 @@
           "stdout": "{\"job_id\":\" 2 \",\"status\":\"retried\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1158,7 +1158,7 @@
           "stdout": "",
           "stderr": "invalid job ID \"abc\": strconv.ParseInt: parsing \"abc\": invalid syntax\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1185,7 +1185,7 @@
           "stdout": "{\"error\":\"invalid job ID \\\"abc\\\": strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1211,7 +1211,7 @@
           "stdout": "",
           "stderr": "retry job 999: update job status for retry: sql: no rows in result set\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1238,7 +1238,7 @@
           "stdout": "{\"error\":\"retry job 999: update job status for retry: sql: no rows in result set\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1264,7 +1264,7 @@
           "stdout": "",
           "stderr": "unknown shorthand flag: '3' in -3\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1291,7 +1291,7 @@
           "stdout": "{\"error\":\"unknown shorthand flag: '3' in -3\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1316,7 +1316,7 @@
           "stdout": "Jobs 1-8 of 8\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\nJob ID: 6 | Status: completed | Source: $ROOT/cwd/empty.txt\nJob ID: 5 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 4 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/page.html\nJob ID: 2 | Status: pending | Source: $ROOT/cwd/note.md\nJob ID: 1 | Status: pending | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1342,7 +1342,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 6,\n      \"document_id\": 4,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/empty.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 5,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 3,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/html\",\n      \"source_path\": \"$ROOT/cwd/page.html\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 2,\n      \"status\": \"pending\",\n      \"attempts\": 0,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"$ROOT/cwd/note.md\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"pending\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 8,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1369,7 +1369,7 @@
           "stdout": "document 1: completed (job 9)\n  output: $ROOT/vault/doc.txt.md\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1397,7 +1397,7 @@
           "stdout": "{\"schema_version\":1,\"document_id\":1,\"job_id\":10,\"status\":\"completed\",\"output_path\":\"$ROOT/vault/doc.txt.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1424,7 +1424,7 @@
           "stdout": "",
           "stderr": "document not found: id 999\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1452,7 +1452,7 @@
           "stdout": "{\"schema_version\":1,\"document_id\":999,\"job_id\":0,\"status\":\"failed\",\"output_path\":\"\",\"error\":{\"code\":\"not_found\",\"message\":\"document not found: id 999\"}}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1479,7 +1479,7 @@
           "stdout": "",
           "stderr": "document not found: id -1\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1507,7 +1507,7 @@
           "stdout": "{\"schema_version\":1,\"document_id\":-1,\"job_id\":0,\"status\":\"failed\",\"output_path\":\"\",\"error\":{\"code\":\"not_found\",\"message\":\"document not found: id -1\"}}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1532,7 +1532,7 @@
           "stdout": "",
           "stderr": "provide an archive path or --document-id\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1558,7 +1558,7 @@
           "stdout": "{\"error\":\"provide an archive path or --document-id\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1584,7 +1584,7 @@
           "stdout": "",
           "stderr": "document not found: archive path \"archive/ingest/nope.txt\"\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1611,7 +1611,7 @@
           "stdout": "{\"schema_version\":1,\"document_id\":0,\"job_id\":0,\"status\":\"failed\",\"output_path\":\"\",\"error\":{\"code\":\"not_found\",\"message\":\"document not found: archive path \\\"archive/ingest/nope.txt\\\"\"}}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1639,7 +1639,7 @@
           "stdout": "",
           "stderr": "provide either an archive path or --document-id, not both\n",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1668,7 +1668,7 @@
           "stdout": "{\"error\":\"provide either an archive path or --document-id, not both\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1693,7 +1693,7 @@
           "stdout": "Jobs 1-10 of 10\nJob ID: 10 | Status: completed | Source: $ROOT/cwd/doc.txt\nJob ID: 9 | Status: completed | Source: $ROOT/cwd/doc.txt\nJob ID: 8 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 7 | Status: completed | Source: $ROOT/cwd/other.txt\nJob ID: 6 | Status: completed | Source: $ROOT/cwd/empty.txt\nJob ID: 5 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 4 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/page.html\nJob ID: 2 | Status: pending | Source: $ROOT/cwd/note.md\nJob ID: 1 | Status: pending | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1719,7 +1719,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 10,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"reocr\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 9,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"reocr\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 8,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 7,\n      \"document_id\": 5,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/other.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 6,\n      \"document_id\": 4,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/empty.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 5,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 3,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/html\",\n      \"source_path\": \"$ROOT/cwd/page.html\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 2,\n      \"status\": \"pending\",\n      \"attempts\": 0,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"$ROOT/cwd/note.md\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"pending\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 10,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"note.md.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"page.html.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"empty.txt.md\",\"details\":\"ingested document\"}\n{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"other.txt.md\",\"details\":\"ingested document\"}\n",
             "archive/ingest/$RAND24$RAND2442733a530ece1993.txt": "Invoice 2026 from Müller\nrechnung total 12 EUR\n",
             "archive/ingest/$RAND24$RAND24a495991b7852b855.txt": "",
             "archive/ingest/$RAND24$RAND24ad8ed2a98d9663e8.md": "# Meeting\n\nstrom und wasser\n",
@@ -1878,7 +1878,7 @@
           "stdout": "map[path:doc.txt.md]\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\nsource_path: $ROOT/cwd/doc.txt\ningested_at: $TIME\nsha256: $RAND24$RAND2442733a530ece1993\nmime: text/plain\ntags: []\ncategory: \"\"\nocr_engine: text\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }
@@ -1893,7 +1893,7 @@
           "stdout": "{\"error\":\"source already ingested: $ROOT/cwd/doc.txt (vault: $ROOT/vault, note: $ROOT/vault/doc.txt.md, archive: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\nsource_path: $ROOT/cwd/doc.txt\ningested_at: $TIME\nsha256: $RAND24$RAND2442733a530ece1993\nmime: text/plain\ntags: []\ncategory: \"\"\nocr_engine: text\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }
@@ -1909,7 +1909,7 @@
           "stdout": "document 1: completed (job 3)\n  output: $ROOT/vault/doc.txt.md\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\ncategory: \"\"\ningested_at: $TIME\nmime: text/plain\nocr_engine: text\nsha256: $RAND24$RAND2442733a530ece1993\nsource_path: $ROOT/cwd/doc.txt\ntags: []\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }
@@ -1926,7 +1926,7 @@
           "stdout": "{\"schema_version\":1,\"document_id\":1,\"job_id\":4,\"status\":\"completed\",\"output_path\":\"$ROOT/vault/doc.txt.md\"}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\ncategory: \"\"\ningested_at: $TIME\nmime: text/plain\nocr_engine: text\nsha256: $RAND24$RAND2442733a530ece1993\nsource_path: $ROOT/cwd/doc.txt\ntags: []\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }
@@ -1940,7 +1940,7 @@
           "stdout": "Jobs 1-4 of 4\nJob ID: 4 | Status: completed | Source: $ROOT/cwd/doc.txt\nJob ID: 3 | Status: completed | Source: $ROOT/cwd/doc.txt\nJob ID: 2 | Status: skipped | Source: $ROOT/cwd/doc.txt\nJob ID: 1 | Status: completed | Source: $ROOT/cwd/doc.txt\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\ncategory: \"\"\ningested_at: $TIME\nmime: text/plain\nocr_engine: text\nsha256: $RAND24$RAND2442733a530ece1993\nsource_path: $ROOT/cwd/doc.txt\ntags: []\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }
@@ -1955,7 +1955,7 @@
           "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 4,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"reocr\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 3,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"reocr\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 2,\n      \"document_id\": 1,\n      \"status\": \"skipped\",\n      \"attempts\": 0,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"last_error\": \"duplicate\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    },\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/plain\",\n      \"source_path\": \"$ROOT/cwd/doc.txt\",\n      \"created_at\": \"$TIME\",\n      \"updated_at\": \"$TIME\"\n    }\n  ],\n  \"total\": 4,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": "",
           "vault": {
-            ".symdesk/journal/2026-11-01.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
+            ".symdesk/journal/$DATE.ndjson": "{\"ts\":\"$TIME\",\"event\":\"file_added\",\"path\":\"doc.txt.md\",\"details\":\"ingested document\"}\n",
             "doc.txt.md": "---\narchive_path: $ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt\ncategory: \"\"\ningested_at: $TIME\nmime: text/plain\nocr_engine: text\nsha256: $RAND24$RAND2442733a530ece1993\nsource_path: $ROOT/cwd/doc.txt\ntags: []\n---\n\nInvoice 2026 from Müller\nrechnung total 12 EUR\n\n---\n[Archived Original](file://$ROOT/home/shared-archive/$RAND24$RAND2442733a530ece1993.txt)\n",
             "keep.md": "keep\n"
           }

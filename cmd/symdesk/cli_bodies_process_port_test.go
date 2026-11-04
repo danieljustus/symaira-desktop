@@ -154,6 +154,19 @@ func observeCLIBodiesProcess(t *testing.T) cliBodiesFixture {
 
 // snapshotBodiesVault returns every regular file below the vault: text files
 // as normalized text, anything else as its SHA-256.
+// journalDayRE matches the daily journal file name, which carries the wall-clock
+// day of the run. The recording must not embed the day it was generated on, or
+// the fixture goes stale at midnight (restore_process_port_test.go masks it the
+// same way as $DATE).
+var journalDayRE = regexp.MustCompile(`^\.symdesk/journal/\d{4}-\d{2}-\d{2}\.ndjson$`)
+
+func maskJournalDay(rel string) string {
+	if journalDayRE.MatchString(rel) {
+		return ".symdesk/journal/$DATE.ndjson"
+	}
+	return rel
+}
+
 func snapshotBodiesVault(t *testing.T, vault, root string, volatile bool) map[string]string {
 	t.Helper()
 	snapshot := map[string]string{}
@@ -172,7 +185,7 @@ func snapshotBodiesVault(t *testing.T, vault, root string, volatile bool) map[st
 		if err != nil {
 			return err
 		}
-		key := normalizeBodiesText(volatile, filepath.ToSlash(rel))
+		key := normalizeBodiesText(volatile, maskJournalDay(filepath.ToSlash(rel)))
 		if volatile && strings.HasPrefix(filepath.ToSlash(rel), ".symdesk/history/objects/") {
 			// Content ids embed the wall clock and identical contents of one
 			// second share an object, so neither names nor counts are stable;

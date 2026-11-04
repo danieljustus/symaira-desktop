@@ -140,7 +140,7 @@ pub fn journal_days(tree: BTreeMap<String, String>) -> BTreeMap<String, String> 
                 .and_then(|rest| rest.strip_suffix(SUFFIX))
                 .filter(|day| is_day(day));
             match day {
-                Some(_) => (format!("{PREFIX}$DAY{SUFFIX}"), value),
+                Some(_) => (format!("{PREFIX}$DATE{SUFFIX}"), value),
                 None => (key, value),
             }
         })
@@ -166,7 +166,7 @@ mod journal_day_tests {
         let masked = journal_days(tree.clone());
         assert_eq!(
             masked
-                .get(".symdesk/journal/$DAY.ndjson")
+                .get(".symdesk/journal/$DATE.ndjson")
                 .map(String::as_str),
             Some("a")
         );
@@ -182,7 +182,7 @@ mod journal_day_tests {
         .into();
         assert_eq!(
             journal_days(other).keys().next(),
-            masked.keys().find(|key| key.contains("$DAY"))
+            masked.keys().find(|key| key.contains("$DATE"))
         );
     }
 }

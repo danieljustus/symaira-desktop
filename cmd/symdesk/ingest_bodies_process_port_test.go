@@ -168,7 +168,7 @@ func snapshotIngestTree(t *testing.T, dir, root, closedPort string, skip func(re
 		if err != nil {
 			return err
 		}
-		rel = filepath.ToSlash(rel)
+		rel = maskJournalDay(filepath.ToSlash(rel))
 		if skip != nil && skip(rel) {
 			return nil
 		}

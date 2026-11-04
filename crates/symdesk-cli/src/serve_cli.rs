@@ -235,33 +235,40 @@ fn settings(
         worker_token.clone_from(&options.worker_token);
     }
     // An options value replaces the flag's environment default, never a flag.
-    let with_options = |name: &str, default: String, option: &str| -> String {
-        if !option.is_empty() && !changed(matches, name) {
-            option.to_owned()
-        } else {
-            last(matches, name).unwrap_or(default)
+    // The environment is only read (and so only validated) when it is the value
+    // that wins.
+    let with_options = |name: &str,
+                        default: &dyn Fn() -> Result<String, String>,
+                        option: &str|
+     -> Result<String, String> {
+        if !changed(matches, name) && !option.is_empty() {
+            return Ok(option.to_owned());
+        }
+        match last(matches, name) {
+            Some(value) => Ok(value),
+            None => default(),
         }
     };
     let listen = with_options(
         "listen",
-        environment_or("SYMDESK_SERVER_LISTEN", "127.0.0.1:8787")?,
+        &|| environment_or("SYMDESK_SERVER_LISTEN", "127.0.0.1:8787"),
         &options.listen,
-    );
+    )?;
     let worker_engine = with_options(
         "worker-engine",
-        environment_or("SYMDESK_WORKER_ENGINE", "tesseract")?,
+        &|| environment_or("SYMDESK_WORKER_ENGINE", "tesseract"),
         &options.worker_engine,
-    );
+    )?;
     let ollama_url = with_options(
         "ollama-url",
-        environment_or("OLLAMA_HOST", "http://127.0.0.1:11434")?,
+        &|| environment_or("OLLAMA_HOST", "http://127.0.0.1:11434"),
         &options.ollama_url,
-    );
+    )?;
     let ollama_model = with_options(
         "ollama-model",
-        environment("SYMDESK_OLLAMA_MODEL")?,
+        &|| environment("SYMDESK_OLLAMA_MODEL"),
         &options.ollama_model,
-    );
+    )?;
     let local_worker = if changed(matches, "local-worker") {
         let text = last(matches, "local-worker").unwrap_or_default();
         parse_bool(&text).ok_or_else(|| {

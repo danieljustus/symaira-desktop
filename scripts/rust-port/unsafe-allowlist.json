@@ -1,0 +1,97 @@
+{
+  "_comment": "SEC-004 unsafe allowlist. Gate: scripts/rust-port/unsafe-inventory.py (make rust-unsafe-inventory). Counts are exact `unsafe` keyword tokens (comments and literals excluded). Production (scope=src) tokens also need a // SAFETY: comment. Add an entry only with a safety invariant and a focused test.",
+  "crate_roots_allowing_unsafe": [],
+  "unsafe": [
+    {
+      "path": "crates/symdesk-cli/src/index_status_process.rs",
+      "count": 0,
+      "scope": "src",
+      "invariant": "Only the `#[allow(unsafe_code)]` on the `#[cfg(windows)]` module declaration of index_status_process_windows.rs; it contains no unsafe token itself.",
+      "test": "crates/symdesk-cli/src/index_status_process_windows_tests.rs"
+    },
+    {
+      "path": "crates/symdesk-cli/src/index_status_process_windows.rs",
+      "count": 22,
+      "scope": "src",
+      "invariant": "Windows-only Win32 Job Object / thread-snapshot FFI behind owning RAII handle wrappers: handles are opened/created in this module, closed exactly once on drop, structs have the SDK ABI layout, and the suspended child is resumed only after Job assignment. Every call site carries a `// SAFETY:` comment. Windows is not a required port target (scope decision 2026-10-29): the focused tests compile and run only on Windows and are NOT exercised by the macOS/Linux local gate.",
+      "test": "crates/symdesk-cli/src/index_status_process_windows_tests.rs"
+    },
+    {
+      "path": "crates/symdesk-cli/src/lifecycle.rs",
+      "count": 7,
+      "scope": "src",
+      "invariant": "Unix libc FFI only: self-pipe/fcntl/poll/signal/raise/gethostname called with valid stack buffers and descriptors created in this module; the SIGINT/SIGTERM handler `on_signal` performs only async-signal-safe operations (atomic store + one `write`). Every call site carries a `// SAFETY:` comment (enforced by the inventory).",
+      "test": "crates/symdesk-cli/tests/signals.rs::signals_match_go"
+    },
+    {
+      "path": "crates/symdesk-index/tests/metadata_contracts.rs",
+      "count": 2,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by a process-wide mutex in `with_sidecar_env`, so no test thread reads the environment concurrently.",
+      "test": "crates/symdesk-index/tests/metadata_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/barcode_contracts.rs",
+      "count": 1,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `ENV_LOCK`.",
+      "test": "crates/symdesk-ingest/tests/barcode_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/magika_contracts.rs",
+      "count": 2,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `PATH_LOCK`; PATH is restored afterwards.",
+      "test": "crates/symdesk-ingest/tests/magika_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/mail_behaviour.rs",
+      "count": 6,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `ENV_LOCK`.",
+      "test": "crates/symdesk-ingest/tests/mail_behaviour.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/mail_contracts.rs",
+      "count": 2,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `ENV_LOCK` and undone by `EnvGuard::drop`.",
+      "test": "crates/symdesk-ingest/tests/mail_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/paperless_run_contracts.rs",
+      "count": 1,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `ENV_LOCK`; the server thread never reads TMPDIR.",
+      "test": "crates/symdesk-ingest/tests/paperless_run_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-ingest/tests/paperless_verify_contracts.rs",
+      "count": 1,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. Calls are serialised by `ENV_LOCK`; the server thread never reads TMPDIR.",
+      "test": "crates/symdesk-ingest/tests/paperless_verify_contracts.rs"
+    },
+    {
+      "path": "crates/symdesk-render/tests/export_vault_contract.rs",
+      "count": 1,
+      "scope": "test",
+      "invariant": "`libc::mkfifo` receives a valid NUL-terminated `CString` path that outlives the call; it creates a FIFO inside the test's private scratch vault to prove the exporter rejects non-regular files.",
+      "test": "crates/symdesk-render/tests/export_vault_contract.rs"
+    },
+    {
+      "path": "crates/symroom-cli/src/mcp.rs",
+      "count": 1,
+      "scope": "src",
+      "invariant": "`libc::signal(SIGPIPE, SIG_DFL)` only resets one signal disposition (restores Go's die-on-EPIPE behaviour); no handler is installed and no memory is shared.",
+      "test": "crates/symroom-cli/tests/mcp_process.rs"
+    },
+    {
+      "path": "crates/symroom-core/tests/identity_events_contracts.rs",
+      "count": 1,
+      "scope": "test",
+      "invariant": "Edition-2024 `std::env::set_var`/`remove_var` are `unsafe` because a concurrent environment read is a data race. The test binary runs one single-threaded `#[test]`, so the mutation is confined to it (documented at `set_env`).",
+      "test": "crates/symroom-core/tests/identity_events_contracts.rs"
+    }
+  ]
+}

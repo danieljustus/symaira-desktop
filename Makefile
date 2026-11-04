@@ -165,7 +165,7 @@ ingest-ocr-fixtures-generate:
 .PHONY: ingest-differential
 ingest-differential: ingest-queue-differential ingest-store-differential ingest-extraction-differential ingest-structured-differential ingest-magika-differential ingest-pipeline-differential ingest-barcode-differential ingest-vlm-differential ingest-paperless-run-differential ingest-paperless-verify-differential ingest-notion-report-differential ingest-mail-differential ingest-watcher-differential ingest-ocr-differential notion-import-differential paperless-mapping-differential paperless-state-differential paperless-export-differential paperless-http-differential
 
-.PHONY: benchmark-large boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large rust-miri rust-unsafe-inventory boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: retention-cli-regressions-test
@@ -1678,6 +1678,33 @@ rust-security:
 	$(CARGO) audit
 	$(CARGO) deny check
 
+# SEC-004 unsafe policy. The deterministic inventory is the gate (default
+# deny(unsafe_code) at every crate root, exact per-file `unsafe` counts against
+# scripts/rust-port/unsafe-allowlist.json, SAFETY comments, a documented focused
+# test per exception). It has a negative-control self test. cargo-geiger is not
+# the gate: it works per package (`cargo geiger --manifest-path <abs crate
+# Cargo.toml>`), counts dependency code and cannot fail on a workspace-owned
+# regression; use it ad hoc as an inventory only.
+rust-unsafe-inventory:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/rust-port/test_unsafe_inventory.py
+	python3 scripts/rust-port/unsafe-inventory.py
+
+# CORE-002/003 (and CORE-001, German search normalization) under Miri: the
+# core_contracts replay reads only include_str! fixtures, so no filesystem or
+# process isolation exception is needed. Install once with
+#   rustup toolchain install $(RUST_NIGHTLY) --profile minimal --component miri,rust-src
+# The gate fails when Miri runs fewer than MIRI_MIN_TESTS cases: zero or
+# filtered-out tests are not a pass.
+MIRI_MIN_TESTS ?= 4
+rust-miri:
+	@out="$$(mktemp)"; \
+	$(CARGO) +$(RUST_NIGHTLY) miri test -p symdesk-core --test core_contracts --locked > "$$out" 2>&1; rc=$$?; \
+	cat "$$out"; \
+	if [ $$rc -ne 0 ]; then rm -f "$$out"; exit $$rc; fi; \
+	passed="$$(sed -n 's/^test result: ok\. \([0-9][0-9]*\) passed.*/\1/p' "$$out" | tail -n 1)"; rm -f "$$out"; \
+	if [ "$${passed:-0}" -lt "$(MIRI_MIN_TESTS)" ]; then echo "rust-miri: only $${passed:-0} test(s) executed, expected >= $(MIRI_MIN_TESTS)" >&2; exit 1; fi; \
+	echo "rust-miri: $$passed test(s) executed under Miri ($(RUST_NIGHTLY))"
+
 rust-version-contract:
 	@mkdir -p bin/port
 	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
@@ -1703,7 +1730,7 @@ native-record:
 	@python3 scripts/rust-port/native-record.py --binary "$(RUST_TARGET_DIR)/release/symdesk" \
 		--expected-version "$(if $(VERSION),$(VERSION),(devel))" --temp-root "$(NATIVE_RECORD_TEMP_ROOT)"
 
-rust-gates: rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract
+rust-gates: rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-unsafe-inventory rust-version-contract
 
 clean:
 	go clean -cache -testcache

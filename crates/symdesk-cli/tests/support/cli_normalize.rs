@@ -72,6 +72,20 @@ fn date_md_len(bytes: &[u8], at: usize) -> Option<usize> {
     matches.then_some(13)
 }
 
+/// Mirrors `portJournalToday`: the daily journal of the run's own UTC day has a
+/// clock-dependent name; journals of other days keep theirs.
+pub fn journal_key(relative: &str) -> String {
+    let today = format!(
+        ".symdesk/journal/{}.ndjson",
+        time::OffsetDateTime::now_utc().date()
+    );
+    if relative == today {
+        ".symdesk/journal/$DATE.ndjson".to_owned()
+    } else {
+        relative.to_owned()
+    }
+}
+
 /// Replaces every token the Go recorder replaces with a stable marker.
 pub fn normalize(text: &str, raw_root: &Path, canonical_root: &Path, with_date: bool) -> String {
     let mut text: String = text

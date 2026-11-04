@@ -471,6 +471,7 @@ fn snapshot(
                 .expect("below vault")
                 .to_string_lossy()
                 .replace('\\', "/");
+            let relative = cli_normalize::journal_key(&relative);
             if volatile && relative.starts_with(".symdesk/history/objects/") {
                 // Content ids embed the wall clock and identical contents of
                 // one second share an object, so neither names nor counts are

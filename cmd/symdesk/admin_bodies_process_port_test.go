@@ -204,7 +204,7 @@ func snapshotAdminTree(t *testing.T, dir, root string, volatile, hashFiles bool)
 		if err != nil {
 			return err
 		}
-		slash := filepath.ToSlash(rel)
+		slash := portJournalToday(filepath.ToSlash(rel))
 		key := normalizeAdminText(volatile, slash)
 		if volatile && strings.HasPrefix(slash, ".symdesk/history/objects/") {
 			// Content ids embed the wall clock and identical contents of one

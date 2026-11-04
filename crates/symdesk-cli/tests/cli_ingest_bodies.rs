@@ -281,6 +281,7 @@ fn snapshot(
                 .expect("below directory")
                 .to_string_lossy()
                 .replace('\\', "/");
+            let relative = cli_normalize::journal_key(&relative);
             if skip(&relative) {
                 return None;
             }

@@ -491,6 +491,7 @@ fn snapshot(
                 .expect("below directory")
                 .to_string_lossy()
                 .replace('\\', "/");
+            let relative = cli_normalize::journal_key(&relative);
             let key = normalize_text(&relative, volatile);
             if volatile && relative.starts_with(".symdesk/history/objects/") {
                 // Content ids embed the wall clock and identical contents of

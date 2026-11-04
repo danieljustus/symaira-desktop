@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 )
 
@@ -152,6 +153,16 @@ func observeCLIBodiesProcess(t *testing.T) cliBodiesFixture {
 	return fixture
 }
 
+// portJournalToday hides the clock-dependent name of the daily journal of the
+// run's own UTC day (the cases run with TZ=UTC) so recordings stay valid on any
+// day; journals of other days keep their names.
+func portJournalToday(rel string) string {
+	if rel == ".symdesk/journal/"+time.Now().UTC().Format("2006-01-02")+".ndjson" {
+		return ".symdesk/journal/$DATE.ndjson"
+	}
+	return rel
+}
+
 // snapshotBodiesVault returns every regular file below the vault: text files
 // as normalized text, anything else as its SHA-256.
 func snapshotBodiesVault(t *testing.T, vault, root string, volatile bool) map[string]string {
@@ -168,6 +179,7 @@ func snapshotBodiesVault(t *testing.T, vault, root string, volatile bool) map[st
 		if err != nil {
 			return err
 		}
+		rel = portJournalToday(filepath.ToSlash(rel))
 		data, err := os.ReadFile(path) //nolint:gosec // test-only walk below a temporary vault
 		if err != nil {
 			return err

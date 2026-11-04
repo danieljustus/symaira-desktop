@@ -256,6 +256,8 @@ type httpFixture struct {
 var (
 	httpRFC3339 = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})`)
 	httpHexRun  = regexp.MustCompile(`[0-9a-f]{24,}`)
+	// httpResolver matches the "on <resolver>:53" part of a failed lookup.
+	httpResolver = regexp.MustCompile(`lookup (\S+) on \S+: `)
 	// httpArchiveMonth matches the year/month folders of archived uploads.
 	httpArchiveMonth = regexp.MustCompile(`archive/\d{4}/\d{2}/`)
 	httpBoundry      = regexp.MustCompile(`boundary=[0-9a-f]+`)
@@ -528,6 +530,8 @@ func (s *httpServer) maskText(text string, mask []string) string {
 	// mime.TypeByExtension(".md") reads the host's MIME tables: macOS has none,
 	// many Linux images map it to text/markdown. Both are the same server path.
 	text = strings.ReplaceAll(text, "text/markdown; charset=utf-8", "text/plain; charset=utf-8")
+	// The resolver that answered a failed lookup is host configuration.
+	text = httpResolver.ReplaceAllString(text, "lookup $$1: ")
 	text = strings.ReplaceAll(text, fmt.Sprintf("127.0.0.1:%d", s.port), "127.0.0.1:$PORT")
 	text = strings.ReplaceAll(text, s.vault, "$VAULT")
 	text = strings.ReplaceAll(text, s.root, "$ROOT")
@@ -827,8 +831,9 @@ func observeHTTPStep(t *testing.T, s *httpServer, step httpStep, mtime int64) ht
 	switch step.Kind {
 	case "fs":
 		httpApplyFS(t, s, step, mtime)
-		// Let the vault watcher deliver the change before the next request.
-		time.Sleep(300 * time.Millisecond)
+		// Let the vault watcher deliver the change before the next request (two
+		// steps in the whole fixture; a loaded host delays file events).
+		time.Sleep(2500 * time.Millisecond)
 		return httpObserved{}
 	case "tree":
 		return httpObserved{Tree: s.tree(step.TreeInclude, step.Mask)}

@@ -315,6 +315,7 @@ struct Patterns {
     rfc3339: Regex,
     hex_run: Regex,
     archive_month: Regex,
+    resolver: Regex,
     boundary: Regex,
     version: Regex,
     date: Regex,
@@ -326,6 +327,7 @@ fn patterns() -> Patterns {
             .unwrap(),
         hex_run: Regex::new(r"[0-9a-f]{24,}").unwrap(),
         archive_month: Regex::new(r"archive/\d{4}/\d{2}/").unwrap(),
+        resolver: Regex::new(r"lookup (\S+) on \S+: ").unwrap(),
         boundary: Regex::new(r"boundary=[0-9a-f]+").unwrap(),
         version: Regex::new(r#""version":"[^"]*""#).unwrap(),
         date: Regex::new(r"[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT")
@@ -493,6 +495,12 @@ impl Server {
         let mut out = self.secrets.redact(text);
         // The host's MIME tables decide `.md` (see maskText in the Go recorder).
         out = out.replace("text/markdown; charset=utf-8", "text/plain; charset=utf-8");
+        // The resolver that answered a failed lookup is host configuration.
+        out = self
+            .patterns
+            .resolver
+            .replace_all(&out, "lookup $1: ")
+            .into_owned();
         out = self
             .patterns
             .archive_month
@@ -974,7 +982,7 @@ impl Server {
                 self.apply_fs(step, mtime)?;
                 // Let the vault watcher (FSEvents/inotify) deliver the change:
                 // the snapshot cache trusts notifications, not metadata.
-                std::thread::sleep(Duration::from_millis(500));
+                std::thread::sleep(Duration::from_millis(2500));
                 Ok(Observed::default())
             }
             "tree" => Ok(Observed {
@@ -1970,13 +1978,17 @@ fn compare(label: &str, expected: &Observed, actual: &Observed, problems: &mut V
 
 fn run_case(binary: &Path, case: &Case) -> Vec<String> {
     let mut problems = Vec::new();
+    // The clock alone is not unique: macOS ticks in microseconds and four
+    // cases start at once.
+    static SEQUENCE: AtomicUsize = AtomicUsize::new(0);
     let base = std::env::temp_dir().join(format!(
-        "http-replay-{}-{}",
+        "http-replay-{}-{}-{}",
         std::process::id(),
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_nanos()
+            .as_nanos(),
+        SEQUENCE.fetch_add(1, Ordering::SeqCst)
     ));
     fs::create_dir_all(&base).unwrap();
     let root = fs::canonicalize(&base).unwrap();

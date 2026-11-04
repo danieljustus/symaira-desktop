@@ -9,3 +9,10 @@ Tests/SymDeskAppTests
 Tests/SymDeskCoreTests
 Tests/SymDeskMobileTests
 docs
+target
+bin
+evidence
+scratch
+fuzz/target
+fuzz/corpus
+fuzz/artifacts

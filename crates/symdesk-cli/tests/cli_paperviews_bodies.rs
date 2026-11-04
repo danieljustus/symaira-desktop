@@ -653,7 +653,13 @@ fn cli_bodies_match_go_process_contract() {
             );
             if let Some(expected) = &step.vault {
                 snapshots += 1;
-                let tree = snapshot(&vault, &root, &canonical, case.volatile_history);
+                let tree = cli_normalize::journal_days(snapshot(
+                    &vault,
+                    &root,
+                    &canonical,
+                    case.volatile_history,
+                ));
+                let expected = &cli_normalize::journal_days(expected.clone());
                 if &tree != expected {
                     let mut differences = Vec::new();
                     for key in expected.keys().chain(tree.keys()) {

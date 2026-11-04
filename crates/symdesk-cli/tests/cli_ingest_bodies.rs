@@ -480,14 +480,14 @@ fn cli_ingest_bodies_match_go_process_contract() {
             }
             if case.snapshot_vault {
                 vault_snapshots += 1;
-                let expected = step.vault.clone().unwrap_or_default();
-                let tree = snapshot(
+                let expected = cli_normalize::journal_days(step.vault.clone().unwrap_or_default());
+                let tree = cli_normalize::journal_days(snapshot(
                     &vault,
                     &root,
                     &canonical,
                     &placeholders["$CLOSED_PORT"],
                     &|_| false,
-                );
+                ));
                 if tree != expected {
                     failures.push(format!(
                         "{label} vault tree\n{}",

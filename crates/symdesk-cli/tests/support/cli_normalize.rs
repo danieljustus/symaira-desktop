@@ -3,7 +3,7 @@
 //! `remoteDateRE` in `cmd/symdesk/remote_command_process_port_test.go`.
 #![allow(dead_code)] // each replay uses a subset
 
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path};
 
 fn is_digit(byte: Option<&u8>) -> bool {
     byte.is_some_and(u8::is_ascii_digit)
@@ -116,4 +116,73 @@ pub fn normalize(text: &str, raw_root: &Path, canonical_root: &Path, with_date: 
         }
     }
     out
+}
+
+/// `.symdesk/journal/<day>.ndjson` is named after the wall-clock day of the run.
+/// Go's recording keeps the day it was generated on, so a replay on any other
+/// day differs only in that file name. Compare the shape, not the day: both the
+/// recorded and the observed tree go through this before they are compared.
+pub fn journal_days(tree: BTreeMap<String, String>) -> BTreeMap<String, String> {
+    const PREFIX: &str = ".symdesk/journal/";
+    const SUFFIX: &str = ".ndjson";
+    let is_day = |name: &str| {
+        let bytes = name.as_bytes();
+        bytes.len() == 10
+            && bytes.iter().enumerate().all(|(index, byte)| match index {
+                4 | 7 => *byte == b'-',
+                _ => byte.is_ascii_digit(),
+            })
+    };
+    tree.into_iter()
+        .map(|(key, value)| {
+            let day = key
+                .strip_prefix(PREFIX)
+                .and_then(|rest| rest.strip_suffix(SUFFIX))
+                .filter(|day| is_day(day));
+            match day {
+                Some(_) => (format!("{PREFIX}$DAY{SUFFIX}"), value),
+                None => (key, value),
+            }
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod journal_day_tests {
+    use super::journal_days;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn journal_days_masks_only_dated_journal_files() {
+        let tree: BTreeMap<String, String> = [
+            (".symdesk/journal/2026-11-01.ndjson", "a"),
+            (".symdesk/journal/not-a-day.ndjson", "b"),
+            (".symdesk/journal/2026-11-01.json", "c"),
+            ("notes/2026-11-01.ndjson", "d"),
+        ]
+        .into_iter()
+        .map(|(key, value)| (key.to_owned(), value.to_owned()))
+        .collect();
+        let masked = journal_days(tree.clone());
+        assert_eq!(
+            masked
+                .get(".symdesk/journal/$DAY.ndjson")
+                .map(String::as_str),
+            Some("a")
+        );
+        assert_eq!(masked.len(), 4);
+        assert!(masked.contains_key(".symdesk/journal/not-a-day.ndjson"));
+        assert!(masked.contains_key(".symdesk/journal/2026-11-01.json"));
+        assert!(masked.contains_key("notes/2026-11-01.ndjson"));
+        // A different day maps to the same key, so recorded and observed trees agree.
+        let other: BTreeMap<String, String> = [(
+            ".symdesk/journal/2030-01-31.ndjson".to_owned(),
+            "a".to_owned(),
+        )]
+        .into();
+        assert_eq!(
+            journal_days(other).keys().next(),
+            masked.keys().find(|key| key.contains("$DAY"))
+        );
+    }
 }

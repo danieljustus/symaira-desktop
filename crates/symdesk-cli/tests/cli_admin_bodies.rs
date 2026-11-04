@@ -240,7 +240,11 @@ fn files_under(directory: &Path, out: &mut Vec<PathBuf>) {
         };
         if kind.is_dir() {
             files_under(&path, out);
-        } else if kind.is_file() {
+        } else if kind.is_file() && entry.file_name() != ".DS_Store" {
+            // macOS (Finder/Spotlight) may drop `.DS_Store` into a scratch
+            // tree mid-run; it is host metadata, not part of the CLI contract
+            // (it turned `demo init --size large` digests into a 10028-file
+            // tree that Go never produces).
             out.push(path);
         }
     }
@@ -702,7 +706,14 @@ fn cli_admin_bodies_match_go_process_contract() {
             }
             if let Some(expected) = &step.cwd {
                 cwd_snapshots += 1;
-                let tree = snapshot(&cwd, &root, &canonical, case.volatile, case.hash_files);
+                let tree = cli_normalize::journal_days(snapshot(
+                    &cwd,
+                    &root,
+                    &canonical,
+                    case.volatile,
+                    case.hash_files,
+                ));
+                let expected = &cli_normalize::journal_days(expected.clone());
                 if &tree != expected {
                     let mut differences = Vec::new();
                     for key in expected.keys().chain(tree.keys()) {
@@ -720,7 +731,14 @@ fn cli_admin_bodies_match_go_process_contract() {
             }
             if let Some(expected) = &step.vault {
                 snapshots += 1;
-                let tree = snapshot(&vault, &root, &canonical, case.volatile, case.hash_files);
+                let tree = cli_normalize::journal_days(snapshot(
+                    &vault,
+                    &root,
+                    &canonical,
+                    case.volatile,
+                    case.hash_files,
+                ));
+                let expected = &cli_normalize::journal_days(expected.clone());
                 if &tree != expected {
                     let mut differences = Vec::new();
                     for key in expected.keys().chain(tree.keys()) {

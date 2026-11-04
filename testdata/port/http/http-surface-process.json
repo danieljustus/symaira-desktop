@@ -50388,6 +50388,64 @@
           }
         },
         {
+          "label": "provider failure echoing the api key",
+          "method": "POST",
+          "target": "/api/v1/ai/transform",
+          "headers": [
+            [
+              "Authorization",
+              "Bearer $ADMIN"
+            ]
+          ],
+          "body": "{\"text\":\"key echo provider input\"}",
+          "mask": [
+            "time",
+            "hex",
+            "version",
+            "date"
+          ],
+          "volatile_length": true,
+          "redacts": [
+            "PROVKEY"
+          ],
+          "expect": {
+            "status": 200,
+            "reason": "OK",
+            "headers": [
+              [
+                "cache-control",
+                "no-store"
+              ],
+              [
+                "connection",
+                "close"
+              ],
+              [
+                "content-security-policy",
+                "default-src 'none'; frame-ancestors 'none'"
+              ],
+              [
+                "content-type",
+                "application/x-ndjson"
+              ],
+              [
+                "referrer-policy",
+                "no-referrer"
+              ],
+              [
+                "transfer-encoding",
+                "chunked"
+              ],
+              [
+                "x-content-type-options",
+                "nosniff"
+              ]
+            ],
+            "body": "{\"type\":\"answer\",\"text\":\"⚠️ Request failed: ollama: llmkit: auth_failure (status 401): rejected credential $PROVKEY for this model\\n\"}\n{\"type\":\"done\"}\n",
+            "closed": true
+          }
+        },
+        {
           "label": "oversized provider line",
           "method": "POST",
           "target": "/api/v1/ai/transform",
@@ -50564,7 +50622,7 @@
           "kind": "provider",
           "count": 2,
           "expect": {
-            "body": "POST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nshort provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ngated provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nsplit provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nprovider error input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\noversized provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ndisconnect provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nhang provider input\\n---\\n\",\"stream\":true}\ncancellations=2",
+            "body": "POST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nshort provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ngated provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nsplit provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nprovider error input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nkey echo provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\noversized provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ndisconnect provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nhang provider input\\n---\\n\",\"stream\":true}\ncancellations=2",
             "closed": false
           }
         },
@@ -50755,8 +50813,8 @@
           ],
           "volatile_length": true,
           "expect": {
-            "status": 200,
-            "reason": "OK",
+            "status": 429,
+            "reason": "Too Many Requests",
             "headers": [
               [
                 "cache-control",
@@ -50772,23 +50830,23 @@
               ],
               [
                 "content-type",
-                "application/x-ndjson"
+                "application/json"
               ],
               [
                 "referrer-policy",
                 "no-referrer"
               ],
               [
-                "transfer-encoding",
-                "chunked"
+                "retry-after",
+                "$RETRY"
               ],
               [
                 "x-content-type-options",
                 "nosniff"
               ]
             ],
-            "body": "{\"type\":\"answer\",\"text\":\"first\"}\n{\"type\":\"answer\",\"text\":\" second\"}\n{\"type\":\"done\"}\n",
-            "body_len": 84,
+            "body": "{\"error\":\"too many AI requests — try again shortly\"}\n",
+            "body_len": 55,
             "closed": true
           }
         },
@@ -50852,7 +50910,7 @@
           "label": "provider requests",
           "kind": "provider",
           "expect": {
-            "body": "POST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nshort provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ngated provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nsplit provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nprovider error input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\noversized provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ndisconnect provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nhang provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nworker provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Continue the following text in a meaningful way, keeping the same style and tone. Return only the continuation, not the original text. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ncontinue provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Rewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nrewrite provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Rewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nunknown provider input\\n---\\n\",\"stream\":true}\ncancellations=2",
+            "body": "POST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nshort provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ngated provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nsplit provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nprovider error input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nkey echo provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\noversized provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ndisconnect provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nhang provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nworker provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Continue the following text in a meaningful way, keeping the same style and tone. Return only the continuation, not the original text. Answer in the language of the input text as pure Markdown text.\\n\\n---\\ncontinue provider input\\n---\\n\",\"stream\":true}\nPOST /api/generate {\"model\":\"fixture-model\",\"prompt\":\"Rewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\\n\\n---\\nrewrite provider input\\n---\\n\",\"stream\":true}\ncancellations=2",
             "closed": false
           }
         }
@@ -58462,6 +58520,86 @@
           "expect": {
             "closed": false,
             "exit": "still running after 8s"
+          }
+        },
+        {
+          "label": "help long",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "--help"
+          ],
+          "expect": {
+            "body": "stdout:\nRun the self-hosted SymDesk API and processing queue\n\nUsage:\n  symdesk serve [flags]\n\nFlags:\n  -h, --help                   help for serve\n      --listen string          listen address (default \"127.0.0.1:8787\")\n      --local-worker           process OCR jobs inside the server container\n      --ocr-language string    Tesseract languages for the local worker (default \"deu+eng\")\n      --ollama-model string    Ollama vision model for the local worker\n      --ollama-url string      Ollama base URL for the local worker (default \"http://127.0.0.1:11434\")\n      --tls-cert string        TLS certificate path\n      --tls-key string         TLS private-key path\n      --token string           admin/client bearer token (or SYMDESK_SERVER_TOKEN; minimum 32 characters)\n      --worker-engine string   local worker OCR engine (default \"tesseract\")\n      --worker-token string    separate bearer token scoped to worker routes only (or SYMDESK_WORKER_TOKEN; minimum 32 characters). When unset, workers must use --token instead\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\nstderr:\n",
+            "closed": false,
+            "exit": "exit 0"
+          }
+        },
+        {
+          "label": "help short",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "-h"
+          ],
+          "expect": {
+            "body": "stdout:\nRun the self-hosted SymDesk API and processing queue\n\nUsage:\n  symdesk serve [flags]\n\nFlags:\n  -h, --help                   help for serve\n      --listen string          listen address (default \"127.0.0.1:8787\")\n      --local-worker           process OCR jobs inside the server container\n      --ocr-language string    Tesseract languages for the local worker (default \"deu+eng\")\n      --ollama-model string    Ollama vision model for the local worker\n      --ollama-url string      Ollama base URL for the local worker (default \"http://127.0.0.1:11434\")\n      --tls-cert string        TLS certificate path\n      --tls-key string         TLS private-key path\n      --token string           admin/client bearer token (or SYMDESK_SERVER_TOKEN; minimum 32 characters)\n      --worker-engine string   local worker OCR engine (default \"tesseract\")\n      --worker-token string    separate bearer token scoped to worker routes only (or SYMDESK_WORKER_TOKEN; minimum 32 characters). When unset, workers must use --token instead\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\nstderr:\n",
+            "closed": false,
+            "exit": "exit 0"
+          }
+        },
+        {
+          "label": "unknown flag",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "--bogus"
+          ],
+          "expect": {
+            "body": "stdout:\nstderr:\nunknown flag: --bogus",
+            "closed": false,
+            "exit": "exit 1"
+          }
+        },
+        {
+          "label": "bad bool value",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "--local-worker=maybe"
+          ],
+          "expect": {
+            "body": "stdout:\nstderr:\ninvalid argument \"maybe\" for \"--local-worker\" flag: strconv.ParseBool: parsing \"maybe\": invalid syntax",
+            "closed": false,
+            "exit": "exit 1"
+          }
+        },
+        {
+          "label": "flag without value",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "--token"
+          ],
+          "expect": {
+            "body": "stdout:\nstderr:\nflag needs an argument: --token",
+            "closed": false,
+            "exit": "exit 1"
+          }
+        },
+        {
+          "label": "help beats other flags",
+          "kind": "launch",
+          "with_stdout": true,
+          "args": [
+            "--listen",
+            "127.0.0.1:$PORT",
+            "--help"
+          ],
+          "expect": {
+            "body": "stdout:\nRun the self-hosted SymDesk API and processing queue\n\nUsage:\n  symdesk serve [flags]\n\nFlags:\n  -h, --help                   help for serve\n      --listen string          listen address (default \"127.0.0.1:8787\")\n      --local-worker           process OCR jobs inside the server container\n      --ocr-language string    Tesseract languages for the local worker (default \"deu+eng\")\n      --ollama-model string    Ollama vision model for the local worker\n      --ollama-url string      Ollama base URL for the local worker (default \"http://127.0.0.1:11434\")\n      --tls-cert string        TLS certificate path\n      --tls-key string         TLS private-key path\n      --token string           admin/client bearer token (or SYMDESK_SERVER_TOKEN; minimum 32 characters)\n      --worker-engine string   local worker OCR engine (default \"tesseract\")\n      --worker-token string    separate bearer token scoped to worker routes only (or SYMDESK_WORKER_TOKEN; minimum 32 characters). When unset, workers must use --token instead\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\nstderr:\n",
+            "closed": false,
+            "exit": "exit 0"
           }
         }
       ],

@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -176,6 +177,14 @@ type httpStep struct {
 	// an unread multi-megabyte body the Go server's close is a kernel race
 	// between FIN (EOF) and RST (connection reset), not a protocol behavior.
 	IgnoreClosed bool `json:"ignore_closed,omitempty"`
+	// WithStdout makes a "launch" step record stdout (the --help text) ahead of
+	// the filtered stderr.
+	WithStdout bool `json:"with_stdout,omitempty"`
+	// Redacts names secrets the Go server is known to reflect in this step (an
+	// upstream provider error is forwarded verbatim). The Go run must really
+	// leak them (the planted-leak control); the Rust server must not, and its
+	// body is compared with the Go body with the secret replaced.
+	Redacts []string `json:"redacts,omitempty"`
 	// Filesystem operations (kind "fs").
 	Op      string `json:"op,omitempty"`
 	Path    string `json:"path,omitempty"`
@@ -269,6 +278,8 @@ type httpServer struct {
 	noWork  bool
 	// leaked collects the secrets seen in raw responses.
 	leaked map[string]bool
+	// reflected holds the secrets a Redacts step saw reflected by Go.
+	reflected map[string]bool
 	// Extension state (http_process_ext_port_test.go).
 	c        httpCase
 	vault2   string
@@ -383,7 +394,16 @@ func (s *httpServer) exchange(raw []byte, headOnly bool, step httpStep, readMS i
 	observed.TLS = tlsState()
 	<-writeDone
 	for _, name := range s.secrets.leaks(wire.String()) {
+		if slices.Contains(step.Redacts, name) {
+			s.reflected[name] = true
+			continue
+		}
 		s.leaked[name] = true
+	}
+	for _, name := range step.Redacts {
+		if !s.reflected[name] {
+			s.t.Fatalf("step %q: the Go server no longer reflects %s; drop Redacts", step.Label, name)
+		}
 	}
 	return observed
 }
@@ -724,7 +744,7 @@ func observeHTTPCase(t *testing.T, binary string, c httpCase) httpCase {
 		root = resolved
 	}
 	secrets := newHTTPSecrets()
-	s := &httpServer{t: t, binary: binary, root: root, vault: filepath.Join(root, "vault"), home: filepath.Join(root, "home"), secrets: secrets, noWork: c.NoWorker, leaked: map[string]bool{}, c: c, vault2: filepath.Join(root, "vault2")}
+	s := &httpServer{t: t, binary: binary, root: root, vault: filepath.Join(root, "vault"), home: filepath.Join(root, "home"), secrets: secrets, noWork: c.NoWorker, leaked: map[string]bool{}, reflected: map[string]bool{}, c: c, vault2: filepath.Join(root, "vault2")}
 	defer s.closeExt()
 	for _, dir := range []string{s.vault, filepath.Join(s.home, "tmp")} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {

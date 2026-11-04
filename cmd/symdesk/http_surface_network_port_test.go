@@ -52,6 +52,14 @@ func httpAICases() []httpCase {
 		streamed("flushed before the provider finishes", "gated provider input", 1, true),
 		transform("split json line", "ADMIN", "split provider input"),
 		transform("provider failure", "ADMIN", "provider error input"),
+		func() httpStep {
+			// Go forwards the upstream error verbatim, so a provider echoing the
+			// planted API key hands it to the caller (SEC-002 finding): Rust must
+			// not.
+			step := transform("provider failure echoing the api key", "ADMIN", "key echo provider input")
+			step.Redacts = []string{"PROVKEY"}
+			return step
+		}(),
 		transform("oversized provider line", "ADMIN", "oversized provider input"),
 		withUntil(abort("client disconnect after first chunk", "disconnect provider input", 1), "partial"),
 		abort("client disconnect before first chunk", "hang provider input", 0),
@@ -448,6 +456,13 @@ func httpServeCases() []httpCase {
 		httpStep{Label: "flag false overrides, tls loads", Kind: "launch", Args: []string{"--vault", "$VAULT", "--token", "$ADMIN", "--listen", listen, "--local-worker=false", "--tls-cert", "$ROOT/missing.pem", "--tls-key", "$TLSKEY"}},
 		httpStep{Label: "options ollama url is checked", Kind: "launch", Args: []string{"--vault", "$VAULT", "--token", "$ADMIN", "--listen", listen, "--local-worker"}},
 		httpStep{Label: "flag ollama url beats options", Kind: "launch", Args: []string{"--vault", "$VAULT", "--token", "$ADMIN", "--listen", listen, "--local-worker", "--ollama-url", "http://127.0.0.1:1"}},
+		// `serve --help` and the flag grammar, byte for byte (stdout and stderr).
+		httpStep{Label: "help long", Kind: "launch", WithStdout: true, Args: []string{"--help"}},
+		httpStep{Label: "help short", Kind: "launch", WithStdout: true, Args: []string{"-h"}},
+		httpStep{Label: "unknown flag", Kind: "launch", WithStdout: true, Args: []string{"--bogus"}},
+		httpStep{Label: "bad bool value", Kind: "launch", WithStdout: true, Args: []string{"--local-worker=maybe"}},
+		httpStep{Label: "flag without value", Kind: "launch", WithStdout: true, Args: []string{"--token"}},
+		httpStep{Label: "help beats other flags", Kind: "launch", WithStdout: true, Args: []string{"--listen", listen, "--help"}},
 	)
 	launchCase.NoServer = true
 	launchCase.TLS = false

@@ -104,6 +104,10 @@ pub struct Step {
     #[serde(default)]
     pub ignore_closed: bool,
     #[serde(default)]
+    pub with_stdout: bool,
+    #[serde(default)]
+    pub redacts: Vec<String>,
+    #[serde(default)]
     pub op: String,
     #[serde(default)]
     pub path: String,
@@ -196,7 +200,7 @@ pub struct Secrets {
 }
 
 impl Secrets {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let mut values = BTreeMap::new();
         for name in [
             "ADMIN", "WORKER", "ADMIN2", "WORKER2", "NAMED", "WNAMED", "NAMEDADM", "SHARE",
@@ -218,7 +222,7 @@ impl Secrets {
         self.vars.lock().unwrap().insert(name.to_owned(), value);
     }
 
-    fn lookup(&self, name: &str) -> String {
+    pub fn lookup(&self, name: &str) -> String {
         self.values
             .get(name)
             .cloned()
@@ -252,7 +256,7 @@ impl Secrets {
         out
     }
 
-    fn leaks(&self, text: &str) -> Vec<String> {
+    pub fn leaks(&self, text: &str) -> Vec<String> {
         let mut names: Vec<&String> = self.values.keys().collect();
         names.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
         names
@@ -1149,13 +1153,19 @@ impl Server {
         args.extend(step.args.iter().map(|arg| self.expand_paths(arg)));
         let log = self.root.join("launch.log");
         let stderr = fs::File::create(&log).map_err(|error| error.to_string())?;
+        let stdout_log = self.root.join("launch.out");
+        let stdout = if step.with_stdout {
+            Stdio::from(fs::File::create(&stdout_log).map_err(|error| error.to_string())?)
+        } else {
+            Stdio::null()
+        };
         let mut command = Command::new(&self.binary);
         command
             .args(&args)
             .current_dir(&self.home)
             .env_clear()
             .envs(self.base_env())
-            .stdout(Stdio::null())
+            .stdout(stdout)
             .stderr(stderr);
         for (name, value) in &self.case.env {
             command.env(name, self.expand_paths(value));
@@ -1187,9 +1197,17 @@ impl Server {
         for name in self.secrets.leaks(&text) {
             self.leaked.insert(name);
         }
+        let mut body = self.mask_text(&kept.join("\n"), &step.mask);
+        if step.with_stdout {
+            let printed = fs::read_to_string(&stdout_log).unwrap_or_default();
+            body = format!(
+                "{}{body}",
+                self.mask_text(&format!("stdout:\n{printed}stderr:\n"), &step.mask)
+            );
+        }
         Ok(Observed {
             exit,
-            body: self.mask_text(&kept.join("\n"), &step.mask),
+            body,
             ..Observed::default()
         })
     }
@@ -1451,6 +1469,8 @@ mod provider {
 
     #[derive(Default)]
     struct State {
+        /// The planted provider API key the "key echo" failure reflects.
+        plant: String,
         requests: Mutex<Vec<String>>,
         cancellations: Mutex<usize>,
         gate: (Mutex<usize>, Condvar),
@@ -1463,10 +1483,13 @@ mod provider {
     }
 
     impl Provider {
-        pub fn start() -> Self {
+        pub fn start(plant: &str) -> Self {
             let listener = TcpListener::bind("127.0.0.1:0").expect("bind provider");
             let url = format!("http://{}", listener.local_addr().unwrap());
-            let state = Arc::new(State::default());
+            let state = Arc::new(State {
+                plant: plant.to_owned(),
+                ..State::default()
+            });
             let accept_state = Arc::clone(&state);
             thread::spawn(move || {
                 for stream in listener.incoming() {
@@ -1640,6 +1663,16 @@ mod provider {
             .push(format!("POST /api/generate {recorded}"));
         let cancelled = || *state.cancellations.lock().unwrap() += 1;
         let ndjson = b"HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nTransfer-Encoding: chunked\r\n\r\n";
+        if prompt.contains("key echo provider input") {
+            let body = format!("rejected credential {} for this model", state.plant);
+            return stream.write_all(
+                format!(
+                    "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            );
+        }
         if prompt.contains("provider error input") {
             return stream.write_all(
                 b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 24\r\nConnection: close\r\n\r\nfixture provider failure",
@@ -1819,12 +1852,14 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
     for dir in [vault.clone(), home.join("tmp")] {
         fs::create_dir_all(dir).unwrap();
     }
+    let secrets = Secrets::new();
+    let planted_key = secrets.lookup("PROVKEY");
     let mut server = Server {
         binary: binary.to_path_buf(),
         root: root.clone(),
         vault: vault.clone(),
         home,
-        secrets: Secrets::new(),
+        secrets,
         port: 0,
         child: None,
         rotated: false,
@@ -1833,7 +1868,7 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
         patterns: patterns(),
         case: case.clone(),
         vault2: root.join("vault2"),
-        provider: case.provider.then(provider::Provider::start),
+        provider: case.provider.then(|| provider::Provider::start(&planted_key)),
         tls_certificate: (case.tls || case.no_server).then(tls::mint),
         capture: Mutex::new(BTreeMap::new()),
     };
@@ -1886,9 +1921,17 @@ fn run_case(binary: &Path, case: &Case) -> Vec<String> {
         return problems;
     }
     for step in &case.steps {
-        let expected = step.expect.clone().unwrap_or_default();
+        let mut expected = step.expect.clone().unwrap_or_default();
+        // A secret Go reflects (SEC-002): Rust must have replaced it.
+        for name in &step.redacts {
+            expected.body = expected.body.replace(&format!("${name}"), "[redacted]");
+        }
         match server.observe_step(step, mtime) {
-            Ok(actual) => {
+            Ok(mut actual) => {
+                if !step.redacts.is_empty() {
+                    // The length recorded by Go includes the reflected secret.
+                    actual.body_len = 0;
+                }
                 compare(&format!("[{}] {}", case.name, step.label), &expected, &actual, &mut problems);
             }
             Err(error) => problems.push(format!("[{}] {}: {error}", case.name, step.label)),

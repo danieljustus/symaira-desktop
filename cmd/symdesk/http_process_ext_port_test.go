@@ -395,8 +395,11 @@ func (s *httpServer) launch(step httpStep) httpObserved {
 	for name, value := range s.c.Env {
 		cmd.Env = append(cmd.Env, name+"="+s.expandPaths(value))
 	}
-	var stderr bytes.Buffer
+	var stderr, stdout bytes.Buffer
 	cmd.Stdout = io.Discard
+	if step.WithStdout {
+		cmd.Stdout = &stdout
+	}
 	cmd.Stderr = &stderr
 	cmd.WaitDelay = time.Second
 	err := cmd.Run()
@@ -412,6 +415,9 @@ func (s *httpServer) launch(step httpStep) httpObserved {
 		kept = append(kept, line)
 	}
 	observed.Body = s.maskText(strings.Join(kept, "\n"), step.Mask)
+	if step.WithStdout {
+		observed.Body = s.maskText("stdout:\n"+stdout.String()+"stderr:\n", step.Mask) + observed.Body
+	}
 	for _, name := range s.secrets.leaks(stderr.String()) {
 		s.leaked[name] = true
 	}
@@ -522,6 +528,9 @@ type httpProvider struct {
 	requests      []string
 	cancellations int
 	gate          chan struct{}
+	// plant is the provider API key planted in the server environment: the
+	// "key echo" failure reflects it back (SEC-002).
+	plant string
 }
 
 type httpProviderRequest struct {
@@ -530,8 +539,8 @@ type httpProviderRequest struct {
 	Stream bool   `json:"stream"`
 }
 
-func newHTTPProvider(_ *httpSecrets) *httpProvider {
-	provider := &httpProvider{gate: make(chan struct{}, 8)}
+func newHTTPProvider(secrets *httpSecrets) *httpProvider {
+	provider := &httpProvider{gate: make(chan struct{}, 8), plant: secrets.values["PROVKEY"]}
 	provider.server = httptest.NewServer(http.HandlerFunc(provider.serve))
 	return provider
 }
@@ -588,6 +597,10 @@ func (p *httpProvider) serve(w http.ResponseWriter, r *http.Request) {
 		p.mu.Unlock()
 	}
 	switch {
+	case strings.Contains(prompt, "key echo provider input"):
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = io.WriteString(w, "rejected credential "+p.plant+" for this model")
+		return
 	case strings.Contains(prompt, "provider error input"):
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = io.WriteString(w, "fixture provider failure")

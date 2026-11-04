@@ -1166,6 +1166,31 @@ mod ai_ask_score_tests {
     }
 }
 
+/// SEC-002: values that must never reach a client through an upstream error
+/// text: the provider API key (configuration and environment) and the server
+/// bearer tokens. Go forwards the upstream body verbatim, so a provider that
+/// echoes its credential would hand it to the caller; Rust redacts it.
+fn ai_secret_values(state: &AppState, config: &symdesk_core::config::Config) -> Vec<String> {
+    let mut values = vec![
+        config.api_key_reference().to_owned(),
+        String::from_utf8_lossy(&state.token).into_owned(),
+    ];
+    if let Some(worker) = &state.worker_token {
+        values.push(String::from_utf8_lossy(worker).into_owned());
+    }
+    if let Ok(Some(key)) = symdesk_core::config::environment_value("SYMDESK_LLM_API_KEY") {
+        values.push(key);
+    }
+    values.retain(|value| value.len() >= 8);
+    values
+}
+
+fn redact_ai_secrets(secrets: &[String], text: &str) -> String {
+    secrets
+        .iter()
+        .fold(text.to_owned(), |text, secret| text.replace(secret, "[redacted]"))
+}
+
 async fn handle_ai_transform(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
@@ -1265,6 +1290,7 @@ async fn handle_ai_transform(
         .filter(|model| !model.is_empty())
         .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
+        let secrets = ai_secret_values(&state, &config);
         tokio::spawn(async move {
             let mut answer_capture = None;
             match stream_ollama(
@@ -1281,7 +1307,10 @@ async fn handle_ai_transform(
                 Ok(true) => {}
                 Ok(false) => return,
                 Err(error) => {
-                    let message = format!("⚠️ Request failed: {error}\n");
+                    let message = format!(
+                        "⚠️ Request failed: {}\n",
+                        redact_ai_secrets(&secrets, &error.to_string())
+                    );
                     if !send_ai_transform_answer(&provider_sender, &message).await {
                         return;
                     }
@@ -2063,6 +2092,7 @@ async fn handle_ai_ask(
     }
     .filter(|model| !model.is_empty())
     .unwrap_or_else(|| "llama3.2".to_owned());
+    let secrets = ai_secret_values(&state, &config);
     tokio::spawn(async move {
         for event in events {
             if sender.send(Ok(event)).await.is_err() {
@@ -2087,7 +2117,10 @@ async fn handle_ai_ask(
             Ok(true) => {}
             Ok(false) => return,
             Err(error) => {
-                let message = format!("⚠️ Request failed: {error}\n");
+                let message = format!(
+                    "⚠️ Request failed: {}\n",
+                    redact_ai_secrets(&secrets, &error.to_string())
+                );
                 if let Some(answer) = answer_capture.as_mut() {
                     answer.push_str(&message);
                 }

@@ -13,7 +13,7 @@ mod http_replay;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected.
 const EXPECTED_CASES: usize = 84;
-const EXPECTED_STEPS: usize = 1128;
+const EXPECTED_STEPS: usize = 1135;
 
 #[test]
 fn rust_server_replays_the_go_http_surface() {
@@ -23,4 +23,141 @@ fn rust_server_replays_the_go_http_surface() {
         EXPECTED_CASES,
         EXPECTED_STEPS,
     );
+}
+
+/// SEC-002 negative control: the leak scanner the replay relies on must flag a
+/// credential planted on the wire, in a body, a header and a log line, and must
+/// stay silent for clean traffic. Without this a scanner that never fires would
+/// make every "no secret leaked" assertion vacuous.
+#[test]
+fn leak_scanner_flags_a_planted_secret_and_only_that() {
+    use std::{
+        io::{Read, Write},
+        net::{TcpListener, TcpStream},
+        thread,
+    };
+
+    let secrets = http_replay::Secrets::new();
+    let key = secrets.lookup("PROVKEY");
+    assert!(key.len() >= 32, "planted key is long enough to be unique");
+
+    // A deliberately leaky server: the key in a header and in the body.
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let planted = key.clone();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut request = [0_u8; 256];
+        let _ = stream.read(&mut request).unwrap();
+        let body = format!("upstream rejected credential {planted}");
+        let response = format!(
+            "HTTP/1.1 401 Unauthorized\r\nX-Echo: {planted}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        );
+        stream.write_all(response.as_bytes()).unwrap();
+    });
+    let mut stream = TcpStream::connect(address).unwrap();
+    stream.write_all(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n").unwrap();
+    let mut wire = String::new();
+    stream.read_to_string(&mut wire).unwrap();
+    server.join().unwrap();
+    assert_eq!(secrets.leaks(&wire), vec!["PROVKEY".to_owned()], "planted key on the wire");
+
+    // Log lines and prefixes of a longer token are covered the same way.
+    assert_eq!(
+        secrets.leaks(&format!("level=INFO msg=\"auth {key}\"")),
+        vec!["PROVKEY".to_owned()]
+    );
+    // Clean traffic, and a truncated key, are not flagged.
+    assert!(secrets.leaks("HTTP/1.1 200 OK\r\n\r\n{\"status\":\"ok\"}").is_empty());
+    assert!(secrets.leaks(&key[..key.len() - 1]).is_empty());
+}
+
+/// The Go server forwards an upstream error body, so a provider that echoes its
+/// credential hands it to the caller; the recorded fixture marks that step
+/// `redacts` and Rust must answer with `[redacted]` instead. If the marker or
+/// the Go-side proof disappears from the fixture this fails.
+#[test]
+fn fixture_records_the_go_reflection_that_rust_redacts() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../testdata/port/http/http-surface-process.json"
+    ))
+    .unwrap();
+    let steps = fixture["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|case| case["steps"].as_array().unwrap())
+        .filter(|step| step["redacts"].is_array())
+        .collect::<Vec<_>>();
+    assert_eq!(steps.len(), 1, "exactly one recorded Go reflection");
+    let body = steps[0]["expect"]["body"].as_str().unwrap();
+    assert!(body.contains("$PROVKEY"), "Go's body carries the planted key: {body}");
+    assert_eq!(steps[0]["redacts"][0], "PROVKEY");
+    // No recorded case may list a Go leak any more: reflections are explicit.
+    for case in fixture["cases"].as_array().unwrap() {
+        assert!(
+            case["stderr_leaks"].as_array().is_none_or(Vec::is_empty),
+            "unexplained Go leak in {}",
+            case["name"]
+        );
+    }
+}
+
+/// Declared hyper-parser limit (docs/rust-port/rust-015-http-progress.md): a
+/// negative or conflicting `Content-Length` gets hyper's bodiless `400` where Go
+/// writes a `400 Bad Request` text body. Rust may be stricter than Go but never
+/// more permissive: both must refuse the request and close the connection.
+#[test]
+fn invalid_content_length_is_refused_and_closed() {
+    use std::{
+        io::{BufRead, BufReader, Read, Write},
+        net::TcpStream,
+        process::{Command, Stdio},
+    };
+
+    let root = std::env::temp_dir().join(format!("http-content-length-{}", std::process::id()));
+    let vault = root.join("vault");
+    std::fs::create_dir_all(&vault).unwrap();
+    let home = root.join("home");
+    std::fs::create_dir_all(&home).unwrap();
+    let token = "t".repeat(40);
+    let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
+        .args(["serve", "--vault"])
+        .arg(&vault)
+        .args(["--token", &token, "--listen", "127.0.0.1:0"])
+        .env_clear()
+        .env("HOME", &home)
+        .env("PATH", "/usr/bin:/bin")
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut log = BufReader::new(child.stderr.take().unwrap());
+    let mut line = String::new();
+    let address = loop {
+        line.clear();
+        assert!(log.read_line(&mut line).unwrap() > 0, "server exited early");
+        if let Some(url) = line.trim().strip_prefix("LISTENING http://") {
+            break url.to_owned();
+        }
+    };
+    for lengths in ["Content-Length: -1\r\n", "Content-Length: 2\r\nContent-Length: 3\r\n"] {
+        let mut stream = TcpStream::connect(&address).unwrap();
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+            .unwrap();
+        let request = format!(
+            "POST /api/v1/worker/lease HTTP/1.1\r\nHost: {address}\r\nAuthorization: Bearer {token}\r\n{lengths}\r\n{{}}"
+        );
+        stream.write_all(request.as_bytes()).unwrap();
+        let mut wire = Vec::new();
+        // EOF (not a timeout) proves the server closed the connection.
+        stream.read_to_end(&mut wire).unwrap();
+        let wire = String::from_utf8_lossy(&wire);
+        assert!(wire.starts_with("HTTP/1.1 400 "), "{lengths:?} -> {wire}");
+    }
+    let _ = child.kill();
+    let _ = child.wait();
+    let _ = std::fs::remove_dir_all(&root);
 }

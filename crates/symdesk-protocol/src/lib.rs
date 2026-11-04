@@ -4661,7 +4661,11 @@ async fn handle_retry_job(State(state): State<Arc<AppState>>, query: GoQuery) ->
     let file = match jobs.open_with(&relative, &options) {
         Ok(file) => file,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            return json_error(StatusCode::CONFLICT, "job not found");
+            // Go: os.OpenInRoot's *PathError text, returned verbatim by Retry.
+            return json_error(
+                StatusCode::CONFLICT,
+                &format!("openat {id}.json: no such file or directory"),
+            );
         }
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
     };
@@ -4868,41 +4872,20 @@ async fn handle_notebook(
         return json_error(StatusCode::BAD_REQUEST, "notebook id is required");
     }
 
-    let mut relative = reference.to_owned();
-    if !relative.ends_with(".md") {
-        relative.push_str(".md");
-    }
-    if !relative.starts_with(&format!("notebooks{}", std::path::MAIN_SEPARATOR)) {
-        let Some(name) = Path::new(&relative).file_name() else {
-            return json_error(StatusCode::NOT_FOUND, "notebook not found");
-        };
-        relative = format!(
-            "notebooks{}{}",
-            std::path::MAIN_SEPARATOR,
-            name.to_string_lossy()
-        );
-    }
     let root_dir = match open_current_root(&state) {
         Ok(root_dir) => root_dir,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
-    match secure_path(&state.vault_root, &relative) {
-        Ok(_) => {}
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
-    }
-    let contents = match read_root_file(&root_dir, Path::new(&relative)) {
-        Ok(contents) => contents,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+    // Go: svc.NotebookGet(id) -> notebook.Resolve; every failure is wrapped as
+    // "notebook not found: <err>" (path, read and "is not a notebook note").
+    let notebook = match symdesk_vault::load_notebook(&state.vault_root, reference) {
+        Ok(notebook) => notebook,
+        Err(error) => {
             return json_error(
                 StatusCode::NOT_FOUND,
-                "notebook not found: notebook not found",
+                &format!("notebook not found: {error}"),
             );
         }
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
-    };
-    let notebook = match parse_notebook(&relative, &contents) {
-        Ok(notebook) => notebook,
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
 
     let source_paths = notebook.sources.clone();

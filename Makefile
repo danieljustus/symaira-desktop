@@ -165,7 +165,7 @@ ingest-ocr-fixtures-generate:
 .PHONY: ingest-differential
 ingest-differential: ingest-queue-differential ingest-store-differential ingest-extraction-differential ingest-structured-differential ingest-magika-differential ingest-pipeline-differential ingest-barcode-differential ingest-vlm-differential ingest-paperless-run-differential ingest-paperless-verify-differential ingest-notion-report-differential ingest-mail-differential ingest-watcher-differential ingest-ocr-differential notion-import-differential paperless-mapping-differential paperless-state-differential paperless-export-differential paperless-http-differential
 
-.PHONY: benchmark-large rust-miri rust-unsafe-inventory boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large rust-miri rust-unsafe-inventory boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: retention-cli-regressions-test
@@ -1408,9 +1408,20 @@ retrieval-differential: $(RETRIEVAL_DIFFERENTIALS)
 index-crate-test:
 	$(CARGO) nextest run -p symdesk-index --all-features --locked --no-fail-fast
 
-INDEX_STATUS_OUTPUT ?= $(RUST_TARGET_DIR)/index-status-evidence/$(shell date -u +%Y%m%dT%H%M%SZ)
+# `symdesk index status` (126 cases, #1225): the canonical Go oracle was run once
+# through the reviewed capture.py world builder and case runner and recorded in
+# testdata/port/cli/index-status-recording.json; frozen.py replays the same
+# inventory with the Rust binary, no Go needed. `record --check` rebuilds the
+# oracle from its commit and fails on drift while Go exists. verify.py (the
+# hash-bound live Go/Rust native gate) is retired as a gate; it stays as the
+# documented provenance of the case inventory and its comparator.
+.PHONY: index-status-cli-fixtures-generate
 index-status-cli-differential:
-	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/index-status/verify.py --output "$(INDEX_STATUS_OUTPUT)" $(if $(INDEX_STATUS_BUILD_LAUNCHER),--build-launcher $(INDEX_STATUS_BUILD_LAUNCHER)) $(if $(INDEX_STATUS_ORACLE_WORKTREE),--oracle-worktree $(INDEX_STATUS_ORACLE_WORKTREE))
+	$(PORTGEN_CHECK_ENV) PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/rust-port/index-status/frozen.py record --check
+	$(CARGO) test -p symdesk-cli --locked --test index_status_frozen
+
+index-status-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/rust-port/index-status/frozen.py record
 
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
@@ -1620,11 +1631,13 @@ retention-cli-fixtures-generate:
 retention-cli-regressions-test:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/test_retention_cli_regressions.py
 
+# CLI-000: the Go diffharness cases are recorded in
+# testdata/port/representative/cli-recording.json and replayed by Rust without Go.
+# The HTTP half of this target (`http-differential`, a live Go/Rust comparison of
+# the 291-case testdata/port/http/representative.json corpus) is retired; see the
+# "retired" entry of scripts/rust-port/frozen-contract.json and the README section
+# "Go recordings of the formerly live gates". `httpdiff` stays for VALUE-001/002.
 representative-differential: representative-fixtures-check
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-		$(MAKE) http-differential PORT_LEFT="bin/port/symdesk-go" PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord --check \
 		--cases "testdata/port/representative/cases.json" --stage representative --output "testdata/port/representative/cli-recording.json"
 	$(CARGO) test -p symdesk-cli --locked --test frozen_diffharness representative
@@ -1632,11 +1645,6 @@ representative-differential: representative-fixtures-check
 representative-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord \
 		--cases "testdata/port/representative/cases.json" --stage representative --output "testdata/port/representative/cli-recording.json"
-
-http-differential: representative-fixtures-check
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/httpdiff \
-		--left "$(PORT_LEFT)" --right "$(PORT_RIGHT)" \
-		--fixture "testdata/port/http/representative.json"
 
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
 .PHONY: value-runtime-dirs value-001-evidence-tests value-001-validate

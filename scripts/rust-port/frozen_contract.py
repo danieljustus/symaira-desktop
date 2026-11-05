@@ -6,7 +6,9 @@ through `$(CARGO) test` or compares two live binaries. This runner executes each
 distinct Rust replay with every `go` executable removed from PATH, inside a
 disposable HOME/XDG/TMP root, and requires the exact recorded test counts from
 `frozen-contract.json`. Targets without a Rust replay must be declared
-`live_only`; a new differential target that is neither fails closed.
+`live_only`, or `retired` with a reason when the live Go comparison was removed
+for good (the Makefile must then no longer define the target); a new
+differential target that is none of these fails closed.
 """
 import argparse
 import json
@@ -64,7 +66,15 @@ def plan(targets, manifest):
     """Return ordered unique replay commands; reject unclassified targets."""
     live_only = manifest["live_only"]
     replays = manifest["replays"]
+    retired = manifest.get("retired", {})
     errors, commands = [], []
+    for name, reason in retired.items():
+        if not str(reason).strip():
+            errors.append(f"{name}: retired without a reason")
+        if name in targets:
+            errors.append(f"{name}: is retired but still defined in the Makefile")
+        if name in live_only:
+            errors.append(f"{name}: is both retired and live_only")
     for name, cargo in targets.items():
         if cargo is None:
             if name in live_only:

@@ -58,6 +58,22 @@ class FrozenContractControls(unittest.TestCase):
         _, errors = runner.plan(runner.differential_targets(MAKEFILE), manifest)
         self.assertIn("b-differential: no Rust replay and not declared live_only", errors)
 
+    def test_retired_targets_need_a_reason_and_must_leave_the_makefile(self):
+        targets = runner.differential_targets(MAKEFILE)
+        manifest = self.manifest()
+        manifest["retired"] = {"gone-differential": "replaced by a-differential"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertEqual(errors, [])
+        manifest["retired"] = {"gone-differential": "  "}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("gone-differential: retired without a reason", errors)
+        manifest["retired"] = {"a-differential": "still there"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("a-differential: is retired but still defined in the Makefile", errors)
+        manifest["retired"] = {"b-differential": "dup"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("b-differential: is both retired and live_only", errors)
+
     def test_replayable_target_cannot_hide_as_live_only(self):
         manifest = self.manifest()
         manifest["live_only"]["a-differential"] = "hidden"

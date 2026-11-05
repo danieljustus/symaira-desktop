@@ -1,11 +1,5 @@
 {
-  "live_only": {
-    "http-differential": "httpdiff compares live Go and Rust HTTP servers",
-    "index-status-cli-differential": "index-status/verify.py captures a Go oracle worktree at 191100811b live; native evidence harness, not yet frozen",
-    "mcp-differential": "mcpdiff compares live Go and Rust MCP servers",
-    "mcp-initialize-differential": "mcpdiff compares live Go and Rust MCP servers",
-    "render-pdfops-hostile-differential": "hostile_replay.py runs the Go oracle against real Poppler/qpdf on hostile PDFs live; not yet frozen"
-  },
+  "live_only": {},
   "mutation_controls": [
     {
       "append": "\n",
@@ -234,6 +228,56 @@
       ],
       "command": "cargo test -p symdesk-render --locked --examples --test pdfops_frozen process_safety",
       "fixture": "testdata/port/render/pdfops-recording.json"
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test mcp_representative",
+      "fixture": "testdata/port/mcp/representative-recording.json",
+      "increment": [
+        "cases",
+        7,
+        "frames",
+        0,
+        "id"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --examples --test pdfops_hostile_frozen",
+      "fixture": "testdata/port/render/pdfops-hostile-recording-darwin.json",
+      "increment": [
+        "cases",
+        0,
+        "view",
+        "delta",
+        "work/out/parts/part-001.pdf",
+        "size"
+      ],
+      "platforms": [
+        "darwin"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --examples --test pdfops_hostile_frozen",
+      "fixture": "testdata/port/render/pdfops-hostile-recording-linux.json",
+      "increment": [
+        "cases",
+        0,
+        "view",
+        "delta",
+        "work/out/parts/part-001.pdf",
+        "size"
+      ],
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test index_status_frozen",
+      "fixture": "testdata/port/cli/index-status-recording.json",
+      "increment": [
+        "cases",
+        0,
+        "exit_code"
+      ]
     }
   ],
   "replays": {
@@ -817,5 +861,8 @@
       "ignored": 0,
       "passed": 2
     }
+  },
+  "retired": {
+    "http-differential": "Retired with the Go removal (RUST-019). It compared the Go and Rust servers live over the 291-case testdata/port/http/representative.json corpus, which needs a Go binary, stateful per-case vault setup and loopback fakes that only exist in the Go harness (scripts/rust-port/cmd/httpdiff, kept for VALUE-001/002). The Go-recorded replacement that already runs here is http-surface-differential (84 cases / 1135 steps from the real Go `symdesk serve`: 21 routes x 3 credentials x 8 methods, ServeMux path cleaning, auth/rotation/named users, files and preconditions, shares, AI transform/ask against a fake provider, Host/Origin/body limits/timeouts/shutdown, TLS and serve flag precedence) plus representative-differential (CLI half, 16 cases). NOT frozen and therefore no longer compared against Go: the 58 POST /api/v1/ingest multipart variants with their persisted upload/job bytes and modes, the worker lease/complete/fail and job retry state machines, and the share-access, hybrid-index ask and provider-failure paths of that corpus; Rust keeps its own unit and protocol tests for them (symdesk_ingest::gform, symdesk-protocol) and the HTTP-004 evidence stays the recorded local run of 291 transcripts (contract-matrix.md)."
   }
 }

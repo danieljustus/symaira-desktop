@@ -448,11 +448,13 @@ def seed_go_index(
     world_key: str,
     output_dir: Path,
     manifest: dict[str, Any],
+    role: str = "go",
 ) -> None:
+    """Seed the populated world with `index`; the frozen replay seeds with the Rust binary."""
     vault = paths["vault"]
     run = record_run(
         case_id="seed_index",
-        role="go",
+        role=role,
         binary=go_binary,
         args=["--json", "--vault", str(vault), "index", str(vault)],
         paths=paths,
@@ -466,7 +468,7 @@ def seed_go_index(
     if not stdout_path.read_bytes().strip():
         run["success"] = False
         persist_manifest(output_dir, manifest)
-        raise RuntimeError(f"Go index seed emitted no stdout; raw output retained at {stdout_path}")
+        raise RuntimeError(f"{role} index seed emitted no stdout; raw output retained at {stdout_path}")
 
     sidecars = list((paths["xdg_data"] / "symdesk" / "vaults").glob("*/sidecar.db"))
     if len(sidecars) != 1:

@@ -242,6 +242,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"native store paths", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/store_paths_record.py", "--check"}, []string{"testdata/port/storage/store-paths-darwin.json", "testdata/port/storage/store-paths-linux.json"}, false},
 	{"MCP representative recording", []string{"run", "./scripts/rust-port/cmd/mcpdiff", "--check-recording", "testdata/port/mcp/representative-recording.json"}, []string{"testdata/port/mcp/representative-recording.json"}, false},
 	{"hostile PDF recording", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "-I", "scripts/rust-port/pdfops/hostile_replay.py", "--record", "--check"}, []string{"testdata/port/render/pdfops-hostile-recording-darwin.json", "testdata/port/render/pdfops-hostile-recording-linux.json"}, false},
+	{"index status CLI recording", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "-I", "scripts/rust-port/index-status/frozen.py", "record", "--check"}, []string{"testdata/port/cli/index-status-recording.json"}, false},
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {

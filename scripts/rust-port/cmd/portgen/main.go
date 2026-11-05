@@ -254,6 +254,7 @@ var fixturePaths = []string{
 	"testdata/port/mcp/representative-recording.json",
 	"testdata/port/render/pdfops-hostile-recording-darwin.json",
 	"testdata/port/render/pdfops-hostile-recording-linux.json",
+	"testdata/port/cli/index-status-recording.json",
 }
 
 func main() {

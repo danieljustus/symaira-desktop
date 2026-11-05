@@ -50,6 +50,10 @@ from compare import (  # noqa: E402
     normalize,
 )
 
+# The status output reports `database_bytes`, and SQLite pages grow with the length of the
+# paths stored in the index. Every world therefore lives below a base of exactly this many
+# characters (padded with `x`), whatever the temporary directory of the host is.
+WORLDS_BASE_LENGTH = 120
 DEFAULT_RECORDING = ROOT / "testdata/port/cli/index-status-recording.json"
 PROVENANCE = ROOT / "testdata/port/provenance.json"
 TOKENS = {"empty": b"<WORLD_EMPTY>", "populated": b"<WORLD_POPULATED>"}
@@ -61,18 +65,25 @@ def pinned_oracle() -> dict[str, str]:
     return {"commit": oracle["commit"], "release": oracle["release"]}
 
 
+def fixed_length(path: Path, length: int) -> Path:
+    text = str(path)
+    if len(text) > length:
+        raise RuntimeError(f"temporary directory {text} is longer than the {length}-character world base")
+    return Path(text + "x" * (length - len(text)))
+
+
 def run_role(binary: Path, role: str, base: Path) -> dict[str, dict[str, Any]]:
     """Run the full case inventory with one binary; returns case -> observation."""
-    out = base / f"{role}-capture"
+    out = base / "c"
     out.mkdir(mode=0o700)
-    worlds = base / f"{role}-worlds"
+    worlds = fixed_length(base / "w", WORLDS_BASE_LENGTH)
     worlds.mkdir(mode=0o700)
     manifest: dict[str, Any] = {"platform": capture.platform_identity(), "executed_case_ids": [], "runs": []}
     roots: dict[str, Path] = {}
     for populated in (False, True):
         group = "populated" if populated else "empty"
         world_key = f"{role}-{group}"
-        paths = capture.prepare_world(worlds, world_key, populated)
+        paths = capture.prepare_world(worlds, group, populated)
         roots[group] = paths["world"]
         if populated:
             capture.seed_go_index(binary, paths, world_key, out, manifest, role=role)
@@ -125,7 +136,7 @@ def build_oracle(base: Path) -> Path:
 
 
 def record(args: argparse.Namespace) -> int:
-    with tempfile.TemporaryDirectory(prefix="symdesk-index-status-record-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sis-") as temporary:
         base = Path(os.path.realpath(temporary))
         binary = args.go_bin.resolve(strict=True) if args.go_bin else build_oracle(base)
         observed = run_role(binary, "go", base)
@@ -157,7 +168,7 @@ def replay(args: argparse.Namespace) -> int:
         print("recording does not match the reviewed case inventory", file=sys.stderr)
         return 1
     rust = args.rust_bin.resolve(strict=True)
-    with tempfile.TemporaryDirectory(prefix="symdesk-index-status-replay-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sis-") as temporary:
         observed = run_role(rust, "rust", Path(os.path.realpath(temporary)))
     mismatches = []
     for case in recording["cases"]:

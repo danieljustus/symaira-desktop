@@ -285,9 +285,18 @@
       "ignored": 0,
       "passed": 10
     },
-    "cargo test -p symdesk-cli --locked --test ask_agent": {},
-    "cargo test -p symdesk-cli --locked --test ask_cancel": {},
-    "cargo test -p symdesk-cli --locked --test ask_hermes": {},
+    "cargo test -p symdesk-cli --locked --test ask_agent": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test ask_cancel": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test ask_hermes": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-cli --locked --test ask_offline": {
       "ignored": 0,
       "passed": 3
@@ -296,8 +305,14 @@
       "ignored": 0,
       "passed": 1
     },
-    "cargo test -p symdesk-cli --locked --test frozen_diffharness representative": {},
-    "cargo test -p symdesk-cli --locked --test frozen_diffharness retention": {},
+    "cargo test -p symdesk-cli --locked --test frozen_diffharness representative": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --locked --test frozen_diffharness retention": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --locked --test index_build": {
       "ignored": 0,
       "passed": 2
@@ -330,9 +345,18 @@
       "ignored": 0,
       "passed": 6
     },
-    "cargo test -p symdesk-cli --locked --test mcp_ask_provider": {},
-    "cargo test -p symdesk-cli --locked --test mcp_representative": {},
-    "cargo test -p symdesk-cli --locked --test mcp_representative mcp001": {},
+    "cargo test -p symdesk-cli --locked --test mcp_ask_provider": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test mcp_representative": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --locked --test mcp_representative mcp001": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --locked --test mcp_search_hybrid": {
       "ignored": 0,
       "passed": 4
@@ -461,8 +485,14 @@
       "passed": 4,
       "retries": 4
     },
-    "cargo test -p symdesk-cli --test mcp_calls --locked": {},
-    "cargo test -p symdesk-cli --test mcp_protocol --locked": {},
+    "cargo test -p symdesk-cli --test mcp_calls --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --test mcp_protocol --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-cli --test mcp_write --locked": {
       "ignored": 0,
       "passed": 3
@@ -569,7 +599,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 131
+      "passed": 136
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,
@@ -833,7 +863,10 @@
       "ignored": 0,
       "passed": 5
     },
-    "cargo test -p symdesk-vault --locked --test history_contracts": {},
+    "cargo test -p symdesk-vault --locked --test history_contracts": {
+      "ignored": 0,
+      "passed": 8
+    },
     "cargo test -p symdesk-vault --locked --test history_prune_contracts": {
       "ignored": 0,
       "passed": 1

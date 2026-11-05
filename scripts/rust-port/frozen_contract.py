@@ -207,11 +207,15 @@ def expected_counts(entry):
     return counts["passed"], counts["ignored"]
 
 
-def is_recorded(entry):
-    """True when this platform already has recorded counts (--record keeps them)."""
+PROGRESS_ENV = "SYMDESK_FROZEN_PROGRESS"
+
+
+def recorded_counts(entry):
+    """(passed, ignored) recorded for this platform, or None."""
     if "by_platform" in entry:
-        return sys.platform in entry["by_platform"]
-    return "passed" in entry and "ignored" in entry
+        counts = entry["by_platform"].get(sys.platform)
+        return None if counts is None else (counts["passed"], counts["ignored"])
+    return (entry["passed"], entry["ignored"]) if "passed" in entry and "ignored" in entry else None
 
 
 def record_counts(entry, got):
@@ -309,9 +313,10 @@ def mutation_control(control, env):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--record", action="store_true",
-                        help="record counts of replays that have none on this platform from a Go-free run; "
-                             "existing counts are kept and verified, never rewritten (delete an entry to re-record it); "
-                             "the manifest is saved after every replay so a failure does not lose finished ones")
+                        help="make the recorded counts equal to what this Go-free run observes on this platform; "
+                             "every changed or new count is printed (old -> new) for review, unchanged ones are kept; "
+                             "the manifest is saved after every replay, and with $SYMDESK_FROZEN_PROGRESS=FILE a "
+                             "rerun after a failure skips the replays already finished in this campaign")
     parser.add_argument("--plan", action="store_true", help="validate classification only; run nothing")
     args = parser.parse_args(argv)
 
@@ -331,18 +336,27 @@ def main(argv=None):
     total = live_total = 0
     with tempfile.TemporaryDirectory(prefix="symdesk-frozen-contract-", dir=replay_parent()) as root:
         env = go_free_env(root)
+        progress = Path(os.environ[PROGRESS_ENV]) if os.environ.get(PROGRESS_ENV) else None
+        finished = set(progress.read_text().splitlines()) if progress and progress.exists() else set()
         for command in commands:
             entry = manifest["replays"][command]
-            recording = args.record and not is_recorded(entry)
+            if args.record and command in finished:
+                print(f"skip (finished earlier in this record campaign)  {command}", flush=True)
+                continue
             try:
-                got, skipped = replay(command, entry, env, verify_counts=not recording)
+                got, skipped = replay(command, entry, env, verify_counts=not args.record)
             except RuntimeError as error:
                 print(f"FAIL {error}", file=sys.stderr)
                 return 1
-            if recording:
+            if args.record:
+                before = recorded_counts(entry)
                 record_counts(entry, got)
+                if before != (got["passed"], got["ignored"]):
+                    print(f"recorded {before} -> {(got['passed'], got['ignored'])}  {command}", flush=True)
                 MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-                print(f"recorded {got['passed']}/{got['ignored']}  {command}", flush=True)
+                if progress:
+                    with progress.open("a") as stream:
+                        stream.write(command + "\n")
             total += got["passed"]
             live_total += got["passed"] + skipped
             print(f"ok {got['passed']:>5} (+{skipped} live-only)  {command}", flush=True)

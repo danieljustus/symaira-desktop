@@ -58,13 +58,13 @@ class FrozenContractControls(unittest.TestCase):
         _, errors = runner.plan(runner.differential_targets(MAKEFILE), manifest)
         self.assertIn("b-differential: no Rust replay and not declared live_only", errors)
 
-    def test_record_keeps_existing_counts_and_only_records_missing_ones(self):
-        self.assertTrue(runner.is_recorded({"passed": 3, "ignored": 0}))
-        self.assertTrue(runner.is_recorded({"passed": 3, "ignored": 0, "retries": 2}))
-        self.assertFalse(runner.is_recorded({}))
-        self.assertFalse(runner.is_recorded({"retries": 2}))
-        self.assertTrue(runner.is_recorded({"by_platform": {runner.sys.platform: {"passed": 1, "ignored": 0}}}))
-        self.assertFalse(runner.is_recorded({"by_platform": {"other-os": {"passed": 1, "ignored": 0}}}))
+    def test_recorded_counts_are_per_platform(self):
+        self.assertEqual(runner.recorded_counts({"passed": 3, "ignored": 0, "retries": 2}), (3, 0))
+        self.assertIsNone(runner.recorded_counts({}))
+        self.assertIsNone(runner.recorded_counts({"retries": 2}))
+        here = {"by_platform": {runner.sys.platform: {"passed": 1, "ignored": 2}}}
+        self.assertEqual(runner.recorded_counts(here), (1, 2))
+        self.assertIsNone(runner.recorded_counts({"by_platform": {"other-os": {"passed": 1, "ignored": 0}}}))
 
     def test_retired_targets_need_a_reason_and_must_leave_the_makefile(self):
         targets = runner.differential_targets(MAKEFILE)

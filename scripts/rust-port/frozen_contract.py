@@ -224,16 +224,25 @@ def mutate(raw, control):
     if "append" in control:
         return raw + control["append"].encode()
     document = json.loads(raw)
-    *parents, leaf = control["increment"]
+    path = control.get("increment") or control["append_string"]
+    *parents, leaf = path
     node = document
     for key in parents:
         node = node[key]
-    node[leaf] += 1
+    if "increment" in control:
+        node[leaf] += 1
+    else:
+        if not isinstance(node[leaf], str):
+            raise ValueError(f"append_string needs a string leaf: {path}")
+        node[leaf] += "~"
     return json.dumps(document, indent=2).encode() + b"\n"
 
 
 def mutation_control(control, env):
     """A frozen replay must fail once its Go-recorded fixture is mutated."""
+    if "platforms" in control and sys.platform not in control["platforms"]:
+        print(f"skip mutation (recorded for {control['platforms']}, host {sys.platform})  {control['fixture']}", flush=True)
+        return 1
     fixture = ROOT / control["fixture"]
     dirty = subprocess.run(["git", "status", "--porcelain", "--", control["fixture"]], cwd=ROOT,
                            capture_output=True, text=True, check=True).stdout
@@ -250,6 +259,7 @@ def mutation_control(control, env):
     if "test result: FAILED" not in run.stdout:
         raise RuntimeError(f"mutation control failed before any test ran: {control['command']}\n{run.stderr[-4000:]}")
     print(f"ok mutation rejected  {control['fixture']} -> {control['command']}", flush=True)
+    return 0
 
 
 def main(argv=None):
@@ -286,12 +296,12 @@ def main(argv=None):
             total += got["passed"]
             live_total += got["passed"] + skipped
             print(f"ok {got['passed']:>5} (+{skipped} live-only)  {command}", flush=True)
-        for control in manifest["mutation_controls"]:
-            mutation_control(control, env)
+        skipped = sum(mutation_control(control, env) for control in manifest["mutation_controls"])
     if args.record:
         MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"PASS frozen contract: {len(commands)} replays, {total} cases without Go "
-          f"({live_total} in live mode), {len(manifest['live_only'])} live-only targets, {len(manifest['mutation_controls'])} mutation controls rejected")
+          f"({live_total} in live mode), {len(manifest['live_only'])} live-only targets, "
+          f"{len(manifest['mutation_controls']) - skipped} mutation controls rejected ({skipped} other-platform skipped)")
     return 0
 
 

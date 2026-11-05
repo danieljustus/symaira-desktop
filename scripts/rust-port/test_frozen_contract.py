@@ -140,6 +140,15 @@ class FrozenContractControls(unittest.TestCase):
         mutated = __import__("json").loads(runner.mutate(raw, {"increment": ["cases", -1, "n"]}))
         self.assertEqual(mutated["cases"], [{"n": 1}, {"n": 6}])
 
+    def test_string_mutation_and_platform_gate(self):
+        raw = b'{"a": [{"s": "x", "n": 1}]}'
+        mutated = __import__("json").loads(runner.mutate(raw, {"append_string": ["a", 0, "s"]}))
+        self.assertEqual(mutated["a"][0], {"s": "x~", "n": 1})
+        with self.assertRaises(ValueError):
+            runner.mutate(raw, {"append_string": ["a", 0, "n"]})
+        other = "linux" if runner.sys.platform != "linux" else "darwin"
+        self.assertEqual(runner.mutation_control({"fixture": "x", "command": "x", "platforms": [other]}, {}), 1)
+
     def test_recorded_manifest_covers_the_real_makefile(self):
         manifest = __import__("json").loads(runner.MANIFEST.read_text())
         targets = runner.differential_targets((runner.ROOT / "Makefile").read_text())

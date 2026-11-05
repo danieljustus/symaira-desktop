@@ -1,16 +1,10 @@
 {
   "live_only": {
-    "dataset-cli-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
-    "history-differential": "history_live.py builds and runs the Go oracle live",
     "http-differential": "httpdiff compares live Go and Rust HTTP servers",
+    "index-status-cli-differential": "index-status/verify.py captures a Go oracle worktree at 191100811b live; native evidence harness, not yet frozen",
     "mcp-differential": "mcpdiff compares live Go and Rust MCP servers",
     "mcp-initialize-differential": "mcpdiff compares live Go and Rust MCP servers",
-    "render-differential": "aggregate of render-pdfops-differential",
-    "render-pdfops-differential": "pdfops/verify.py builds and runs the Go oracle live",
-    "representative-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
-    "retention-cli-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
-    "source-differential": "source-differential.py runs the Go and Rust binaries live",
-    "source-watch-differential": "source-differential.py runs the Go and Rust binaries live"
+    "render-pdfops-hostile-differential": "hostile_replay.py runs the Go oracle against real Poppler/qpdf on hostile PDFs live; not yet frozen"
   },
   "mutation_controls": [
     {
@@ -132,9 +126,121 @@
         0,
         "status"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test frozen_diffharness representative",
+      "fixture": "testdata/port/representative/cli-recording.json",
+      "increment": [
+        "cases",
+        0,
+        "observation",
+        "exit_code"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test frozen_diffharness dataset",
+      "fixture": "testdata/port/dataset/cli-recording.json",
+      "increment": [
+        "cases",
+        0,
+        "observation",
+        "exit_code"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test frozen_diffharness retention",
+      "fixture": "testdata/port/cli/retention-recording.json",
+      "increment": [
+        "cases",
+        0,
+        "observation",
+        "exit_code"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-vault --locked --test history_contracts",
+      "fixture": "testdata/port/vault/history-oracle.json",
+      "increment": [
+        "operations",
+        0,
+        "step"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test sources_frozen registry",
+      "fixture": "testdata/port/cli/source-registry.json",
+      "increment": [
+        "registry",
+        "version"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --locked --test sources_frozen watch",
+      "fixture": "testdata/port/cli/source-watch.json",
+      "increment": [
+        "schema_version"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-core --locked --test store_paths",
+      "fixture": "testdata/port/storage/store-paths-darwin.json",
+      "increment": [
+        "schema_version"
+      ],
+      "platforms": [
+        "darwin"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-core --locked --test store_paths",
+      "fixture": "testdata/port/storage/store-paths-linux.json",
+      "increment": [
+        "schema_version"
+      ],
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --examples --test pdfops_frozen pdf_adapter",
+      "fixture": "testdata/port/render/pdfops-recording.json",
+      "increment": [
+        "pdfops",
+        0,
+        "observation",
+        "before",
+        "a.pdf",
+        "mode"
+      ]
+    },
+    {
+      "append_string": [
+        "press",
+        1,
+        "observation",
+        "response",
+        0,
+        "version"
+      ],
+      "command": "cargo test -p symdesk-render --locked --examples --test pdfops_frozen press",
+      "fixture": "testdata/port/render/pdfops-recording.json"
+    },
+    {
+      "append_string": [
+        "safety",
+        0,
+        "observation",
+        "error"
+      ],
+      "command": "cargo test -p symdesk-render --locked --examples --test pdfops_frozen process_safety",
+      "fixture": "testdata/port/render/pdfops-recording.json"
     }
   ],
   "replays": {
+    "cargo test -p symdesk-cli --bin symdesk cobra:: --locked": {
+      "ignored": 0,
+      "passed": 10
+    },
     "cargo test -p symdesk-cli --locked --test ask_offline": {
       "ignored": 0,
       "passed": 3
@@ -171,26 +277,6 @@
       "ignored": 0,
       "passed": 4
     },
-    "cargo test -p symdesk-cli --locked --test secret_canary": {
-      "ignored": 0,
-      "passed": 2
-    },
-    "cargo test -p symdesk-service --locked --test secrets_resolve": {
-      "ignored": 0,
-      "passed": 2
-    },
-    "cargo test -p symdesk-service --locked --test compose_memory": {
-      "ignored": 0,
-      "passed": 2
-    },
-    "cargo test -p symdesk-cli --locked --test transform_hermes": {
-      "ignored": 0,
-      "passed": 2
-    },
-    "cargo test -p symdesk-service --locked --test ai_compose": {
-      "ignored": 0,
-      "passed": 3
-    },
     "cargo test -p symdesk-cli --locked --test recipe_run": {
       "ignored": 0,
       "passed": 3
@@ -203,13 +289,21 @@
       "ignored": 0,
       "passed": 3
     },
-    "cargo test -p symdesk-cli --locked --test sources": {
+    "cargo test -p symdesk-cli --locked --test secret_canary": {
       "ignored": 0,
-      "passed": 1
+      "passed": 2
     },
     "cargo test -p symdesk-cli --locked --test signals": {
       "ignored": 0,
       "passed": 3
+    },
+    "cargo test -p symdesk-cli --locked --test sources": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --locked --test transform_hermes": {
+      "ignored": 0,
+      "passed": 2
     },
     "cargo test -p symdesk-cli --test ask_offline --locked": {
       "ignored": 0,
@@ -218,6 +312,10 @@
     "cargo test -p symdesk-cli --test backlinks --locked": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-cli --test cobra_parse --locked": {
+      "ignored": 0,
+      "passed": 2
     },
     "cargo test -p symdesk-cli --test config --locked": {
       "ignored": 0,
@@ -325,9 +423,6 @@
     },
     "cargo test -p symdesk-core --all-features --locked": {
       "ignored": 0,
-      "live_only_tests": [
-        "contacts_and_ingest_paths_match_native_go"
-      ],
       "passed": 39
     },
     "cargo test -p symdesk-core --locked --test ai_providers": {
@@ -505,6 +600,18 @@
     "cargo test -p symdesk-render --test draw_emit_contract --locked": {
       "ignored": 0,
       "passed": 3
+    },
+    "cargo test -p symdesk-service --locked --test ai_compose": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-service --locked --test compose_memory": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-service --locked --test secrets_resolve": {
+      "ignored": 0,
+      "passed": 2
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,
@@ -701,14 +808,6 @@
     "cargo test -p symroom-core --test identity_events_contracts --locked": {
       "ignored": 0,
       "passed": 2
-    },
-    "cargo test -p symdesk-cli --test cobra_parse --locked": {
-      "ignored": 0,
-      "passed": 2
-    },
-    "cargo test -p symdesk-cli --bin symdesk cobra:: --locked": {
-      "ignored": 0,
-      "passed": 10
     }
   }
 }

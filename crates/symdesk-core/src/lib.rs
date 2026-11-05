@@ -15,6 +15,7 @@ pub mod config;
 pub mod document_format;
 pub mod german;
 pub mod gofmt;
+pub mod pre_rust_backup;
 pub mod query;
 pub mod simhash;
 pub mod template_path;

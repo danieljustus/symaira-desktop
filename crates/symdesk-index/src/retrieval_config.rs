@@ -14,6 +14,32 @@ use symdesk_vault::{go_path_error, go_read, go_read_to_string};
 
 use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
+/// A per-vault retrieval index that was just created from an older store.
+/// Go logs each of these through `slog` (stderr), see `internal/retrieval`.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RetrievalMigration {
+    /// `seeded per-vault retrieval index from standalone store`: the
+    /// standalone index stays in place.
+    SeededFromStandalone { standalone: PathBuf, new: PathBuf },
+    /// `migrated pre-absorption retrieval index to per-vault location`: the
+    /// pre-absorption `symseek.db` was moved.
+    MigratedPreAbsorption { legacy: PathBuf, new: PathBuf },
+}
+
+static MIGRATION_HOOK: std::sync::OnceLock<fn(&RetrievalMigration)> = std::sync::OnceLock::new();
+
+/// Registers the process-wide reporter called once per completed migration
+/// (the CLI prints Go's slog line on stderr). The library itself stays silent.
+pub fn set_retrieval_migration_hook(hook: fn(&RetrievalMigration)) -> bool {
+    MIGRATION_HOOK.set(hook).is_ok()
+}
+
+fn report_migration(event: &RetrievalMigration) {
+    if let Some(hook) = MIGRATION_HOOK.get() {
+        hook(event);
+    }
+}
+
 /// Resolves the standalone symseek config file, which intentionally ignores
 /// `XDG_CONFIG_HOME` just like the Go config package.
 pub fn symseek_config_path(
@@ -227,6 +253,15 @@ fn migrate_legacy_retrieval_index(
         remove_retrieval_database_artifacts(&source).map_err(|error| {
             SidecarError::Contract(format!("remove migrated legacy retrieval index: {error}"))
         })?;
+        report_migration(&RetrievalMigration::MigratedPreAbsorption {
+            legacy: source,
+            new: destination.to_path_buf(),
+        });
+    } else {
+        report_migration(&RetrievalMigration::SeededFromStandalone {
+            standalone: source,
+            new: destination.to_path_buf(),
+        });
     }
     Ok(())
 }

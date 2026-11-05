@@ -79,9 +79,9 @@ pub use retrieval::{
     materialize_byte_chunks, materialize_chunks,
 };
 pub use retrieval_config::{
-    RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,
-    relocate_index_for_vault, retrieval_embedding_config, store_retrieval_path_for_vault,
-    symseek_config_path,
+    RetrievalEmbeddingConfig, RetrievalMigration, index_location_for_vault,
+    open_retrieval_for_vault, relocate_index_for_vault, retrieval_embedding_config,
+    set_retrieval_migration_hook, store_retrieval_path_for_vault, symseek_config_path,
 };
 pub use retrieval_csv::parse_csv_retrieval_sections;
 pub use retrieval_extractions::{detect_sidecar_path, import_extraction_sidecar};

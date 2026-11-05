@@ -10,6 +10,10 @@ pub trait IsolatedEnvironment {
 impl IsolatedEnvironment for Command {
     fn isolated_env(&mut self) -> &mut Self {
         self.env_clear();
+        // RUST-018: the automatic pre-Rust state backup is covered by its own
+        // tests; every other hermetic process opts out so the Go-recorded
+        // side-effect fixtures (exact file trees) stay unchanged.
+        self.env("SYMDESK_PRE_RUST_BACKUP", "off");
         #[cfg(windows)]
         self.env(
             "SYSTEMROOT",

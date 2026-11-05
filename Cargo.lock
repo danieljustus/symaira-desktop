@@ -3147,6 +3147,7 @@ version = "0.0.0"
 dependencies = [
  "cap-std",
  "clap",
+ "flate2",
  "libc",
  "notify",
  "noyalib",
@@ -3196,9 +3197,11 @@ name = "symdesk-core"
 version = "0.0.0"
 dependencies = [
  "regex",
+ "rusqlite",
  "rustix",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "symaira-core-config",
  "symaira-core-llm",
  "symaira-core-version",
@@ -3365,9 +3368,11 @@ dependencies = [
 name = "symroom-cli"
 version = "0.0.0"
 dependencies = [
+ "flate2",
  "getrandom 0.4.3",
  "hex",
  "libc",
+ "regex",
  "serde",
  "serde_json",
  "sha2 0.10.9",

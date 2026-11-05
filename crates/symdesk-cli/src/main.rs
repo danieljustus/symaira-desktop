@@ -5,6 +5,7 @@ mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
 mod asset_export_cli;
+mod backup_cli;
 mod clip_cli;
 mod cobra;
 mod config_cli;
@@ -94,11 +95,23 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
     serve_cli::take_internal_options_path(&mut args);
+    // Go logs every lazy retrieval-index migration through slog on stderr.
+    symdesk_index::set_retrieval_migration_hook(conflict_cli::log_retrieval_migration);
+    // Hidden RUST-018 restore command; it must run before the one-time backup
+    // gate below and is not part of the Go-recorded cobra tree.
+    if let Some(code) = backup_cli::intercept(&args) {
+        return code;
+    }
     // Cobra/pflag front half: command resolution, flag grammar, help,
     // version, argument counts and the generated commands (CLI-001..004).
     match cobra::front(&args) {
         cobra::Front::Exit(code) => return code,
         cobra::Front::Continue(valid) => args = valid,
+    }
+    // RUST-018: back up state that earlier Go builds created before any Rust
+    // code can touch it; a failed backup aborts with state untouched.
+    if let Err(code) = backup_cli::gate() {
+        return code;
     }
     if let Some(result) = config_cli::intercept(&args) {
         return result;

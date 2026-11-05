@@ -26,3 +26,7 @@ getrandom = "=0.4.3"
 
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.189"
+
+[dev-dependencies]
+flate2.workspace = true
+regex.workspace = true

@@ -361,6 +361,7 @@ The measured Go baseline is in
 - [`value001-order-bias-repair.md`](value001-order-bias-repair.md) — schema-4/5 order-stratified decision contract and fail-closed boundary.
 - [`value001-fbc52d0c-current-gate.md`](value001-fbc52d0c-current-gate.md) — current-candidate decision; no RUST-006/RUST-007/RUST-016 advancement.
 - [`results/value001-retained.json`](results/value001-retained.json) and its provenance sidecar — historical privacy-reviewed 655d248 capture; check historical evidence with `make value-001-evidence-tests`, not as approval of current HEAD. Exact candidate approval requires the explicit command in [`operations-gate-checkpoint.md`](operations-gate-checkpoint.md).
+- [`value002.md`](value002.md) — VALUE-002 full release gate: fixed thresholds, new workloads, quiet-host rule, build provenance and result schema (`scripts/rust-port/value002.py`, `validate_value002.py`, `make value-002`).
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
 
 ## Running VALUE-001

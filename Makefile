@@ -1706,6 +1706,37 @@ value-001: value-runtime-dirs
 		--warmups $(VALUE_WARMUPS) \
 		--output "$(VALUE_OUTPUT)"
 
+# VALUE-002: fail-closed full-release gate (docs/rust-port/value002.md). The
+# runner never compiles. The release candidates are built beforehand as direct
+# dev-external commands and documented with `value002.py record-build`
+# (build record), then measured here from the two release archives.
+.PHONY: value-002 value-002-tests value-002-validate
+VALUE002_DIR ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002
+VALUE002_RECORD ?= $(VALUE002_DIR)/build-record.json
+VALUE002_GO_ARCHIVE ?= $(VALUE002_DIR)/rebuild/go-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz
+VALUE002_RUST_ARCHIVE ?= $(VALUE002_DIR)/rebuild/rust-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz
+VALUE002_TOOLS ?= $(VALUE002_DIR)/rebuild/tools
+VALUE002_OUTPUT ?= docs/rust-port/results/value002-latest.json
+VALUE002_BINARIES ?= $(VALUE002_DIR)/measured
+
+value-002-tests: value-runtime-dirs
+	$(VALUE_RUNTIME_ENV) python3 -m unittest discover -s scripts/rust-port -p 'test_value002*.py' -v
+
+value-002: value-runtime-dirs
+	@mkdir -p "$$(dirname "$(VALUE002_OUTPUT)")" "$(VALUE002_BINARIES)"
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/value002.py run \
+		--root . \
+		--build-record "$(VALUE002_RECORD)" \
+		--go-archive "$(VALUE002_GO_ARCHIVE)" \
+		--rust-archive "$(VALUE002_RUST_ARCHIVE)" \
+		--contract-tools "$(VALUE002_TOOLS)" \
+		--binary-dir "$(VALUE002_BINARIES)" \
+		--output "$(VALUE002_OUTPUT)"
+
+value-002-validate: value-runtime-dirs
+	@test -n "$(VALUE002_CANDIDATE)"
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/validate_value002.py "$(VALUE002_OUTPUT)" --candidate "$(VALUE002_CANDIDATE)"
+
 mcp-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpgen
 

@@ -13,6 +13,17 @@ without /ID, pdfinfo text) plus byte hashes (reported; required equal with the r
 Resource bounds: wall clock, RLIMIT_FSIZE, delta size, response size.
 Mutation controls prove the comparator and the real pipeline reject faults.
 Inputs are generated, never oracle output; expectations come from the Go run.
+
+Frozen mode (RUST-019, no Go needed afterwards):
+
+* `--record [FILE]` / `--check`: run only the Go driver over the whole corpus with
+  the real tools and write (or verify) the per-OS recording
+  `testdata/port/render/pdfops-hostile-recording-<os>.json`: tool versions plus one
+  normalized observation per case (`make render-pdfops-hostile-fixtures-generate`);
+* `--replay FILE --rust-binary PROBE`: rebuild each world, run the Rust probe with the
+  same real tools and compare with the recorded Go observation
+  (`crates/symdesk-render/tests/pdfops_hostile_frozen.rs`). It starts no Go and needs
+  the same tool versions the recording names.
 """
 import argparse
 import hashlib
@@ -26,6 +37,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import zlib
 
 sys.dont_write_bytecode = True
@@ -285,14 +297,137 @@ def compare_case(harness, case, tools_rust=None):
     return seen, infos, error
 
 
+def host_os():
+    if sys.platform == 'darwin': return 'darwin'
+    if sys.platform.startswith('linux'): return 'linux'
+    raise SystemExit(f'hostile PDF recordings exist for macOS and Linux only, not {sys.platform}')
+
+
+def default_recording():
+    return ROOT / f'testdata/port/render/pdfops-hostile-recording-{host_os()}.json'
+
+
+def tool_versions(paths):
+    versions = {}
+    for name, path in paths.items():
+        raw = subprocess.run([path, '--version' if name == 'qpdf' else '-v'], capture_output=True, text=True, timeout=15)
+        versions[name] = (raw.stdout + raw.stderr).splitlines()[0]
+    return versions
+
+
+def real_tool_paths():
+    found = {name: shutil.which(name) for name in NAMES}
+    if not all(found.values()): raise RuntimeError(f'real Poppler/qpdf tools required: {found}')
+    return {name: str(Path(path).resolve()) for name, path in found.items()}
+
+
+def hostile_inputs(runtime, paths):
+    """Generate the deterministic corpus inputs; returns name -> bytes."""
+    generated = runtime / 'inputs'
+    subprocess.run([sys.executable, '-I', str(HERE / 'hostile_inputs.py'), str(generated), paths['qpdf']], check=True, capture_output=True, timeout=60)
+    again = runtime / 'inputs-again'
+    subprocess.run([sys.executable, '-I', str(HERE / 'hostile_inputs.py'), str(again), paths['qpdf']], check=True, capture_output=True, timeout=60)
+    assert json.loads((generated / 'manifest.json').read_text()) == json.loads((again / 'manifest.json').read_text()), 'hostile inputs not deterministic'
+    return inputs_for(generated)
+
+
+def build_go_driver(runtime):
+    go = runtime / 'bin/pdfops-go'
+    go.parent.mkdir(parents=True)
+    # The Go tool this process was started with (the portgen check puts its own GOROOT first).
+    toolchain = dict(os.environ, GOTOOLCHAIN='go1.26.10', GOENV='off', GOWORK='off')
+    go_root = subprocess.check_output(['go', 'env', 'GOROOT'], text=True, env=toolchain, cwd=ROOT).strip()
+    subprocess.run([f'{go_root}/bin/go', 'build', '-o', str(go), './internal/ingest/testdata/portpdfops'], cwd=ROOT, check=True,
+                   timeout=900, env=dict(os.environ, GOTOOLCHAIN='local', GOENV='off', GOWORK='off', CGO_ENABLED='0'))
+    identity = json.loads(subprocess.check_output([str(go), '--identity'], timeout=30))
+    assert identity['compiler'] == 'go1.26.10', identity
+    return go, identity
+
+
+def record_document(runtime, out):
+    paths = real_tool_paths()
+    go, identity = build_go_driver(runtime)
+    harness = Harness(out, runtime, paths, go, None, hostile_inputs(runtime, paths))
+    cases = []
+    for case in corpus():
+        view, _ = harness.observe(case, 'go', go)
+        cases.append({'id': case['id'], 'view': view})
+    return {'schema_version': 1, 'oracle': identity['oracle'], 'compiler': identity['compiler'], 'os': host_os(),
+            'tools': tool_versions(paths), 'cases': cases}
+
+
+def record_main(args):
+    out, runtime = args.output.resolve(), args.runtime_root.resolve()
+    for path in (out, runtime): path.mkdir(parents=True, exist_ok=False)
+    document = record_document(runtime, out)
+    encoded = (json.dumps(document, indent=1, sort_keys=True, ensure_ascii=False) + '\n').encode()
+    target = args.recording or default_recording()
+    if args.check:
+        if not target.is_file() or target.read_bytes() != encoded:
+            print(f'{target.name} drifted from the live Go PDF adapters on {host_os()}', file=sys.stderr)
+            return 1
+        print(f'PASS {target.name} matches the live Go PDF adapters ({len(document["cases"])} cases, real tools {document["tools"]})')
+        return 0
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(encoded)
+    print(f'recorded {target} ({len(document["cases"])} cases)')
+    return 0
+
+
+def replay_main(args):
+    """Replay the recorded Go observations through the Rust probe; Go is never started."""
+    out, runtime = args.output.resolve(), args.runtime_root.resolve()
+    for path in (out, runtime): path.mkdir(parents=True, exist_ok=False)
+    recording = json.loads(args.replay.read_text())
+    assert recording['schema_version'] == 1 and recording['os'] == host_os(), 'recording is for another OS'
+    paths = real_tool_paths()
+    versions = tool_versions(paths)
+    if versions != recording['tools']:
+        print(f'installed tools {versions} differ from the recorded {recording["tools"]}; re-record with '
+              f'make render-pdfops-hostile-fixtures-generate', file=sys.stderr)
+        return 1
+    rust = args.rust_binary.resolve(strict=True)
+    harness = Harness(out, runtime, paths, None, rust, hostile_inputs(runtime, paths))
+    cases = corpus()
+    assert [c['id'] for c in cases] == [c['id'] for c in recording['cases']], 'recording does not cover the corpus'
+    failures = 0
+    for case, recorded in zip(cases, recording['cases']):
+        view, _ = harness.observe(case, 'rust', rust)
+        try:
+            compare(recorded['view'], view)
+        except AssertionError as error:
+            failures += 1
+            print(f'FAIL {case["id"]}: {error}'[:400], file=sys.stderr, flush=True)
+    if failures:
+        print(f'{failures} hostile replay mismatches of {len(cases)}', file=sys.stderr)
+        return 1
+    print(f'PASS hostile PDF replay: {len(cases)} cases match the Go recording (real tools {versions})')
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', required=True, type=Path)
-    parser.add_argument('--runtime-root', required=True, type=Path)
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--runtime-root', type=Path)
+    parser.add_argument('--record', action='store_true', help='record the Go observations (no Rust side)')
+    parser.add_argument('--check', action='store_true', help='with --record: verify the committed recording instead of writing it')
+    parser.add_argument('--recording', type=Path, help='recording file for --record/--check (default: per-OS file)')
+    parser.add_argument('--replay', type=Path, help='replay this recording through --rust-binary (no Go)')
     parser.add_argument('--go-binary', type=Path)
     parser.add_argument('--rust-binary', type=Path)
     parser.add_argument('--only', help='regex of case ids (diagnostics; never certifies)')
     args = parser.parse_args()
+    if args.check and not args.record: parser.error('--check needs --record')
+    if args.record or args.replay:
+        scratch = None
+        if not args.output or not args.runtime_root:
+            scratch = Path(tempfile.mkdtemp(prefix='symdesk-hostile-'))
+            args.output, args.runtime_root = args.output or scratch / 'out', args.runtime_root or scratch / 'runtime'
+        try:
+            return record_main(args) if args.record else replay_main(args)
+        finally:
+            if scratch: shutil.rmtree(scratch, ignore_errors=True)
+    if not args.output or not args.runtime_root: parser.error('--output and --runtime-root are required')
     out, runtime = args.output.resolve(), args.runtime_root.resolve()
     out.mkdir(parents=True, exist_ok=False)
     runtime.mkdir(parents=True, exist_ok=False)

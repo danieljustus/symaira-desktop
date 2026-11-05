@@ -343,11 +343,22 @@ render-pdfops-fixtures-generate:
 	$(CARGO) build -p symdesk-render --examples --locked
 	$(PORTGEN_GENERATE_GO_ENV) python3 scripts/rust-port/pdfops/record.py --stub "$(RUST_TARGET_DIR)/debug/examples/pdf_tool_stub"
 
-# Go-oracle hostile PDF replay with the REAL installed pdfinfo/pdfseparate/pdfunite/qpdf
-# (hostile_inputs.py corpus). Own sibling roots, so it is independent of the stub-tool target.
+# Hostile PDFs through the REAL installed pdfinfo/pdfseparate/pdfunite/qpdf (the
+# hostile_inputs.py corpus, 455 cases). The Go driver was recorded once per OS
+# into testdata/port/render/pdfops-hostile-recording-<os>.json
+# (render-pdfops-hostile-fixtures-generate); the Rust probe replays it without Go
+# and with the same tool versions. `--record --check` re-runs the Go driver and
+# fails on drift while Go exists. The former live Go/Rust comparison (and its
+# RENDER_EVIDENCE_ROOT/RENDER_RUNTIME_ROOT evidence directories) is retired:
+# it compared the same inputs that are now frozen.
+.PHONY: render-pdfops-hostile-fixtures-generate
 render-pdfops-hostile-differential:
-	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
-	python3 scripts/rust-port/pdfops/hostile_replay.py --output "$(RENDER_EVIDENCE_ROOT)-pdfops-hostile" --runtime-root "$(RENDER_RUNTIME_ROOT)-pdfops-hostile"
+	$(CARGO) build -p symdesk-render --examples --locked
+	$(PORTGEN_CHECK_ENV) PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/rust-port/pdfops/hostile_replay.py --record --check
+	$(CARGO) test -p symdesk-render --locked --examples --test pdfops_hostile_frozen
+
+render-pdfops-hostile-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PYTHONDONTWRITEBYTECODE=1 python3 -I scripts/rust-port/pdfops/hostile_replay.py --record
 
 # Verifies the identity of the binary actually built: the stamped revision must
 # be this checkout's HEAD and the CLI must run.
@@ -1693,20 +1704,25 @@ mcp-fixtures-generate:
 mcp-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpgen --check
 
-mcp-differential: mcp-fixtures-check
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff \
-		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk"
+# The raw-process representative MCP corpus (MCP-001 and the early surface) is
+# recorded once from the real Go `symdesk mcp` into
+# testdata/port/mcp/representative-recording.json; the Rust replay needs no Go.
+# mcpdiff --check-recording builds the pinned Go oracle itself and fails when
+# the committed recording drifts from a fresh Go run. The former live Go/Rust
+# comparison is retired: it compared the same requests, now frozen.
+.PHONY: mcp-representative-recording-generate mcp-representative-recording-check
+mcp-representative-recording-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff --record testdata/port/mcp/representative-recording.json
+
+mcp-representative-recording-check:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff --check-recording testdata/port/mcp/representative-recording.json
+
+mcp-differential: mcp-fixtures-check mcp-representative-recording-check
+	$(CARGO) test -p symdesk-cli --locked --test mcp_representative
 
 .PHONY: mcp-initialize-differential
-mcp-initialize-differential: mcp-fixtures-check
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff \
-		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk" --case-prefix mcp001-
+mcp-initialize-differential: mcp-fixtures-check mcp-representative-recording-check
+	$(CARGO) test -p symdesk-cli --locked --test mcp_representative mcp001
 
 # history_live.py still drives the native acceptance evidence (CI); the gate
 # itself compares the committed Go report with a fresh one and replays it.

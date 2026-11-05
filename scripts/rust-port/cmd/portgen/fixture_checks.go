@@ -240,6 +240,8 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"source recordings", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/source_record.py", "--check"}, []string{"testdata/port/cli/source-registry.json", "testdata/port/cli/source-watch.json"}, false},
 	{"PDF adapter recording", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/pdfops/record.py", "--check"}, []string{"testdata/port/render/pdfops-recording.json"}, false},
 	{"native store paths", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/store_paths_record.py", "--check"}, []string{"testdata/port/storage/store-paths-darwin.json", "testdata/port/storage/store-paths-linux.json"}, false},
+	{"MCP representative recording", []string{"run", "./scripts/rust-port/cmd/mcpdiff", "--check-recording", "testdata/port/mcp/representative-recording.json"}, []string{"testdata/port/mcp/representative-recording.json"}, false},
+	{"hostile PDF recording", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "-I", "scripts/rust-port/pdfops/hostile_replay.py", "--record", "--check"}, []string{"testdata/port/render/pdfops-hostile-recording-darwin.json", "testdata/port/render/pdfops-hostile-recording-linux.json"}, false},
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {

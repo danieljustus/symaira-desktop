@@ -1,4 +1,8 @@
-// Command mcpdiff compares raw-process representative MCP responses.
+// Command mcpdiff compares raw-process representative MCP responses. With
+// --record it writes the Go observations of --left as the frozen recording
+// (testdata/port/mcp/representative-recording.json) that the Rust replay
+// `mcp_representative` consumes without Go; --check-recording verifies that the
+// committed recording still equals a fresh run of the Go oracle.
 package main
 
 import (
@@ -16,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 type fixture struct {
@@ -30,6 +36,23 @@ type mcpCase struct {
 	InstructionsAbsent bool   `json:"instructions_absent,omitempty"`
 }
 
+// recording is the frozen Go observation of the fixture requests. The vault
+// root of the run is masked as <ROOT> so the Rust replay can substitute its own.
+type recording struct {
+	SchemaVersion int           `json:"schema_version"`
+	Oracle        recordOracle  `json:"oracle"`
+	Cases         []observation `json:"cases"`
+}
+type recordOracle struct {
+	Commit  string `json:"commit"`
+	Release string `json:"release"`
+}
+type observation struct {
+	ID       string `json:"id"`
+	ExitCode int    `json:"exit_code"`
+	Frames   []any  `json:"frames"`
+}
+
 type processResult struct {
 	stdout, stderr []byte
 	exitCode       int
@@ -38,11 +61,27 @@ type processResult struct {
 func main() {
 	left := flag.String("left", "", "Go oracle binary")
 	right := flag.String("right", "", "Rust binary")
+	recordPath := flag.String("record", "", "write the Go observations of --left to this recording instead of comparing")
+	checkPath := flag.String("check-recording", "", "verify that this recording equals a fresh run of --left instead of comparing")
 	fixturePath := flag.String("fixture", "testdata/port/mcp/representative.json", "fixture path")
 	casePrefix := flag.String("case-prefix", "", "run only fixture cases with this ID prefix")
 	flag.Parse()
-	if *left == "" || *right == "" {
-		fatal("--left and --right are required")
+	recordMode := *recordPath != "" || *checkPath != ""
+	if *recordPath != "" && *checkPath != "" {
+		fatal("--record and --check-recording are exclusive")
+	}
+	if !recordMode && (*left == "" || *right == "") {
+		fatal("--left and --right are required (--right is not used with --record/--check-recording)")
+	}
+	if recordMode && *left == "" {
+		// Recording and its drift check build the pinned Go oracle themselves, so
+		// portgen can verify the recording from an immutable source snapshot.
+		built, cleanup, err := buildOracle()
+		if err != nil {
+			fatal("build Go oracle: %v", err)
+		}
+		defer cleanup()
+		*left = built
 	}
 	data, err := os.ReadFile(*fixturePath)
 	if err != nil {
@@ -67,6 +106,20 @@ func main() {
 		fatal("fixture file: %v", err)
 	}
 
+	maskRoots := []string{root}
+	if resolved, err := filepath.EvalSymlinks(root); err == nil && resolved != root {
+		maskRoots = []string{resolved, root}
+	}
+	recorded := recording{SchemaVersion: 1, Oracle: recordOracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}}
+	// desk_ls reports file modification times: pin them so the recording and its
+	// Rust replay are clock independent.
+	fixedTime := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	for _, name := range []string{"alpha.md", "nested/beta.md"} {
+		if err := os.Chtimes(filepath.Join(root, name), fixedTime, fixedTime); err != nil {
+			fatal("pin mtime of %s: %v", name, err)
+		}
+	}
+
 	runCount := 0
 	for _, tc := range suite.Cases {
 		if *casePrefix != "" && !strings.HasPrefix(tc.ID, *casePrefix) {
@@ -84,8 +137,10 @@ func main() {
 			if err := prepare(*left, vault, filepath.Join(root, "go.db")); err != nil {
 				fatal("%s prepare Go: %v", tc.ID, err)
 			}
-			if err := prepare(*right, vault, filepath.Join(root, "rust.db")); err != nil {
-				fatal("%s prepare Rust: %v", tc.ID, err)
+			if !recordMode {
+				if err := prepare(*right, vault, filepath.Join(root, "rust.db")); err != nil {
+					fatal("%s prepare Rust: %v", tc.ID, err)
+				}
 			}
 		}
 		goDB := filepath.Join(root, "go.db")
@@ -95,6 +150,26 @@ func main() {
 			rustDB = filepath.Join(vault, "rust.db")
 		}
 		leftResult := run(*left, vault, goDB, tc)
+		if recordMode {
+			stdout := leftResult.stdout
+			for _, mask := range maskRoots {
+				stdout = bytes.ReplaceAll(stdout, []byte(mask), []byte("<ROOT>"))
+			}
+			frames, err := decodeFrames(stdout, tc.Framed)
+			if err != nil {
+				fatal("%s Go output: %v (%q)", tc.ID, err, stdout)
+			}
+			if tc.InstructionsAbsent {
+				if err := checkInstructionsAbsent(frames); err != nil {
+					fatal("%s Go %v", tc.ID, err)
+				}
+			}
+			if frames == nil {
+				frames = []any{}
+			}
+			recorded.Cases = append(recorded.Cases, observation{ID: tc.ID, ExitCode: leftResult.exitCode, Frames: frames})
+			continue
+		}
 		rightResult := run(*right, vault, rustDB, tc)
 		if leftResult.exitCode != rightResult.exitCode {
 			fatal("%s exit mismatch: Go=%d Rust=%d\nGo stderr=%s\nRust stderr=%s", tc.ID, leftResult.exitCode, rightResult.exitCode, leftResult.stderr, rightResult.stderr)
@@ -123,7 +198,52 @@ func main() {
 	if runCount == 0 {
 		fatal("no MCP fixture cases match prefix %q", *casePrefix)
 	}
+	if recordMode {
+		content, err := json.MarshalIndent(recorded, "", "  ")
+		if err != nil {
+			fatal("encode recording: %v", err)
+		}
+		content = append(content, '\n')
+		if *recordPath != "" {
+			if err := os.WriteFile(*recordPath, content, 0o644); err != nil { //nolint:gosec // checked-in non-secret fixture
+				fatal("write recording: %v", err)
+			}
+			fmt.Printf("PASS recorded %d MCP cases to %s\n", runCount, *recordPath)
+			return
+		}
+		//nolint:gosec // path is the recording named on the command line
+		actual, err := os.ReadFile(*checkPath)
+		if err != nil {
+			fatal("read recording: %v", err)
+		}
+		if !bytes.Equal(actual, content) {
+			fatal("recording drift in %s; run make mcp-representative-recording-generate", *checkPath)
+		}
+		fmt.Printf("PASS MCP recording verified: %d cases in %s\n", runCount, *checkPath)
+		return
+	}
 	fmt.Printf("PASS MCP differential: %d cases\n", runCount)
+}
+
+// buildOracle compiles the Go symdesk of the current checkout with the version
+// stamp "devel", which is what a plain Rust test binary reports. The Go tool is the one this command
+// was built with, never a PATH lookup.
+func buildOracle() (string, func(), error) {
+	dir, err := os.MkdirTemp("", "symdesk-mcp-oracle-")
+	if err != nil {
+		return "", func() {}, err
+	}
+	cleanup := func() { _ = os.RemoveAll(dir) }
+	binary := filepath.Join(dir, "symdesk-go")
+	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
+	goTool := filepath.Join(runtime.GOROOT(), "bin", "go")
+	cmd := exec.Command(goTool, "build", "-ldflags=-X main.version=devel", "-o", binary, "./cmd/symdesk") //nolint:gosec // fixed arguments
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		cleanup()
+		return "", func() {}, fmt.Errorf("%w\n%s", err, output)
+	}
+	return binary, cleanup, nil
 }
 
 func checkInstructionsAbsent(frames []any) error {

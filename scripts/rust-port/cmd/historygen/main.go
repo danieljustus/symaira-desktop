@@ -145,7 +145,7 @@ func main() {
 		if readErr != nil {
 			fatal("read recorded history oracle: %v", readErr)
 		}
-		if !bytes.Equal(volatileTimestamps.ReplaceAll(recorded, []byte("<ts>")), volatileTimestamps.ReplaceAll(content, []byte("<ts>"))) {
+		if !bytes.Equal(stableForCheck(recorded), stableForCheck(content)) {
 			fatal("%s drifted from the live Go history oracle; regenerate deliberately", outPath)
 		}
 		fmt.Printf("PASS %s matches the live Go history oracle (%d operations)\n", outPath, len(doc.Operations))
@@ -771,8 +771,39 @@ func classifyError(err error) string {
 }
 
 // volatileTimestamps matches the wall-clock snapshot timestamps that every live
-// Go run stamps differently; --check compares everything else byte for byte.
+// Go run stamps differently (including their trailing-zero-trimmed fractions).
 var volatileTimestamps = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z`)
+
+// stableForCheck removes what a live run cannot reproduce byte for byte: the
+// snapshot manifests embed those timestamps and list them in map order, so their
+// raw bytes, size and digest are dropped and every remaining timestamp is
+// masked. Paths, modes, snapshot ids, object contents and every recorded
+// operation result still have to match exactly.
+func stableForCheck(raw []byte) []byte {
+	var document map[string]any
+	if err := json.Unmarshal(raw, &document); err != nil {
+		return raw
+	}
+	if entries, ok := document["final_filesystem"].([]any); ok {
+		for _, item := range entries {
+			entry, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			path, _ := entry["path"].(string)
+			if isDir, _ := entry["is_dir"].(bool); !isDir && strings.HasPrefix(path, ".symdesk/history/manifest/") {
+				delete(entry, "content_base64")
+				delete(entry, "sha256")
+				delete(entry, "size")
+			}
+		}
+	}
+	normalized, err := json.Marshal(document)
+	if err != nil {
+		return raw
+	}
+	return volatileTimestamps.ReplaceAll(normalized, []byte("<ts>"))
+}
 
 func fatal(format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, "FAIL "+format+"\n", args...)

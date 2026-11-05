@@ -27,11 +27,13 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -136,7 +138,9 @@ def build_oracle(base: Path) -> Path:
     source = base / "oracle-src"
     source.mkdir()
     archive = subprocess.run(["git", "-C", str(ROOT), "archive", pinned_oracle()["commit"]], capture_output=True, check=True)
-    subprocess.run(["tar", "-x", "-C", str(source)], input=archive.stdout, check=True)
+    # Extract in-process: the fixture check runs under a toolchain-only PATH without tar.
+    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as bundle:
+        bundle.extractall(source, filter="data")
     binary = base / "symdesk-go"
     go = shutil.which("go")
     if go is None:

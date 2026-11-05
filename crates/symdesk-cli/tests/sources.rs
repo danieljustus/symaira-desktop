@@ -480,6 +480,12 @@ fn run_process(root: &TempRoot, args: &[String]) -> (i32, String, String) {
 }
 
 fn run_watch(root: &TempRoot, args: &[String], actions: &[WatchAction]) -> (i32, String, String) {
+    // macOS delivers FSEvents for paths written just before a stream starts
+    // when fseventsd lags (a host running other builds), so the seeding writes
+    // surface as events of the watch under test. Go's kqueue watcher never
+    // replays them; give the host time to drain before starting.
+    #[cfg(target_os = "macos")]
+    thread::sleep(Duration::from_millis(4000));
     let mut child = command(root, args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

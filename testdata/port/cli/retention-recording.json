@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "2bb529cdc3bcc461bcf4a6af89624fc0418be180",
-    "release": "post-v0.12.2-security-880"
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "source": {
     "cases_file": "testdata/port/cli/retention-cases.json",

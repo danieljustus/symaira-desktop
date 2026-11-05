@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	portdiff "github.com/danieljustus/symaira-desktop/scripts/rust-port/internal/diff"
 )
 
@@ -89,9 +90,12 @@ func main() {
 		fatal("unsupported or empty case suite")
 	}
 	digest := sha256.Sum256(raw)
+	// The recording observes the production source P built from this working
+	// directory, whatever commit a (possibly historical) cases file names.
+	live := fixtureoracle.Current()
 	recording := Recording{
 		SchemaVersion: 1,
-		Oracle:        suite.Oracle,
+		Oracle:        portdiff.Oracle{Commit: live.Commit, Release: live.Release},
 		Stage:         *stage,
 		Source: Source{
 			CasesFile:     filepath.ToSlash(*casesPath),

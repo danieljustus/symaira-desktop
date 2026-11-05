@@ -292,7 +292,10 @@
       "ignored": 0,
       "passed": 3
     },
-    "cargo test -p symdesk-cli --locked --test frozen_diffharness dataset": {},
+    "cargo test -p symdesk-cli --locked --test frozen_diffharness dataset": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --locked --test frozen_diffharness representative": {},
     "cargo test -p symdesk-cli --locked --test frozen_diffharness retention": {},
     "cargo test -p symdesk-cli --locked --test index_build": {
@@ -315,7 +318,10 @@
       "ignored": 0,
       "passed": 2
     },
-    "cargo test -p symdesk-cli --locked --test index_status_frozen": {},
+    "cargo test -p symdesk-cli --locked --test index_status_frozen": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --locked --test index_symlink": {
       "ignored": 0,
       "passed": 3
@@ -964,7 +970,10 @@
       "ignored": 0,
       "passed": 1
     },
-    "cargo test -p symroom-cli --locked --test store_commands": {},
+    "cargo test -p symroom-cli --locked --test store_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symroom-cli --locked --test verify_commands": {
       "ignored": 0,
       "passed": 1

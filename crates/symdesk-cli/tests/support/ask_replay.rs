@@ -273,6 +273,7 @@ impl Scratch {
         command
             .current_dir(&self.root)
             .env_clear()
+            .env("SYMDESK_PRE_RUST_BACKUP", "off")
             .env("PATH", format!("{}:/usr/bin:/bin", self.bin.display()))
             .env("HOME", &self.home)
             .env("TZ", "UTC")

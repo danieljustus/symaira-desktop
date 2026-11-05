@@ -122,7 +122,9 @@ pub fn load() -> Manifest {
     let manifest: Manifest = serde_json::from_slice(&bytes).expect("decode cutover manifest");
     assert_eq!(manifest.schema_version, 1);
     assert_eq!(manifest.generated_on.goos, host_goos());
-    assert!(!manifest.generated_on.goarch.is_empty() && !manifest.generated_on.go_version.is_empty());
+    assert!(
+        !manifest.generated_on.goarch.is_empty() && !manifest.generated_on.go_version.is_empty()
+    );
     manifest
 }
 
@@ -209,7 +211,11 @@ impl Root {
 
     fn unpack_matching(&self, state: &State, prefix: Option<&str>) {
         let archive = fs::read(fixture_dir().join(&state.archive)).expect("read archive");
-        assert_eq!(hex(&Sha256::digest(&archive)), state.archive_sha256, "archive digest");
+        assert_eq!(
+            hex(&Sha256::digest(&archive)),
+            state.archive_sha256,
+            "archive digest"
+        );
         match prefix {
             None => {
                 make_writable(&self.path);
@@ -243,7 +249,10 @@ impl Root {
             );
             let target = self.path.join(name);
             let wanted = prefix.is_none_or(|prefix| {
-                name == prefix || name.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('/'))
+                name == prefix
+                    || name
+                        .strip_prefix(prefix)
+                        .is_some_and(|rest| rest.starts_with('/'))
             });
             if !wanted {
                 if kind == b'f' {
@@ -262,7 +271,10 @@ impl Root {
                     fs::create_dir_all(target.parent().expect("parent")).expect("create parent");
                     fs::write(&target, data).expect("write file");
                     set_mode(&target, mode);
-                    let file = File::options().write(true).open(&target).expect("reopen file");
+                    let file = File::options()
+                        .write(true)
+                        .open(&target)
+                        .expect("reopen file");
                     file.set_modified(
                         SystemTime::UNIX_EPOCH
                             + Duration::from_nanos(i64::cast_unsigned(mtime.cast_signed())),
@@ -438,14 +450,11 @@ pub fn diff(expected: &[FileEntry], actual: &[FileEntry]) -> Vec<String> {
         // Rust both perform on the first read (their SQLite snapshot bytes
         // differ; the replay compares the rows). Anything else must be
         // byte-identical.
-        match item.volatile.as_str() {
-            "migration-product" => {
-                if got.get(path).is_none_or(|other| other.kind != "f") {
-                    problems.push(format!("missing migration product: {path}"));
-                }
-                continue;
+        if item.volatile == "migration-product" {
+            if got.get(path).is_none_or(|other| other.kind != "f") {
+                problems.push(format!("missing migration product: {path}"));
             }
-            _ => {}
+            continue;
         }
         match got.get(path) {
             None => problems.push(format!("missing: {path}")),

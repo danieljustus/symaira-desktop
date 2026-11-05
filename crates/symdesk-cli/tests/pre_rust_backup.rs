@@ -36,12 +36,17 @@ impl Env {
             "symdesk-prerust-{}-{}-{}",
             std::process::id(),
             SEQUENCE.fetch_add(1, Ordering::SeqCst),
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         for directory in ["home", "config", "cache", "data", "vault", "cwd"] {
             fs::create_dir_all(root.join(directory)).unwrap();
         }
-        Self { root: fs::canonicalize(root).unwrap() }
+        Self {
+            root: fs::canonicalize(root).unwrap(),
+        }
     }
 
     fn data(&self) -> PathBuf {
@@ -64,7 +69,10 @@ impl Env {
         ] {
             command.env(key, self.root.join(directory));
         }
-        command.env("TZ", "UTC").env("LANG", "C").env("PATH", "/usr/bin:/bin");
+        command
+            .env("TZ", "UTC")
+            .env("LANG", "C")
+            .env("PATH", "/usr/bin:/bin");
         // `on` enables the backup; `off` is what isolated_env() already set.
         command.env("SYMDESK_PRE_RUST_BACKUP", backup);
         command.args(args);
@@ -93,11 +101,23 @@ impl Env {
         fs::create_dir_all(data.join("backups")).unwrap();
         fs::create_dir_all(self.root.join("config/symdesk")).unwrap();
         fs::create_dir_all(self.root.join("data/symingest")).unwrap();
-        fs::write(vault_dir.join("metadata.json"), br#"{"vault_path":"/x","last_used":"2026-01-01T00:00:00Z"}"#).unwrap();
+        fs::write(
+            vault_dir.join("metadata.json"),
+            br#"{"vault_path":"/x","last_used":"2026-01-01T00:00:00Z"}"#,
+        )
+        .unwrap();
         fs::write(data.join("archive/big.bin"), vec![7_u8; 4096]).unwrap();
         fs::write(data.join("backups/old.txt"), b"older backup").unwrap();
-        fs::write(self.root.join("config/symdesk/config.toml"), b"vault = \"/x\"\n").unwrap();
-        fs::write(self.root.join("data/symingest/legacy.txt"), b"legacy ingest state\n").unwrap();
+        fs::write(
+            self.root.join("config/symdesk/config.toml"),
+            b"vault = \"/x\"\n",
+        )
+        .unwrap();
+        fs::write(
+            self.root.join("data/symingest/legacy.txt"),
+            b"legacy ingest state\n",
+        )
+        .unwrap();
         for database in [data.join("symingest.db"), vault_dir.join("sidecar.db")] {
             let connection = Connection::open(&database).unwrap();
             connection
@@ -123,16 +143,23 @@ fn sha256(path: &Path) -> String {
 
 fn manifest(env: &Env) -> serde_json::Value {
     let path = env.data().join("backups/pre-rust/manifest.json");
-    serde_json::from_slice(&fs::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))).unwrap()
+    serde_json::from_slice(&fs::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display())))
+        .unwrap()
 }
 
 /// Every file below `root` except the `backups` directory: path -> sha256.
 fn tree(root: &Path) -> std::collections::BTreeMap<String, String> {
     fn walk(root: &Path, dir: &Path, out: &mut std::collections::BTreeMap<String, String>) {
-        let Ok(entries) = fs::read_dir(dir) else { return };
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
-            let relative = path.strip_prefix(root).unwrap().to_string_lossy().into_owned();
+            let relative = path
+                .strip_prefix(root)
+                .unwrap()
+                .to_string_lossy()
+                .into_owned();
             if path.is_dir() {
                 walk(root, &path, out);
             } else {
@@ -157,7 +184,10 @@ fn first_run_creates_backup_with_correct_hashes_and_second_run_does_nothing() {
 
     let off = env.run("off", &["config", "paths"]);
     assert_eq!(off.status.code(), Some(0), "{}", text(&off.stderr));
-    assert!(!env.data().join("backups/pre-rust").exists(), "opt-out must not create a backup");
+    assert!(
+        !env.data().join("backups/pre-rust").exists(),
+        "opt-out must not create a backup"
+    );
     assert!(off.stderr.is_empty());
 
     let first = env.run("on", &["config", "paths"]);
@@ -165,7 +195,11 @@ fn first_run_creates_backup_with_correct_hashes_and_second_run_does_nothing() {
     // stdout is identical with and without the backup: it stays reserved for the command.
     assert_eq!(first.stdout, off.stdout);
     let notice = text(&first.stderr);
-    assert_eq!(notice.matches("backed up once").count(), 1, "exactly one notice: {notice}");
+    assert_eq!(
+        notice.matches("backed up once").count(),
+        1,
+        "exactly one notice: {notice}"
+    );
     assert!(notice.contains("backup restore-pre-rust"));
 
     let manifest = manifest(&env);
@@ -173,9 +207,18 @@ fn first_run_creates_backup_with_correct_hashes_and_second_run_does_nothing() {
     assert_eq!(manifest["tool"], "symdesk");
     assert!(manifest["created_at"].as_str().unwrap().ends_with('Z'));
     assert!(!manifest["symdesk_version"].as_str().unwrap().is_empty());
-    assert!(manifest["sources"].as_array().unwrap().iter().any(|s| s["path"].as_str().unwrap().ends_with("data/symingest")));
+    assert!(
+        manifest["sources"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|s| s["path"].as_str().unwrap().ends_with("data/symingest"))
+    );
     let files = manifest["files"].as_array().unwrap();
-    let sources: Vec<&str> = files.iter().map(|f| f["source"].as_str().unwrap()).collect();
+    let sources: Vec<&str> = files
+        .iter()
+        .map(|f| f["source"].as_str().unwrap())
+        .collect();
     for expected in [
         "data/symdesk/symingest.db",
         "data/symdesk/vaults/0123456789abcdef/sidecar.db",
@@ -183,17 +226,36 @@ fn first_run_creates_backup_with_correct_hashes_and_second_run_does_nothing() {
         "config/symdesk/config.toml",
         "data/symingest/legacy.txt",
     ] {
-        assert!(sources.iter().any(|s| s.ends_with(expected)), "{expected} missing from {sources:?}");
+        assert!(
+            sources.iter().any(|s| s.ends_with(expected)),
+            "{expected} missing from {sources:?}"
+        );
     }
-    assert!(!sources.iter().any(|s| s.contains("/archive/") || s.contains("/backups/")), "{sources:?}");
+    assert!(
+        !sources
+            .iter()
+            .any(|s| s.contains("/archive/") || s.contains("/backups/")),
+        "{sources:?}"
+    );
     let backup_dir = env.data().join("backups/pre-rust");
     for file in files {
         let copy = backup_dir.join(file["backup"].as_str().unwrap());
-        assert_eq!(sha256(&copy), file["sha256"].as_str().unwrap(), "{}", file["source"]);
-        assert_eq!(fs::metadata(&copy).unwrap().len(), file["size"].as_u64().unwrap());
+        assert_eq!(
+            sha256(&copy),
+            file["sha256"].as_str().unwrap(),
+            "{}",
+            file["source"]
+        );
+        assert_eq!(
+            fs::metadata(&copy).unwrap().len(),
+            file["size"].as_u64().unwrap()
+        );
         // Quiescent files are copied byte for byte: the digest is the original's.
         assert_eq!(file["method"], "copy");
-        assert_eq!(sha256(Path::new(file["source"].as_str().unwrap())), file["sha256"].as_str().unwrap());
+        assert_eq!(
+            sha256(Path::new(file["source"].as_str().unwrap())),
+            file["sha256"].as_str().unwrap()
+        );
     }
     // State is read, never modified, by the backup.
     let after: std::collections::BTreeMap<_, _> = tree(&env.root)
@@ -205,8 +267,15 @@ fn first_run_creates_backup_with_correct_hashes_and_second_run_does_nothing() {
     let manifest_bytes = fs::read(backup_dir.join("manifest.json")).unwrap();
     let second = env.run("on", &["config", "paths"]);
     assert_eq!(second.status.code(), Some(0));
-    assert!(second.stderr.is_empty(), "second run must be silent: {}", text(&second.stderr));
-    assert_eq!(fs::read(backup_dir.join("manifest.json")).unwrap(), manifest_bytes);
+    assert!(
+        second.stderr.is_empty(),
+        "second run must be silent: {}",
+        text(&second.stderr)
+    );
+    assert_eq!(
+        fs::read(backup_dir.join("manifest.json")).unwrap(),
+        manifest_bytes
+    );
 }
 
 #[test]
@@ -217,7 +286,8 @@ fn no_state_creates_no_backup_and_later_rust_state_is_not_backed_up_as_pre_rust(
     assert!(run.stderr.is_empty());
     assert!(!env.data().join("backups/pre-rust").exists());
     let marker: serde_json::Value =
-        serde_json::from_slice(&fs::read(env.data().join("backups/pre-rust.done.json")).unwrap()).unwrap();
+        serde_json::from_slice(&fs::read(env.data().join("backups/pre-rust.done.json")).unwrap())
+            .unwrap();
     assert_eq!(marker["result"], "no-state");
     // State the Rust build creates afterwards is not "pre-Rust" state.
     env.seed_state();
@@ -235,7 +305,10 @@ fn opt_out_values_disable_the_backup() {
         assert_eq!(run.status.code(), Some(0));
         assert!(run.stderr.is_empty());
         assert!(!env.data().join("backups/pre-rust").exists(), "{value}");
-        assert!(!env.data().join("backups/pre-rust.done.json").exists(), "{value}");
+        assert!(
+            !env.data().join("backups/pre-rust.done.json").exists(),
+            "{value}"
+        );
     }
 }
 
@@ -252,23 +325,56 @@ fn live_wal_database_is_snapshotted_consistently_and_its_sidecars_are_folded() {
              INSERT INTO t(body) VALUES ('committed-in-wal-1'), ('committed-in-wal-2');",
         )
         .unwrap();
-    assert!(fs::metadata(format!("{}-wal", database.display())).unwrap().len() > 0, "WAL must be live");
+    assert!(
+        fs::metadata(format!("{}-wal", database.display()))
+            .unwrap()
+            .len()
+            > 0,
+        "WAL must be live"
+    );
 
     let run = env.run("on", &["config", "paths"]);
     assert_eq!(run.status.code(), Some(0), "{}", text(&run.stderr));
     let manifest = manifest(&env);
-    let entry = manifest["files"].as_array().unwrap().iter()
-        .find(|f| f["source"].as_str().unwrap().ends_with("data/symdesk/live.db")).unwrap();
+    let entry = manifest["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|f| {
+            f["source"]
+                .as_str()
+                .unwrap()
+                .ends_with("data/symdesk/live.db")
+        })
+        .unwrap();
     assert_eq!(entry["method"], "sqlite-backup");
-    let snapshot = env.data().join("backups/pre-rust").join(entry["backup"].as_str().unwrap());
+    let snapshot = env
+        .data()
+        .join("backups/pre-rust")
+        .join(entry["backup"].as_str().unwrap());
     let restored = Connection::open(&snapshot).unwrap();
-    let rows: i64 = restored.query_row("SELECT count(*) FROM t", [], |row| row.get(0)).unwrap();
+    let rows: i64 = restored
+        .query_row("SELECT count(*) FROM t", [], |row| row.get(0))
+        .unwrap();
     assert_eq!(rows, 2, "WAL content must be inside the snapshot");
-    let integrity: String = restored.query_row("PRAGMA integrity_check", [], |row| row.get(0)).unwrap();
+    let integrity: String = restored
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .unwrap();
     assert_eq!(integrity, "ok");
     let files = manifest["files"].as_array().unwrap();
-    assert!(!files.iter().any(|f| f["source"].as_str().unwrap().ends_with("live.db-wal")), "WAL must be folded, not copied");
-    assert!(manifest["skipped"].as_array().unwrap().iter().any(|s| s["source"].as_str().unwrap().ends_with("live.db-wal")));
+    assert!(
+        !files
+            .iter()
+            .any(|f| f["source"].as_str().unwrap().ends_with("live.db-wal")),
+        "WAL must be folded, not copied"
+    );
+    assert!(
+        manifest["skipped"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|s| s["source"].as_str().unwrap().ends_with("live.db-wal"))
+    );
     drop(connection);
 }
 
@@ -284,7 +390,10 @@ fn failed_backup_aborts_the_command_and_leaves_state_untouched() {
     assert_ne!(run.status.code(), Some(0));
     assert!(run.stdout.is_empty(), "no stdout on a refused command");
     let message = text(&run.stderr);
-    assert!(message.contains("cannot create the one-time pre-Rust state backup"), "{message}");
+    assert!(
+        message.contains("cannot create the one-time pre-Rust state backup"),
+        "{message}"
+    );
     assert!(message.contains("SYMDESK_PRE_RUST_BACKUP=off"), "{message}");
     assert_eq!(tree(&env.root), before, "state must be untouched");
     // The documented escape hatch still lets the user continue.
@@ -299,13 +408,26 @@ fn mcp_stdout_carries_only_json_rpc_frames_while_the_backup_runs() {
     let initialize = br#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}
 "#;
     let vault = env.root.join("vault");
-    let output = env.run_with("on", &["--vault", vault.to_str().unwrap(), "mcp"], Some(initialize));
-    assert!(env.data().join("backups/pre-rust/manifest.json").is_file(), "backup missing: {}", text(&output.stderr));
+    let output = env.run_with(
+        "on",
+        &["--vault", vault.to_str().unwrap(), "mcp"],
+        Some(initialize),
+    );
+    assert!(
+        env.data().join("backups/pre-rust/manifest.json").is_file(),
+        "backup missing: {}",
+        text(&output.stderr)
+    );
     assert!(text(&output.stderr).contains("backed up once"));
     let stdout = text(&output.stdout);
-    assert!(!stdout.trim().is_empty(), "initialize must be answered: {}", text(&output.stderr));
+    assert!(
+        !stdout.trim().is_empty(),
+        "initialize must be answered: {}",
+        text(&output.stderr)
+    );
     for line in stdout.lines() {
-        let frame: serde_json::Value = serde_json::from_str(line).unwrap_or_else(|e| panic!("non-JSON on stdout {line:?}: {e}"));
+        let frame: serde_json::Value = serde_json::from_str(line)
+            .unwrap_or_else(|e| panic!("non-JSON on stdout {line:?}: {e}"));
         assert_eq!(frame["jsonrpc"], "2.0", "{line}");
     }
 }
@@ -319,10 +441,17 @@ fn restore_verifies_moves_current_state_aside_and_returns_the_original_files() {
     assert_eq!(run.status.code(), Some(0));
 
     // Rust-era changes: edit, delete, add, and a new store.
-    fs::write(env.data().join("vaults/0123456789abcdef/metadata.json"), b"{\"changed\":true}").unwrap();
+    fs::write(
+        env.data().join("vaults/0123456789abcdef/metadata.json"),
+        b"{\"changed\":true}",
+    )
+    .unwrap();
     fs::remove_file(env.root.join("data/symingest/legacy.txt")).unwrap();
     fs::write(env.data().join("rust-created.db"), b"new").unwrap();
-    Connection::open(env.data().join("symingest.db")).unwrap().execute("INSERT INTO t(body) VALUES ('rust')", []).unwrap();
+    Connection::open(env.data().join("symingest.db"))
+        .unwrap()
+        .execute("INSERT INTO t(body) VALUES ('rust')", [])
+        .unwrap();
     assert_ne!(tree(&env.root), original);
 
     // A dry run verifies and reports but changes nothing.
@@ -333,7 +462,12 @@ fn restore_verifies_moves_current_state_aside_and_returns_the_original_files() {
     assert_eq!(tree(&env.root), changed);
 
     let restored = env.run("on", &["backup", "restore-pre-rust"]);
-    assert_eq!(restored.status.code(), Some(0), "{}", text(&restored.stderr));
+    assert_eq!(
+        restored.status.code(),
+        Some(0),
+        "{}",
+        text(&restored.stderr)
+    );
     assert!(text(&restored.stdout).contains("all digests verified"));
     let without_backups: std::collections::BTreeMap<_, _> = tree(&env.root)
         .into_iter()
@@ -341,21 +475,35 @@ fn restore_verifies_moves_current_state_aside_and_returns_the_original_files() {
         .collect();
     let expected: std::collections::BTreeMap<_, _> = original
         .into_iter()
-        .filter(|(path, _)| !path.starts_with("data/symdesk/backups/") && !path.starts_with("data/symdesk/archive/"))
+        .filter(|(path, _)| {
+            !path.starts_with("data/symdesk/backups/") && !path.starts_with("data/symdesk/archive/")
+        })
         .collect();
     let restored_tree: std::collections::BTreeMap<_, _> = without_backups
         .into_iter()
         .filter(|(path, _)| !path.starts_with("data/symdesk/archive/"))
         .collect();
-    assert_eq!(restored_tree, expected, "restore must give back the original bytes and drop Rust-era files");
+    assert_eq!(
+        restored_tree, expected,
+        "restore must give back the original bytes and drop Rust-era files"
+    );
     // Nothing is deleted: the Rust-era state sits in pre-restore-*.
     let aside: Vec<_> = fs::read_dir(env.data().join("backups"))
         .unwrap()
         .flatten()
-        .filter(|entry| entry.file_name().to_string_lossy().starts_with("pre-restore-"))
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with("pre-restore-")
+        })
         .collect();
     assert_eq!(aside.len(), 1);
-    assert!(tree(&aside[0].path()).keys().any(|path| path.ends_with("rust-created.db")));
+    assert!(
+        tree(&aside[0].path())
+            .keys()
+            .any(|path| path.ends_with("rust-created.db"))
+    );
 }
 
 #[test]
@@ -371,10 +519,17 @@ fn restore_refuses_a_tampered_backup_and_changes_nothing() {
     fs::write(&victim_path, bytes).unwrap();
     fs::write(env.data().join("rust-created.db"), b"new").unwrap();
     let before = tree(&env.root);
-    for args in [&["backup", "restore-pre-rust"][..], &["backup", "restore-pre-rust", "--dry-run"][..]] {
+    for args in [
+        &["backup", "restore-pre-rust"][..],
+        &["backup", "restore-pre-rust", "--dry-run"][..],
+    ] {
         let run = env.run("on", args);
         assert_eq!(run.status.code(), Some(1));
-        assert!(text(&run.stderr).contains("failed verification"), "{}", text(&run.stderr));
+        assert!(
+            text(&run.stderr).contains("failed verification"),
+            "{}",
+            text(&run.stderr)
+        );
         assert_eq!(tree(&env.root), before);
     }
     let missing = env.run("on", &["backup", "restore-pre-rust", "--bogus"]);
@@ -386,7 +541,11 @@ fn restore_without_a_backup_explains_itself() {
     let env = Env::new();
     let run = env.run("off", &["backup", "restore-pre-rust"]);
     assert_eq!(run.status.code(), Some(1));
-    assert!(text(&run.stderr).contains("no pre-Rust backup found"), "{}", text(&run.stderr));
+    assert!(
+        text(&run.stderr).contains("no pre-Rust backup found"),
+        "{}",
+        text(&run.stderr)
+    );
 }
 
 #[test]
@@ -398,5 +557,9 @@ fn restore_command_is_hidden_from_help_and_other_backup_words_stay_unknown() {
     assert!(!text(&help.stdout).contains(" backup "));
     let unknown = env.run("on", &["backup"]);
     assert_eq!(unknown.status.code(), Some(1));
-    assert!(text(&unknown.stderr).contains("unknown command \"backup\""), "{}", text(&unknown.stderr));
+    assert!(
+        text(&unknown.stderr).contains("unknown command \"backup\""),
+        "{}",
+        text(&unknown.stderr)
+    );
 }

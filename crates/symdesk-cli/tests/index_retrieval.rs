@@ -339,6 +339,7 @@ fn without_provider_diagnostics(stderr: &str) -> String {
 
 fn run(root: &TempRoot, args: &[String]) -> ProcessResult {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+    command.env("SYMDESK_PRE_RUST_BACKUP", "off");
     command
         .arg("--vault")
         .arg(root.path("vault"))

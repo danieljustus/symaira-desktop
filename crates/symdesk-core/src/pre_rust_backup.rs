@@ -252,7 +252,7 @@ struct Inventory {
     skipped: Vec<Skipped>,
 }
 
-fn walk(root: &Path, directory: &Path, inventory: &mut Inventory, top_level: bool) -> io::Result<()> {
+fn walk(directory: &Path, inventory: &mut Inventory, top_level: bool) -> io::Result<()> {
     let mut entries: Vec<_> = fs::read_dir(directory)?.collect::<Result<_, _>>()?;
     entries.sort_by_key(fs::DirEntry::file_name);
     for entry in entries {
@@ -264,7 +264,7 @@ fn walk(root: &Path, directory: &Path, inventory: &mut Inventory, top_level: boo
         let metadata = fs::symlink_metadata(&path)?;
         if metadata.is_dir() {
             inventory.dirs.push((path.clone(), mode_of(&metadata)));
-            walk(root, &path, inventory, false)?;
+            walk(&path, inventory, false)?;
         } else if metadata.is_file() {
             if name.ends_with("-shm") {
                 inventory.skipped.push(Skipped {
@@ -300,9 +300,10 @@ fn inventory(spec: &Spec) -> Result<(Inventory, Vec<SourceRoot>), String> {
         if !exists {
             continue;
         }
-        let metadata = fs::symlink_metadata(root).map_err(|e| format!("stat {}: {e}", root.display()))?;
+        let metadata =
+            fs::symlink_metadata(root).map_err(|e| format!("stat {}: {e}", root.display()))?;
         found.dirs.push((root.clone(), mode_of(&metadata)));
-        walk(root, root, &mut found, true).map_err(|e| format!("scan {}: {e}", root.display()))?;
+        walk(root, &mut found, true).map_err(|e| format!("scan {}: {e}", root.display()))?;
     }
     for file in &spec.extra_files {
         if found.files.iter().any(|existing| &existing.path == file) {
@@ -370,7 +371,8 @@ pub fn ensure(spec: &Spec) -> Result<Outcome, String> {
         .write(true)
         .open(spec.backups_dir.join(LOCK_NAME))
         .map_err(|e| format!("open backup lock: {e}"))?;
-    lock.lock().map_err(|e| format!("lock backup directory: {e}"))?;
+    lock.lock()
+        .map_err(|e| format!("lock backup directory: {e}"))?;
     // Another first run may have finished while this one waited.
     if marker_path(spec).is_file() {
         return Ok(Outcome::AlreadyDone);
@@ -569,7 +571,13 @@ fn file_label(path: &Path) -> String {
         |name| {
             name.to_string_lossy()
                 .chars()
-                .map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') { c } else { '_' })
+                .map(|c| {
+                    if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') {
+                        c
+                    } else {
+                        '_'
+                    }
+                })
                 .collect()
         },
     )
@@ -621,7 +629,10 @@ fn copy_database(source: &Path, destination: &Path) -> Result<String, String> {
         .and_then(|c| c.query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0)))
         .map_err(|e| format!("verify snapshot of {}: {e}", source.display()))?;
     if check != "ok" {
-        return Err(format!("snapshot of {} failed its integrity check: {check}", source.display()));
+        return Err(format!(
+            "snapshot of {} failed its integrity check: {check}",
+            source.display()
+        ));
     }
     Ok("sqlite-backup".to_owned())
 }
@@ -672,7 +683,10 @@ fn verify_files(dir: &Path, manifest: &Manifest) -> Result<usize, String> {
     let mut problems = Vec::new();
     for file in &manifest.files {
         if !safe_relative(&file.backup) {
-            problems.push(format!("{}: unsafe backup path {:?}", file.source, file.backup));
+            problems.push(format!(
+                "{}: unsafe backup path {:?}",
+                file.source, file.backup
+            ));
             continue;
         }
         match sha256_file(&dir.join(&file.backup)) {
@@ -681,7 +695,9 @@ fn verify_files(dir: &Path, manifest: &Manifest) -> Result<usize, String> {
                 "{}: backup copy changed (sha256 {digest}/{size} bytes, manifest {}/{})",
                 file.source, file.sha256, file.size
             )),
-            Err(error) => problems.push(format!("{}: backup copy unreadable: {error}", file.source)),
+            Err(error) => {
+                problems.push(format!("{}: backup copy unreadable: {error}", file.source))
+            }
         }
     }
     if problems.is_empty() {
@@ -729,13 +745,20 @@ pub fn restore(spec: &Spec, dry_run: bool) -> Result<RestoreReport, String> {
             moves.push((root_path.join(&name), format!("root-{position}/{name}")));
         }
     }
-    let root_paths: BTreeSet<&str> = manifest.sources.iter().map(|root| root.path.as_str()).collect();
+    let root_paths: BTreeSet<&str> = manifest
+        .sources
+        .iter()
+        .map(|root| root.path.as_str())
+        .collect();
     for file in &manifest.files {
         let in_root = root_paths
             .iter()
             .any(|root| Path::new(&file.source).starts_with(root));
         if !in_root && Path::new(&file.source).exists() {
-            moves.push((PathBuf::from(&file.source), format!("extra/{}", file_label(Path::new(&file.source)))));
+            moves.push((
+                PathBuf::from(&file.source),
+                format!("extra/{}", file_label(Path::new(&file.source))),
+            ));
         }
         // Sidecars of an out-of-root database go aside with it.
         if !in_root {
@@ -747,7 +770,10 @@ pub fn restore(spec: &Spec, dry_run: bool) -> Result<RestoreReport, String> {
             }
         }
     }
-    report.set_aside = moves.iter().map(|(path, _)| path.to_string_lossy().into_owned()).collect();
+    report.set_aside = moves
+        .iter()
+        .map(|(path, _)| path.to_string_lossy().into_owned())
+        .collect();
     if dry_run {
         return Ok(report);
     }
@@ -785,7 +811,9 @@ pub fn restore(spec: &Spec, dry_run: bool) -> Result<RestoreReport, String> {
             let _ = fs::remove_dir_all(source).or_else(|_| fs::remove_file(source));
             let _ = fs::rename(target, source);
         }
-        return Err(format!("restore failed and the previous state was put back: {error}"));
+        return Err(format!(
+            "restore failed and the previous state was put back: {error}"
+        ));
     }
     Ok(report)
 }
@@ -823,7 +851,10 @@ fn place(dir: &Path, manifest: &Manifest) -> Result<(), String> {
         let (digest, size) = sha256_file(Path::new(&file.source))
             .map_err(|e| format!("verify restored {}: {e}", file.source))?;
         if digest != file.sha256 || size != file.size {
-            return Err(format!("restored {} does not match its manifest digest", file.source));
+            return Err(format!(
+                "restored {} does not match its manifest digest",
+                file.source
+            ));
         }
     }
     Ok(())
@@ -872,7 +903,11 @@ pub fn restore_command(tool: &str, spec: &Spec, args: &[String]) -> CommandResul
         match arg.as_str() {
             "--dry-run" | "-dry-run" => dry_run = true,
             "-h" | "--help" | "help" => {
-                return CommandResult { code: 0, stdout: usage, stderr: String::new() };
+                return CommandResult {
+                    code: 0,
+                    stdout: usage,
+                    stderr: String::new(),
+                };
             }
             other => {
                 return CommandResult {
@@ -902,7 +937,10 @@ pub fn restore_command(tool: &str, spec: &Spec, args: &[String]) -> CommandResul
                 "Restored {} files from {} (all digests verified).\nPrevious state moved to {}\n",
                 report.files,
                 report.backup_dir.display(),
-                report.aside_dir.as_deref().map_or_else(String::new, |p| p.display().to_string())
+                report
+                    .aside_dir
+                    .as_deref()
+                    .map_or_else(String::new, |p| p.display().to_string())
             ),
             stderr: String::new(),
         },

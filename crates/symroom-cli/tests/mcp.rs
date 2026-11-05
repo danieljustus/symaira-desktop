@@ -377,6 +377,7 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
     let _ = std::fs::remove_dir_all(&home);
     std::fs::create_dir_all(&home).unwrap();
     let created = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .args(["identity", "create", "owner"])
         .env("HOME", &home)
         .env("XDG_DATA_HOME", &home)
@@ -385,6 +386,7 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
         .unwrap();
     assert!(created.status.success(), "identity create: {created:?}");
     let mut child = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .args(["mcp", "--identity", "owner"])
         .env("HOME", &home)
         .env("XDG_DATA_HOME", &home)
@@ -444,6 +446,7 @@ fn real_mcp_server_gives_the_symdesk_child_a_null_stdin() {
         scenario["symdesk_script"].as_str().expect("script"),
     );
     let created = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .args(["identity", "create", "owner"])
         .env("HOME", &home)
         .env("XDG_DATA_HOME", &home)
@@ -453,6 +456,7 @@ fn real_mcp_server_gives_the_symdesk_child_a_null_stdin() {
     assert!(created.status.success(), "identity create: {created:?}");
     let artifact_root = root.join("testdata/port/room");
     let mut child = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .arg("mcp")
         .arg("--room")
         .arg(&room)

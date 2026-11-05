@@ -80,6 +80,7 @@ fn run_transform(status: u16, via: &str) -> (Vec<u8>, Vec<u8>, usize) {
     command
         .current_dir(&root)
         .env_clear()
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .env("PATH", "/usr/bin:/bin")
         .env("HOME", &home)
         .env("XDG_CONFIG_HOME", home.join("config"))

@@ -98,7 +98,9 @@ pub fn gate() -> Result<(), ExitCode> {
 /// other invocation to the cobra front half (so `symdesk backup` stays Go's
 /// "unknown command").
 pub fn intercept(args: &[OsString]) -> Option<ExitCode> {
-    if args.get(1).is_none_or(|word| word != "backup") || args.get(2).is_none_or(|word| word != "restore-pre-rust") {
+    if args.get(1).is_none_or(|word| word != "backup")
+        || args.get(2).is_none_or(|word| word != "restore-pre-rust")
+    {
         return None;
     }
     let rest: Vec<String> = args[3..]
@@ -110,7 +112,8 @@ pub fn intercept(args: &[OsString]) -> Option<ExitCode> {
         None => pre_rust_backup::CommandResult {
             code: 1,
             stdout: String::new(),
-            stderr: "symdesk: cannot resolve the state locations (set HOME or XDG_DATA_HOME)\n".to_owned(),
+            stderr: "symdesk: cannot resolve the state locations (set HOME or XDG_DATA_HOME)\n"
+                .to_owned(),
         },
     };
     let _ = io::stdout().write_all(result.stdout.as_bytes());

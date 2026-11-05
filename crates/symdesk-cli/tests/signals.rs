@@ -638,6 +638,7 @@ fn run_case(case: &Case, rust_steps: bool) -> Result<Outcome, String> {
             .args(&argv)
             .current_dir(&scratch.root)
             .env_clear()
+            .env("SYMDESK_PRE_RUST_BACKUP", "off")
             .envs(environment.clone())
             .output()
             .map_err(|error| format!("setup {setup}: {error}"))?;
@@ -663,6 +664,7 @@ fn run_case(case: &Case, rust_steps: bool) -> Result<Outcome, String> {
         .args(&argv)
         .current_dir(&scratch.root)
         .env_clear()
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .envs(environment)
         .process_group(0)
         .stdin(Stdio::piped())
@@ -892,6 +894,7 @@ fn run_case(case: &Case, rust_steps: bool) -> Result<Outcome, String> {
                 ])
                 .current_dir(&scratch.root)
                 .env_clear()
+                .env("SYMDESK_PRE_RUST_BACKUP", "off")
                 .envs(scratch.environment(&case.env))
                 .output()
                 .map_err(|error| error.to_string())?;

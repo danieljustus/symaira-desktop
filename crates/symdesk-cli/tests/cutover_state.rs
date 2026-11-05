@@ -27,7 +27,11 @@ fn retrieval_rows(path: &std::path::Path) -> Vec<String> {
         .unwrap_or_else(|error| panic!("open {}: {error}", path.display()));
     let mut rows = Vec::new();
     for (label, sql, columns) in [
-        ("document", "SELECT path, hash FROM documents ORDER BY path", 2),
+        (
+            "document",
+            "SELECT path, hash FROM documents ORDER BY path",
+            2,
+        ),
         (
             "chunk",
             "SELECT document_path, chunk_index, content, hash, embedding, norm FROM chunks ORDER BY document_path, chunk_index",
@@ -64,13 +68,28 @@ fn assert_seeded_from_standalone(root: &cutover_state::Root, state: &State) {
     {
         let seeded = retrieval_rows(&root.path.join(&product.path));
         let standalone = retrieval_rows(&root.path.join("home/data/symdesk/retrieval.db"));
-        assert!(seeded.iter().filter(|row| row.starts_with("chunk|")).count() >= 4, "{seeded:?}");
-        assert_eq!(seeded, standalone, "{}: seeded index differs from the standalone store", state.name);
+        assert!(
+            seeded
+                .iter()
+                .filter(|row| row.starts_with("chunk|"))
+                .count()
+                >= 4,
+            "{seeded:?}"
+        );
+        assert_eq!(
+            seeded, standalone,
+            "{}: seeded index differs from the standalone store",
+            state.name
+        );
     }
 }
 
 fn symdesk_queries(state: &State) -> Vec<&cutover_state::Query> {
-    state.queries.iter().filter(|q| q.tool == "symdesk").collect()
+    state
+        .queries
+        .iter()
+        .filter(|q| q.tool == "symdesk")
+        .collect()
 }
 
 #[test]
@@ -83,7 +102,12 @@ fn rust_reads_go_created_state_with_go_outputs_and_leaves_it_unchanged() {
         let queries = symdesk_queries(state);
         assert_eq!(queries.len(), EXPECTED_SYMDESK_QUERIES, "{}", state.name);
         root.unpack(state);
-        assert_eq!(diff(&state.files, &root.scan()), Vec::<String>::new(), "{}: unpacked tree", state.name);
+        assert_eq!(
+            diff(&state.files, &root.scan()),
+            Vec::<String>::new(),
+            "{}: unpacked tree",
+            state.name
+        );
         let mut mismatches = Vec::new();
         for query in queries {
             let run = root.run(&manifest, BINARY, &query.cwd, &query.args, &[], &[]);
@@ -96,18 +120,34 @@ fn rust_reads_go_created_state_with_go_outputs_and_leaves_it_unchanged() {
                 ));
             }
         }
-        assert!(mismatches.is_empty(), "Rust output differs from the recorded Go output:\n{}", mismatches.join("\n"));
+        assert!(
+            mismatches.is_empty(),
+            "Rust output differs from the recorded Go output:\n{}",
+            mismatches.join("\n")
+        );
         // Rust must not migrate or rewrite Go state on read: the tree equals what
         // Go itself left after the same reads (unchanged for the settled state).
-        assert_eq!(diff(&state.after_reads, &root.scan()), Vec::<String>::new(), "{}: tree after Rust reads", state.name);
+        assert_eq!(
+            diff(&state.after_reads, &root.scan()),
+            Vec::<String>::new(),
+            "{}: tree after Rust reads",
+            state.name
+        );
         assert_seeded_from_standalone(&root, state);
         assert_eq!(
-            state.after_reads.iter().any(|f| f.volatile == "migration-product"),
+            state
+                .after_reads
+                .iter()
+                .any(|f| f.volatile == "migration-product"),
             state.name == "unmigrated",
             "only the unmigrated state may migrate on read"
         );
         if state.name == "settled" {
-            assert_eq!(diff(&state.files, &root.scan()), Vec::<String>::new(), "settled tree must be byte-identical");
+            assert_eq!(
+                diff(&state.files, &root.scan()),
+                Vec::<String>::new(),
+                "settled tree must be byte-identical"
+            );
         }
     }
     assert_eq!(executed, EXPECTED_STATES * EXPECTED_SYMDESK_QUERIES);
@@ -115,7 +155,11 @@ fn rust_reads_go_created_state_with_go_outputs_and_leaves_it_unchanged() {
 
 fn run_step(root: &cutover_state::Root, manifest: &cutover_state::Manifest, step: &Step) -> String {
     let run = root.run(manifest, BINARY, &step.cwd, &step.args, &[], &[]);
-    assert_eq!(run.exit, 0, "{:?}: stdout {} stderr {}", step.args, run.stdout, run.stderr);
+    assert_eq!(
+        run.exit, 0,
+        "{:?}: stdout {} stderr {}",
+        step.args, run.stdout, run.stderr
+    );
     for expected in &step.expect_substr {
         assert!(
             run.stdout.contains(expected.as_str()),
@@ -149,16 +193,55 @@ fn rust_writes_keep_go_created_stores_openable() {
         // answer the recorded read queries with the recorded exit codes.
         for query in symdesk_queries(state) {
             let run = root.run(&manifest, BINARY, &query.cwd, &query.args, &[], &[]);
-            assert_eq!(run.exit, query.exit_code, "{}/{} after Rust writes: {}", state.name, query.name, run.stderr);
+            assert_eq!(
+                run.exit, query.exit_code,
+                "{}/{} after Rust writes: {}",
+                state.name, query.name, run.stderr
+            );
         }
-        let status = root.run(&manifest, BINARY, "cwd", &["--vault".into(), "$ROOT/vault".into(), "--json".into(), "index".into(), "status".into()], &[], &[]);
+        let status = root.run(
+            &manifest,
+            BINARY,
+            "cwd",
+            &[
+                "--vault".into(),
+                "$ROOT/vault".into(),
+                "--json".into(),
+                "index".into(),
+                "status".into(),
+            ],
+            &[],
+            &[],
+        );
         assert_eq!(status.exit, 0, "{}", status.stderr);
-        let status: serde_json::Value = serde_json::from_str(&status.stdout).expect("index status JSON");
-        assert!(status["document_count"].as_u64().unwrap_or(0) >= 3, "{status}");
+        let status: serde_json::Value =
+            serde_json::from_str(&status.stdout).expect("index status JSON");
+        assert!(
+            status["document_count"].as_u64().unwrap_or(0) >= 3,
+            "{status}"
+        );
         // The contacts store written by Go is still the same store afterwards.
-        let contact = root.run(&manifest, BINARY, "cwd", &["--vault".into(), "$ROOT/vault".into(), "--json".into(), "relations".into(), "contact".into(), "Ada Lovelace".into()], &[], &[]);
+        let contact = root.run(
+            &manifest,
+            BINARY,
+            "cwd",
+            &[
+                "--vault".into(),
+                "$ROOT/vault".into(),
+                "--json".into(),
+                "relations".into(),
+                "contact".into(),
+                "Ada Lovelace".into(),
+            ],
+            &[],
+            &[],
+        );
         assert_eq!(contact.exit, 0, "{}", contact.stderr);
-        assert!(contact.stdout.contains(&manifest.vars["ADA"]), "{}", contact.stdout);
+        assert!(
+            contact.stdout.contains(&manifest.vars["ADA"]),
+            "{}",
+            contact.stdout
+        );
     }
     assert!(steps_run >= 2 * 10, "write scenarios executed: {steps_run}");
 }
@@ -197,11 +280,17 @@ fn first_rust_run_backup_and_restore_return_go_created_state_byte_identically() 
             &enable_backup,
         );
         assert_eq!(first.exit, 0, "{}: {}", state.name, first.stderr);
-        assert_eq!(first.stderr.matches("backed up once").count(), 1, "{}", first.stderr);
+        assert_eq!(
+            first.stderr.matches("backed up once").count(),
+            1,
+            "{}",
+            first.stderr
+        );
         let backup_dir = root.path.join("home/data/symdesk/backups/pre-rust");
-        let recorded: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(backup_dir.join("manifest.json")).expect("manifest"))
-                .expect("backup manifest JSON");
+        let recorded: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(backup_dir.join("manifest.json")).expect("manifest"),
+        )
+        .expect("backup manifest JSON");
         assert_eq!(recorded["schema_version"], 1);
         // Every Go-recorded state file is in the backup with the Go digest: the
         // backup holds the Go bytes, not a re-encoding.
@@ -226,22 +315,37 @@ fn first_rust_run_backup_and_restore_return_go_created_state_byte_identically() 
                 && (f.path.starts_with("home/data/symdesk/") || f.path.starts_with("home/config/"))
         }) {
             let source = root.path.join(&file.path).to_string_lossy().into_owned();
-            let (digest, method) = backed.get(&source).unwrap_or_else(|| panic!("{}: {source} not backed up", state.name));
+            let (digest, method) = backed
+                .get(&source)
+                .unwrap_or_else(|| panic!("{}: {source} not backed up", state.name));
             assert_eq!(digest, &file.sha256, "{}: {}", state.name, file.path);
             assert_eq!(method, "copy", "{}: {}", state.name, file.path);
             compared += 1;
         }
-        assert!(compared >= 4, "{}: databases and JSON compared: {compared}", state.name);
+        assert!(
+            compared >= 4,
+            "{}: databases and JSON compared: {compared}",
+            state.name
+        );
         for database in ["symingest.db", "symrelate.db"] {
             assert!(
-                backed.keys().any(|source| source.ends_with(&format!("data/symdesk/{database}"))),
+                backed
+                    .keys()
+                    .any(|source| source.ends_with(&format!("data/symdesk/{database}"))),
                 "{}: {database} must be in the backup",
                 state.name
             );
         }
         // The Go fixture has no live WAL, so nothing needed the SQLite snapshot path.
         // A second run is silent and idempotent.
-        let again = root.run(&manifest, BINARY, "cwd", &strings(&["--vault", "$ROOT/vault", "--json", "config", "paths"]), &[], &enable_backup);
+        let again = root.run(
+            &manifest,
+            BINARY,
+            "cwd",
+            &strings(&["--vault", "$ROOT/vault", "--json", "config", "paths"]),
+            &[],
+            &enable_backup,
+        );
         assert!(again.stderr.is_empty(), "{}", again.stderr);
 
         // Rust writes: stores (sidecar, retrieval, ingest) and the vault entries
@@ -251,27 +355,72 @@ fn first_rust_run_backup_and_restore_return_go_created_state_byte_identically() 
             &["--vault", "$ROOT/vault", "ingest", "$ROOT/inbox/second.md"][..],
             &["--vault", "$ROOT/vault", "index"][..],
         ] {
-            let run = root.run(&manifest, BINARY, "cwd", &strings(args), &[], &enable_backup);
-            assert_eq!(run.exit, 0, "{}: {:?}: {} {}", state.name, args, run.stdout, run.stderr);
+            let run = root.run(
+                &manifest,
+                BINARY,
+                "cwd",
+                &strings(args),
+                &[],
+                &enable_backup,
+            );
+            assert_eq!(
+                run.exit, 0,
+                "{}: {:?}: {} {}",
+                state.name, args, run.stdout, run.stderr
+            );
         }
         let changed = root.scan();
-        assert_ne!(diff(&state.files, &without_backups(changed.clone())), Vec::<String>::new(), "{}: Rust writes must have changed the state", state.name);
+        assert_ne!(
+            diff(&state.files, &without_backups(changed.clone())),
+            Vec::<String>::new(),
+            "{}: Rust writes must have changed the state",
+            state.name
+        );
 
-        let dry = root.run(&manifest, BINARY, "cwd", &strings(&["backup", "restore-pre-rust", "--dry-run"]), &[], &enable_backup);
+        let dry = root.run(
+            &manifest,
+            BINARY,
+            "cwd",
+            &strings(&["backup", "restore-pre-rust", "--dry-run"]),
+            &[],
+            &enable_backup,
+        );
         assert_eq!(dry.exit, 0, "{}", dry.stderr);
         assert!(dry.stdout.contains("Dry run"), "{}", dry.stdout);
-        assert_eq!(diff(&changed, &root.scan()), Vec::<String>::new(), "dry run must not change anything");
+        assert_eq!(
+            diff(&changed, &root.scan()),
+            Vec::<String>::new(),
+            "dry run must not change anything"
+        );
 
-        let restore = root.run(&manifest, BINARY, "cwd", &strings(&["backup", "restore-pre-rust"]), &[], &enable_backup);
+        let restore = root.run(
+            &manifest,
+            BINARY,
+            "cwd",
+            &strings(&["backup", "restore-pre-rust"]),
+            &[],
+            &enable_backup,
+        );
         assert_eq!(restore.exit, 0, "{}: {}", state.name, restore.stderr);
-        assert!(restore.stdout.contains("all digests verified"), "{}", restore.stdout);
+        assert!(
+            restore.stdout.contains("all digests verified"),
+            "{}",
+            restore.stdout
+        );
         // The restore covers the state locations (data and config directories):
         // those are byte-identical to the Go-created ones.
-        let in_state_locations = |files: Vec<cutover_state::FileEntry>| -> Vec<cutover_state::FileEntry> {
-            files.into_iter().filter(|f| f.path == "home" || f.path.starts_with("home/")).collect()
-        };
+        let in_state_locations =
+            |files: Vec<cutover_state::FileEntry>| -> Vec<cutover_state::FileEntry> {
+                files
+                    .into_iter()
+                    .filter(|f| f.path == "home" || f.path.starts_with("home/"))
+                    .collect()
+            };
         assert_eq!(
-            diff(&in_state_locations(state.files.clone()), &in_state_locations(without_backups(root.scan()))),
+            diff(
+                &in_state_locations(state.files.clone()),
+                &in_state_locations(without_backups(root.scan()))
+            ),
             Vec::<String>::new(),
             "{}: restored state locations must be byte-identical to the Go-created ones",
             state.name
@@ -282,7 +431,9 @@ fn first_rust_run_backup_and_restore_return_go_created_state_byte_identically() 
         // and replay the reads against the Go-era vault.
         let vault_before = root.scan();
         assert!(
-            diff(&state.files, &without_backups(vault_before)).iter().any(|p| p.contains("vault/")),
+            diff(&state.files, &without_backups(vault_before))
+                .iter()
+                .any(|p| p.contains("vault/")),
             "{}: the Rust writes changed the vault, which the restore does not touch",
             state.name
         );
@@ -297,15 +448,106 @@ fn first_rust_run_backup_and_restore_return_go_created_state_byte_identically() 
         let aside_exists = std::fs::read_dir(root.path.join("home/data/symdesk/backups"))
             .expect("backups dir")
             .flatten()
-            .any(|entry| entry.file_name().to_string_lossy().starts_with("pre-restore-"));
+            .any(|entry| {
+                entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("pre-restore-")
+            });
         assert!(aside_exists, "{}", state.name);
 
         // Reads work on the restored state and match the recorded Go outputs.
         for query in symdesk_queries(state) {
             let run = root.run(&manifest, BINARY, &query.cwd, &query.args, &[], &[]);
-            assert_eq!(run.exit, query.exit_code, "{}/{} after restore", state.name, query.name);
-            assert_eq!(normalize(&run.stdout), query.stdout, "{}/{} after restore", state.name, query.name);
-            assert_eq!(normalize(&run.stderr), query.stderr, "{}/{} after restore", state.name, query.name);
+            assert_eq!(
+                run.exit, query.exit_code,
+                "{}/{} after restore",
+                state.name, query.name
+            );
+            assert_eq!(
+                normalize(&run.stdout),
+                query.stdout,
+                "{}/{} after restore",
+                state.name,
+                query.name
+            );
+            assert_eq!(
+                normalize(&run.stderr),
+                query.stderr,
+                "{}/{} after restore",
+                state.name,
+                query.name
+            );
         }
     }
+}
+
+/// Negative controls: the comparisons above are not vacuous. A tampered Go
+/// observation (exit code, stdout or stderr) and a single changed, missing or
+/// extra byte in a frozen store file must each be reported.
+#[test]
+fn tampered_go_observations_and_store_files_are_rejected() {
+    let manifest = load();
+    let root = lock_root(&manifest);
+    let state = manifest
+        .states
+        .iter()
+        .find(|s| s.name == "settled")
+        .expect("settled state");
+    root.unpack(state);
+    let query = symdesk_queries(state)
+        .into_iter()
+        .find(|q| q.name == "contact-ada-id-json")
+        .expect("contact query");
+    let run = root.run(&manifest, BINARY, &query.cwd, &query.args, &[], &[]);
+    let observed = (run.exit, normalize(&run.stdout), normalize(&run.stderr));
+    let recorded = (query.exit_code, query.stdout.clone(), query.stderr.clone());
+    assert_eq!(observed, recorded, "control needs a matching baseline");
+    let mut tampered = [recorded.clone(), recorded.clone(), recorded];
+    tampered[0].0 += 1;
+    tampered[1].1.push('x');
+    tampered[2].2.push('x');
+    for (index, variant) in tampered.iter().enumerate() {
+        assert_ne!(&observed, variant, "tampering {index} must be detected");
+    }
+    // Store files: one appended byte, one missing file, one extra file.
+    let database = root.path.join("home/data/symdesk/symingest.db");
+    let mut bytes = std::fs::read(&database).expect("read ingest store");
+    bytes.push(0);
+    std::fs::write(&database, bytes).expect("append byte");
+    let problems = diff(&state.files, &root.scan());
+    assert!(
+        problems
+            .iter()
+            .any(|p| p.starts_with("changed: home/data/symdesk/symingest.db")),
+        "{problems:?}"
+    );
+    std::fs::remove_file(root.path.join("home/data/symdesk/symrelate.db"))
+        .expect("remove contacts store");
+    std::fs::write(root.path.join("home/data/symdesk/extra.db"), b"x").expect("extra file");
+    let problems = diff(&state.files, &root.scan());
+    assert!(
+        problems
+            .iter()
+            .any(|p| p == "missing: home/data/symdesk/symrelate.db"),
+        "{problems:?}"
+    );
+    assert!(
+        problems
+            .iter()
+            .any(|p| p == "unexpected: home/data/symdesk/extra.db"),
+        "{problems:?}"
+    );
+    // A migration product is the one declared exception and must still exist.
+    let unmigrated = manifest
+        .states
+        .iter()
+        .find(|s| s.name == "unmigrated")
+        .expect("unmigrated state");
+    assert!(
+        diff(&unmigrated.after_reads, &unmigrated.files)
+            .iter()
+            .any(|p| p.starts_with("missing migration product")),
+        "a missing per-vault retrieval index must be reported"
+    );
 }

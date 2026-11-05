@@ -51,6 +51,7 @@ fn history_tasks_matches_go_process_contract() {
             fs::write(checkpoints.join(name), manifest).expect("write checkpoint manifest");
         }
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+        command.env("SYMDESK_PRE_RUST_BACKUP", "off");
         if case.json {
             command.arg("--json");
         }

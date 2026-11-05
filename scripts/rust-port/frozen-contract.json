@@ -231,6 +231,18 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symdesk-cli --test cutover_state --locked": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-cli --test pre_rust_backup --locked": {
+      "ignored": 0,
+      "passed": 10
+    },
+    "cargo test -p symroom-cli --test cutover_state --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
     "cargo test -p symdesk-cli --test docs_read --locked": {
       "ignored": 0,
       "passed": 1

@@ -4,6 +4,7 @@ use std::process::{Command, Output};
 
 fn run(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .args(args)
         .output()
         .expect("run symroom")

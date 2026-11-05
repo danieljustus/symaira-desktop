@@ -429,6 +429,7 @@ fn sorted_lines(text: &str) -> String {
 
 fn command(root: &TempRoot, args: &[String]) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+    command.env("SYMDESK_PRE_RUST_BACKUP", "off");
     command
         .arg("--vault")
         .arg(root.path("vault"))

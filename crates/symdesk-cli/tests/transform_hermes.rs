@@ -75,6 +75,7 @@ fn replay(case: &Case, script: &str) -> Result<(), String> {
     command
         .current_dir(&root)
         .env_clear()
+        .env("SYMDESK_PRE_RUST_BACKUP", "off")
         .env("PATH", format!("{}:/usr/bin:/bin", bin.display()))
         .env("HOME", &home)
         .env("TZ", "UTC")

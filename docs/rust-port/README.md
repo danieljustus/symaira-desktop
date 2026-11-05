@@ -21,6 +21,110 @@ arm64 run in the `symdesk-linux-gate` container. A row whose only residual was
 native CI or Windows becomes PASS on that evidence; Linux amd64 is covered by
 the single CI run of the final push.
 
+## RUST-018 cutover data safety — Go-created state and the pre-Rust backup
+
+Two gates of the Rust-only cutover decision above, implemented without any Go
+fallback. Everything below replays without Go (`make port-contract-frozen`).
+
+**Go-created state opens unchanged** (`make cutover-state-differential`). The
+Go recorder `cmd/symdesk/cutover_state_port_test.go` (`make
+cutover-state-fixtures-generate`, run once per OS) builds the real Go `symdesk`
+and `symroom`, creates a realistic tree in a disposable root at one fixed
+absolute path, `/tmp/symdesk-cutover-v1` in its canonical spelling
+(`/private/tmp/...` on macOS), and freezes it: sidecar (`sidecar.db`), the
+shared and per-vault retrieval indexes, an ingested Markdown file (ingest
+store, archive, note), the Go contacts store (two persons, one organization,
+created by `internal/contacts/cutover_seed_port_test.go` because the domain
+services are internal to that package), saved views and a base note, a signed
+SymRoom journal (two identities, owner and a second member, `room.created`,
+notes and a decision), plus every `config paths` location. The fixed path is
+required because the sidecar and retrieval databases embed absolute vault paths
+and the vault-hash directory names. Fixtures: `testdata/port/cutover/state-v1-<os>.json`
+(manifest: file modes, sizes and SHA-256, per-state Go outputs, write
+scenarios) with `state-v1-<os>-{unmigrated,settled}.cxa` (gzip archives with
+modes and nanosecond mtimes; the format is read by `crates/test-support/cutover_state.rs`
+without extra dependencies).
+
+Two states are frozen per OS: `unmigrated` (exactly what the Go commands left,
+before any read: the first read of either implementation lazily seeds the
+per-vault retrieval index from the shared one) and `settled` (after one Go read
+pass; Go itself leaves it unchanged). 28 `symdesk` and 6 `symroom` read-only
+queries per state (config paths, ls, search, backlinks, props, graph, docs,
+views, base notes, ingest jobs, three contact lookups plus a miss, sidecar list,
+sources, index status/location, related, room log/verify/members/identities)
+are replayed by the Rust binaries and compared byte for byte with the recorded
+Go stdout/stderr/exit code (`crates/symdesk-cli/tests/cutover_state.rs`,
+`crates/symroom-cli/tests/cutover_state.rs`; absence of the fixture for the host
+is a failure, not a skip; a lock file serializes the two test binaries on the
+shared root). The tree must then be byte-identical to the Go tree: for the
+settled state to the recorded one, for the unmigrated state to what Go's own
+first read produced, where the only declared difference is the per-vault
+`retrieval.db` (SQLite snapshot bytes differ between implementations; its rows
+are compared with the standalone store it was seeded from). Normalized, and
+nothing else: `vaults/<hash>/metadata.json` `last_used` (both implementations
+rewrite it on every command), SQLite `-shm` files and zero-length `-wal` files,
+heap addresses in Go `%v` output and slog timestamps. Rust then performs one
+write each (note + index refresh, saved view, ingest, a Rust-signed room
+event, `index rebuild`) and a second Rust process must still open every store;
+`symroom verify` passes over the Go-signed plus Rust-signed chain.
+
+Incompatibility found and fixed: Go prints an slog line on stderr whenever a
+command lazily seeds or migrates the per-vault retrieval index
+(`seeded per-vault retrieval index from standalone store`, `migrated
+pre-absorption retrieval index to per-vault location`); Rust performed the same
+migration silently except under `conflict resolve`. The migration now reports
+through a hook in `symdesk-index` (`set_retrieval_migration_hook`) that the CLI
+turns into Go's line for every command. The comparison was not weakened.
+
+**Automatic backup and verified restore** (`crates/symdesk-core/src/pre_rust_backup.rs`,
+user documentation in [BACKUP.md](../../BACKUP.md)). On the first run that finds
+existing state and no marker, `symdesk` copies the data directory (vault-hash
+databases, `symingest.db`, `symrelate.db`), the config directory, the legacy
+`symingest`/`symrelate`/`symaira-seek` directories and configured database
+files to `$XDG_DATA_HOME/symdesk/backups/pre-rust/` through a temporary
+directory and a rename; `manifest.json` (`schema_version`, `created_at`,
+`symdesk_version`, `sources`, `files[{source, backup, sha256, size, mode,
+mtime_ns, method}]`, `dirs`, `skipped`) is written last. `symroom` does the same
+for its identity store (`$XDG_DATA_HOME/symroom`). Decisions:
+
+- *Never stdout, one stderr notice.* MCP stdio frames stay clean
+  (`pre_rust_backup::mcp_stdout_carries_only_json_rpc_frames_while_the_backup_runs`).
+- *Failure policy:* if state exists and the backup fails, the command is
+  aborted with exit 1, a clear message and the state untouched (data safety is
+  the gate). Escape hatch: `SYMDESK_PRE_RUST_BACKUP=off`, which is also what
+  `isolated_env()` and every other test spawn sets so the Go-recorded
+  side-effect fixtures keep their exact trees.
+- *No state:* nothing is backed up; a marker (`backups/pre-rust.done.json`)
+  records `no-state` so state the Rust build itself creates later is not
+  mistaken for Go-era state. A backup in progress is guarded by a lock file.
+- *SQLite:* quiescent databases (no live WAL/journal, unchanged while copied)
+  are copied byte for byte so the restore is byte-identical; anything else is
+  snapshotted with `VACUUM INTO` (WAL-consistent, integrity-checked) and its
+  `-wal`/`-journal` are folded in rather than copied.
+- *Skipped:* `archive/` and `backups/` at the top of a state root, `-shm`.
+- *Restore* is the hidden `symdesk|symroom backup restore-pre-rust [--dry-run]`.
+  It is intercepted before Cobra resolution, so the Go-recorded command tree,
+  `--help` and completion fixtures stay byte-identical (the Cobra model does
+  support `Hidden`, but a Rust-only node would change the 207-node inventory
+  contract). It verifies every digest, moves the current state aside to
+  `backups/pre-restore-<time>-<pid>/` (never deletes), restores files through
+  temporary files and renames with modes and mtimes, re-verifies, and moves the
+  previous state back if anything fails.
+
+The restore exercise on Go-created state (both frozen states, both OSes): first
+Rust run → backup with the Go digests → `sources add`, `ingest` and `index`
+change the stores → dry run → restore → the data/config locations are
+byte-identical to the Go tree, and with the Rust-added vault entries removed
+(the vault is user data and is not restored) the whole tree is → all 28 queries
+match the recorded Go output again. The same for the SymRoom identity store
+(Rust-created identity set aside, journal still verifies).
+
+Declared limits: the vault, rooms and the ingest `archive/` are not backed up
+by the tool (the vault is the user's; see BACKUP.md); a retrieval index
+relocated by a custom `index_path` outside the state roots is derived data and
+is not copied; the first run on a very large data directory copies it all;
+Windows and macOS Intel are out of scope.
+
 ## Local completion checkpoint — 2026-10-31
 
 Local `main` 8c7cee5f (not pushed). Passed (local): RUST-001…009, RUST-011,

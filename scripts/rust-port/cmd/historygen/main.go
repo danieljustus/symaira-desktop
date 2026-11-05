@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -144,7 +145,7 @@ func main() {
 		if readErr != nil {
 			fatal("read recorded history oracle: %v", readErr)
 		}
-		if !bytes.Equal(recorded, content) {
+		if !bytes.Equal(volatileTimestamps.ReplaceAll(recorded, []byte("<ts>")), volatileTimestamps.ReplaceAll(content, []byte("<ts>"))) {
 			fatal("%s drifted from the live Go history oracle; regenerate deliberately", outPath)
 		}
 		fmt.Printf("PASS %s matches the live Go history oracle (%d operations)\n", outPath, len(doc.Operations))
@@ -768,6 +769,10 @@ func classifyError(err error) string {
 		return "other"
 	}
 }
+
+// volatileTimestamps matches the wall-clock snapshot timestamps that every live
+// Go run stamps differently; --check compares everything else byte for byte.
+var volatileTimestamps = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z`)
 
 func fatal(format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, "FAIL "+format+"\n", args...)

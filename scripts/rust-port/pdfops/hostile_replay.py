@@ -450,8 +450,12 @@ def main():
             go_root = subprocess.check_output(['go', 'env', 'GOROOT'], text=True, env=toolchain, cwd=ROOT).strip()
             subprocess.run([f'{go_root}/bin/go', 'build', '-o', str(go), './internal/ingest/testdata/portpdfops'], cwd=ROOT, check=True,
                            timeout=900, env=dict(os.environ, GOTOOLCHAIN='local', GOENV='off', GOWORK='off', CGO_ENABLED='0'))
-            subprocess.run(['cargo', 'build', '--locked', '-p', 'symdesk-render', '--examples'], cwd=ROOT, check=True, timeout=1800)
-            target = json.loads(subprocess.check_output(['cargo', 'metadata', '--no-deps', '--format-version', '1'], cwd=ROOT))['target_directory']
+            # The fixture check runs under a toolchain-only PATH; cargo still
+            # needs the system linker driver and its own proxies.
+            cargo_env = dict(os.environ, PATH=os.pathsep.join([os.environ.get('PATH', ''), str(Path.home() / '.cargo/bin'), '/usr/bin', '/bin']))
+            cargo = str(Path.home() / '.cargo/bin/cargo')
+            subprocess.run([cargo, 'build', '--locked', '-p', 'symdesk-render', '--examples'], cwd=ROOT, check=True, timeout=1800, env=cargo_env)
+            target = json.loads(subprocess.check_output([cargo, 'metadata', '--no-deps', '--format-version', '1'], cwd=ROOT, env=cargo_env))['target_directory']
             rust = Path(target) / 'debug/examples/pdfops_probe'
         report['binaries'] = {str(p): digest(p.read_bytes()) for p in (go, rust)}
         identity = json.loads(subprocess.check_output([str(go), '--identity'], timeout=30))

@@ -234,7 +234,10 @@ def find_stub(explicit):
         return Path(explicit).resolve(strict=True)
     cargo = shutil.which("cargo") or str(Path.home() / ".cargo/bin/cargo")
     target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
-    subprocess.run([cargo, "build", "-p", "symdesk-render", "--example", "pdf_tool_stub", "--locked"], cwd=ROOT, check=True)
+    # The fixture check runs under a toolchain-only PATH; cargo still needs the
+    # system linker driver and its own proxies.
+    env = dict(os.environ, PATH=os.pathsep.join([os.environ.get("PATH", ""), str(Path.home() / ".cargo/bin"), "/usr/bin", "/bin"]))
+    subprocess.run([cargo, "build", "-p", "symdesk-render", "--example", "pdf_tool_stub", "--locked"], cwd=ROOT, check=True, env=env)
     return (target / "debug/examples/pdf_tool_stub").resolve(strict=True)
 
 

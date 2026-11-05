@@ -21,8 +21,9 @@ sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_FILES = [
-    "go.mod", "go.sum", ".goreleaser.yml", "Dockerfile", "VAULT.md",
-    ".github/workflows/release.yml", "home-assistant-addon/symdesk/config.yaml",
+    # Dockerfile and release.yml left the Go production contract (RUST-017).
+    "go.mod", "go.sum", ".goreleaser.yml", "VAULT.md",
+    "home-assistant-addon/symdesk/config.yaml",
 ]
 STEPS = {
     "Replay native contacts and ingest path contracts": 1,

@@ -391,11 +391,12 @@ func productionContractFiles() []string {
 		"go.mod",
 		"go.sum",
 		".goreleaser.yml",
-		"Dockerfile",
 		"VAULT.md",
-		".github/workflows/release.yml",
 		"home-assistant-addon/symdesk/config.yaml",
 	}
+	// Dockerfile and .github/workflows/release.yml left the Go production
+	// contract with RUST-017: they build the Rust release now, and their
+	// contract is the DIST-001..005 evidence in docs/rust-port/contract-matrix.md.
 }
 
 // ComputeFileChecksum computes the SHA-256 hex string of a file.

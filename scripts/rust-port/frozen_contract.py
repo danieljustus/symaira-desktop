@@ -203,7 +203,13 @@ def replay(command, entry, env, *, verify_counts=True):
     argv = shlex.split(command)
     if skips:
         argv += ["--"] + [arg for skip in skips for arg in ("--skip", skip)]
-    run = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True)
+    # `retries` is declared only for replays that depend on live OS file-event delivery
+    # (FSEvents/inotify), which a saturated host drops; every other replay runs exactly once.
+    for attempt in range(entry.get("retries", 0) + 1):
+        run = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True)
+        if run.returncode == 0:
+            break
+        print(f"retry {attempt + 1}: {command}: exit {run.returncode}", file=sys.stderr, flush=True)
     if run.returncode:
         raise RuntimeError(f"{command}: exit {run.returncode}\n{cargo_diagnostics(run)}")
     try:

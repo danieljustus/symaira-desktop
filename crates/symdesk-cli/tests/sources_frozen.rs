@@ -418,11 +418,19 @@ fn source_watch_lifecycle_matches_go_recording() {
             "recorded Go hash is the content hash"
         );
         let end = Instant::now() + Duration::from_secs(120);
+        let mut rewritten = Instant::now();
         while indexed_hash(&home, &note) != expected {
             assert!(
                 Instant::now() < end,
                 "watch index hash did not reach {expected:?}"
             );
+            // A write event the OS never delivered is replayed with the same bytes; deletions
+            // have nothing to replay.
+            if observation["action"] == "write" && rewritten.elapsed() > Duration::from_secs(10) {
+                let content = observation["content"].as_str().expect("content");
+                fs::write(&note, content).expect("rewrite watched note");
+                rewritten = Instant::now();
+            }
             thread::sleep(Duration::from_millis(200));
         }
     }

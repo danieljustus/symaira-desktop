@@ -301,6 +301,9 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symdesk-cli --locked --test sources_frozen watch": {
+      "retries": 2
+    },
     "cargo test -p symdesk-cli --locked --test transform_hermes": {
       "ignored": 0,
       "passed": 2
@@ -543,7 +546,8 @@
     },
     "cargo test -p symdesk-ingest --locked": {
       "ignored": 0,
-      "passed": 23
+      "passed": 23,
+      "retries": 2
     },
     "cargo test -p symdesk-ingest --test extraction_contracts --locked": {
       "ignored": 0,

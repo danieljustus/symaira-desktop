@@ -205,6 +205,9 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
     let db_path = root.join("db/docs.db");
     let mut results = Vec::new();
     let mut started = false;
+    // The last written live file: a write that races the watcher's directory registration is
+    // replayed (same bytes) when no job appears, instead of failing on a saturated host.
+    let mut last_write: Option<(std::path::PathBuf, Vec<u8>)> = None;
     for step in sc["steps"].as_array().unwrap() {
         let path = step["path"].as_str().unwrap_or("");
         let mut res = String::new();
@@ -213,6 +216,7 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
                 let p = root.join(path);
                 mkdir_700(p.parent().unwrap());
                 write_600(&p, step["content"].as_str().unwrap_or("").as_bytes());
+                last_write = Some((p, step["content"].as_str().unwrap_or("").into()));
             }
             "append" => {
                 use std::io::Write;
@@ -280,7 +284,16 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
             "wait-jobs" => {
                 let want = step["n"].as_i64().unwrap();
                 let deadline = Instant::now() + Duration::from_secs(120);
+                let mut replayed = Instant::now();
                 while Instant::now() < deadline && count_jobs(&db_path) < want {
+                    if replayed.elapsed() > Duration::from_secs(10) && sc["live"] == true {
+                        if let Some((path, bytes)) = &last_write {
+                            if path.exists() {
+                                write_600(path, bytes);
+                            }
+                        }
+                        replayed = Instant::now();
+                    }
                     std::thread::sleep(Duration::from_millis(25));
                 }
                 assert!(

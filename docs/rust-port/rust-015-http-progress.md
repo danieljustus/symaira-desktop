@@ -37,31 +37,39 @@ Go observations as a Go-recorded process fixture that the Rust replay checks wit
 
 - Slice 1 (front door): `crates/symdesk-protocol/src/go_http.rs`; existing 291-case `make http-differential` still passes.
 
-## Checkpoint (session end; branch rebased on main 7145e89b, PG-001 merged)
+## Checkpoint (final, candidate `bc1bbfaf`, branch `local/r015-http`; main not merged)
 
 Done:
-- Go harness `cmd/symdesk/http_process_port_test.go` (+ `http_surface_port_test.go`): real Go `symdesk serve`, raw socket,
-  25 cases / 613 steps in `testdata/port/http/http-surface-process.json`. Symlink-target leak fixed (readlink target goes
-  through `maskText`; fixture regenerated, no absolute temp paths). New mask classes `version` and `date`; fixture regenerated.
-- `go vet ./cmd/symdesk` clean; `gofmt -l` lists only two pre-existing files (`ask_agent_port_test.go`, `ask_cancel_port_test.go`).
-- Rust replay `crates/symdesk-cli/tests/http_surface.rs` + engine `tests/support/http_replay.rs` (dev-deps `regex`, `sha2`);
-  the schema already supports fs/tree/restart(rotate)/shutdown/raw steps for the later cases.
-- Rust server: `server_state.rs` (job-store dir, permissions manager, one-time legacy-token admin migration into
-  `.symdesk/users.json` with the `storage_entries` SQLite `state.db` marker); Go-exact close-delimited connection errors
-  written on the socket (`go_http::close_delimited_wire`, `RawAnswered`), replacing the chunked framing listed above as a limit.
-- Go `serve` never sets `ServerConfig.StateDSN`, so no route uses PostgreSQL; nothing to wire to `symdesk-storage`.
+- Go harness (`cmd/symdesk/http_process_port_test.go`, `http_process_ext_port_test.go`, `http_surface_*_port_test.go`) drives the real Go
+  `symdesk serve`; fixture `testdata/port/http/http-surface-process.json` = 84 cases / 1135 steps (routes, paths, auth/rotation/named users,
+  files/preconditions/limits/command, shares, fake loopback AI provider, Host/Origin/body/timeouts/shutdown/TLS, serve launch/flag/options cases).
+  The Go oracle with the Home Assistant options path is built with `go build -overlay`; Go production source is untouched.
+- Rust: `serve --tls-cert/--tls-key/--local-worker/--worker-engine/--ollama-url/--ollama-model` and the `/data/options.json` merge
+  (flag > env > options > default; path injectable with the internal `--internal-ha-options=PATH`), `crates/symdesk-cli/src/serve_cli.rs`;
+  TLS in `crates/symdesk-protocol/src/tls.rs` (rustls, explicit ring provider, safe default protocol versions; rcgen only as dev-dependency).
+  `symdesk serve --help`, `serve -h` and `help serve` are byte-identical to Go (1275 bytes, stdout/stderr/exit compared).
+- SEC-002 HTTP canaries: planted tokens and a provider key echoed by a failing fake provider are scanned over every response, log and vault
+  snapshot, with a planted-leak negative control. Go reflects the provider key in the error; Rust redacts it (recorded, intentionally stricter).
+- Fixed in passing: the HTTP fixture masks the resolver host (`lookup ${1}:`, an earlier `$$1` produced `lookup $1:`); the admin-bodies tree
+  snapshots skip Finder `.DS_Store` (host noise, fixture bytes unchanged); journal-date masking of the CLI bodies fixtures.
+- Generator digest re-frozen (`provenance.json`); `make port-fixtures-check` is green when it is run to completion.
 
-Last check (macOS, http_surface test): FAILS with 2 divergences left of 613 steps (35 before the fixes):
-1. `POST /api/v1/jobs/retry?id=000...0`: Go `{"error":"openat <id>.json: no such file or directory"}`, Rust `job not found`.
-2. `GET /api/v1/notebooks/research%00`: Go `notebook not found: open vault file $VAULT/notebooks/research\u0000.md: openat notebooks/research\u0000.md: invalid argument`, Rust `notebook not found`
-   (Go also has the `... is not a notebook note (type=...)` and read-error texts; reuse the `symdesk_vault::typed` notebook resolve).
+Evidence (all on clean tree `bc1bbfaf`, receipts in `target/local-gate/receipts.jsonl`):
+- Linux arm64: `linux-bc1bbfaf-063657.log` exit 0 (`rust-check rust-lint rust-test port-contract representative-differential http-surface-differential`).
+- macOS arm64: `rust-check`, `rust-lint` and the HTTP replays pass; the gate is NOT green. `macos-bc1bbfaf-062051.log` (rust-test) fails
+  `symdesk-cli::sources`, `symdesk-cli::signals`, `symdesk-cli::http_surface` (snapshot after external write stays 304),
+  `symdesk-index::source_tests::external_source_watch...`, `symdesk-ingest::watcher_contracts`, `symdesk-protocol::snapshot_cache*`;
+  `macos-bc1bbfaf-085148.log` fails `sidecar-differential` on the same index watcher test. Cause: `fseventsd` pinned at ~99% CPU on this host
+  (4 GB / ~110k files in `/Volumes/1TB_NVMe_SN850X/.fseventsd`), so notify/FSEvents events arrive seconds late or as stale events (Go uses kqueue).
+  The same tests fail in the sibling receipts `r014-mcp/.../macos-81525fb0-*.log` and `r-sec004/.../macos-3e8abbea-*.log`; the index watcher test passes
+  in isolation when its tmpdir is on the internal volume and the host is quieter. The coordinator's main has bounded nextest retries for these
+  replays; the macOS receipt has to be re-taken after integration. `make http-differential` standalone needs `PORT_LEFT/PORT_RIGHT` and runs
+  inside `representative-differential` (291 transcripts, green on both hosts).
+- `docker`/OrbStack restarts during long runs aborted two Linux attempts (`linux-bc1bbfaf-035804.log` exit 125) and the host ran out of space once;
+  those receipts are noise, not evidence.
 
-Remaining (not started): fixture cases for HTTP-002 (rotation via restart+rotate, named users), HTTP-003 (file paths,
-preconditions, limits, command), HTTP-005 (shares create/list/revoke/expire/access, legacy `token` field cleared on start),
-HTTP-006 (fake loopback providers; needs a fake-provider step in the Go harness and replay), HTTP-007 (Host, Origin, body,
-timeouts, shutdown, TLS: Rust `serve` has no `--tls-cert/--tls-key`, nor `--local-worker`), SEC-002 failure paths.
-Not run after the server_state/raw-error changes: `representative-differential` (291 cases), `http-differential`. Not done:
-`port-fixtures-check` digest re-freeze, matrix rows HTTP-001/002/003/005/006/007/SEC-002 and the RUST-015 note, the two-host
-local gate, clippy/fmt of the new Rust. Declared: Go's fail-open `CanRead/CanWrite` on an unreadable `permissions.json`
-stays unported (Rust keeps fail-closed).
-Cleanup owed: target dir `/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r015-http`; no Docker volumes were created.
+Declared limits: hyper parser limits above stay (Rust stricter, never more permissive). macOS snapshot freshness after an external write depends on the
+FSEvents backend latency (2.5 s settle in both harnesses). Go's fail-open `CanRead/CanWrite` on an unreadable `permissions.json` stays unported
+(Rust fail-closed). Go never sets `StateDSN`, so no HTTP route uses PostgreSQL.
+
+Cleanup owed: target dir `/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r015-http`; scratch `/private/tmp/r015http-tmp`.

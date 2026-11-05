@@ -128,7 +128,14 @@ final class MobileRemoteClient: @unchecked Sendable {
             throw MobileServerError.server(http.statusCode, error?.error ?? "Unknown error")
         }
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let text = try container.decode(String.self)
+            guard let date = MobileServerDate.parse(text) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected RFC 3339 date string, got \(text)")
+            }
+            return date
+        }
         let decoded = try decoder.decode(SnapshotResponse.self, from: data)
         let root = URL(fileURLWithPath: "/remote-vault", isDirectory: true)
         var notes: [MobileNote] = []
@@ -218,4 +225,30 @@ final class MobileRemoteClient: @unchecked Sendable {
 enum MobileSnapshotResult: Sendable {
     case unchanged
     case updated(MobileVaultSnapshot, etag: String?)
+}
+
+/// Parses the timestamps the server writes in `/api/v1/snapshot`.
+///
+/// The server serializes file modification times as RFC 3339 *with*
+/// nanosecond precision (Go `time.Time` marshalled as `RFC3339Nano`, and the
+/// Rust core writes the same text), e.g. `2026-11-05T08:12:18.302234634Z`.
+/// `JSONDecoder.DateDecodingStrategy.iso8601` rejects any fractional seconds,
+/// which made every snapshot of a vault with real file times fail to decode.
+enum MobileServerDate {
+    private static let pattern = try! NSRegularExpression(
+        pattern: #"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$"#
+    )
+
+    static func parse(_ text: String) -> Date? {
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let match = pattern.firstMatch(in: text, range: range),
+              let base = Range(match.range(at: 1), in: text),
+              let zone = Range(match.range(at: 3), in: text) else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        guard let date = formatter.date(from: String(text[base]) + String(text[zone])) else { return nil }
+        guard let fractionRange = Range(match.range(at: 2), in: text),
+              let fraction = Double("0" + String(text[fractionRange])) else { return date }
+        return date.addingTimeInterval(fraction)
+    }
 }

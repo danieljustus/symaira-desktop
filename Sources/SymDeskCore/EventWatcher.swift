@@ -6,7 +6,41 @@ public struct VaultEvent: Codable, Equatable, Identifiable {
     public let path: String
     public let ts: Int64
 
+    public init(event: String, path: String, ts: Int64) {
+        self.event = event
+        self.path = path
+        self.ts = ts
+    }
+
     public var id: String { "\(ts)-\(path)-\(event)" }
+}
+
+extension VaultEvent {
+    /// The `events --json` stream writes `ts` as an RFC 3339 string (Go
+    /// `time.RFC3339`, kept byte-for-byte by the Rust core). Older fixtures
+    /// and tests used epoch seconds, so both shapes decode; the RFC 3339
+    /// form is converted to epoch seconds. Without this a real event line
+    /// failed `JSONDecoder` and was silently dropped by `EventWatcher`.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let event = try container.decode(String.self, forKey: .event)
+        let path = try container.decode(String.self, forKey: .path)
+        let ts: Int64
+        if let seconds = try? container.decode(Int64.self, forKey: .ts) {
+            ts = seconds
+        } else {
+            let text = try container.decode(String.self, forKey: .ts)
+            guard let date = ISO8601DateFormatter().date(from: text) else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .ts,
+                    in: container,
+                    debugDescription: "ts is neither epoch seconds nor RFC 3339: \(text)"
+                )
+            }
+            ts = Int64(date.timeIntervalSince1970)
+        }
+        self.init(event: event, path: path, ts: ts)
+    }
 }
 
 @MainActor

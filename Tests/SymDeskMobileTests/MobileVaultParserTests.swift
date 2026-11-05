@@ -128,4 +128,23 @@ final class MobileVaultParserTests: XCTestCase {
 		XCTAssertEqual(store.recentlyOpenedPaths.count, 10, "recents list must stay bounded")
 		XCTAssertEqual(store.recentlyOpenedPaths.first, "extra11.md")
 	}
+
+    /// Titles are YAML double-quoted by `note new`, `props edit` and
+    /// `MobileNoteWriter`; quotes and backslashes must read back unescaped.
+    func testDoubleQuotedTitleEscapesReadBackUnescaped() throws {
+        let root = URL(fileURLWithPath: "/tmp/SymDeskMobileVault", isDirectory: true)
+        let title = "Käse \"Crème\" \\ 日本"
+        let document = MobileNoteWriter.noteDocument(title: title, body: "body", createdAt: Date(timeIntervalSince1970: 1_752_600_000))
+        let note = try MobileVaultParser.parse(
+            data: Data(document.utf8), fileURL: root.appendingPathComponent("k.md"), root: root, modifiedAt: Date()
+        )
+        XCTAssertEqual(note.title, title)
+
+        let single = "---\ntitle: 'it''s quoted'\ncorrespondent: \"ACME \\\"Ltd\\\"\"\n---\n\nbody"
+        let parsed = try MobileVaultParser.parse(
+            data: Data(single.utf8), fileURL: root.appendingPathComponent("s.md"), root: root, modifiedAt: Date()
+        )
+        XCTAssertEqual(parsed.title, "it's quoted")
+        XCTAssertEqual(parsed.correspondent, "ACME \"Ltd\"")
+    }
 }

@@ -1927,3 +1927,14 @@ restore-cli-fixtures-generate:
 restore-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRestoreProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test restore --locked
+
+# SWIFT-001/002/003: the native apps against the Rust `symdesk` (no Go).
+# SYMDESK_CONSUMER_BINARY must name the Rust binary; without it the target
+# fails, so the env-gated XCTest classes can never "pass" by skipping.
+# See scripts/rust-port/swift-consumer.sh for the optional knobs
+# (SWIFT_CONSUMER_XCODEBUILD, SWIFT_CONSUMER_BUILD_DIR, SWIFT_CONSUMER_SIM_ID,
+# SWIFT_CONSUMER_ONLY).
+.PHONY: swift-consumer
+swift-consumer:
+	@test -n "$(SYMDESK_CONSUMER_BINARY)" || { echo "swift-consumer: SYMDESK_CONSUMER_BINARY (absolute path of the Rust symdesk binary) is required" >&2; exit 2; }
+	SYMDESK_CONSUMER_BINARY="$(SYMDESK_CONSUMER_BINARY)" scripts/rust-port/swift-consumer.sh

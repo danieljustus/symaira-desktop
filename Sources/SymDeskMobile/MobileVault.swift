@@ -284,12 +284,46 @@ enum MobileVaultParser {
         guard var value = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
             return nil
         }
-        if value.count >= 2,
-           (value.hasPrefix("\"") && value.hasSuffix("\"") || value.hasPrefix("'") && value.hasSuffix("'")) {
+        if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
             value.removeFirst()
             value.removeLast()
+            value = unescapeDoubleQuoted(value)
+        } else if value.count >= 2, value.hasPrefix("'"), value.hasSuffix("'") {
+            value.removeFirst()
+            value.removeLast()
+            value = value.replacingOccurrences(of: "''", with: "'")
         }
         return value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Undoes the YAML escapes the desktop core (`note new`, `props edit`) and
+    /// `MobileNoteWriter` apply inside double-quoted scalars, so a title such as
+    /// `Käse "Crème" \ 日本` reads back identically instead of with literal
+    /// backslashes. Unknown escapes are kept verbatim.
+    private static func unescapeDoubleQuoted(_ value: String) -> String {
+        guard value.contains("\\") else { return value }
+        var result = ""
+        var iterator = value.makeIterator()
+        while let character = iterator.next() {
+            guard character == "\\" else {
+                result.append(character)
+                continue
+            }
+            guard let escaped = iterator.next() else {
+                result.append(character)
+                break
+            }
+            switch escaped {
+            case "\\", "\"", "/": result.append(escaped)
+            case "n": result.append("\n")
+            case "t": result.append("\t")
+            case "r": result.append("\r")
+            default:
+                result.append(character)
+                result.append(escaped)
+            }
+        }
+        return result
     }
 
     private static func orderedUnique(_ values: [String]) -> [String] {

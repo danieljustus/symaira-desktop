@@ -119,11 +119,63 @@ byte-identical to the Go tree, and with the Rust-added vault entries removed
 match the recorded Go output again. The same for the SymRoom identity store
 (Rust-created identity set aside, journal still verifies).
 
-Declared limits: the vault, rooms and the ingest `archive/` are not backed up
+Audit points (previous worker could not confirm them; each is now pinned by a
+test):
+
+- *Case counts.* 34 Go-recorded queries per state (28 `symdesk` + 6 `symroom`)
+  × 2 states (`unmigrated`, `settled`) = 68 per platform, identical on macOS
+  arm64 and Linux arm64 (`state-v1-darwin.json`, `state-v1-linux.json` each
+  hold 34 queries and 4 write scenarios per state, read out of the committed
+  manifests; the fixed root is `/private/tmp/symdesk-cutover-v1` on macOS and
+  `/tmp/symdesk-cutover-v1` on Linux). The frozen
+  counts are `cargo test -p symdesk-cli --test cutover_state` 4,
+  `--test pre_rust_backup` 11 and `cargo test -p symroom-cli --test
+  cutover_state` 3.
+- *Incompatibility fixed.* The only behavioural divergence the Go state
+  exposed was the missing slog line for the lazy retrieval-index migration
+  (above); the replay compares stderr, so the divergence failed the test
+  before the fix.
+- *Abort on failure.* `failed_backup_aborts_the_command_and_leaves_state_untouched`
+  puts a regular file where `backups/` must go: exit 1, empty stdout, the
+  message names `SYMDESK_PRE_RUST_BACKUP=off`, the whole tree is byte-identical,
+  and the opt-out then lets the command run.
+- *Hidden restore command and help parity.* `backup_cli::intercept` matches
+  exactly `<bin> backup restore-pre-rust ...` before Cobra; nothing is added to
+  the Cobra tree, usage text or completion. `every_command_help_and_completion_match_go_process`
+  (424 help-process cases against the recorded Go bytes) and the 207-node tree
+  fixtures pass unchanged; `restore_command_is_hidden_from_help_and_other_backup_words_stay_unknown`
+  pins that `symdesk backup` is still Go's `unknown command "backup"`.
+- *The gate sits behind the Cobra front half and skips `version`.* Help,
+  `--version`, completion, `__complete`, unknown commands and flag errors are
+  answered by Cobra before the gate and therefore never create a backup or add
+  a stderr line; `symdesk version` (valid, but reads no state) is exempted
+  explicitly (`cobra::resolved_key`), so the Go bytes of `version` hold even on
+  the first run with existing state and the Homebrew `test do` / release smoke
+  see no notice. `symroom version` is exempted the same way. Pinned by
+  `help_version_completion_and_usage_errors_never_trigger_or_change_the_backup`
+  (found while auditing: before this change `symdesk version` ran the backup).
+  Anything the gate cannot classify (non-UTF-8 argv) fails safe: it backs up.
+- *Restore exercise.* Both frozen states on both OSes, see above; the Rust
+  writes in between are real (`sources add`, `ingest`, `index`).
+
+Declared limits: the restore moves the current state aside with `rename`, so
+the config directory and `backups/` must be on one filesystem (a cross-device
+rename fails, and the failure path puts everything back); the vault, rooms and the ingest `archive/` are not backed up
 by the tool (the vault is the user's; see BACKUP.md); a retrieval index
 relocated by a custom `index_path` outside the state roots is derived data and
 is not copied; the first run on a very large data directory copies it all;
 Windows and macOS Intel are out of scope.
+
+**DIST-006 / DIST-007 re-scoped (never silently).** The matrix rows were
+written for the dual-binary model: DIST-006 asked a frozen Go fallback to
+reopen Rust-written data, DIST-007 asked for `symdesk-go`/`symroom-go` archive
+members and Homebrew/Docker/HA fallback selection. The cutover decision of
+2026-10-30 (above) drops the Go fallback. DIST-006 therefore becomes the
+evidence of this section (pre-Rust backup + restore exercise, rows
+CUTOVER-001/002) and DIST-007 is **RETIRED** because no Go fallback binaries
+ship; the archive-member half that survives ("exactly `symdesk` and `symroom`")
+is already DIST-001/002. `rollback-harness.md` (Go reopens a Rust-written
+SymRoom journal) remains a local regression check and is not required.
 
 ## Local completion checkpoint — 2026-10-31
 

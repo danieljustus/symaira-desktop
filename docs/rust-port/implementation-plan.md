@@ -458,6 +458,8 @@ partial delegation that bypasses test doubles is rejected.
 
 ### RUST-017: Full value gate and dual-binary prerelease
 
+> **Superseded 2026-10-30** (README 'Cutover decision'): no `symdesk-go`/`symroom-go` fallbacks ship and nothing is exercised as Go rollback. DIST-007 is RETIRED and DIST-006 became the pre-Rust backup and restore exercise (RUST-018). The text below is the original plan.
+
 - Build Go and Rust release candidates from clean and warm caches on the same host.
 - Collect paired distributions for startup, representative CLI/index/search/graph/MCP/HTTP/ingest workloads, long-running RSS, and binary/archive size.
 - Reapply both original thresholds; do not redefine metrics after seeing results.
@@ -467,6 +469,8 @@ partial delegation that bypasses test doubles is rejected.
 - Exercise rollback against Rust-written copied data.
 
 ### RUST-018: Stable cutover with Go fallback
+
+> **Superseded 2026-10-30:** Rust-only cutover. The data-safety gates are (1) Rust opens Go-created state unchanged (CUTOVER-001) and (2) an automatic pre-Rust backup on the first Rust run with a verified restore (CUTOVER-002 = DIST-006); see README 'RUST-018 cutover data safety'. The text below is the original plan.
 
 Run native platform suites and Swift macOS/iOS consumer tests against installed
 release candidates. Publish one stable Rust-primary release that still contains

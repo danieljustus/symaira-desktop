@@ -462,7 +462,7 @@
     {
       "id": "RUST-018",
       "title": "Stable Rust-only cutover",
-      "status": "blocked",
+      "status": "in_progress",
       "depends_on": [
         "RUST-017"
       ],
@@ -487,7 +487,7 @@
         "automatic pre-migration backup created and restore exercise green"
       ],
       "decision": "Rust-only cutover per maintainer decision 2026-10-30: no Go fallback binary, no Go rollback, no observation window; data safety via automatic backup before first Rust migration plus verified restore.",
-      "notes": "Data-safety acceptance implemented on local/r018-backup (not merged): (1) Go-recorded cutover state (testdata/port/cutover/state-v1-<os>.json + .cxa archives; recorder cmd/symdesk/cutover_state_port_test.go, make cutover-state-fixtures-generate / cutover-state-differential) replayed by crates/symdesk-cli/tests/cutover_state.rs and crates/symroom-cli/tests/cutover_state.rs without Go: Rust opens the Go sidecar, retrieval index, ingest store, contacts store, saved views and signed room journal with the recorded Go outputs and byte-identical files after reads; Rust writes keep the stores openable. (2) Automatic pre-Rust backup (crates/symdesk-core/src/pre_rust_backup.rs) with manifest, opt-out SYMDESK_PRE_RUST_BACKUP=off, abort-on-failure policy and the hidden `backup restore-pre-rust [--dry-run]` command; restore exercise on the Go-created tree returns it byte-identically (crates/symdesk-cli/tests/pre_rust_backup.rs, cutover_state.rs). Still open for RUST-018: native installed release smoke, Swift consumer gates, all matrix rows."
+      "notes": "Data-safety half implemented and verified on local/r018-backup (not merged; gate receipts in docs/rust-port/README.md 'RUST-018 cutover data safety'): (1) CUTOVER-001: Go-recorded cutover state (testdata/port/cutover/state-v1-<os>.json + .cxa archives; recorder cmd/symdesk/cutover_state_port_test.go; make cutover-state-fixtures-generate / cutover-state-differential) replayed WITHOUT Go by crates/symdesk-cli/tests/cutover_state.rs (4 tests) and crates/symroom-cli/tests/cutover_state.rs (3 tests); 34 recorded queries x 2 states = 68 cases per platform (macOS arm64, Linux arm64); Rust reads the Go sidecar, retrieval indexes, ingest store, contacts store, saved views and signed room journal with the recorded Go bytes and leaves the files byte-identical; Rust writes keep the stores openable. Incompatibility found and fixed: Go's slog lines for the lazy retrieval-index migration. (2) CUTOVER-002 = DIST-006 (re-dedicated): automatic one-time pre-Rust backup (crates/symdesk-core/src/pre_rust_backup.rs) with manifest, opt-out SYMDESK_PRE_RUST_BACKUP=off, abort-on-failure with state untouched, one stderr notice and no stdout; hidden `backup restore-pre-rust [--dry-run]` intercepted before Cobra (help/completion/tree fixtures byte-identical; Cobra-answered invocations and `version` never trigger the backup); restore exercise Go-created state -> Rust run (backup) -> Rust writes -> restore -> byte-identical to the Go bytes (crates/symdesk-cli/tests/pre_rust_backup.rs 11 tests, both cutover_state tests). DIST-007 RETIRED (no Go fallback binaries ship, decision 2026-10-30). Still open for RUST-018 (not part of this slice): all-rows PASS (DIST-003 post-push readback, VALUE-002), native installed release smoke on the integrated tree, Swift consumer gates re-run on the integrated tree; branch merge and a final integrated two-host gate."
     },
     {
       "id": "RUST-019",

@@ -237,7 +237,7 @@
     },
     "cargo test -p symdesk-cli --test pre_rust_backup --locked": {
       "ignored": 0,
-      "passed": 10
+      "passed": 11
     },
     "cargo test -p symroom-cli --test cutover_state --locked": {
       "ignored": 0,

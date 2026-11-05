@@ -531,7 +531,7 @@ func (s *httpServer) maskText(text string, mask []string) string {
 	// many Linux images map it to text/markdown. Both are the same server path.
 	text = strings.ReplaceAll(text, "text/markdown; charset=utf-8", "text/plain; charset=utf-8")
 	// The resolver that answered a failed lookup is host configuration.
-	text = httpResolver.ReplaceAllString(text, "lookup $$1: ")
+	text = httpResolver.ReplaceAllString(text, "lookup ${1}: ")
 	text = strings.ReplaceAll(text, fmt.Sprintf("127.0.0.1:%d", s.port), "127.0.0.1:$PORT")
 	text = strings.ReplaceAll(text, s.vault, "$VAULT")
 	text = strings.ReplaceAll(text, s.root, "$ROOT")

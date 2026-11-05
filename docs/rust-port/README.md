@@ -166,6 +166,44 @@ relocated by a custom `index_path` outside the state roots is derived data and
 is not copied; the first run on a very large data directory copies it all;
 Windows and macOS Intel are out of scope.
 
+**Verification at `58e0933b`** (the Rust sources are identical to `53cef398`;
+only the generator digest in `testdata/port/provenance.json` and the
+recorded `pre_rust_backup` count differ; later commits are docs-only).
+Receipts: `local-gate-r018/receipts.jsonl` next to the build directory
+(`builds/symaira-desktop/.worktrees/r018-backup/`), `LOCAL_GATE_SLUG=r018`.
+
+| Gate | Host | Result |
+|---|---|---|
+| `rust-check`, `rust-lint` | macOS arm64 | exit 0 (`macos-53cef398-152059.log`, `-152124.log`; `cargo fmt --check` of main's `symdesk-protocol` import order fixed in this branch) |
+| `rust-check`, `rust-lint` | Linux arm64 | exit 0 (`linux-58e0933b-183451.log`, `-185053.log`) |
+| `rust-test` | Linux arm64 | exit 0, 1026 passed, 5 skipped (`linux-58e0933b-195026.log`) |
+| `port-contract` | Linux arm64 | exit 0 (`linux-58e0933b-190630.log`), includes `cutover-state-differential` against the Linux-recorded state |
+| `cutover-state-differential` | macOS arm64 | exit 0 (`macos-58e0933b-211009.log`): Go re-check, then `cutover_state` 4, `pre_rust_backup` 11, symroom `cutover_state` 3 |
+| `port-contract` remainder (`sidecar-metadata`, `room-journal`, `room-run-projection`, `dataset-sync`, `retention-state`, `retrieval-turboquant`) | macOS arm64 | exit 0 (`macos-58e0933b-210906.log`) |
+| `port-contract` as one target | macOS arm64 | **not green**: `port-fixtures-check` and `cutover-state-differential` pass, then `sidecar-differential` stops on `symdesk-index source_tests::external_source_watch_syncs_nested_create_modify_delete_and_stops` (FSEvents; fails 0/15 in isolation on this host, see below). Earlier attempts failed `port-fixtures-check` itself on `TestPortCLIAdminBodiesProcessContract` / `TestPortComposeProbeContract` (fake-tool version probes time out under load: `version unknown` instead of `1.2.3`, load 20-100) |
+| `rust-test` | macOS arm64 | 1025 tests; at `53cef398` (`-152150.log`) all pass except `http_surface rust_server_replays_the_go_http_surface` ("plaintext request on the tls port", load 30); at `58e0933b` (`-162509.log`, `-174135.log`) only host-timing tests fail |
+| `port-contract-frozen` | both | exit 1 on both hosts and on main `e8b7e654` itself: `test_recorded_manifest_covers_the_real_makefile` lists 46 entries (ingest, contacts, render, retrieval, MCP and other differential replays) without recorded counts; none are RUST-018 entries. The three RUST-018 replays are recorded and pass Go-free (PATH without `go`, isolated HOME): 4 / 11 / 3. Not recorded here: another worktree (`r-frozen`) is recording the 46 |
+
+macOS host-timing failures, honest account. `fseventsd` has used ~100% CPU on
+this host for days and the load averaged 10-100 from concurrent agents:
+
+- `symdesk-cli::http_surface` (TLS plaintext close) and `cli_admin_bodies` /
+  `TestPortCLIAdminBodiesProcessContract` (version probe) failed under load but
+  **passed at load < 8** on the final tree (`retest2.log`: 43 s and 49 s), and
+  `sources_match_go_process_fixture` and `symdesk-ingest watcher_contracts` also
+  passed there.
+- `symdesk-cli::signals signals_match_go` (`events_first_vault_change`,
+  `events_idle_sigterm_exits_zero`, `sources_watch...`), `symdesk-index
+  source_tests::external_source_watch_*` and the two `symdesk-protocol
+  snapshot_cache` watcher tests passed on the first `53cef398` run (signals and
+  source watch on retry 2 and 3 of 5, the two snapshot-cache tests first time)
+  and failed in the later attempts (nextest
+  retries 5/5 and the single-test loop, 15 of 15 for the source watch, also with
+  `TMPDIR` on the internal disk). They exercise FSEvents only, none of the files
+  changed by RUST-018 are on their path, and they pass on Linux (inotify).
+  **They have not passed on the final tree.** They need a host with a healthy
+  `fseventsd` (restart needs root) and a re-run before merge.
+
 **DIST-006 / DIST-007 re-scoped (never silently).** The matrix rows were
 written for the dual-binary model: DIST-006 asked a frozen Go fallback to
 reopen Rust-written data, DIST-007 asked for `symdesk-go`/`symroom-go` archive

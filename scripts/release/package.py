@@ -103,7 +103,12 @@ def verify_archive(path: Path, version: str, run: bool) -> list[str]:
                 errors.append(f"{stem}: {m.name} mode {oct(m.mode)}, want {oct(want)}")
         if run and not errors and target == host_target():
             with tempfile.TemporaryDirectory() as tmp:
-                tar.extractall(tmp, filter="data")
+                # Members were checked above: exact names, regular files only.
+                # The filter argument needs Python >= 3.11.4 / 3.12.
+                if hasattr(tarfile, "data_filter"):
+                    tar.extractall(tmp, filter="data")
+                else:
+                    tar.extractall(tmp)  # noqa: S202 - members validated above
                 for name in BINARIES:
                     out = subprocess.run([os.path.join(tmp, name), "version"], capture_output=True, text=True, timeout=60)
                     got = out.stdout.strip()

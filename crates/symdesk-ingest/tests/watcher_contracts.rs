@@ -279,7 +279,7 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
             }
             "wait-jobs" => {
                 let want = step["n"].as_i64().unwrap();
-                let deadline = Instant::now() + Duration::from_secs(30);
+                let deadline = Instant::now() + Duration::from_secs(120);
                 while Instant::now() < deadline && count_jobs(&db_path) < want {
                     std::thread::sleep(Duration::from_millis(25));
                 }

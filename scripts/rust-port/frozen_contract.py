@@ -207,6 +207,13 @@ def expected_counts(entry):
     return counts["passed"], counts["ignored"]
 
 
+def is_recorded(entry):
+    """True when this platform already has recorded counts (--record keeps them)."""
+    if "by_platform" in entry:
+        return sys.platform in entry["by_platform"]
+    return "passed" in entry and "ignored" in entry
+
+
 def record_counts(entry, got):
     if "by_platform" in entry:
         entry["by_platform"][sys.platform] = {"passed": got["passed"], "ignored": got["ignored"]}
@@ -301,7 +308,10 @@ def mutation_control(control, env):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--record", action="store_true", help="rewrite recorded counts from this Go-free run")
+    parser.add_argument("--record", action="store_true",
+                        help="record counts of replays that have none on this platform from a Go-free run; "
+                             "existing counts are kept and verified, never rewritten (delete an entry to re-record it); "
+                             "the manifest is saved after every replay so a failure does not lose finished ones")
     parser.add_argument("--plan", action="store_true", help="validate classification only; run nothing")
     args = parser.parse_args(argv)
 
@@ -323,13 +333,16 @@ def main(argv=None):
         env = go_free_env(root)
         for command in commands:
             entry = manifest["replays"][command]
+            recording = args.record and not is_recorded(entry)
             try:
-                got, skipped = replay(command, entry, env, verify_counts=not args.record)
+                got, skipped = replay(command, entry, env, verify_counts=not recording)
             except RuntimeError as error:
                 print(f"FAIL {error}", file=sys.stderr)
                 return 1
-            if args.record:
+            if recording:
                 record_counts(entry, got)
+                MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+                print(f"recorded {got['passed']}/{got['ignored']}  {command}", flush=True)
             total += got["passed"]
             live_total += got["passed"] + skipped
             print(f"ok {got['passed']:>5} (+{skipped} live-only)  {command}", flush=True)

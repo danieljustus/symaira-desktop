@@ -220,6 +220,7 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
             }
             "append" => {
                 use std::io::Write;
+                last_write = None;
                 let mut f = std::fs::OpenOptions::new()
                     .append(true)
                     .open(root.join(path))
@@ -263,7 +264,14 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
                 }
             }
             "start" => match w.start(&ctx) {
-                Ok(()) => started = true,
+                Ok(()) => {
+                    started = true;
+                    if sc["live"] == true {
+                        // The OS watch registers asynchronously; give it time before the
+                        // first filesystem event of a live scenario (saturated hosts lost it).
+                        std::thread::sleep(Duration::from_millis(1500));
+                    }
+                }
                 Err(e) => res = norm(&e),
             },
             "pending" => {

@@ -258,22 +258,22 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
                     res = norm(&e);
                 }
             }
-            "start" => match {
+            "start" => {
                 // FSEvents can still deliver the creation of the scenario's own setup
                 // directories to a stream opened right after; let those events drain first.
                 std::thread::sleep(Duration::from_millis(1000));
-                w.start(&ctx)
-            } {
-                Ok(()) => {
-                    started = true;
-                    if sc["live"] == true {
-                        // The OS watch registers asynchronously; give it time before the
-                        // first filesystem event of a live scenario (saturated hosts lost it).
-                        std::thread::sleep(Duration::from_millis(1500));
+                match w.start(&ctx) {
+                    Ok(()) => {
+                        started = true;
+                        if sc["live"] == true {
+                            // The OS watch registers asynchronously; give it time before the
+                            // first filesystem event of a live scenario (saturated hosts lost it).
+                            std::thread::sleep(Duration::from_millis(1500));
+                        }
                     }
+                    Err(e) => res = norm(&e),
                 }
-                Err(e) => res = norm(&e),
-            },
+            }
             "pending" => {
                 let mut keys: Vec<String> = w
                     .pending_snapshot()

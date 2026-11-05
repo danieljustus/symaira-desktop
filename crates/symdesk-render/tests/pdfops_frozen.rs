@@ -256,7 +256,7 @@ fn pdf_adapter_corpus_matches_go_recording() {
     for name in TOOLS {
         fs::copy(examples.join("pdf_tool_stub"), tools.join(name)).expect("copy stub");
     }
-    let replacements = vec![
+    let replacements = [
         (path_text(&tools), "<TOOLS>"),
         (path_text(&examples.join("pdf_tool_stub")), "<STUB>"),
     ];

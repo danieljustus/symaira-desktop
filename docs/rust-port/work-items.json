@@ -384,7 +384,7 @@
         "SEC-003"
       ],
       "acceptance": [
-        "make http-differential",
+        "make http-surface-differential",
         "make postgres-integration",
         "cargo nextest run -p symdesk-protocol"
       ],

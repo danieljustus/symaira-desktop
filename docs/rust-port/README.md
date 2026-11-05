@@ -715,16 +715,18 @@ the Rust port after Go is deleted. It needs only Python 3 and Cargo:
   a missing count fails. New differential targets fail until their counts are
   recorded with `python3 scripts/rust-port/frozen_contract.py --record`, which
   also runs without Go.
-- Targets without a Rust replay must be declared `live_only` with a reason. A
-  pure aggregate (prerequisites, no recipe line) is classified through its
-  prerequisites. Five targets remain live-only and are named in the manifest:
-  `mcp-differential`, `mcp-initialize-differential` (`mcpdiff`) and
-  `http-differential` (`httpdiff`) belong to the RUST-014/RUST-015 work, and
-  `index-status-cli-differential` (a Go oracle worktree at `19110081`) and
-  `render-pdfops-hostile-differential` (real Poppler/qpdf over hostile PDFs) are
-  evidence harnesses that were never part of the frozen set. No
-  `live_only_tests` entry remains: `store_paths` now replays committed native
-  Go captures instead of starting Go.
+- Targets without a Rust replay must be declared `live_only` with a reason, or
+  `retired` (reason required, and the target must no longer exist in the
+  `Makefile`). A pure aggregate (prerequisites, no recipe line) is classified
+  through its prerequisites. **No target is live-only any more** and no
+  `live_only_tests` entry remains. The former live-only targets became Go-recorded
+  replays: `mcp-differential` and `mcp-initialize-differential`
+  (`mcpdiff --record`, `mcp_representative`, 23 raw-process cases of which 7 are
+  MCP-001), `index-status-cli-differential` (`index-status/frozen.py`, 126 cases from
+  the canonical Go oracle `19110081`) and `render-pdfops-hostile-differential`
+  (`hostile_replay.py --record`, 455 hostile PDF cases through the real
+  Poppler/qpdf, one recording per OS because the tool versions differ).
+  `http-differential` is **retired**: see "Retired live HTTP comparison" below.
 - Mutation controls change one Go-recorded observation, such as a fixture byte
   covered by the provenance checksum or a recorded journal value. The runner
   requires the replay to fail and then restores the bytes. It refuses to mutate
@@ -799,3 +801,26 @@ Start at the first `ready` item in `work-items.json`. Complete its fixture,
 differential, security, and platform gates; update the matrix and exactly one
 work item; then unblock direct successors. Stop on unexplained parity drift or a
 failed value gate. Never silently normalize a mismatch.
+
+## Retired live HTTP comparison (`http-differential`)
+
+`httpdiff` compared a Go and a Rust `symdesk serve` live over the 291 requests of
+`testdata/port/http/representative.json`. It cannot run without a Go binary and
+its stateful per-case vault setup, loopback fakes and persisted-file assertions
+exist only in that Go harness, so it was not converted to a recording. The Make
+target and the HTTP half of `representative-differential` are removed; the tool
+stays for the VALUE-001/002 contract preconditions and the Windows CI job.
+
+Frozen replacement (runs in `port-contract-frozen`): `http-surface-differential`
+(`http_surface.rs`, the Go-recorded 84 cases / 1135 steps from the real
+`symdesk serve`) and the CLI half of `representative-differential`.
+
+Not frozen, and therefore no longer compared with Go: the 58 `POST /api/v1/ingest`
+multipart variants together with the persisted upload and job bytes and modes,
+the worker lease/complete/fail and job-retry state machines, and the share-access,
+hybrid-index ask and provider-failure paths of that corpus. HTTP-004 keeps its
+recorded local evidence (291 transcripts green at `3b95db4d`/`b13bf038`) and the
+Rust unit and protocol tests (`symdesk_ingest::gform`, `symdesk-protocol`). A
+future recording would have to port the `populate*` setup of `httpdiff` into the
+surface generator (`cmd/symdesk/http_surface_*_port_test.go`).
+

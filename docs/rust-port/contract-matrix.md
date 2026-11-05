@@ -589,15 +589,25 @@ README, "Go recordings of the formerly live gates"):
 - CLI-000 (`representative-differential`, CLI part), DATA-002
   (`dataset-cli-differential`) and VAULT-006 (`retention-cli-differential`):
   16 + 16 + 61 diffharness cases, `frozen_diffharness`. The HTTP half of
-  `representative-differential` (`http-differential`) is owned by RUST-015 and
-  stays live until it is frozen there.
+  `representative-differential` (`http-differential`) is retired (README,
+  "Retired live HTTP comparison"); `http-surface-differential` is its Go-recorded
+  replacement for the route/auth/limits surface.
 - VAULT-006 history: `history_contracts` replays the committed
   `history-oracle.json` (56 operations).
 - Source registry/search/watch: `sources_frozen` (12 steps, 3 watch states).
 - RENDER-001: `pdfops_frozen` replays 157 PDF adapter cases, 13 Typst
   discovery cases and 11 process-safety cases. The real-tool hostile corpus
-  (`render-pdfops-hostile-differential`) is environment-bound (installed
-  Poppler/qpdf) and stays a named live-only evidence harness.
+  (`render-pdfops-hostile-differential`) is replayed by `pdfops_hostile_frozen`: 455
+  cases recorded from the Go driver per OS (`pdfops-hostile-recording-{darwin,linux}.json`)
+  and run through the Rust probe with the same installed pdfinfo/pdfseparate/
+  pdfunite/qpdf; the recording pins the tool versions (macOS Poppler 26.10 and qpdf
+  12.4.2, Ubuntu 24.04 Poppler 24.02 and qpdf 11.9) and fails on any other.
+- MCP-001 and the early MCP surface (`mcp-differential`, `mcp-initialize-differential`):
+  `mcp_representative` replays the 23 raw-process Go observations
+  (`representative-recording.json`).
+- `index status` (`index-status-cli-differential`): `index_status_frozen` replays
+  the 126-case Go inventory of #1225 (`index-status-recording.json`); the populated
+  world is seeded by the Rust `index` instead of the Go one.
 - CFG-001 contacts/ingest store paths: `store_paths` replays native Go captures
   recorded on macOS arm64 and Linux arm64.
 

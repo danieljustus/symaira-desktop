@@ -47,6 +47,20 @@ fn words_of(args: &[OsString]) -> Option<Vec<String>> {
         .collect()
 }
 
+/// Help key (`ls`, `config paths`, `version`) of the command Cobra resolves for
+/// these arguments; `None` when the grammar cannot name it (non-UTF-8 bytes or
+/// a resolution error). Used by the RUST-018 backup gate, which must fail safe
+/// (back up) for anything it cannot classify.
+pub fn resolved_key(args: &[OsString]) -> Option<String> {
+    let words = words_of(args)?;
+    let tree = Tree::get();
+    let found = find(tree, &words, true);
+    if found.error.is_some() {
+        return None;
+    }
+    Some(tree.help_key(found.node).to_owned())
+}
+
 pub fn front(args: &[OsString]) -> Front {
     // Non-UTF-8 argument bytes cannot be named by the recorded grammar: leave
     // those invocations to the Clap pipeline.

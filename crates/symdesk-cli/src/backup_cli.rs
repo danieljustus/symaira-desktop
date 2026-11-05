@@ -77,7 +77,12 @@ fn to_stderr(text: &str) {
 
 /// Runs before any command executes. `Err` aborts the command: state exists
 /// but could not be backed up, and nothing was changed. Never writes stdout.
-pub fn gate() -> Result<(), ExitCode> {
+/// `symdesk version` reads no state and keeps its exact Go bytes, so it neither
+/// triggers the backup nor prints the notice.
+pub fn gate(args: &[OsString]) -> Result<(), ExitCode> {
+    if crate::cobra::resolved_key(args).as_deref() == Some("version") {
+        return Ok(());
+    }
     let Some(spec) = spec() else {
         return Ok(());
     };

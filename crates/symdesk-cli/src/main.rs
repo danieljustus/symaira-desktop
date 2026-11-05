@@ -110,7 +110,7 @@ fn main() -> ExitCode {
     }
     // RUST-018: back up state that earlier Go builds created before any Rust
     // code can touch it; a failed backup aborts with state untouched.
-    if let Err(code) = backup_cli::gate() {
+    if let Err(code) = backup_cli::gate(&args) {
         return code;
     }
     if let Some(result) = config_cli::intercept(&args) {

@@ -563,3 +563,50 @@ fn restore_command_is_hidden_from_help_and_other_backup_words_stay_unknown() {
         text(&unknown.stderr)
     );
 }
+
+#[test]
+fn help_version_completion_and_usage_errors_never_trigger_or_change_the_backup() {
+    // The gate sits behind the Cobra front half, so every invocation that
+    // Cobra answers on its own (help, version, completion, unknown command,
+    // flag errors) keeps its Go bytes and never touches existing state.
+    let env = Env::new();
+    env.seed_state();
+    fs::remove_dir_all(env.data().join("backups")).unwrap();
+    let before = tree(&env.root);
+    for args in [
+        vec!["--help"],
+        vec!["help"],
+        vec!["config", "--help"],
+        vec!["--version"],
+        vec!["completion", "bash"],
+        vec!["backup"],
+        vec!["backup", "--help"],
+        vec!["no-such-command"],
+        vec!["--no-such-flag"],
+    ] {
+        let run = env.run("on", &args);
+        let stderr = text(&run.stderr);
+        assert!(
+            !stderr.contains("pre-Rust") && !stderr.contains("backed up"),
+            "{args:?} must not mention the backup: {stderr}"
+        );
+        assert!(
+            !text(&run.stdout).contains("restore-pre-rust"),
+            "{args:?} must not advertise the hidden command"
+        );
+    }
+    assert!(
+        !env.data().join("backups").exists(),
+        "no backup and no marker for commands Cobra answers itself"
+    );
+    assert_eq!(tree(&env.root), before, "state must be untouched");
+    // `version` is answered from the binary alone: no backup, exact bytes.
+    let version = env.run("on", &["--vault", "x", "version"]);
+    assert_eq!(version.status.code(), Some(0));
+    assert!(version.stderr.is_empty(), "{}", text(&version.stderr));
+    assert!(!env.data().join("backups").exists());
+    // A command that does reach the gate still creates the backup afterwards.
+    let run = env.run("on", &["config", "paths"]);
+    assert_eq!(run.status.code(), Some(0), "{}", text(&run.stderr));
+    assert!(env.data().join("backups/pre-rust/manifest.json").is_file());
+}

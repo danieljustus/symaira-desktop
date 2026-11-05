@@ -46,6 +46,14 @@ Path(staged).write_bytes(b'controlled staged PDF input; not a semantic PDF fixtu
 '''
 
 
+def safety_cases():
+    """(operation, mode) pairs; the frozen recorder replays the same list."""
+    cases = [(operation, mode) for operation in ('merge', 'press')
+             for mode in ('descendant-cancel', 'descendant-exit', 'flood-out', 'flood-err')]
+    cases += [(operation, 'race') for operation in ('split', 'merge', 'rotate')]
+    return cases
+
+
 def alive(pid):
     try: os.kill(pid, 0)
     except ProcessLookupError: return False
@@ -55,9 +63,7 @@ def alive(pid):
 def verify_safety(run, runtime, output, env, binaries, report, compare, normalized):
     if os.name == 'nt':
         raise RuntimeError('native Windows process-tree safety is not implemented; cannot pass')
-    cases = [(operation, mode) for operation in ('merge', 'press')
-             for mode in ('descendant-cancel', 'descendant-exit', 'flood-out', 'flood-err')]
-    cases += [(operation, 'race') for operation in ('split', 'merge', 'rotate')]
+    cases = safety_cases()
     report['safety_cases'] = []
     report['safety_tool_sha256'] = hashlib.sha256(TOOL.encode()).hexdigest()
     for operation, mode in cases:

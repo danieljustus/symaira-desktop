@@ -1,0 +1,2452 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "2bb529cdc3bcc461bcf4a6af89624fc0418be180",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source": {
+    "cases_file": "testdata/port/cli/retention-cases.json",
+    "cases_sha256": "fbf5480ecc3c941ea51aea053f90774f0d4e2d046afdeb79f54ee32986563da3",
+    "go_version": "go1.26.10",
+    "binary_version": "devel"
+  },
+  "stage": "retention",
+  "cases": [
+    {
+      "id": "retention-list-no-proposals",
+      "case": {
+        "id": "retention-list-no-proposals",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"message\":\"no pending proposals\",\"proposals\":[]}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-pending",
+      "case": {
+        "id": "retention-list-pending",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-test.json",
+            "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}],\"status\":\"pending\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-status-filter",
+      "case": {
+        "id": "retention-list-status-filter",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-a.json",
+            "content": "{\"run_id\":\"ret-a\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"accepted\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-b.json",
+            "content": "{\"run_id\":\"ret-b\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"failed\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-c.json",
+            "content": "{\"run_id\":\"ret-c\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"partial\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"run_id\":\"ret-b\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}],\"status\":\"failed\"},{\"run_id\":\"ret-c\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}],\"status\":\"partial\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-skips-undecodable",
+      "case": {
+        "id": "retention-list-skips-undecodable",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-broken.json",
+            "content": "{ not json",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-test.json",
+            "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}],\"status\":\"pending\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-skips-non-proposal-entries",
+      "case": {
+        "id": "retention-list-skips-non-proposal-entries",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/nested/keep.json",
+            "content": "{\"run_id\":\"nested\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/notes.txt",
+            "content": "not a proposal\n",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-test.json",
+            "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}],\"status\":\"pending\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-text",
+      "case": {
+        "id": "retention-list-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-test.json",
+            "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          },
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "Proposal ret-test (2026-01-01 00:00): 1 items pending review\n  doc.md — expires 2026-01-02 → trash\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-json",
+      "case": {
+        "id": "retention-reject-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"run_id\":\"ret-safe\",\"status\":\"rejected\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-text",
+      "case": {
+        "id": "retention-reject-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "ret-safe",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "map[run_id:ret-safe status:rejected]\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-mismatched-stored-run-id",
+      "case": {
+        "id": "retention-reject-mismatched-stored-run-id",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "probe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"stored\",\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"retention proposal run ID \\\"stored\\\" does not match requested \\\"probe\\\"\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-missing-run-id",
+      "case": {
+        "id": "retention-reject-missing-run-id",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "stderr": "accepts 1 arg(s), received 0\n"
+      }
+    },
+    {
+      "id": "retention-reject-missing-proposal-json",
+      "case": {
+        "id": "retention-reject-missing-proposal-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "ret-missing",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "console_text",
+        "stdout": "{\"error\":\"open <SANDBOX>/workspace/.symdesk/retention/ret-missing.json: no such file or directory\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-unsafe-run-id-json",
+      "case": {
+        "id": "retention-reject-unsafe-run-id-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "../escape",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"retention proposal run ID \\\"../escape\\\" is not a single safe filename component\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-safe-missing-run-id-json",
+      "case": {
+        "id": "retention-diff-safe-missing-run-id-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "safe-missing",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "console_text",
+        "stdout": "{\"error\":\"open <SANDBOX>/workspace/.symdesk/retention/safe-missing.json: no such file or directory\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-json-escaping",
+      "case": {
+        "id": "retention-diff-json-escaping",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc<&.md\",\"title\":\"Title > &\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test<&\",\"fingerprint\":\"fp\",\"status\":\"action_completed\",\"failure\":\"retry > later\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"path\":\"doc\\u003c\\u0026.md\",\"title\":\"Title \\u003e \\u0026\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\\u003c\\u0026\",\"fingerprint\":\"fp\",\"status\":\"action_completed\",\"failure\":\"retry \\u003e later\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-text",
+      "case": {
+        "id": "retention-diff-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{Path:doc.md Title:Doc ReferenceDate:2026-01-01 ExpiresAt:2026-01-02 Action:trash RuleName:test Fingerprint: Status: Failure:}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-empty-items-json",
+      "case": {
+        "id": "retention-diff-empty-items-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-missing-json",
+      "case": {
+        "id": "retention-history-missing-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "null\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-missing-text",
+      "case": {
+        "id": "retention-history-missing-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "no retention actions recorded\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-empty-json",
+      "case": {
+        "id": "retention-history-empty-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-nonempty-json",
+      "case": {
+        "id": "retention-history-nonempty-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule<&\",\"action\":\"trash\",\"path\":\"doc<&.md\",\"title\":\"Title > &\"}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule\\u003c\\u0026\",\"action\":\"trash\",\"path\":\"doc\\u003c\\u0026.md\",\"title\":\"Title \\u003e \\u0026\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-nonempty-text",
+      "case": {
+        "id": "retention-history-nonempty-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule\",\"action\":\"trash\",\"path\":\"doc.md\",\"title\":\"Doc\"}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "2026-01-02 03:04:05  rule  doc.md → trash\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-null-json",
+      "case": {
+        "id": "retention-history-null-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "null",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"retention history must be a non-null array\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-extra-arg-json",
+      "case": {
+        "id": "retention-history-extra-arg-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "extra",
+          "--json"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk retention history\\\"\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "retention-diff-missing-items-json",
+      "case": {
+        "id": "retention-diff-missing-items-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "null\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-null-items-json",
+      "case": {
+        "id": "retention-diff-null-items-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":null}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "null\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-top-level-null-json",
+      "case": {
+        "id": "retention-diff-top-level-null-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "null",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"retention proposal run ID \\\"\\\" does not match requested \\\"ret-safe\\\"\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-item-zero-strings-json",
+      "case": {
+        "id": "retention-diff-item-zero-strings-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"title\":null,\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\",\"rule_name\":null}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"path\":\"\",\"title\":\"\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-duplicate-null-last-wins-json",
+      "case": {
+        "id": "retention-diff-duplicate-null-last-wins-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"rule_name\":null,\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"items\":null,\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "null\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-output-text-overrides-json-before",
+      "case": {
+        "id": "retention-output-text-overrides-json-before",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--output",
+          "text",
+          "--json",
+          "retention",
+          "diff",
+          "ret-safe",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{Path:note.md Title:Note ReferenceDate:2025-01-01 ExpiresAt:2026-01-01 Action:trash RuleName: Fingerprint: Status: Failure:}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-output-text-overrides-json-after",
+      "case": {
+        "id": "retention-output-text-overrides-json-after",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--output",
+          "text",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{Path:note.md Title:Note ReferenceDate:2025-01-01 ExpiresAt:2026-01-01 Action:trash RuleName: Fingerprint: Status: Failure:}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-malformed-eof-json",
+      "case": {
+        "id": "retention-diff-malformed-eof-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"unexpected end of JSON input\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-malformed-key-json",
+      "case": {
+        "id": "retention-diff-malformed-key-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{ not json",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"invalid character 'n' looking for beginning of object key string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-error-json-escaping",
+      "case": {
+        "id": "retention-error-json-escaping",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "bad<\u2028\u2029",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"retention proposal run ID \\\"bad\\u003c\\\\u2028\\\\u2029\\\" is not platform-safe\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-null-strings-json",
+      "case": {
+        "id": "retention-history-null-strings-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":null,\"action\":null,\"path\":null,\"title\":null}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"\",\"action\":\"\",\"path\":\"\",\"title\":\"\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-diff-malformed-type-json",
+      "case": {
+        "id": "retention-diff-malformed-type-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "diff",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":1}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field Proposal.run_id of type string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-history-malformed-eof-json",
+      "case": {
+        "id": "retention-history-malformed-eof-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "history",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "{",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"unexpected end of JSON input\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-output-text-version-caller",
+      "case": {
+        "id": "retention-output-text-version-caller",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--json",
+          "version",
+          "--output",
+          "text"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "symdesk devel\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-run-id-bad-then-good",
+      "case": {
+        "id": "retention-regression-duplicate-run-id-bad-then-good",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":1,\"run_id\":\"probe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field Proposal.run_id of type string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-run-id-bad-then-good-reject",
+      "case": {
+        "id": "retention-regression-duplicate-run-id-bad-then-good-reject",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "reject",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":1,\"run_id\":\"probe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field Proposal.run_id of type string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-items-bad-then-empty",
+      "case": {
+        "id": "retention-regression-duplicate-items-bad-then-empty",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":{},\"items\":[],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal object into Go struct field Proposal.items of type []retention.ProposalItem\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-items-bad-then-empty-reject",
+      "case": {
+        "id": "retention-regression-duplicate-items-bad-then-empty-reject",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "reject",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":{},\"items\":[],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal object into Go struct field Proposal.items of type []retention.ProposalItem\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-item-path-bad-then-good",
+      "case": {
+        "id": "retention-regression-duplicate-item-path-bad-then-good",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[{\"path\":1,\"path\":\"note.md\",\"action\":\"trash\"}],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field ProposalItem.items.path of type string\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-history-rule-bad-then-good",
+      "case": {
+        "id": "retention-regression-duplicate-history-rule-bad-then-good",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "history"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":1,\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field HistoryEntry.rule_name of type string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-duplicate-history-timestamp-bad-then-good",
+      "case": {
+        "id": "retention-regression-duplicate-history-timestamp-bad-then-good",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "history"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"timestamp\":1,\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"Time.UnmarshalJSON: input is not a JSON string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-malformed-value-token",
+      "case": {
+        "id": "retention-regression-malformed-value-token",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":truX}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"invalid character 'X' in literal true (expecting 'e')\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-malformed-trailing-comma",
+      "case": {
+        "id": "retention-regression-malformed-trailing-comma",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"probe\",}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"invalid character '}' looking for beginning of object key string\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-malformed-array-trailing-comma",
+      "case": {
+        "id": "retention-regression-malformed-array-trailing-comma",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "history"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\"},]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"invalid character ']' looking for beginning of value\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-invalid-created-timestamp",
+      "case": {
+        "id": "retention-regression-invalid-created-timestamp",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "diff",
+          "probe"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/probe.json",
+            "content": "{\"run_id\":\"probe\",\"created\":\"not-a-time\",\"items\":[]}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"parsing time \\\"not-a-time\\\" as \\\"2006-01-02T15:04:05Z07:00\\\": cannot parse \\\"not-a-time\\\" as \\\"2006\\\"\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-regression-invalid-history-timestamp",
+      "case": {
+        "id": "retention-regression-invalid-history-timestamp",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "--vault",
+          "${WORKSPACE}",
+          "--json",
+          "retention",
+          "history"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/history.json",
+            "content": "[{\"timestamp\":\"not-a-time\",\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"parsing time \\\"not-a-time\\\" as \\\"2006-01-02T15:04:05Z07:00\\\": cannot parse \\\"not-a-time\\\" as \\\"2006\\\"\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-reject-omitted-items-json",
+      "case": {
+        "id": "retention-reject-omitted-items-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "reject",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"run_id\":\"ret-safe\",\"status\":\"rejected\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-list-existing-dir-no-pending-json",
+      "case": {
+        "id": "retention-list-existing-dir-no-pending-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "list",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-done.json",
+            "content": "{\"run_id\":\"ret-done\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[],\"status\":\"accepted\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "null\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-shm",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db-wal"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-reviewable-proposal",
+      "case": {
+        "id": "retention-eval-reviewable-proposal",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          ".symdesk/rules.yaml",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "json_run_id",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/rules.yaml",
+            "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n",
+            "mode": 420
+          },
+          {
+            "path": "expired.md",
+            "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n",
+            "mode": 420
+          },
+          {
+            "path": "fresh.md",
+            "content": "---\ntitle: Fresh\ndocument_date: \"2099-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n",
+            "mode": 420
+          },
+          {
+            "path": "paid.md",
+            "content": "---\ntitle: Paid\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: paid\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "json_run_id",
+        "stdout": "{\"item_count\":1,\"items\":[{\"path\":\"expired.md\",\"title\":\"Expired\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"expired-open\",\"fingerprint\":\"ded8aa556a8b10880ce4df9878704d1dab3c12716ffe29b29b73485cfb7a2f7c\"}],\"run_id\":\"ret-<clock>\",\"status\":\"pending\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-reviewable-proposal-text",
+      "case": {
+        "id": "retention-eval-reviewable-proposal-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          ".symdesk/rules.yaml",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "text_run_id",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/rules.yaml",
+            "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n",
+            "mode": 420
+          },
+          {
+            "path": "expired.md",
+            "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "text_run_id",
+        "stdout": "map[item_count:1 items:[{Path:expired.md Title:Expired ReferenceDate:2024-01-01 ExpiresAt:2024-01-31 Action:flag_review RuleName:expired-open Fingerprint:ded8aa556a8b10880ce4df9878704d1dab3c12716ffe29b29b73485cfb7a2f7c Status: Failure:}] run_id:ret-<clock> status:pending]\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-no-items-json",
+      "case": {
+        "id": "retention-eval-no-items-json",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          ".symdesk/rules.yaml",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "json_run_id",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/rules.yaml",
+            "content": "name: empty\nperiod_days: 30\naction: flag_review\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "json_run_id",
+        "stdout": "{\"item_count\":0,\"items\":null,\"run_id\":\"ret-<clock>\",\"status\":\"pending\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-invalid-rule",
+      "case": {
+        "id": "retention-eval-invalid-rule",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          ".symdesk/rules.yaml",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/rules.yaml",
+            "content": "name: invalid\nperiod_days: 0\naction: trash\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"load rules from .symdesk/rules.yaml: invalid rule \\\"invalid\\\": period_days must be positive\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-missing-rule-file",
+      "case": {
+        "id": "retention-eval-missing-rule-file",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          ".symdesk/missing.yaml",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"load rules from .symdesk/missing.yaml: open .symdesk/missing.yaml: no such file or directory\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-eval-empty-rules-uses-default",
+      "case": {
+        "id": "retention-eval-empty-rules-uses-default",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "eval",
+          "--rules",
+          "",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention-rules.yaml",
+            "content": "name: invalid-default\nperiod_days: 0\naction: trash\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "console_text",
+        "stdout": "{\"error\":\"load rules from <SANDBOX>/workspace/.symdesk/retention-rules.yaml: invalid rule \\\"invalid-default\\\": period_days must be positive\"}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-accept-flag-review",
+      "case": {
+        "id": "retention-accept-flag-review",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "accept",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "prepare_args": [
+          "--json",
+          "ls",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"acted\":1,\"failures\":null,\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\",\"status\":\"accepted\"}],\"run_id\":\"ret-safe\",\"status\":\"accepted\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-accept-stale-fingerprint",
+      "case": {
+        "id": "retention-accept-stale-fingerprint",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "accept",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "prepare_args": [
+          "--json",
+          "ls",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"0000000000000000000000000000000000000000000000000000000000000000\"}],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"acted\":0,\"failures\":[\"doc.md: proposal is stale: authoritative fingerprint changed\"],\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"failure\":\"proposal is stale: authoritative fingerprint changed\"}],\"run_id\":\"ret-safe\",\"status\":\"failed\"}\n{\"error\":\"retention acceptance failed: doc.md: proposal is stale: authoritative fingerprint changed\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-accept-text",
+      "case": {
+        "id": "retention-accept-text",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "accept",
+          "ret-safe",
+          "--output",
+          "text",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "prepare_args": [
+          "--json",
+          "ls",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "doc.md",
+            "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n",
+            "mode": 420
+          },
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "map[acted:1 failures:[] items:[{Path:doc.md Title:Retention Doc ReferenceDate:2024-01-01 ExpiresAt:2024-01-31 Action:flag_review RuleName:rule Fingerprint:166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74 Status:accepted Failure:}] run_id:ret-safe status:accepted]\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "retention-accept-action-completed-recovery",
+      "case": {
+        "id": "retention-accept-action-completed-recovery",
+        "binary": "symdesk",
+        "stage": "retention",
+        "args": [
+          "retention",
+          "accept",
+          "ret-safe",
+          "--json",
+          "--vault",
+          "${WORKSPACE}"
+        ],
+        "working_dir": ".",
+        "timeout_ms": 10000,
+        "stdout_mode": "bytes",
+        "windows_stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": ".symdesk/retention/ret-safe.json",
+            "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"missing.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"trash\",\"rule_name\":\"rule\",\"status\":\"action_completed\"}],\"status\":\"pending\"}",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"acted\":0,\"failures\":null,\"items\":[{\"path\":\"missing.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"trash\",\"rule_name\":\"rule\",\"status\":\"accepted\"}],\"run_id\":\"ret-safe\",\"status\":\"accepted\"}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    }
+  ]
+}

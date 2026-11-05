@@ -329,9 +329,19 @@ build:
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
 render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-archive-pdf-differential render-press-differential render-pdfops-differential render-pdfops-hostile-differential
 
+# The Go PDF adapters (split/merge/rotate/parse, Typst discovery, process-tree
+# safety) are recorded once into testdata/port/render/pdfops-recording.json by
+# pdfops/record.py; the Rust probes replay it without Go. verify.py remains the
+# live Go/Rust comparison while Go exists.
 render-pdfops-differential:
-	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
-	python3 scripts/rust-port/pdfops/verify.py --output "$(RENDER_EVIDENCE_ROOT)" --runtime-root "$(RENDER_RUNTIME_ROOT)" $(if $(RENDER_BUILD_LAUNCHER),--build-launcher "$(RENDER_BUILD_LAUNCHER)",)
+	$(CARGO) build -p symdesk-render --examples --locked
+	$(PORTGEN_CHECK_ENV) python3 scripts/rust-port/pdfops/record.py --check --stub "$(RUST_TARGET_DIR)/debug/examples/pdf_tool_stub"
+	$(CARGO) test -p symdesk-render --locked --examples --test pdfops_frozen
+
+.PHONY: render-pdfops-fixtures-generate
+render-pdfops-fixtures-generate:
+	$(CARGO) build -p symdesk-render --examples --locked
+	$(PORTGEN_GENERATE_GO_ENV) python3 scripts/rust-port/pdfops/record.py --stub "$(RUST_TARGET_DIR)/debug/examples/pdf_tool_stub"
 
 # Go-oracle hostile PDF replay with the REAL installed pdfinfo/pdfseparate/pdfunite/qpdf
 # (hostile_inputs.py corpus). Own sibling roots, so it is independent of the stub-tool target.
@@ -473,6 +483,7 @@ contacts-security-fixtures-generate:
 contacts-security-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsRedactContract$$' -v
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsExportBackupContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test security_contracts
 	rm -rf "$(RUST_TARGET_DIR)/contacts-backup-exchange" && mkdir -p "$(RUST_TARGET_DIR)/contacts-backup-exchange"
 	PORT_RUST_BACKUP_DIR="$(abspath $(RUST_TARGET_DIR))/contacts-backup-exchange" $(CARGO) test -p symdesk-contacts --locked --test security_contracts
 	test -s "$(RUST_TARGET_DIR)/contacts-backup-exchange/rust.bak"
@@ -1016,16 +1027,20 @@ retrieval-bm25-differential:
 	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
 
 source-differential:
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	python3 scripts/rust-port/source-differential.py "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
+	$(PORTGEN_CHECK_ENV) python3 scripts/rust-port/source_record.py --check
+	$(CARGO) test -p symdesk-cli --locked --test sources_frozen registry
+
+.PHONY: source-fixtures-generate
+source-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) python3 scripts/rust-port/source_record.py
 
 source-watch-differential:
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	python3 scripts/rust-port/source-differential.py --watch "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
+	$(PORTGEN_CHECK_ENV) python3 scripts/rust-port/source_record.py --check
+	$(CARGO) test -p symdesk-cli --locked --test sources_frozen watch
+
+.PHONY: store-paths-fixtures-generate
+store-paths-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) python3 scripts/rust-port/store_paths_record.py
 
 retrieval-embedding-state-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
@@ -1466,13 +1481,17 @@ dataset-sync-differential:
 	$(CARGO) test -p symdesk-index --locked --test dataset_service_contracts
 	$(CARGO) test -p symdesk-index --locked --test dataset_import_contracts
 
+# The recording holds what the real Go binary printed for every case; the first
+# line proves it still does, the second replays it against the Rust binary
+# without Go (RUST-019). `make dataset-cli-fixtures-generate` re-records it.
 dataset-cli-differential:
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
-		--cases "testdata/port/dataset/cli.json" --stage dataset-cli
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord --check \
+		--cases "testdata/port/dataset/cli.json" --stage dataset-cli --output "testdata/port/dataset/cli-recording.json"
+	$(CARGO) test -p symdesk-cli --locked --test frozen_diffharness dataset
+
+dataset-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord \
+		--cases "testdata/port/dataset/cli.json" --stage dataset-cli --output "testdata/port/dataset/cli-recording.json"
 
 symroom-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
@@ -1580,12 +1599,13 @@ representative-fixtures-check:
 # on the same synthetic vault and compared on stdout, stderr, exit code and the
 # written vault files.
 retention-cli-differential:
-	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
-		--cases "testdata/port/cli/retention-cases.json" --stage retention --show-mismatch-output
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord --check \
+		--cases "testdata/port/cli/retention-cases.json" --stage retention --output "testdata/port/cli/retention-recording.json"
+	$(CARGO) test -p symdesk-cli --locked --test frozen_diffharness retention
+
+retention-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord \
+		--cases "testdata/port/cli/retention-cases.json" --stage retention --output "testdata/port/cli/retention-recording.json"
 
 retention-cli-regressions-test:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/test_retention_cli_regressions.py
@@ -1594,10 +1614,14 @@ representative-differential: representative-fixtures-check
 	@mkdir -p bin/port
 	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
-		--cases "testdata/port/representative/cases.json" --stage representative
 		$(MAKE) http-differential PORT_LEFT="bin/port/symdesk-go" PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord --check \
+		--cases "testdata/port/representative/cases.json" --stage representative --output "testdata/port/representative/cli-recording.json"
+	$(CARGO) test -p symdesk-cli --locked --test frozen_diffharness representative
+
+representative-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffrecord \
+		--cases "testdata/port/representative/cases.json" --stage representative --output "testdata/port/representative/cli-recording.json"
 
 http-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/httpdiff \
@@ -1685,9 +1709,15 @@ mcp-initialize-differential: mcp-fixtures-check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff \
 		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk" --case-prefix mcp001-
 
-.PHONY: history-differential
+# history_live.py still drives the native acceptance evidence (CI); the gate
+# itself compares the committed Go report with a fresh one and replays it.
+.PHONY: history-differential history-fixtures-generate
 history-differential:
-	python3 scripts/rust-port/history_live.py
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/historygen --check --output testdata/port/vault/history-oracle.json
+	$(CARGO) test -p symdesk-vault --locked --test history_contracts
+
+history-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/historygen --output testdata/port/vault/history-oracle.json
 
 rust-build:
 	$(CARGO) build --workspace --locked

@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "sources": [
+      "cmd/symdesk/sources.go",
+      "internal/retrieval/sources.go",
+      "internal/retrieval/retrieval.go",
+      "internal/retrieval/internal/engine/sync.go",
+      "internal/service/service.go"
+    ]
+  },
+  "originals": {
+    "alpha.md": "# Alpha\n\nquartzalpha searchable note.\n",
+    "plain.txt": "quartztext searchable plain text.\n",
+    "source.go": "// quartzgocode searchable Go source.\npackage fixture\n"
+  },
+  "kind": "registry",
+  "queries": {
+    "quartzalpha": "alpha.md",
+    "quartztext": "plain.txt",
+    "quartzgocode": "source.go"
+  },
+  "steps": [
+    {
+      "args": [
+        "sources",
+        "list"
+      ],
+      "output": null
+    },
+    {
+      "args": [
+        "sources",
+        "add",
+        "<SOURCE>"
+      ],
+      "output": {
+        "source": {
+          "id": "<ID>",
+          "path": "<SOURCE>"
+        },
+        "status": "indexed"
+      }
+    },
+    {
+      "args": [
+        "sources",
+        "list"
+      ],
+      "output": [
+        {
+          "id": "<ID>",
+          "path": "<SOURCE>"
+        }
+      ]
+    },
+    {
+      "args": [
+        "sources",
+        "add",
+        "<SOURCE>"
+      ],
+      "output": {
+        "source": {
+          "id": "<ID>",
+          "path": "<SOURCE>"
+        },
+        "status": "indexed"
+      }
+    },
+    {
+      "args": [
+        "search",
+        "quartzalpha"
+      ],
+      "output": {
+        "target_hit": {
+          "path": "<SOURCE>/alpha.md",
+          "title": "alpha",
+          "snippet": "# Alpha\n\nquartzalpha searchable note.",
+          "source_type": "external",
+          "read_only": true
+        }
+      }
+    },
+    {
+      "args": [
+        "search",
+        "quartztext"
+      ],
+      "output": {
+        "target_hit": {
+          "path": "<SOURCE>/plain.txt",
+          "title": "plain",
+          "snippet": "quartztext searchable plain text.",
+          "source_type": "external",
+          "read_only": true
+        }
+      }
+    },
+    {
+      "args": [
+        "search",
+        "quartzgocode"
+      ],
+      "output": {
+        "target_hit": {
+          "path": "<SOURCE>/source.go",
+          "title": "source",
+          "snippet": "// quartzgocode searchable Go source.\npackage fixture",
+          "source_type": "external",
+          "read_only": true
+        }
+      }
+    },
+    {
+      "args": [
+        "sources",
+        "remove",
+        "<ID>"
+      ],
+      "output": {
+        "removed": 3,
+        "source": {
+          "id": "<ID>",
+          "path": "<SOURCE>"
+        },
+        "status": "removed"
+      }
+    },
+    {
+      "args": [
+        "sources",
+        "list"
+      ],
+      "output": null
+    },
+    {
+      "args": [
+        "search",
+        "quartzalpha"
+      ],
+      "output": {
+        "results": []
+      }
+    },
+    {
+      "args": [
+        "search",
+        "quartztext"
+      ],
+      "output": {
+        "results": []
+      }
+    },
+    {
+      "args": [
+        "search",
+        "quartzgocode"
+      ],
+      "output": {
+        "results": []
+      }
+    }
+  ],
+  "registry": {
+    "version": 1,
+    "sources": []
+  }
+}

@@ -100,6 +100,7 @@ func main() {
 	output := flag.String("output", "", "oracle fixture report output path")
 	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
 	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
+	check := flag.Bool("check", false, "fail when the existing --output report differs from a fresh Go oracle run")
 	flag.Parse()
 	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
 	if identityErr != nil {
@@ -137,6 +138,17 @@ func main() {
 	outPath := *output
 	if !filepath.IsAbs(outPath) {
 		outPath = filepath.Join(root, filepath.FromSlash(outPath))
+	}
+	if *check {
+		recorded, readErr := os.ReadFile(outPath) // #nosec G304 -- developer-supplied fixture path
+		if readErr != nil {
+			fatal("read recorded history oracle: %v", readErr)
+		}
+		if !bytes.Equal(recorded, content) {
+			fatal("%s drifted from the live Go history oracle; regenerate deliberately", outPath)
+		}
+		fmt.Printf("PASS %s matches the live Go history oracle (%d operations)\n", outPath, len(doc.Operations))
+		return
 	}
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o750); err != nil {
 		fatal("create output dir: %v", err)

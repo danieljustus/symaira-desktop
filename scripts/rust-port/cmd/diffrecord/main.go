@@ -32,6 +32,9 @@ type Recording struct {
 }
 
 // Source names the exact case file and tool chain the observations came from.
+// There is deliberately no platform field: the macOS arm64 and Linux arm64 Go
+// recordings of all three suites were compared and are byte-identical, so one
+// recording serves both supported OSes and --check passes on either host.
 type Source struct {
 	CasesFile   string `json:"cases_file"`
 	CasesSHA256 string `json:"cases_sha256"`
@@ -39,7 +42,6 @@ type Source struct {
 	// BinaryVersion is the version string the recorded Go binary reports. The
 	// Rust replay binary is built without SYMDESK_VERSION and reports the same.
 	BinaryVersion string `json:"binary_version"`
-	Platform      string `json:"platform"`
 }
 
 // RecordedCase is one case input plus the observation Go produced for it. The
@@ -96,7 +98,6 @@ func main() {
 			CasesSHA256:   hex.EncodeToString(digest[:]),
 			GoVersion:     runtime.Version(),
 			BinaryVersion: *binaryVersion,
-			Platform:      runtime.GOOS,
 		},
 	}
 	seen := map[string]bool{}

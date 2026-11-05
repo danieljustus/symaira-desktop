@@ -28,8 +28,13 @@ GO_NAMES = ("go", "go.exe")
 
 
 def differential_targets(makefile):
-    """Map each `*-differential` target to its `$(CARGO) test` commands."""
-    targets, current = {}, None
+    """Map each `*-differential` target to its `$(CARGO) test` commands.
+
+    A pure aggregate (prerequisites, no recipe line at all) maps to `None`: it
+    runs nothing itself, and every prerequisite is a target of its own that is
+    classified on its own.
+    """
+    targets, current, aggregate = {}, None, set()
     for line in makefile.splitlines():
         match = TARGET.match(line)
         if match:
@@ -37,7 +42,10 @@ def differential_targets(makefile):
             if current in targets:
                 raise ValueError(f"duplicate Make target {current}")
             targets[current] = []
+            if line[match.end():].split("#")[0].strip():
+                aggregate.add(current)
         elif line.startswith("\t") and current:
+            aggregate.discard(current)
             command = line.strip()
             if command.startswith("$(CARGO) test"):
                 command = command.replace("$(CARGO)", "cargo", 1)
@@ -46,6 +54,9 @@ def differential_targets(makefile):
                 targets[current].append(command)
         elif line and not line.startswith("\t"):
             current = None
+    for name in aggregate:
+        if not targets[name]:
+            targets[name] = None
     return targets
 
 
@@ -55,6 +66,10 @@ def plan(targets, manifest):
     replays = manifest["replays"]
     errors, commands = [], []
     for name, cargo in targets.items():
+        if cargo is None:
+            if name in live_only:
+                errors.append(f"{name}: is a pure aggregate but is declared live_only")
+            continue
         if cargo and name in live_only:
             errors.append(f"{name}: has a Rust replay but is declared live_only")
         elif not cargo and name not in live_only:

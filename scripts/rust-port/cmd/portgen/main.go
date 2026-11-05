@@ -242,6 +242,15 @@ var fixturePaths = []string{
 	"testdata/port/sidecar/large-corpus.json",
 	"testdata/port/sidecar/roundtrip.json",
 	"testdata/port/representative/cases.json",
+	"testdata/port/representative/cli-recording.json",
+	"testdata/port/dataset/cli-recording.json",
+	"testdata/port/cli/retention-recording.json",
+	"testdata/port/vault/history-oracle.json",
+	"testdata/port/cli/source-registry.json",
+	"testdata/port/cli/source-watch.json",
+	"testdata/port/storage/store-paths-darwin.json",
+	"testdata/port/storage/store-paths-linux.json",
+	"testdata/port/render/pdfops-recording.json",
 }
 
 func main() {

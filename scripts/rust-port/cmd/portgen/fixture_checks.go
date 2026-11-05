@@ -233,6 +233,13 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},
 	{"permissions manager", []string{"run", "./scripts/rust-port/cmd/permissionsgen", "--check"}, []string{"testdata/port/vault/permissions.json"}, false},
 	{"postgres store", []string{"run", "./scripts/rust-port/cmd/pggen", "--check"}, []string{"testdata/port/storage/postgres.json"}, false},
+	{"representative CLI recording", []string{"run", "./scripts/rust-port/cmd/diffrecord", "--check", "--cases", "testdata/port/representative/cases.json", "--stage", "representative", "--output", "testdata/port/representative/cli-recording.json"}, []string{"testdata/port/representative/cli-recording.json"}, false},
+	{"dataset CLI recording", []string{"run", "./scripts/rust-port/cmd/diffrecord", "--check", "--cases", "testdata/port/dataset/cli.json", "--stage", "dataset-cli", "--output", "testdata/port/dataset/cli-recording.json"}, []string{"testdata/port/dataset/cli-recording.json"}, false},
+	{"retention CLI recording", []string{"run", "./scripts/rust-port/cmd/diffrecord", "--check", "--cases", "testdata/port/cli/retention-cases.json", "--stage", "retention", "--output", "testdata/port/cli/retention-recording.json"}, []string{"testdata/port/cli/retention-recording.json"}, false},
+	{"history oracle", []string{"run", "./scripts/rust-port/cmd/historygen", "--check", "--output", "testdata/port/vault/history-oracle.json"}, []string{"testdata/port/vault/history-oracle.json"}, false},
+	{"source recordings", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/source_record.py", "--check"}, []string{"testdata/port/cli/source-registry.json", "testdata/port/cli/source-watch.json"}, false},
+	{"PDF adapter recording", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/pdfops/record.py", "--check"}, []string{"testdata/port/render/pdfops-recording.json"}, false},
+	{"native store paths", []string{"run", "./scripts/rust-port/cmd/extrecord", "--", "python3", "scripts/rust-port/store_paths_record.py", "--check"}, []string{"testdata/port/storage/store-paths-darwin.json", "testdata/port/storage/store-paths-linux.json"}, false},
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {

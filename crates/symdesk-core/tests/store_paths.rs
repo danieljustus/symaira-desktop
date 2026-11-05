@@ -6,7 +6,6 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::Path,
-    process::{Command, Stdio},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -111,12 +110,86 @@ fn snapshot(root: &Path) -> BTreeMap<String, String> {
     result
 }
 
+/// Native Go captures of `configgen --store-paths-root`, one per supported OS,
+/// recorded by `scripts/rust-port/store_paths_record.py` (macOS arm64 directly,
+/// Linux arm64 inside the `symdesk-local-gate` container). They replace the
+/// former live `go run` so the test needs no Go once Go is deleted.
+#[cfg(target_os = "macos")]
+const RECORDED_CAPTURE: &str =
+    include_str!("../../../testdata/port/storage/store-paths-darwin.json");
+#[cfg(target_os = "linux")]
+const RECORDED_CAPTURE: &str =
+    include_str!("../../../testdata/port/storage/store-paths-linux.json");
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+const RECORDED_CAPTURE: &str = "";
+
+fn hex_decode(value: &str) -> Vec<u8> {
+    assert_eq!(value.len() % 2, 0, "even hex length");
+    (0..value.len())
+        .step_by(2)
+        .map(|index| u8::from_str_radix(&value[index..index + 2], 16).expect("hex byte"))
+        .collect()
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    use std::fmt::Write as _;
+    let mut value = String::new();
+    for byte in bytes {
+        write!(value, "{byte:02x}").expect("write String");
+    }
+    value
+}
+
+/// Rewrites the capture root recorded by Go to this run's private root. Symlink
+/// snapshots carry their targets hex-encoded, so those are rewritten too.
+fn retarget(snapshot: &mut BTreeMap<String, String>, recorded: &str, capture: &str) {
+    for value in snapshot.values_mut() {
+        if let Some(hex) = value.strip_prefix("symlink:") {
+            let target = String::from_utf8(hex_decode(hex)).expect("UTF-8 synthetic link");
+            *value = format!(
+                "symlink:{}",
+                hex_encode(target.replace(recorded, capture).as_bytes())
+            );
+        }
+    }
+}
+
+/// Recreates a case's seeded state from its recorded `before` snapshot, the
+/// state the Go producer wrote before it resolved any path.
+#[cfg(unix)]
+fn materialize(case_root: &Path, before: &BTreeMap<String, String>) {
+    fs::create_dir_all(case_root).expect("case root");
+    for (key, value) in before {
+        if key == "." {
+            continue;
+        }
+        let path = case_root.join(key);
+        if value == "directory" {
+            fs::create_dir_all(&path).expect("seed directory");
+        } else if let Some(hex) = value.strip_prefix("file:") {
+            fs::create_dir_all(path.parent().expect("seed parent")).expect("seed parent");
+            fs::write(&path, hex_decode(hex)).expect("seed file");
+        } else if let Some(hex) = value.strip_prefix("symlink:") {
+            fs::create_dir_all(path.parent().expect("seed parent")).expect("seed parent");
+            let target = String::from_utf8(hex_decode(hex)).expect("UTF-8 synthetic link");
+            std::os::unix::fs::symlink(target, &path).expect("seed symlink");
+        } else {
+            panic!("unknown recorded snapshot entry {key:?}");
+        }
+    }
+}
+
+#[cfg(not(unix))]
+fn materialize(_case_root: &Path, _before: &BTreeMap<String, String>) {
+    panic!("Go store-path captures are recorded for macOS and Linux only");
+}
+
 #[test]
 fn contacts_and_ingest_paths_match_native_go() {
-    // Fresh native Go capture on every OS, not a hand-authored expectation or
-    // a platform-normalized Darwin file. No inherited environment reaches Rust.
-    let crate_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let repository = crate_root
+    // Native Go capture per OS (committed, recorded by Go), replayed into a
+    // fresh private root. No inherited environment reaches Rust.
+    assert!(!RECORDED_CAPTURE.is_empty(), "no Go capture for this OS");
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(Path::parent)
         .expect("workspace root");
@@ -126,47 +199,47 @@ fn contacts_and_ingest_paths_match_native_go() {
         .as_nanos();
     let parent = std::env::var_os("SYMDESK_CFG_CAPTURE_DIR")
         .map_or_else(std::env::temp_dir, std::path::PathBuf::from);
-    fs::create_dir_all(&parent).expect("native capture output directory");
+    fs::create_dir_all(&parent).expect("capture output directory");
     let root = parent.join(format!("symdesk-cfg-paths-{}-{nonce}", std::process::id()));
-    let builder = fs::DirBuilder::new();
+    let maker = fs::DirBuilder::new();
     #[cfg(unix)]
-    let builder = {
+    let maker = {
         use std::os::unix::fs::DirBuilderExt;
-        let mut builder = builder;
-        builder.mode(0o700);
-        builder
+        let mut maker = maker;
+        maker.mode(0o700);
+        maker
     };
-    builder.create(&root).expect("fresh private capture parent");
-    // Keep the native drive volume: Windows canonicalize introduces \\?\,
-    // which Go filepath.Rel cannot compare to its ordinary-drive working directory.
-    let root = std::path::absolute(root).expect("absolute native root");
+    maker.create(&root).expect("fresh private capture parent");
+    // Go resolved its root before capturing; resolve ours the same way so a
+    // cwd-relative XDG value (macOS /var -> /private/var) names the same path.
+    let root = fs::canonicalize(root).expect("canonical native root");
     let capture = root.join("capture");
-    let output = capture.join("native-go.json");
-    let stdout = fs::File::create(root.join("go.stdout.log")).expect("retain producer stdout");
-    let stderr = fs::File::create(root.join("go.stderr.log")).expect("retain producer stderr");
-    let status = Command::new("go")
-        .current_dir(crate_root)
-        .env("GOTOOLCHAIN", "go1.26.10")
-        .env("CGO_ENABLED", "0")
-        .arg("run")
-        .arg(repository.join("scripts/rust-port/cmd/configgen"))
-        .arg("--store-paths-root")
-        .arg(&capture)
-        .arg("--output")
-        .arg(&output)
-        .stdin(Stdio::null())
-        .stdout(stdout)
-        .stderr(stderr)
-        .status()
-        .expect("execute genuine Go producer; Go is required, never skipped");
+    fs::create_dir(&capture).expect("private capture directory");
+    let capture_text = capture.to_str().expect("UTF-8 capture root").to_owned();
     assert!(
-        status.success(),
-        "native Go capture failed: {status}; original logs retained at {}",
-        root.display()
+        !capture_text.contains(['"', '\\']),
+        "capture root must not need JSON escaping"
     );
-    let raw = fs::read(&output).expect("retain/read complete original Go capture");
-    let fixture: Fixture = serde_json::from_slice(&raw).expect("strict native capture schema");
-    let mut unexpected: serde_json::Value = serde_json::from_slice(&raw).expect("capture control");
+
+    let probe: serde_json::Value =
+        serde_json::from_str(RECORDED_CAPTURE).expect("recorded capture");
+    let recorded_root = Path::new(
+        probe["cases"][0]["root"]
+            .as_str()
+            .expect("recorded case root"),
+    )
+    .parent()
+    .and_then(Path::to_str)
+    .expect("recorded capture root")
+    .to_owned();
+    let raw = RECORDED_CAPTURE.replace(&recorded_root, &capture_text);
+    let mut fixture: Fixture = serde_json::from_str(&raw).expect("strict native capture schema");
+    for case in &mut fixture.cases {
+        retarget(&mut case.before, &recorded_root, &capture_text);
+        retarget(&mut case.after, &recorded_root, &capture_text);
+        materialize(Path::new(&case.root), &case.before);
+    }
+    let mut unexpected: serde_json::Value = serde_json::from_str(&raw).expect("capture control");
     unexpected
         .as_object_mut()
         .expect("capture object")
@@ -396,15 +469,13 @@ fn contacts_and_ingest_paths_match_native_go() {
         );
     }
     assert_eq!(seen, BTreeSet::from(expected_ids));
-    assert_eq!(fs::read(&output).expect("original capture unchanged"), raw);
     println!(
-        "PASS native contacts/ingest: {} layouts, {} ingest observations, unchanged seeded state; retained {}",
+        "PASS recorded native contacts/ingest: {} layouts, {} ingest observations, unchanged seeded state",
         fixture.cases.len(),
         fixture
             .cases
             .iter()
             .map(|case| case.ingest.len())
-            .sum::<usize>(),
-        output.display()
+            .sum::<usize>()
     );
 }

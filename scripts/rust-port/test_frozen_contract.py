@@ -22,6 +22,7 @@ b-differential:
 \tgo run ./scripts/rust-port/cmd/diffharness
 c-differential:
 \t$(CARGO) test -p a --locked
+all-differential: a-differential b-differential
 """
 OK = "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out\n"
 
@@ -37,6 +38,19 @@ class FrozenContractControls(unittest.TestCase):
         self.assertEqual(targets["b-differential"], [])
         commands, errors = runner.plan(targets, self.manifest())
         self.assertEqual((commands, errors), (["cargo test -p a --locked"], []))
+
+    def test_pure_aggregates_are_classified_through_their_prerequisites(self):
+        targets = runner.differential_targets(MAKEFILE)
+        self.assertIsNone(targets["all-differential"])
+        _, errors = runner.plan(targets, self.manifest())
+        self.assertEqual(errors, [])
+        manifest = self.manifest()
+        manifest["live_only"]["all-differential"] = "hidden"
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("all-differential: is a pure aggregate but is declared live_only", errors)
+        # A target with any recipe line is not an aggregate and needs a replay.
+        with_recipe = runner.differential_targets("x-differential: y-differential\n\t@echo hi\n")
+        self.assertEqual(with_recipe["x-differential"], [])
 
     def test_unclassified_live_target_fails(self):
         manifest = self.manifest()

@@ -10,15 +10,9 @@ import re
 import shutil
 
 
-def verify_press(run, runtime, output, env, binary_root, stub, report, compare, normalized, digest):
-    suffix = '.exe' if os.name == 'nt' else ''
-    oracle = runtime / ('press-go'+suffix)
-    candidate = binary_root / ('press_probe'+suffix)
-    run(['go','build','-o',str(oracle),'./internal/pdf/testdata/portpress'], 'press-build-go', build=True)
-    identity = json.loads(run([str(oracle),'--identity'], 'press-oracle-identity'))
-    assert identity == report['oracle'], 'press and PDF oracle identities differ'
-    report['binaries'].update({str(p):digest(p) for p in (oracle,candidate)})
-    cases = [
+def press_cases():
+    """The profile/discovery corpus; the frozen recorder replays the same list."""
+    return [
         dict(id='registry',steps=[dict(operation='profiles')]+[dict(operation='lookup',name=n) for n in ('behoerde','brief','meeting','rechnung','report','Report',' report ','unknown','')]),
         dict(id='default',steps=[dict(operation='detect')]),
         dict(id='override',steps=[dict(operation='detect',name=' TOOL ')]),
@@ -36,6 +30,17 @@ def verify_press(run, runtime, output, env, binary_root, stub, report, compare, 
         dict(id='negative-cache',absent=True,steps=[dict(operation='detect'),dict(operation='install',source='STUB',path='TOOL'),dict(operation='detect'),dict(operation='reset'),dict(operation='detect')]),
         dict(id='distinct-keys',steps=[dict(operation='detect'),dict(operation='detect',name='other')]),
     ]
+
+
+def verify_press(run, runtime, output, env, binary_root, stub, report, compare, normalized, digest):
+    suffix = '.exe' if os.name == 'nt' else ''
+    oracle = runtime / ('press-go'+suffix)
+    candidate = binary_root / ('press_probe'+suffix)
+    run(['go','build','-o',str(oracle),'./internal/pdf/testdata/portpress'], 'press-build-go', build=True)
+    identity = json.loads(run([str(oracle),'--identity'], 'press-oracle-identity'))
+    assert identity == report['oracle'], 'press and PDF oracle identities differ'
+    report['binaries'].update({str(p):digest(p) for p in (oracle,candidate)})
+    cases = press_cases()
     report['press_cases'] = []
     for case in cases:
         observations = []

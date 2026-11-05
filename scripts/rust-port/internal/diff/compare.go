@@ -92,41 +92,48 @@ func isLowerHex16(value string) bool {
 }
 
 func compareStream(name, mode string, left, right []byte, leftRoot, rightRoot string) error {
-	switch mode {
-	case comparisonModeIgnore:
+	if mode == comparisonModeIgnore {
 		return nil
-	case comparisonModeBytes:
-	case comparisonModeConsoleText:
-		left = normalizeConsole(left, leftRoot)
-		right = normalizeConsole(right, rightRoot)
-	case comparisonModeJSONRunID:
-		var err error
-		left, err = normalizeJSONRunID(left)
-		if err != nil {
-			return fmt.Errorf("left %s: %w", name, err)
-		}
-		right, err = normalizeJSONRunID(right)
-		if err != nil {
-			return fmt.Errorf("right %s: %w", name, err)
-		}
-	case comparisonModeTextRunID:
-		var err error
-		left, err = normalizeTextRunID(left)
-		if err != nil {
-			return fmt.Errorf("left %s: %w", name, err)
-		}
-		right, err = normalizeTextRunID(right)
-		if err != nil {
-			return fmt.Errorf("right %s: %w", name, err)
-		}
-	default:
-		return fmt.Errorf("unsupported %s comparison mode %q", name, mode)
+	}
+	left, err := normalizeStream("left "+name, mode, left, leftRoot)
+	if err != nil {
+		return err
+	}
+	right, err = normalizeStream("right "+name, mode, right, rightRoot)
+	if err != nil {
+		return err
 	}
 	if !bytes.Equal(left, right) {
 		return fmt.Errorf("%s mismatch: left_bytes=%d left_sha256=%s right_bytes=%d right_sha256=%s",
 			name, len(left), digestBytes(left), len(right), digestBytes(right))
 	}
 	return nil
+}
+
+// normalizeStream applies the comparison mode's normalization to one process
+// stream. Compare and Observe share it so a recorded observation is normalized
+// exactly as a live comparison would have normalized it.
+func normalizeStream(label, mode string, value []byte, sandboxRoot string) ([]byte, error) {
+	switch mode {
+	case comparisonModeBytes:
+		return value, nil
+	case comparisonModeConsoleText:
+		return normalizeConsole(value, sandboxRoot), nil
+	case comparisonModeJSONRunID:
+		normalized, err := normalizeJSONRunID(value)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", label, err)
+		}
+		return normalized, nil
+	case comparisonModeTextRunID:
+		normalized, err := normalizeTextRunID(value)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", label, err)
+		}
+		return normalized, nil
+	default:
+		return nil, fmt.Errorf("unsupported %s comparison mode %q", label, mode)
+	}
 }
 
 func normalizeJSONRunID(value []byte) ([]byte, error) {

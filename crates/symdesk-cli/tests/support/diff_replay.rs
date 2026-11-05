@@ -45,7 +45,6 @@ struct Source {
     cases_sha256: String,
     go_version: String,
     binary_version: String,
-    platform: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -163,10 +162,6 @@ pub fn replay_all(recording: &str, stage: &str, expected_cases: usize, binary: &
     assert_eq!(
         recording.source.binary_version, "devel",
         "the Rust test binary is built without SYMDESK_VERSION"
-    );
-    assert!(
-        matches!(recording.source.platform.as_str(), "darwin" | "linux"),
-        "recorded platform"
     );
     assert_eq!(recording.cases.len(), expected_cases, "recorded case count");
     let mut seen = std::collections::BTreeSet::new();

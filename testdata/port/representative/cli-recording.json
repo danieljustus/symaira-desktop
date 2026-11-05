@@ -1,0 +1,576 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source": {
+    "cases_file": "testdata/port/representative/cases.json",
+    "cases_sha256": "268718e9d2521fce27f745fc4a325f72b5acde207f7cca746b532b1c12c418fa",
+    "go_version": "go1.26.10",
+    "binary_version": "devel"
+  },
+  "stage": "representative",
+  "cases": [
+    {
+      "id": "version-positional-ls-not-command",
+      "case": {
+        "id": "version-positional-ls-not-command",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "version",
+          "ls"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "symdesk devel\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "version-positional-search-not-command",
+      "case": {
+        "id": "version-positional-search-not-command",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "version",
+          "search"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "symdesk devel\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "desk-ls-json",
+      "case": {
+        "id": "desk-ls-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha Note\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"nested/beta.md\",\"title\":\"Nested Beta\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-ls-text",
+      "case": {
+        "id": "desk-ls-text",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--output=text",
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "console_text",
+        "stdout": "[{Path:alpha.md Title:Alpha Note Type:note Modified:2026-01-02T03:04:05Z} {Path:nested/beta.md Title:Nested Beta Type:note Modified:2026-01-02T03:04:05Z}]\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-ls-dir-json",
+      "case": {
+        "id": "desk-ls-dir-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "ls",
+          "--dir",
+          "nested",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--output=json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "[{\"path\":\"nested/beta.md\",\"title\":\"Nested Beta\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"}]\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-search-json",
+      "case": {
+        "id": "desk-search-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "search",
+          "needle",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"results\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Note\",\"snippet\":\"needle alpha body\\n\",\"score\":0},{\"path\":\"nested/beta.md\",\"title\":\"Nested Beta\",\"snippet\":\"needle beta body\\n\",\"score\":0}]}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-search-text",
+      "case": {
+        "id": "desk-search-text",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--output=text",
+          "search",
+          "needle",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "console_text",
+        "stdout": "{Results:[{Path:alpha.md Title:Alpha Note Snippet:needle alpha body\n Score:0 Anchor:<nil> MetadataMatches:[] SourceType: ReadOnly:false} {Path:nested/beta.md Title:Nested Beta Snippet:needle beta body\n Score:0 Anchor:<nil> MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+        "stderr_mode": "console_text",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-search-inherited-output",
+      "case": {
+        "id": "desk-search-inherited-output",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--output=json",
+          "search",
+          "needle",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"results\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Note\",\"snippet\":\"needle alpha body\\n\",\"score\":0},{\"path\":\"nested/beta.md\",\"title\":\"Nested Beta\",\"snippet\":\"needle beta body\\n\",\"score\":0}]}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "desk-search-fresh-index-empty",
+      "case": {
+        "id": "desk-search-fresh-index-empty",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "search",
+          "needle",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"results\":[]}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "transform-no-provider-json",
+      "case": {
+        "id": "transform-no-provider-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--json",
+          "transform",
+          "summarize",
+          "--text",
+          "short input"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"chunk\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "transform-empty-text-json",
+      "case": {
+        "id": "transform-empty-text-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--json",
+          "transform",
+          "summarize",
+          "--text",
+          "   "
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"chunk\":\"⚠️ No text provided – please select text first.\\n\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "ask-no-provider-json",
+      "case": {
+        "id": "ask-no-provider-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--json",
+          "ask",
+          "needle",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Note\",\"snippet\":\"needle alpha body\\n\"}\n{\"type\":\"citation\",\"path\":\"nested/beta.md\",\"title\":\"Nested Beta\",\"snippet\":\"needle beta body\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[nested/beta.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "ask-no-provider-no-results-json",
+      "case": {
+        "id": "ask-no-provider-no-results-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "--json",
+          "ask",
+          "missing",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "ls",
+          "--vault",
+          "${WORKSPACE}/vault",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes",
+        "setup": [
+          {
+            "path": "vault/alpha.md",
+            "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          },
+          {
+            "path": "vault/nested/beta.md",
+            "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+            "mode": 384,
+            "mtime_ns": 1767323045000000000
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "desk-search-too-many-json",
+      "case": {
+        "id": "desk-search-too-many-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "search",
+          "--json",
+          "one",
+          "two"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"accepts at most 1 arg(s), received 2\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "desk-search-required-text",
+      "case": {
+        "id": "desk-search-required-text",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "search"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text"
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "console_text",
+        "stderr_mode": "console_text",
+        "stderr": "search query is required\n"
+      }
+    },
+    {
+      "id": "desk-search-required-json",
+      "case": {
+        "id": "desk-search-required-json",
+        "binary": "symdesk",
+        "stage": "representative",
+        "args": [
+          "search",
+          "--json"
+        ],
+        "timeout_ms": 30000,
+        "stdout_mode": "bytes",
+        "stderr_mode": "bytes"
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"search query is required\"}\n",
+        "stderr_mode": "bytes"
+      }
+    }
+  ]
+}

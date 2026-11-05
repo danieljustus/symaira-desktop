@@ -1,0 +1,2665 @@
+{
+  "schema_version": 1,
+  "generated_on": {
+    "goos": "linux",
+    "goarch": "arm64",
+    "go_version": "go1.26.10"
+  },
+  "root": "/tmp/symdesk-cutover-v1",
+  "env": {
+    "HOME": "$ROOT/home",
+    "LANG": "C",
+    "PATH": "/usr/bin:/bin",
+    "TZ": "UTC",
+    "USERPROFILE": "$ROOT/home",
+    "XDG_CACHE_HOME": "$ROOT/home/cache",
+    "XDG_CONFIG_HOME": "$ROOT/home/config",
+    "XDG_DATA_HOME": "$ROOT/home/data"
+  },
+  "vars": {
+    "ACME": "34a8fd9b-5206-4146-989e-9e13b1231c38",
+    "ADA": "f4996ab0-39d8-497f-a95a-65d6dd59b36e",
+    "BOB": "mem_7b110fa128062981",
+    "BOBKEY": "4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656",
+    "GRACE": "5668730e-1592-40e9-a4f9-b475252bb73e"
+  },
+  "states": [
+    {
+      "name": "unmigrated",
+      "description": "tree as the Go commands left it, before the first read; the first Go read lazily copies the shared retrieval index into the per-vault location",
+      "archive": "state-v1-linux-unmigrated.cxa",
+      "archive_sha256": "3c8e69f734ed647c6744f05ba6425a43719a29cab6b821804f0c309d34a1af70",
+      "files": [
+        {
+          "path": "cwd",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/cache",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/cache/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+        },
+        {
+          "path": "home/data/symdesk/symingest.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 126976,
+          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+        },
+        {
+          "path": "home/data/symdesk/symrelate.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 294912,
+          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+        },
+        {
+          "path": "home/data/symdesk/vaults",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/metadata.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 64,
+          "sha256": "44074949a14994a891ce0474db2884bc851905db4e035755c7c3ab0afcf58f23",
+          "volatile": "last_used"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 188416,
+          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+        },
+        {
+          "path": "home/data/symroom",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities/bob.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 291,
+          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+        },
+        {
+          "path": "home/data/symroom/identities/owner.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 293,
+          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+        },
+        {
+          "path": "inbox",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "inbox/report.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "inbox/second.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 46,
+          "sha256": "660ffb644741e7af2d110ca33947fa3fbf0fa30eccb390ff35652e7cab8fd7a4"
+        },
+        {
+          "path": "room",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.gitignore",
+          "kind": "f",
+          "mode": "0644",
+          "size": 10,
+          "sha256": "cc58a04b995d11e79e6a127b5b9d30793dfcbda8a521f7f4d4994b9980b70111"
+        },
+        {
+          "path": "room/.symroom",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.symroom/authorization.lock",
+          "kind": "f",
+          "mode": "0600",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "room/.symroom/local.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 38,
+          "sha256": "947447a7e4cd8f7992b1ce51c8c0ebf9522a6e8254a3ea65e53c8d2ce2c38bd2"
+        },
+        {
+          "path": "room/journal",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/journal/mem_44a09ff945986047.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
+        },
+        {
+          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+        },
+        {
+          "path": "room/room.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 211,
+          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+        },
+        {
+          "path": "vault",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "kind": "f",
+          "mode": "0644",
+          "size": 103,
+          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+        },
+        {
+          "path": "vault/archive",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest/e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "vault/bases",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/bases/open-notes.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 300,
+          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+        },
+        {
+          "path": "vault/bases/tasks.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 174,
+          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+        },
+        {
+          "path": "vault/notes",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/alpha.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 102,
+          "sha256": "59eef3d044f36dc11a7cc5345dd9320c3b4f578e02d7b2a0f357624f3d97caa9"
+        },
+        {
+          "path": "vault/notes/beta.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 119,
+          "sha256": "4be7a76b188292bd7ff65bba7c3253bd622668eb901eb4b00ba198afef096f33"
+        },
+        {
+          "path": "vault/notes/nested",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/nested/gamma.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 54,
+          "sha256": "002397ae1b68719a7cf69b729be2ba8a32d03188c4a319258f91eb801cddcb21"
+        },
+        {
+          "path": "vault/report.md.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 565,
+          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+        }
+      ],
+      "after_reads": [
+        {
+          "path": "cwd",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/cache",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/cache/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+        },
+        {
+          "path": "home/data/symdesk/symingest.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 126976,
+          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+        },
+        {
+          "path": "home/data/symdesk/symrelate.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 294912,
+          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+        },
+        {
+          "path": "home/data/symdesk/vaults",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/metadata.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 64,
+          "sha256": "44074949a14994a891ce0474db2884bc851905db4e035755c7c3ab0afcf58f23",
+          "volatile": "last_used"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 0,
+          "volatile": "migration-product"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 188416,
+          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+        },
+        {
+          "path": "home/data/symroom",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities/bob.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 291,
+          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+        },
+        {
+          "path": "home/data/symroom/identities/owner.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 293,
+          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+        },
+        {
+          "path": "inbox",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "inbox/report.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "inbox/second.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 46,
+          "sha256": "660ffb644741e7af2d110ca33947fa3fbf0fa30eccb390ff35652e7cab8fd7a4"
+        },
+        {
+          "path": "room",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.gitignore",
+          "kind": "f",
+          "mode": "0644",
+          "size": 10,
+          "sha256": "cc58a04b995d11e79e6a127b5b9d30793dfcbda8a521f7f4d4994b9980b70111"
+        },
+        {
+          "path": "room/.symroom",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.symroom/authorization.lock",
+          "kind": "f",
+          "mode": "0600",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "room/.symroom/local.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 38,
+          "sha256": "947447a7e4cd8f7992b1ce51c8c0ebf9522a6e8254a3ea65e53c8d2ce2c38bd2"
+        },
+        {
+          "path": "room/journal",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/journal/mem_44a09ff945986047.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
+        },
+        {
+          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+        },
+        {
+          "path": "room/room.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 211,
+          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+        },
+        {
+          "path": "vault",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "kind": "f",
+          "mode": "0644",
+          "size": 103,
+          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+        },
+        {
+          "path": "vault/archive",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest/e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "vault/bases",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/bases/open-notes.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 300,
+          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+        },
+        {
+          "path": "vault/bases/tasks.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 174,
+          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+        },
+        {
+          "path": "vault/notes",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/alpha.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 102,
+          "sha256": "59eef3d044f36dc11a7cc5345dd9320c3b4f578e02d7b2a0f357624f3d97caa9"
+        },
+        {
+          "path": "vault/notes/beta.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 119,
+          "sha256": "4be7a76b188292bd7ff65bba7c3253bd622668eb901eb4b00ba198afef096f33"
+        },
+        {
+          "path": "vault/notes/nested",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/nested/gamma.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 54,
+          "sha256": "002397ae1b68719a7cf69b729be2ba8a32d03188c4a319258f91eb801cddcb21"
+        },
+        {
+          "path": "vault/report.md.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 565,
+          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+        }
+      ],
+      "queries": [
+        {
+          "name": "config-paths",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "config",
+            "paths"
+          ],
+          "exit_code": 0,
+          "stdout": "data_dir: /tmp/symdesk-cutover-v1/home/data/symdesk\nconfig_dir: /tmp/symdesk-cutover-v1/home/config/symdesk\ncache_dir: /tmp/symdesk-cutover-v1/home/cache/symdesk\nsidecar: /tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\nretrieval: /tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\ningest: /tmp/symdesk-cutover-v1/home/data/symdesk/symingest.db\ningest_archive: /tmp/symdesk-cutover-v1/vault/archive/ingest\ncontacts: /tmp/symdesk-cutover-v1/home/data/symdesk/symrelate.db\n",
+          "stderr": ""
+        },
+        {
+          "name": "config-paths-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "config",
+            "paths"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"data_dir\": \"/tmp/symdesk-cutover-v1/home/data/symdesk\",\n  \"config_dir\": \"/tmp/symdesk-cutover-v1/home/config/symdesk\",\n  \"cache_dir\": \"/tmp/symdesk-cutover-v1/home/cache/symdesk\",\n  \"sidecar\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\",\n  \"retrieval\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\",\n  \"ingest\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/symingest.db\",\n  \"ingest_archive\": \"/tmp/symdesk-cutover-v1/vault/archive/ingest\",\n  \"contacts\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/symrelate.db\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ls-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "ls"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.440411028Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.394524646Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.11732507Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118063657Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118195366Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T11:14:23.055414478Z\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "ls-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "ls"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T11:14:22.440411028Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T11:14:22.394524646Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T11:14:07.11732507Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T11:14:07.118063657Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T11:14:07.118195366Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T11:14:23.055414478Z}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "search-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "search",
+            "kangaroos"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032522473484277725},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
+          "stderr": "time=\u003cT\u003e level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path=/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db new_path=/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\n"
+        },
+        {
+          "name": "search-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "search",
+            "kangaroos"
+          ],
+          "exit_code": 0,
+          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet:# Beta\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü. Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stderr": ""
+        },
+        {
+          "name": "search-ingested",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "search",
+            "wombats"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "backlinks-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "backlinks",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"notes/beta.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "name": "backlinks-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "backlinks",
+            "notes/beta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[notes/alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "name": "props-get",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "props",
+            "get",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"open\",\"tags\":\"[work project]\",\"title\":\"Alpha\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "graph-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "graph"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"bases/open-notes.md\",\"label\":\"Open notes\"},{\"id\":\"bases/tasks.md\",\"label\":\"Tasks\"},{\"id\":\"notes/alpha.md\",\"label\":\"Alpha\"},{\"id\":\"notes/beta.md\",\"label\":\"Beta\"},{\"id\":\"notes/nested/gamma.md\",\"label\":\"gamma\"},{\"id\":\"report.md.md\",\"label\":\"report.md\"}],\"edges\":[{\"source\":\"notes/alpha.md\",\"target\":\"notes/beta.md\"},{\"source\":\"notes/beta.md\",\"target\":\"notes/alpha.md\"},{\"source\":\"notes/nested/gamma.md\",\"target\":\"notes/alpha.md\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "docs-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"tags\":[\"base\"]},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"tags\":[\"base\"]},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"status\":\"open\",\"tags\":[\"work\",\"project\"]},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"status\":\"done\",\"tags\":[\"work\"]},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-get-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "get",
+            "open-notes"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-exec-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "exec",
+            "open-notes"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"_path\":\"/tmp/symdesk-cutover-v1/vault/notes/alpha.md\",\"_title\":\"Alpha\",\"status\":\"open\",\"tags\":\"[work project]\",\"title\":\"Alpha\"},{\"_path\":\"/tmp/symdesk-cutover-v1/vault/notes/beta.md\",\"_title\":\"Beta\",\"status\":\"done\",\"tags\":\"[work]\",\"title\":\"Beta\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-base-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "base",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-base-get-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "base",
+            "get",
+            "tasks"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ingest-jobs-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "ingest",
+            "jobs"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T11:14:23Z\",\n      \"updated_at\": \"2026-11-05T11:14:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ingest-jobs-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "ingest",
+            "jobs"
+          ],
+          "exit_code": 0,
+          "stdout": "Jobs 1-1 of 1\nJob ID: 1 | Status: completed | Source: /tmp/symdesk-cutover-v1/inbox/report.md\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-ada-id-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "--id",
+            "$ADA"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-ada-name-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "Ada Lovelace"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-acme-name-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "Acme GmbH"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"34a8fd9b-5206-4146-989e-9e13b1231c38\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-missing-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "--id",
+            "c_missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "sidecar-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\",\"vault_path\":\"/tmp/symdesk-cutover-v1/vault\",\"last_used\":\"\u003cT\u003e\",\"size\":188416,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\",\"retrieval_index_present\":true}],\"count\":1,\"total_bytes\":188416,\"orphan_count\":0,\"legacy_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/sidecar.db\",\"legacy_present\":false,\"legacy_retrieval_index_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "sources-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "sources",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": ""
+        },
+        {
+          "name": "index-status-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "index",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-05T11:14:22Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "index-location-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "index",
+            "maintenance",
+            "location"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "related-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "related",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[],\"notes\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-log",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "log"
+          ],
+          "exit_code": 0,
+          "stdout": "[2026-11-05T11:14:23.313Z] mem_44a09ff945986047 (room.created): Cutover Room\n[2026-11-05T11:14:23.385Z] mem_44a09ff945986047 (note.posted): First note\n[2026-11-05T11:14:23.408Z] mem_44a09ff945986047 (decision.recorded): Adopt Rust\n[2026-11-05T11:14:23.444Z] mem_44a09ff945986047 (member.added): Bob\n[2026-11-05T11:14:23.454Z] mem_7b110fa128062981 (note.posted): Bob was here\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-log-json",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "log",
+            "-json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"author\":\"mem_44a09ff945986047\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\"},\"id\":\"ev_811f979c52acf1a84d95\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:avS12ymhwUF2mcDtDX9yMHNmmto96zKZoT5b3XBBliJJ2Wp5DMO0VqWzi7anRNUzt2zl2wcnOXRhaNvaiZM1DA==\",\"ts\":\"2026-11-05T11:14:23.313Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_48b1c2a09fc6172ac09c\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:43bd679c03c4feb63a52c9d522cc9fbf1797424c3612d434acdd6ae5db74d801\",\"room\":\"rm_2a601765bf37259c\",\"seq\":2,\"sig\":\"ed25519:Ga9Mwt9PD2yCEb1gkxsZ3LHgY24wY/d7raAa5YGxkusGclhDKyPKrL1PFvLaPgG+Oiio0FIYpmix4u/iTohZAA==\",\"ts\":\"2026-11-05T11:14:23.385Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_fc31971920a3e6cffc92\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:cb7efdb7172b890a5ccb6162fc1c7adaa3a9e0d01101161a974201c6d3151782\",\"room\":\"rm_2a601765bf37259c\",\"seq\":3,\"sig\":\"ed25519:c7xPVbwdvbFn/JQDHy+O3D/5GjlgWRsi2V/I3jqrFU59syo7hMtMfdESsnx16tCIThipb6mIqlDHOIUO8OveAw==\",\"ts\":\"2026-11-05T11:14:23.408Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"id\":\"mem_7b110fa128062981\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656\",\"role\":\"member\"},\"id\":\"ev_318a79a0bc6a5c7560dd\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:ea21db28dc29c2415f23aa293a8525daf825b03b85fc8dc8c69e5a45d9e75dda\",\"room\":\"rm_2a601765bf37259c\",\"seq\":4,\"sig\":\"ed25519:aaXGpY05c51JVIOnB/0+wJqH4Dly7ximY+jsYhrUg3+TzuDXTKZTcrVUIsf/oinpNxTmiJQr8x0b6b6iDe7kDg==\",\"ts\":\"2026-11-05T11:14:23.444Z\",\"v\":1}\n{\"author\":\"mem_7b110fa128062981\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_930da50ebf2edb077cdd\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:2ZIqs/gh+gFTH1Iw1KHKS8F54pCH4ElmmIn9PSwHhWpxDLCx8NMxdGtWYYTMqHihDDgTSEgsiLFYhvIj2OdrAg==\",\"ts\":\"2026-11-05T11:14:23.454Z\",\"v\":1}\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-verify",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "verify"
+          ],
+          "exit_code": 0,
+          "stdout": "Journal verification PASSED: zero findings\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-member-list",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "member",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_44a09ff945986047  Cutover Room  owner   human\nmem_7b110fa128062981  Bob           member  human\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-identity-list",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "identity",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "bob\nowner\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-identity-show",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "identity",
+            "show",
+            "owner"
+          ],
+          "exit_code": 0,
+          "stdout": "Name: owner\nMember ID: mem_44a09ff945986047\nPublic Key: 97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\n",
+          "stderr": ""
+        }
+      ],
+      "writes": [
+        {
+          "name": "note-add-and-index-refresh",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "note",
+                "new",
+                "--title",
+                "Gamma Rust Cutover"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "index"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ls"
+              ],
+              "expect_substr": [
+                "Gamma Rust Cutover"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "search",
+                "kangaroos"
+              ],
+              "expect_substr": [
+                "notes/alpha.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "views",
+                "list"
+              ],
+              "expect_substr": [
+                "Open notes"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "view-save-after-go-state",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "views",
+                "save",
+                "{\"id\":\"rust-view\",\"name\":\"Rust view\",\"source\":\"tag:project\",\"columns\":[\"title\"]}"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "views",
+                "list"
+              ],
+              "expect_substr": [
+                "rust-view",
+                "open-notes"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ingest-after-go-state",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "ingest",
+                "$ROOT/inbox/second.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "index"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ingest",
+                "jobs"
+              ],
+              "expect_substr": [
+                "completed",
+                "second.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ls"
+              ],
+              "expect_substr": [
+                "second.md.md"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "room-event",
+          "steps": [
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "note",
+                "--identity",
+                "owner",
+                "Rust wrote this after the cutover"
+              ]
+            },
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "verify"
+              ],
+              "expect_substr": [
+                "PASSED"
+              ]
+            },
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "log"
+              ],
+              "expect_substr": [
+                "Rust wrote this after the cutover",
+                "Bob was here"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "settled",
+      "description": "steady state after one Go read pass; further Go reads must leave the tree unchanged",
+      "archive": "state-v1-linux-settled.cxa",
+      "archive_sha256": "584d3c8ab2e4007ddf345c2892989d55b9441960d60a84c2bb67691de5e94e76",
+      "files": [
+        {
+          "path": "cwd",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/cache",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/cache/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+        },
+        {
+          "path": "home/data/symdesk/symingest.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 126976,
+          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+        },
+        {
+          "path": "home/data/symdesk/symrelate.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 294912,
+          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+        },
+        {
+          "path": "home/data/symdesk/vaults",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/metadata.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 64,
+          "sha256": "44074949a14994a891ce0474db2884bc851905db4e035755c7c3ab0afcf58f23",
+          "volatile": "last_used"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "9efb7a147ea254dbe0be7a05d27e9558c617e6ddd504bb3ea929d31b2a7d514d"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 188416,
+          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+        },
+        {
+          "path": "home/data/symroom",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities/bob.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 291,
+          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+        },
+        {
+          "path": "home/data/symroom/identities/owner.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 293,
+          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+        },
+        {
+          "path": "inbox",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "inbox/report.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "inbox/second.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 46,
+          "sha256": "660ffb644741e7af2d110ca33947fa3fbf0fa30eccb390ff35652e7cab8fd7a4"
+        },
+        {
+          "path": "room",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.gitignore",
+          "kind": "f",
+          "mode": "0644",
+          "size": 10,
+          "sha256": "cc58a04b995d11e79e6a127b5b9d30793dfcbda8a521f7f4d4994b9980b70111"
+        },
+        {
+          "path": "room/.symroom",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.symroom/authorization.lock",
+          "kind": "f",
+          "mode": "0600",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "room/.symroom/local.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 38,
+          "sha256": "947447a7e4cd8f7992b1ce51c8c0ebf9522a6e8254a3ea65e53c8d2ce2c38bd2"
+        },
+        {
+          "path": "room/journal",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/journal/mem_44a09ff945986047.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
+        },
+        {
+          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+        },
+        {
+          "path": "room/room.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 211,
+          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+        },
+        {
+          "path": "vault",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "kind": "f",
+          "mode": "0644",
+          "size": 103,
+          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+        },
+        {
+          "path": "vault/archive",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest/e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "vault/bases",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/bases/open-notes.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 300,
+          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+        },
+        {
+          "path": "vault/bases/tasks.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 174,
+          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+        },
+        {
+          "path": "vault/notes",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/alpha.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 102,
+          "sha256": "59eef3d044f36dc11a7cc5345dd9320c3b4f578e02d7b2a0f357624f3d97caa9"
+        },
+        {
+          "path": "vault/notes/beta.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 119,
+          "sha256": "4be7a76b188292bd7ff65bba7c3253bd622668eb901eb4b00ba198afef096f33"
+        },
+        {
+          "path": "vault/notes/nested",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/nested/gamma.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 54,
+          "sha256": "002397ae1b68719a7cf69b729be2ba8a32d03188c4a319258f91eb801cddcb21"
+        },
+        {
+          "path": "vault/report.md.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 565,
+          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+        }
+      ],
+      "after_reads": [
+        {
+          "path": "cwd",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/cache",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/cache/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/config/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+        },
+        {
+          "path": "home/data/symdesk/symingest.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 126976,
+          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+        },
+        {
+          "path": "home/data/symdesk/symrelate.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 294912,
+          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+        },
+        {
+          "path": "home/data/symdesk/vaults",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/metadata.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 64,
+          "sha256": "44074949a14994a891ce0474db2884bc851905db4e035755c7c3ab0afcf58f23",
+          "volatile": "last_used"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db",
+          "kind": "f",
+          "mode": "0600",
+          "size": 172032,
+          "sha256": "9efb7a147ea254dbe0be7a05d27e9558c617e6ddd504bb3ea929d31b2a7d514d"
+        },
+        {
+          "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
+          "kind": "f",
+          "mode": "0644",
+          "size": 188416,
+          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+        },
+        {
+          "path": "home/data/symroom",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "home/data/symroom/identities/bob.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 291,
+          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+        },
+        {
+          "path": "home/data/symroom/identities/owner.json",
+          "kind": "f",
+          "mode": "0600",
+          "size": 293,
+          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+        },
+        {
+          "path": "inbox",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "inbox/report.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "inbox/second.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 46,
+          "sha256": "660ffb644741e7af2d110ca33947fa3fbf0fa30eccb390ff35652e7cab8fd7a4"
+        },
+        {
+          "path": "room",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.gitignore",
+          "kind": "f",
+          "mode": "0644",
+          "size": 10,
+          "sha256": "cc58a04b995d11e79e6a127b5b9d30793dfcbda8a521f7f4d4994b9980b70111"
+        },
+        {
+          "path": "room/.symroom",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/.symroom/authorization.lock",
+          "kind": "f",
+          "mode": "0600",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "room/.symroom/local.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 38,
+          "sha256": "947447a7e4cd8f7992b1ce51c8c0ebf9522a6e8254a3ea65e53c8d2ce2c38bd2"
+        },
+        {
+          "path": "room/journal",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "room/journal/mem_44a09ff945986047.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
+        },
+        {
+          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+        },
+        {
+          "path": "room/room.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 211,
+          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+        },
+        {
+          "path": "vault",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal",
+          "kind": "d",
+          "mode": "0750",
+          "size": 0
+        },
+        {
+          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "kind": "f",
+          "mode": "0644",
+          "size": 103,
+          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+        },
+        {
+          "path": "vault/archive",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest",
+          "kind": "d",
+          "mode": "0700",
+          "size": 0
+        },
+        {
+          "path": "vault/archive/ingest/e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 115,
+          "sha256": "e216bb842c808978ec37eca4dd92d995de5068d33c579914c67e3ae9519f357b"
+        },
+        {
+          "path": "vault/bases",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/bases/open-notes.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 300,
+          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+        },
+        {
+          "path": "vault/bases/tasks.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 174,
+          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+        },
+        {
+          "path": "vault/notes",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/alpha.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 102,
+          "sha256": "59eef3d044f36dc11a7cc5345dd9320c3b4f578e02d7b2a0f357624f3d97caa9"
+        },
+        {
+          "path": "vault/notes/beta.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 119,
+          "sha256": "4be7a76b188292bd7ff65bba7c3253bd622668eb901eb4b00ba198afef096f33"
+        },
+        {
+          "path": "vault/notes/nested",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "vault/notes/nested/gamma.md",
+          "kind": "f",
+          "mode": "0644",
+          "size": 54,
+          "sha256": "002397ae1b68719a7cf69b729be2ba8a32d03188c4a319258f91eb801cddcb21"
+        },
+        {
+          "path": "vault/report.md.md",
+          "kind": "f",
+          "mode": "0600",
+          "size": 565,
+          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+        }
+      ],
+      "queries": [
+        {
+          "name": "config-paths",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "config",
+            "paths"
+          ],
+          "exit_code": 0,
+          "stdout": "data_dir: /tmp/symdesk-cutover-v1/home/data/symdesk\nconfig_dir: /tmp/symdesk-cutover-v1/home/config/symdesk\ncache_dir: /tmp/symdesk-cutover-v1/home/cache/symdesk\nsidecar: /tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\nretrieval: /tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\ningest: /tmp/symdesk-cutover-v1/home/data/symdesk/symingest.db\ningest_archive: /tmp/symdesk-cutover-v1/vault/archive/ingest\ncontacts: /tmp/symdesk-cutover-v1/home/data/symdesk/symrelate.db\n",
+          "stderr": ""
+        },
+        {
+          "name": "config-paths-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "config",
+            "paths"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"data_dir\": \"/tmp/symdesk-cutover-v1/home/data/symdesk\",\n  \"config_dir\": \"/tmp/symdesk-cutover-v1/home/config/symdesk\",\n  \"cache_dir\": \"/tmp/symdesk-cutover-v1/home/cache/symdesk\",\n  \"sidecar\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\",\n  \"retrieval\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\",\n  \"ingest\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/symingest.db\",\n  \"ingest_archive\": \"/tmp/symdesk-cutover-v1/vault/archive/ingest\",\n  \"contacts\": \"/tmp/symdesk-cutover-v1/home/data/symdesk/symrelate.db\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ls-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "ls"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.440411028Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.394524646Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.11732507Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118063657Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118195366Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T11:14:23.055414478Z\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "ls-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "ls"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T11:14:22.440411028Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T11:14:22.394524646Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T11:14:07.11732507Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T11:14:07.118063657Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T11:14:07.118195366Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T11:14:23.055414478Z}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "search-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "search",
+            "kangaroos"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032522473484277725},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "search-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "search",
+            "kangaroos"
+          ],
+          "exit_code": 0,
+          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet:# Beta\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü. Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stderr": ""
+        },
+        {
+          "name": "search-ingested",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "search",
+            "wombats"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "backlinks-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "backlinks",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"notes/beta.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "name": "backlinks-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "backlinks",
+            "notes/beta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[notes/alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "name": "props-get",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "props",
+            "get",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"open\",\"tags\":\"[work project]\",\"title\":\"Alpha\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "graph-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "graph"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"bases/open-notes.md\",\"label\":\"Open notes\"},{\"id\":\"bases/tasks.md\",\"label\":\"Tasks\"},{\"id\":\"notes/alpha.md\",\"label\":\"Alpha\"},{\"id\":\"notes/beta.md\",\"label\":\"Beta\"},{\"id\":\"notes/nested/gamma.md\",\"label\":\"gamma\"},{\"id\":\"report.md.md\",\"label\":\"report.md\"}],\"edges\":[{\"source\":\"notes/alpha.md\",\"target\":\"notes/beta.md\"},{\"source\":\"notes/beta.md\",\"target\":\"notes/alpha.md\"},{\"source\":\"notes/nested/gamma.md\",\"target\":\"notes/alpha.md\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "docs-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"tags\":[\"base\"]},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"tags\":[\"base\"]},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"status\":\"open\",\"tags\":[\"work\",\"project\"]},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"status\":\"done\",\"tags\":[\"work\"]},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-get-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "get",
+            "open-notes"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-exec-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "exec",
+            "open-notes"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"_path\":\"/tmp/symdesk-cutover-v1/vault/notes/alpha.md\",\"_title\":\"Alpha\",\"status\":\"open\",\"tags\":\"[work project]\",\"title\":\"Alpha\"},{\"_path\":\"/tmp/symdesk-cutover-v1/vault/notes/beta.md\",\"_title\":\"Beta\",\"status\":\"done\",\"tags\":\"[work]\",\"title\":\"Beta\"}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-base-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "base",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stderr": ""
+        },
+        {
+          "name": "views-base-get-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "views",
+            "base",
+            "get",
+            "tasks"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ingest-jobs-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "ingest",
+            "jobs"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T11:14:23Z\",\n      \"updated_at\": \"2026-11-05T11:14:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stderr": ""
+        },
+        {
+          "name": "ingest-jobs-text",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "ingest",
+            "jobs"
+          ],
+          "exit_code": 0,
+          "stdout": "Jobs 1-1 of 1\nJob ID: 1 | Status: completed | Source: /tmp/symdesk-cutover-v1/inbox/report.md\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-ada-id-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "--id",
+            "$ADA"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-ada-name-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "Ada Lovelace"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-acme-name-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "Acme GmbH"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"34a8fd9b-5206-4146-989e-9e13b1231c38\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "contact-missing-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "relations",
+            "contact",
+            "--id",
+            "c_missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "sidecar-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db\",\"vault_path\":\"/tmp/symdesk-cutover-v1/vault\",\"last_used\":\"\u003cT\u003e\",\"size\":188416,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\",\"retrieval_index_present\":true}],\"count\":1,\"total_bytes\":188416,\"orphan_count\":0,\"legacy_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/sidecar.db\",\"legacy_present\":false,\"legacy_retrieval_index_path\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "name": "sources-list-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "sources",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": ""
+        },
+        {
+          "name": "index-status-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "index",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-05T11:14:22Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "index-location-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "index",
+            "maintenance",
+            "location"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/464f72ba6fea84e6/retrieval.db\"}\n",
+          "stderr": ""
+        },
+        {
+          "name": "related-json",
+          "tool": "symdesk",
+          "cwd": "cwd",
+          "args": [
+            "--vault",
+            "$ROOT/vault",
+            "--json",
+            "related",
+            "notes/alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[],\"notes\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-log",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "log"
+          ],
+          "exit_code": 0,
+          "stdout": "[2026-11-05T11:14:23.313Z] mem_44a09ff945986047 (room.created): Cutover Room\n[2026-11-05T11:14:23.385Z] mem_44a09ff945986047 (note.posted): First note\n[2026-11-05T11:14:23.408Z] mem_44a09ff945986047 (decision.recorded): Adopt Rust\n[2026-11-05T11:14:23.444Z] mem_44a09ff945986047 (member.added): Bob\n[2026-11-05T11:14:23.454Z] mem_7b110fa128062981 (note.posted): Bob was here\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-log-json",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "log",
+            "-json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"author\":\"mem_44a09ff945986047\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\"},\"id\":\"ev_811f979c52acf1a84d95\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:avS12ymhwUF2mcDtDX9yMHNmmto96zKZoT5b3XBBliJJ2Wp5DMO0VqWzi7anRNUzt2zl2wcnOXRhaNvaiZM1DA==\",\"ts\":\"2026-11-05T11:14:23.313Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_48b1c2a09fc6172ac09c\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:43bd679c03c4feb63a52c9d522cc9fbf1797424c3612d434acdd6ae5db74d801\",\"room\":\"rm_2a601765bf37259c\",\"seq\":2,\"sig\":\"ed25519:Ga9Mwt9PD2yCEb1gkxsZ3LHgY24wY/d7raAa5YGxkusGclhDKyPKrL1PFvLaPgG+Oiio0FIYpmix4u/iTohZAA==\",\"ts\":\"2026-11-05T11:14:23.385Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_fc31971920a3e6cffc92\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:cb7efdb7172b890a5ccb6162fc1c7adaa3a9e0d01101161a974201c6d3151782\",\"room\":\"rm_2a601765bf37259c\",\"seq\":3,\"sig\":\"ed25519:c7xPVbwdvbFn/JQDHy+O3D/5GjlgWRsi2V/I3jqrFU59syo7hMtMfdESsnx16tCIThipb6mIqlDHOIUO8OveAw==\",\"ts\":\"2026-11-05T11:14:23.408Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"id\":\"mem_7b110fa128062981\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656\",\"role\":\"member\"},\"id\":\"ev_318a79a0bc6a5c7560dd\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:ea21db28dc29c2415f23aa293a8525daf825b03b85fc8dc8c69e5a45d9e75dda\",\"room\":\"rm_2a601765bf37259c\",\"seq\":4,\"sig\":\"ed25519:aaXGpY05c51JVIOnB/0+wJqH4Dly7ximY+jsYhrUg3+TzuDXTKZTcrVUIsf/oinpNxTmiJQr8x0b6b6iDe7kDg==\",\"ts\":\"2026-11-05T11:14:23.444Z\",\"v\":1}\n{\"author\":\"mem_7b110fa128062981\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_930da50ebf2edb077cdd\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:2ZIqs/gh+gFTH1Iw1KHKS8F54pCH4ElmmIn9PSwHhWpxDLCx8NMxdGtWYYTMqHihDDgTSEgsiLFYhvIj2OdrAg==\",\"ts\":\"2026-11-05T11:14:23.454Z\",\"v\":1}\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-verify",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "verify"
+          ],
+          "exit_code": 0,
+          "stdout": "Journal verification PASSED: zero findings\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-member-list",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "member",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_44a09ff945986047  Cutover Room  owner   human\nmem_7b110fa128062981  Bob           member  human\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-identity-list",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "identity",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "bob\nowner\n",
+          "stderr": ""
+        },
+        {
+          "name": "room-identity-show",
+          "tool": "symroom",
+          "cwd": "room",
+          "args": [
+            "identity",
+            "show",
+            "owner"
+          ],
+          "exit_code": 0,
+          "stdout": "Name: owner\nMember ID: mem_44a09ff945986047\nPublic Key: 97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\n",
+          "stderr": ""
+        }
+      ],
+      "writes": [
+        {
+          "name": "note-add-and-index-refresh",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "note",
+                "new",
+                "--title",
+                "Gamma Rust Cutover"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "index"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ls"
+              ],
+              "expect_substr": [
+                "Gamma Rust Cutover"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "search",
+                "kangaroos"
+              ],
+              "expect_substr": [
+                "notes/alpha.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "views",
+                "list"
+              ],
+              "expect_substr": [
+                "Open notes"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "view-save-after-go-state",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "views",
+                "save",
+                "{\"id\":\"rust-view\",\"name\":\"Rust view\",\"source\":\"tag:project\",\"columns\":[\"title\"]}"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "views",
+                "list"
+              ],
+              "expect_substr": [
+                "rust-view",
+                "open-notes"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ingest-after-go-state",
+          "steps": [
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "ingest",
+                "$ROOT/inbox/second.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "index"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ingest",
+                "jobs"
+              ],
+              "expect_substr": [
+                "completed",
+                "second.md"
+              ]
+            },
+            {
+              "tool": "symdesk",
+              "cwd": "cwd",
+              "args": [
+                "--vault",
+                "$ROOT/vault",
+                "--json",
+                "ls"
+              ],
+              "expect_substr": [
+                "second.md.md"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "room-event",
+          "steps": [
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "note",
+                "--identity",
+                "owner",
+                "Rust wrote this after the cutover"
+              ]
+            },
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "verify"
+              ],
+              "expect_substr": [
+                "PASSED"
+              ]
+            },
+            {
+              "tool": "symroom",
+              "cwd": "room",
+              "args": [
+                "log"
+              ],
+              "expect_substr": [
+                "Rust wrote this after the cutover",
+                "Bob was here"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

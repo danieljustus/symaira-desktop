@@ -206,7 +206,7 @@ fn summary_text(handle: &symdesk_vault::DatasetHandle, rows: usize) -> String {
 
 /// Go `readDatasetHandleWithMigration`: read a handle and persist the exact
 /// legacy shape (neither policy field) with both fields.
-fn read_handle_with_migration(
+pub(crate) fn read_handle_with_migration(
     root: &Path,
     rel: &str,
 ) -> Result<symdesk_vault::DatasetHandle, String> {
@@ -273,7 +273,7 @@ fn run_list(vault: Option<&str>, json_output: bool) -> ExitCode {
 }
 
 /// Go `Service.DatasetList`.
-fn list_datasets(
+pub(crate) fn list_datasets(
     root: &Path,
     sidecar: &symdesk_index::Sidecar,
 ) -> Result<Vec<(symdesk_vault::DatasetHandle, usize)>, String> {
@@ -634,13 +634,13 @@ fn value_or_empty(args: &clap::ArgMatches, name: &str) -> String {
 }
 
 #[derive(Serialize)]
-struct SyncJson<'a> {
-    slug: &'a str,
-    rows: usize,
-    imported_rows: usize,
-    raw_path: &'a str,
-    handle_path: &'a str,
-    idempotent: bool,
+pub(crate) struct SyncJson<'a> {
+    pub(crate) slug: &'a str,
+    pub(crate) rows: usize,
+    pub(crate) imported_rows: usize,
+    pub(crate) raw_path: &'a str,
+    pub(crate) handle_path: &'a str,
+    pub(crate) idempotent: bool,
 }
 
 fn output_sync_result(result: &symdesk_index::DatasetSyncResult, json_output: bool) -> ExitCode {
@@ -663,4 +663,48 @@ fn output_sync_result(result: &symdesk_index::DatasetSyncResult, json_output: bo
         result.handle_path,
         result.idempotent
     ))
+}
+
+/// Go `DatasetSummary` list as the CLI and the MCP tool marshal it.
+pub(crate) fn summaries_json(
+    handles: &[(symdesk_vault::DatasetHandle, usize)],
+) -> Result<String, String> {
+    let summaries: Vec<Summary<'_>> = handles
+        .iter()
+        .map(|(handle, rows)| Summary {
+            slug: &handle.slug,
+            title: &handle.title,
+            path: &handle.path,
+            source: &handle.source,
+            rows: *rows,
+            columns: &handle.schema,
+            identity_field: &handle.identity_field,
+            sensitivity: &handle.sensitivity,
+            retention_rule: &handle.retention_rule,
+            provenance: &handle.provenance,
+        })
+        .collect();
+    serde_json::to_string(&summaries).map_err(|error| error.to_string())
+}
+
+/// Go `DatasetDescription` as the CLI and the MCP tool marshal it.
+pub(crate) fn description_json(
+    handle: &symdesk_vault::DatasetHandle,
+    rows: usize,
+) -> Result<String, String> {
+    serde_json::to_string(&Description {
+        slug: &handle.slug,
+        title: &handle.title,
+        path: &handle.path,
+        source: &handle.source,
+        rows,
+        columns: &handle.schema,
+        identity_field: &handle.identity_field,
+        sensitivity: &handle.sensitivity,
+        retention_rule: &handle.retention_rule,
+        provenance: &handle.provenance,
+        coverage: &handle.coverage,
+        refresh_command: &handle.refresh_command,
+    })
+    .map_err(|error| error.to_string())
 }

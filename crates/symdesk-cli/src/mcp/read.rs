@@ -33,7 +33,7 @@ pub(super) fn supports(name: &str) -> bool {
         )
 }
 
-fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
+pub(super) fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
     let text = serde_json::to_string(value).map_err(|error| error.to_string())?;
     Ok(Value::String(crate::go_escape_json(text)))
 }
@@ -172,7 +172,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
 
 // Unlike citation paths, Go backlinks uses filepath.Rel even for indexed
 // sources outside the vault. Different volumes retain the original path.
-fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
+pub(crate) fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
     use std::path::{Component, PathBuf};
     let root_path = symdesk_index::document_storage_key(root).unwrap_or_else(|_| root.to_owned());
     let target_path = symdesk_index::document_storage_key(path).unwrap_or_else(|_| path.to_owned());

@@ -35,6 +35,9 @@ noyalib.workspace = true
 ureq = { version = "=3.4.1", default-features = false, features = ["rustls"] }
 notify.workspace = true
 
+[dev-dependencies]
+regex.workspace = true
+
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [
     "Win32_Foundation",

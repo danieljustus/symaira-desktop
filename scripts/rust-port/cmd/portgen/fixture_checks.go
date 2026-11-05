@@ -27,6 +27,8 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"MCP remaining tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPCallsProcessPortFixture$"}, []string{"testdata/port/mcp/calls-process.json"}, false},
+	{"MCP protocol transcripts", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPProtocolProcessPortFixture$"}, []string{"testdata/port/mcp/protocol-process.json"}, false},
 	{"MCP write tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPWriteProcessPortFixture$"}, []string{"testdata/port/mcp/write-process.json"}, false},
 	{"notebook write CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookWriteProcessContract$"}, []string{"testdata/port/cli/notebook-write-process.json"}, false},
 	{"notebook read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookReadProcessContract$"}, []string{"testdata/port/cli/notebook-read-process.json"}, false},

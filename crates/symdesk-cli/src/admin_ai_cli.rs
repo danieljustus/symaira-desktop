@@ -56,7 +56,7 @@ struct AutofillChange {
 }
 
 #[derive(Serialize)]
-struct AutofillResult {
+pub(crate) struct AutofillResult {
     view: String,
     property: String,
     total: usize,
@@ -127,7 +127,7 @@ fn autofill_text(result: &AutofillResult) -> String {
 }
 
 /// Go `Service.Autofill`.
-fn autofill(
+pub(crate) fn autofill(
     root: &Path,
     db: &mut Sidecar,
     view_id: &str,

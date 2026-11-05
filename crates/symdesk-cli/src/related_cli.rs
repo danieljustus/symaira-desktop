@@ -12,7 +12,7 @@ use symdesk_vault::Document;
 use crate::{mutate_cli::parse, service_cli::with_deps, write_go_json, write_stdout};
 
 #[derive(Serialize)]
-struct RelatedEntity {
+pub(crate) struct RelatedEntity {
     name: String,
     #[serde(rename = "type")]
     kind: String,
@@ -21,7 +21,7 @@ struct RelatedEntity {
 }
 
 #[derive(Serialize)]
-struct RelatedData {
+pub(crate) struct RelatedData {
     entities: Vec<RelatedEntity>,
     notes: Vec<String>,
 }
@@ -63,37 +63,46 @@ fn parse_in_root(root: &Path, requested: &str) -> Result<Document, String> {
 
 pub fn run(file: &str, vault: Option<&str>, json: bool) -> ExitCode {
     with_deps(vault, json, |root, db| {
+        let result = related(root, db, file)?;
+        if json {
+            return Ok(write_go_json(&result));
+        }
+        let entities = result
+            .entities
+            .iter()
+            .map(|entity| {
+                format!(
+                    "{{Name:{} Type:{} Relation:{}}}",
+                    entity.name, entity.kind, entity.relation
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        Ok(write_stdout(format!(
+            "&{{Entities:[{entities}] Notes:[{}]}}\n",
+            result.notes.join(" ")
+        )))
+    })
+}
+
+/// Go `Service.Related`.
+pub(crate) fn related(
+    root: &Path,
+    db: &symdesk_index::Sidecar,
+    file: &str,
+) -> Result<RelatedData, String> {
+    {
         let document = parse_in_root(root, file)?;
         let mut result = RelatedData {
             entities: Vec::new(),
             notes: Vec::new(),
-        };
-        let render = |result: &RelatedData| {
-            if json {
-                return write_go_json(result);
-            }
-            let entities = result
-                .entities
-                .iter()
-                .map(|entity| {
-                    format!(
-                        "{{Name:{} Type:{} Relation:{}}}",
-                        entity.name, entity.kind, entity.relation
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(" ");
-            write_stdout(format!(
-                "&{{Entities:[{entities}] Notes:[{}]}}\n",
-                result.notes.join(" ")
-            ))
         };
         let resolver = Resolver::from_environment().map_err(|error| error.to_string())?;
         if !ToolCache::default()
             .has_tool(&resolver, "symmemory")
             .available
         {
-            return Ok(render(&result));
+            return Ok(result);
         }
         let resolve = |name: &str| resolver.resolve(name);
         let entities = memory::list_entities(&resolve)?.unwrap_or_default();
@@ -165,7 +174,7 @@ pub fn run(file: &str, vault: Option<&str>, json: bool) -> ExitCode {
         }
 
         let Ok(listed) = db.list_files(root, "") else {
-            return Ok(render(&result));
+            return Ok(result);
         };
         for listed in listed {
             let relative = crate::relative_path(root, &listed.path);
@@ -183,6 +192,6 @@ pub fn run(file: &str, vault: Option<&str>, json: bool) -> ExitCode {
                 result.notes.push(relative);
             }
         }
-        Ok(render(&result))
-    })
+        Ok(result)
+    }
 }

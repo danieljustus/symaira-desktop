@@ -1860,6 +1860,41 @@ mcp-write-differential:
 mcp-write-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
 
+.PHONY: mcp-protocol-fixtures-generate mcp-protocol-differential
+mcp-protocol-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPProtocolProcessPortFixture$$'
+
+mcp-protocol-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPProtocolProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --test mcp_protocol --locked
+
+# RUST-014 conformance: every recorded Go MCP transcript (raw protocol, catalog,
+# read/write/remaining tool calls) replayed against the native server, plus the
+# pure transport port and its bounded property tests.
+.PHONY: mcp-calls-fixtures-generate mcp-calls-differential
+mcp-calls-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPCallsProcessPortFixture$$'
+
+mcp-calls-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPCallsProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --test mcp_calls --locked
+
+# MCP-002: every legacy alias answers byte for byte like its canonical tool.
+.PHONY: mcp-aliases
+mcp-aliases:
+	$(CARGO) test -p symdesk-cli --locked --test mcp_aliases
+
+# SEC-002 (MCP part): planted credentials never reach responses, stderr or
+# files; includes a planted-leak negative control.
+.PHONY: mcp-secret-canary
+mcp-secret-canary:
+	$(CARGO) test -p symdesk-cli --locked --test mcp_secret_canary
+
+.PHONY: mcp-conformance
+mcp-conformance: mcp-protocol-differential mcp-calls-differential mcp-aliases mcp-secret-canary
+	$(CARGO) test -p symdesk-protocol --test mcp_frame --locked
+	$(CARGO) test -p symdesk-cli --locked --test mcp_surface --test mcp_read --test mcp_write --test mcp_initialize
+
 .PHONY: note-doc-cli-fixtures-generate note-doc-cli-differential
 note-doc-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'

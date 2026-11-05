@@ -300,8 +300,9 @@ fn inventory(spec: &Spec) -> Result<(Inventory, Vec<SourceRoot>), String> {
         if !exists {
             continue;
         }
-        let metadata =
-            fs::symlink_metadata(root).map_err(|e| format!("stat {}: {e}", root.display()))?;
+        // A state root may itself be a symlink to another volume: record the
+        // directory it points to, not the link.
+        let metadata = fs::metadata(root).map_err(|e| format!("stat {}: {e}", root.display()))?;
         found.dirs.push((root.clone(), mode_of(&metadata)));
         walk(root, &mut found, true).map_err(|e| format!("scan {}: {e}", root.display()))?;
     }

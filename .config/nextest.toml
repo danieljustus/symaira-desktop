@@ -40,5 +40,5 @@ threads-required = "num-test-threads"
 # so a bounded retry keeps them honest; nextest marks a pass-after-retry as
 # FLAKY in the log, which stays in the gate receipt. Nothing else retries.
 [[profile.default.overrides]]
-filter = 'binary(signals) | binary(sources) | binary(watcher_contracts) | binary(compose_probe) | (binary(mcp) & test(=go_mcp_mutation_scenarios_match_journal_side_effects)) | (package(symdesk-index) & test(~external_source_watch))'
+filter = 'binary(signals) | binary(sources) | binary(watcher_contracts) | binary(compose_probe) | (binary(mcp) & test(=go_mcp_mutation_scenarios_match_journal_side_effects)) | (package(symdesk-index) & test(~external_source_watch)) | test(~native_snapshot_cache) | test(~native_watcher)'
 retries = 2

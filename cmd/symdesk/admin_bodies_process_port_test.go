@@ -205,6 +205,11 @@ func snapshotAdminTree(t *testing.T, dir, root string, volatile, hashFiles bool)
 			return err
 		}
 		slash := filepath.ToSlash(rel)
+		// Finder drops .DS_Store into directories it has seen; that is host
+		// state, not behaviour of the program under test.
+		if filepath.Base(rel) == ".DS_Store" {
+			return nil
+		}
 		key := normalizeAdminText(volatile, slash)
 		if volatile && strings.HasPrefix(slash, ".symdesk/history/objects/") {
 			// Content ids embed the wall clock and identical contents of one

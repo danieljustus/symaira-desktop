@@ -486,6 +486,11 @@ fn snapshot(
     files
         .into_iter()
         .filter_map(|path| {
+            // Finder drops .DS_Store into directories it has seen; that is
+            // host state, not behaviour of the program under test.
+            if path.file_name().is_some_and(|name| name == ".DS_Store") {
+                return None;
+            }
             let relative = path
                 .strip_prefix(directory)
                 .expect("below directory")

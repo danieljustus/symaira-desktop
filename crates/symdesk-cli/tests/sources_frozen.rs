@@ -354,7 +354,7 @@ fn source_watch_lifecycle_matches_go_recording() {
         }
     });
 
-    let deadline = Instant::now() + Duration::from_secs(30);
+    let deadline = Instant::now() + Duration::from_secs(120);
     let ready = loop {
         let remaining = deadline.saturating_duration_since(Instant::now());
         match lines.recv_timeout(remaining.min(Duration::from_millis(200))) {
@@ -372,7 +372,30 @@ fn source_watch_lifecycle_matches_go_recording() {
 
     let nested = source.join("nested");
     fs::create_dir(&nested).expect("nested directory");
-    thread::sleep(Duration::from_millis(500)); // Let the new directory's watcher register.
+    // Wait until the watcher has registered the new directory: a probe note must reach the
+    // index and leave it again before the recorded steps start. A fixed sleep loses the first
+    // event on a saturated host.
+    let probe = nested.join("probe.md");
+    let probe_hash = Some(symdesk_vault::sha256_hex(b"# probe\n"));
+    let ready_end = Instant::now() + Duration::from_secs(120);
+    let mut rewritten = Instant::now();
+    fs::write(&probe, "# probe\n").expect("write probe note");
+    while indexed_hash(&home, &probe) != probe_hash {
+        assert!(
+            Instant::now() < ready_end,
+            "nested directory never registered"
+        );
+        if rewritten.elapsed() > Duration::from_secs(5) {
+            fs::write(&probe, "# probe\n").expect("rewrite probe note");
+            rewritten = Instant::now();
+        }
+        thread::sleep(Duration::from_millis(200));
+    }
+    fs::remove_file(&probe).expect("delete probe note");
+    while indexed_hash(&home, &probe).is_some() {
+        assert!(Instant::now() < ready_end, "probe deletion never indexed");
+        thread::sleep(Duration::from_millis(200));
+    }
     let note = nested.join("watched.md");
     let observations = recording["observations"].as_array().expect("observations");
     assert_eq!(observations.len(), EXPECTED_WATCH_STATES);
@@ -394,7 +417,7 @@ fn source_watch_lifecycle_matches_go_recording() {
             observation["indexed_sha256"].as_str(),
             "recorded Go hash is the content hash"
         );
-        let end = Instant::now() + Duration::from_secs(30);
+        let end = Instant::now() + Duration::from_secs(120);
         while indexed_hash(&home, &note) != expected {
             assert!(
                 Instant::now() < end,

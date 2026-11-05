@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import shutil
@@ -52,8 +53,8 @@ from compare import (  # noqa: E402
 
 # The status output reports `database_bytes`, and SQLite pages grow with the length of the
 # paths stored in the index. Every world therefore lives below a base of exactly this many
-# characters (padded with `x`), whatever the temporary directory of the host is.
-WORLDS_BASE_LENGTH = 120
+# characters (padded with `x`) inside a short directory of /tmp, whatever TMPDIR of the host is.
+WORLDS_BASE_LENGTH = 100
 DEFAULT_RECORDING = ROOT / "testdata/port/cli/index-status-recording.json"
 PROVENANCE = ROOT / "testdata/port/provenance.json"
 TOKENS = {"empty": b"<WORLD_EMPTY>", "populated": b"<WORLD_POPULATED>"}
@@ -63,6 +64,16 @@ def pinned_oracle() -> dict[str, str]:
     """The production commit P every recording is bound to (portgen verifies it)."""
     oracle = json.loads(PROVENANCE.read_text())["oracle"]
     return {"commit": oracle["commit"], "release": oracle["release"]}
+
+
+@contextlib.contextmanager
+def short_temp():
+    """A scratch directory directly below the real /tmp (its path length must not depend on TMPDIR)."""
+    path = tempfile.mkdtemp(prefix="sis-", dir=os.path.realpath("/tmp"))
+    try:
+        yield Path(os.path.realpath(path))
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
 
 
 def fixed_length(path: Path, length: int) -> Path:
@@ -136,8 +147,7 @@ def build_oracle(base: Path) -> Path:
 
 
 def record(args: argparse.Namespace) -> int:
-    with tempfile.TemporaryDirectory(prefix="sis-") as temporary:
-        base = Path(os.path.realpath(temporary))
+    with short_temp() as base:
         binary = args.go_bin.resolve(strict=True) if args.go_bin else build_oracle(base)
         observed = run_role(binary, "go", base)
     cases = []
@@ -168,8 +178,8 @@ def replay(args: argparse.Namespace) -> int:
         print("recording does not match the reviewed case inventory", file=sys.stderr)
         return 1
     rust = args.rust_bin.resolve(strict=True)
-    with tempfile.TemporaryDirectory(prefix="sis-") as temporary:
-        observed = run_role(rust, "rust", Path(os.path.realpath(temporary)))
+    with short_temp() as base:
+        observed = run_role(rust, "rust", base)
     mismatches = []
     for case in recording["cases"]:
         got = observed[case["id"]]

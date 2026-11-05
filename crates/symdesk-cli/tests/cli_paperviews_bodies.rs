@@ -500,6 +500,8 @@ fn snapshot(
                 pv_normalize(&value),
             ))
         })
+        // The journal rolls over daily: its file name carries the run date.
+        .map(|(key, value)| (cli_normalize::journal_day(&key), value))
         .collect()
 }
 

@@ -57,6 +57,35 @@ fn timestamp_len(bytes: &[u8], at: usize) -> Option<usize> {
     }
 }
 
+/// Replaces every `journal/dddd-dd-dd.ndjson` file name with a date marker
+/// (the Go recorder's `bodiesJournalDayRE`).
+pub fn journal_day(text: &str) -> String {
+    const PREFIX: &str = "journal/";
+    let bytes = text.as_bytes();
+    let mut out = String::with_capacity(text.len());
+    let mut at = 0;
+    while at < bytes.len() {
+        if text[at..].starts_with(PREFIX) {
+            let day = at + PREFIX.len();
+            let matches = digits(bytes, day, 4)
+                && bytes.get(day + 4) == Some(&b'-')
+                && digits(bytes, day + 5, 2)
+                && bytes.get(day + 7) == Some(&b'-')
+                && digits(bytes, day + 8, 2)
+                && bytes.get(day + 10..day + 17) == Some(b".ndjson");
+            if matches {
+                out.push_str("journal/$DATE.ndjson");
+                at = day + 17;
+                continue;
+            }
+        }
+        let character = text[at..].chars().next().expect("non-empty remainder");
+        out.push(character);
+        at += character.len_utf8();
+    }
+    out
+}
+
 /// `dddd-dd-dd.md` preceded by a non-word byte.
 fn date_md_len(bytes: &[u8], at: usize) -> Option<usize> {
     let word = |byte: &u8| byte.is_ascii_alphanumeric() || *byte == b'_';

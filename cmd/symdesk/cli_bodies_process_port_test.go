@@ -301,6 +301,8 @@ func observeCLIBodiesCase(t *testing.T, binary string, c cliBodiesCase) cliBodie
 // normalizeBodiesRandom hides the random identifiers Go draws for trash names
 // (24 lowercase hex digits) and the wall-clock timestamps of text listings.
 func normalizeBodiesText(volatile bool, text string) string {
+	// The journal rolls over daily: its file name carries the run date.
+	text = bodiesJournalDayRE.ReplaceAllString(text, "journal/$$DATE.ndjson")
 	if volatile {
 		text = bodiesSHARE.ReplaceAllString(text, "$$SHA256")
 	}
@@ -314,6 +316,9 @@ func normalizeBodiesText(volatile bool, text string) string {
 var bodiesRFC3339RE = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z`)
 
 var bodiesRandomRE = regexp.MustCompile(`[0-9a-f]{24}`)
+
+// bodiesJournalDayRE matches the per-day journal file name.
+var bodiesJournalDayRE = regexp.MustCompile(`journal/\d{4}-\d{2}-\d{2}\.ndjson`)
 
 var bodiesSHARE = regexp.MustCompile(`[0-9a-f]{64}`)
 

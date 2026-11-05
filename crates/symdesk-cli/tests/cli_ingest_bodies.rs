@@ -304,6 +304,8 @@ fn snapshot(
                     .replace(closed_port, "$CLOSED_PORT"),
             ))
         })
+        // The journal rolls over daily: its file name carries the run date.
+        .map(|(key, value)| (cli_normalize::journal_day(&key), value))
         .collect()
 }
 

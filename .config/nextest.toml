@@ -36,9 +36,9 @@ threads-required = "num-test-threads"
 # the host delivers FSEvents/inotify events and schedules child processes. On a
 # host shared with other builds (load average 50+ while several agents gate
 # worktrees in parallel) each of them was observed to miss its window in one run
-# and pass in the next, with no code change. A real defect fails every attempt,
+# and pass in the next, with no code change. A real defect fails every attempt (up to five),
 # so a bounded retry keeps them honest; nextest marks a pass-after-retry as
 # FLAKY in the log, which stays in the gate receipt. Nothing else retries.
 [[profile.default.overrides]]
 filter = 'binary(signals) | binary(sources) | binary(watcher_contracts) | binary(compose_probe) | (binary(mcp) & test(=go_mcp_mutation_scenarios_match_journal_side_effects)) | (package(symdesk-index) & test(~external_source_watch)) | test(~native_snapshot_cache) | test(~native_watcher)'
-retries = 2
+retries = 4

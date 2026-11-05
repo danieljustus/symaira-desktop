@@ -196,7 +196,10 @@ fn source_registry_and_external_search_match_go_recording() {
         let stdout = run_json(&home, &vault, &args);
         let parsed: Value = serde_json::from_str(&stdout).expect("JSON stdout");
         if args[..2] == ["sources".to_owned(), "add".to_owned()] && source_id.is_empty() {
-            source_id = parsed["source"]["id"].as_str().expect("source id").to_owned();
+            source_id = parsed["source"]["id"]
+                .as_str()
+                .expect("source id")
+                .to_owned();
             assert!(source_id.starts_with("folder-") && source_id.len() == 71);
         }
         let observed = match step["output"].get("target_hit") {
@@ -235,8 +238,8 @@ fn source_registry_and_external_search_match_go_recording() {
         assert_eq!(observed, step["output"], "step {index}: {args:?}");
     }
 
-    let registry = fs::read_to_string(vault.join(".symdesk/search-sources.json"))
-        .expect("registry file");
+    let registry =
+        fs::read_to_string(vault.join(".symdesk/search-sources.json")).expect("registry file");
     let observed: Value = serde_json::from_str(&normalize(&registry)).expect("registry JSON");
     assert_eq!(observed, recording["registry"], "registry file");
     for (name, text) in originals {
@@ -322,7 +325,11 @@ fn source_watch_lifecycle_matches_go_recording() {
     let added = run_json(
         &home,
         &vault,
-        &["sources".to_owned(), "add".to_owned(), source.to_string_lossy().into_owned()],
+        &[
+            "sources".to_owned(),
+            "add".to_owned(),
+            source.to_string_lossy().into_owned(),
+        ],
     );
     let source_id = serde_json::from_str::<Value>(&added).expect("add JSON")["source"]["id"]
         .as_str()
@@ -351,7 +358,9 @@ fn source_watch_lifecycle_matches_go_recording() {
     let ready = loop {
         let remaining = deadline.saturating_duration_since(Instant::now());
         match lines.recv_timeout(remaining.min(Duration::from_millis(200))) {
-            Ok(line) if line.starts_with("Watching ") && line.contains(source.to_str().unwrap()) => {
+            Ok(line)
+                if line.starts_with("Watching ") && line.contains(source.to_str().unwrap()) =>
+            {
                 break normalize(&line);
             }
             Ok(_) => {}
@@ -387,7 +396,10 @@ fn source_watch_lifecycle_matches_go_recording() {
         );
         let end = Instant::now() + Duration::from_secs(30);
         while indexed_hash(&home, &note) != expected {
-            assert!(Instant::now() < end, "watch index hash did not reach {expected:?}");
+            assert!(
+                Instant::now() < end,
+                "watch index hash did not reach {expected:?}"
+            );
             thread::sleep(Duration::from_millis(200));
         }
     }

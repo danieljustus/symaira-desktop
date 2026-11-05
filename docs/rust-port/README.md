@@ -715,17 +715,16 @@ the Rust port after Go is deleted. It needs only Python 3 and Cargo:
   a missing count fails. New differential targets fail until their counts are
   recorded with `python3 scripts/rust-port/frozen_contract.py --record`, which
   also runs without Go.
-- Targets without a Rust replay must be declared `live_only` with a reason.
-  These targets compare two live binaries: diffharness, `mcpdiff`, `httpdiff`,
-  source, history and pdfops. Rust tests that still execute Go are listed per
-  command as `live_only_tests`. The dataset service rejections are now frozen:
-  Rust replays the committed `sync.json` ledger, which the Go gate
-  (`TestPortDatasetImportServiceRejections`) checks against live Go. The store
-  paths capture still runs Go, because
-  they depend on per-OS native captures. The history source pin test now imports
-  the recorded oracle bundle through git, after checking its digest, so it no
-  longer runs Go. Each skip must name exactly one listed test. The
-  output reports the frozen count and the corresponding live-mode count.
+- Targets without a Rust replay must be declared `live_only` with a reason. A
+  pure aggregate (prerequisites, no recipe line) is classified through its
+  prerequisites. Five targets remain live-only and are named in the manifest:
+  `mcp-differential`, `mcp-initialize-differential` (`mcpdiff`) and
+  `http-differential` (`httpdiff`) belong to the RUST-014/RUST-015 work, and
+  `index-status-cli-differential` (a Go oracle worktree at `19110081`) and
+  `render-pdfops-hostile-differential` (real Poppler/qpdf over hostile PDFs) are
+  evidence harnesses that were never part of the frozen set. No
+  `live_only_tests` entry remains: `store_paths` now replays committed native
+  Go captures instead of starting Go.
 - Mutation controls change one Go-recorded observation, such as a fixture byte
   covered by the provenance checksum or a recorded journal value. The runner
   requires the replay to fail and then restores the bytes. It refuses to mutate
@@ -737,10 +736,62 @@ external Dev volume, point `TMPDIR` at a private directory under `/private/tmp`.
 
 The CI job `Rust frozen contract (no Go)` deletes any preinstalled Go before it
 runs the target. The existing live targets (`port-contract` and the
-`*-differential` recipes) are unchanged and still verify fixtures against Go
-while Go remains in the tree. Freezing the live-only binary comparisons and the
-`live_only_tests` that remain are follow-ups. Until then, they are named rather
-than silently skipped.
+`*-differential` recipes) are unchanged where they only check a fixture against
+Go: they still verify the recordings below against the real Go oracle while Go
+remains in the tree, and are dropped with Go at RUST-019.
+
+### Go recordings of the formerly live gates (RUST-019 freeze)
+
+Each gate below used to start the Go binary next to the Rust one. The real Go
+oracle now writes what it observed once; a Rust test replays the same inputs
+and compares. `go run`/`python3` `--check` (also registered in
+`testdata/port/provenance.json` and `portgen`) proves a recording still equals a
+fresh Go run, so Go-equals-recording and Rust-equals-recording together keep
+the former Go-equals-Rust comparison.
+
+| Gate | Recording (cases) | Recorder (real Go) | Rust replay |
+|---|---|---|---|
+| `representative-differential` (CLI part) | `testdata/port/representative/cli-recording.json` (16) | `cmd/diffrecord` | `symdesk-cli/tests/frozen_diffharness.rs` |
+| `dataset-cli-differential` | `testdata/port/dataset/cli-recording.json` (16) | `cmd/diffrecord` | same |
+| `retention-cli-differential` | `testdata/port/cli/retention-recording.json` (61) | `cmd/diffrecord` | same |
+| `history-differential` | `testdata/port/vault/history-oracle.json` (56 operations) | `cmd/historygen` | `symdesk-vault/tests/history_contracts.rs` |
+| `source-differential` | `testdata/port/cli/source-registry.json` (12 steps, 3 external-search hits, registry file) | `source_record.py` | `symdesk-cli/tests/sources_frozen.rs` |
+| `source-watch-differential` | `testdata/port/cli/source-watch.json` (ready line, create/update/delete hashes) | `source_record.py` | same |
+| `render-pdfops-differential` | `testdata/port/render/pdfops-recording.json` (157 PDF adapter, 13 press, 11 safety) | `pdfops/record.py` | `symdesk-render/tests/pdfops_frozen.rs` (run with `--examples`) |
+| `store_paths` (was `live_only_tests`) | `testdata/port/storage/store-paths-{darwin,linux}.json` (20 layouts each) | `store_paths_record.py` (macOS arm64, and Linux arm64 in `symdesk-local-gate:1`) | `symdesk-core/tests/store_paths.rs` (selected by `cfg(target_os)`) |
+
+Harness rules shared by the replays:
+
+- **diffharness.** `diffrecord` builds the Go `symdesk` with
+  `-X main.version=devel` (the Rust test binary reports `devel`) and runs each
+  case through `internal/diff.Run`; `internal/diff.Observe` applies the very
+  normalization `Compare` applies (`normalizeStream`: console text, retention
+  run IDs, sidecar layout), so a recording is exactly what a live comparison
+  compared. The input case is embedded, so the file is self-contained. The Rust
+  side (`tests/support/diff_replay.rs`) rebuilds the sandbox (HOME/XDG/tmp
+  roots, setup files with modes and mtimes, reserved-environment rules,
+  `prepare_args`, cwd, stdin) and rejects what it does not replay
+  (`compare_files` manifests, symlink setup, raw base64 environment): none of
+  the 93 cases uses them. macOS arm64 and Linux arm64 Go recordings were
+  compared and are byte-identical, so one file serves both.
+- **history.** `historygen --check` compares the committed report with a fresh
+  Go run; `SYMDESK_HISTORY_ORACLE` still overrides the recorded file for the
+  live `history_live.py` evidence.
+- **sources.** Variable text is normalized on both sides: canonical and literal
+  source/vault roots become `<SOURCE>`/`<VAULT>` and the path-derived source ID
+  `folder-<sha256>` becomes `<ID>`.
+- **PDF adapters.** The controlled `pdf_tool_stub` example is an input shared by
+  both languages, never an oracle. Worlds are rebuilt per case; the comparison
+  covers response, tool trace and the before/after file-system snapshot (type,
+  mode, SHA-256), plus the lifetime checks (no leaked staging file, no owned
+  process left alive).
+- **store paths.** The recording carries the native capture root; the replay
+  rewrites it (and the hex-encoded symlink targets) to a fresh canonical private
+  root and recreates the recorded seed state before it runs the same
+  assertions.
+- Regenerate with `make <area>-fixtures-generate` (`dataset-cli`, `retention-cli`,
+  `representative-cli`, `history`, `source`, `store-paths`, `render-pdfops`) and
+  re-freeze the generator digest as before.
 
 ## Execution rule
 

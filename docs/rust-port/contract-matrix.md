@@ -579,3 +579,30 @@ chunks at that size.
 Not covered: the quantized search facades (dormant in Go, see above), mixed
 embedding dimensions inside an index of 128+ chunks (Go panics), and snapshots
 written concurrently by two processes.
+
+## Frozen replay of the formerly live gates (RUST-019)
+
+`make port-contract-frozen` replays Go-recorded fixtures only. The gates that
+used to run the Go binary live now do so through committed recordings (see
+README, "Go recordings of the formerly live gates"):
+
+- CLI-000 (`representative-differential`, CLI part), DATA-002
+  (`dataset-cli-differential`) and VAULT-006 (`retention-cli-differential`):
+  16 + 16 + 61 diffharness cases, `frozen_diffharness`. The HTTP half of
+  `representative-differential` (`http-differential`) is owned by RUST-015 and
+  stays live until it is frozen there.
+- VAULT-006 history: `history_contracts` replays the committed
+  `history-oracle.json` (56 operations).
+- Source registry/search/watch: `sources_frozen` (12 steps, 3 watch states).
+- RENDER-001: `pdfops_frozen` replays 157 PDF adapter cases, 13 Typst
+  discovery cases and 11 process-safety cases. The real-tool hostile corpus
+  (`render-pdfops-hostile-differential`) is environment-bound (installed
+  Poppler/qpdf) and stays a named live-only evidence harness.
+- CFG-001 contacts/ingest store paths: `store_paths` replays native Go captures
+  recorded on macOS arm64 and Linux arm64.
+
+Retired without a replacement: the Go restore check of a Rust-written contacts
+backup (`TestPortContactsRustBackupRestores`) in `contacts-security-differential`.
+It tests Go reading Rust output and has no observable once Go is gone; the Rust
+side keeps `security_contracts` (including the Go-recorded export/redact
+fixtures), which now also runs as its own frozen replay.

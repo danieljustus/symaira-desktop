@@ -109,9 +109,7 @@ fn normalize(value: &Value, replacements: &[(String, &str)]) -> Value {
     while let Some(index) = rest.find(MARK) {
         result.push_str(&rest[..index + MARK.len()]);
         let tail = &rest[index + MARK.len()..];
-        let stop = tail
-            .find(['/', '\\', '"', ' '])
-            .unwrap_or(tail.len());
+        let stop = tail.find(['/', '\\', '"', ' ']).unwrap_or(tail.len());
         result.push_str("<TEMP>");
         rest = &tail[stop..];
     }
@@ -136,7 +134,10 @@ fn snapshot(root: &Path) -> Value {
             let is_dir = fs::metadata(&path).is_ok_and(|m| m.is_dir());
             if relative != "trace.jsonl" && relative != "ready" {
                 let mut entry = Map::new();
-                entry.insert("type".into(), json!(if is_dir { "directory" } else { "file" }));
+                entry.insert(
+                    "type".into(),
+                    json!(if is_dir { "directory" } else { "file" }),
+                );
                 entry.insert("mode".into(), json!(metadata.permissions().mode() & 0o777));
                 if fs::metadata(&path).is_ok_and(|m| m.is_file()) {
                     let digest = Sha256::digest(fs::read(&path).expect("read fixture"));
@@ -196,7 +197,10 @@ fn run(binary: &Path, world: &Path, env: &BTreeMap<String, String>, stdin: &str)
     let started = Instant::now();
     let output = child.wait_with_output().expect("probe output");
     feeder.join().expect("stdin feeder");
-    assert!(started.elapsed() < Duration::from_secs(40), "probe took too long");
+    assert!(
+        started.elapsed() < Duration::from_secs(40),
+        "probe took too long"
+    );
     assert!(
         output.stderr.is_empty(),
         "unexpected probe stderr: {}",
@@ -235,8 +239,7 @@ fn path_text(path: &Path) -> String {
 
 fn assert_same(id: &str, expected: &Value, actual: &Value) {
     assert_eq!(
-        actual,
-        expected,
+        actual, expected,
         "{id}: observation differs from the Go recording\n  recorded: {expected}\n  actual:   {actual}"
     );
 }
@@ -263,7 +266,11 @@ fn pdf_adapter_corpus_matches_go_recording() {
         mkdir(&world, 0o700);
         mkdir(&world.join("sub"), 0o700);
         for name in ["a.pdf", "b.pdf"] {
-            write_mode(&world.join(name), format!("%PDF-fixture-{name}\n").as_bytes(), 0o600);
+            write_mode(
+                &world.join(name),
+                format!("%PDF-fixture-{name}\n").as_bytes(),
+                0o600,
+            );
         }
         for key in ["home", "tmp", "config", "data", "cache", "state"] {
             mkdir(&world.join(key), 0o700);
@@ -282,22 +289,43 @@ fn pdf_adapter_corpus_matches_go_recording() {
             ("TMPDIR".to_owned(), path_text(&world.join("tmp"))),
             ("TMP".to_owned(), path_text(&world.join("tmp"))),
             ("TEMP".to_owned(), path_text(&world.join("tmp"))),
-            ("XDG_CONFIG_HOME".to_owned(), path_text(&world.join("config"))),
+            (
+                "XDG_CONFIG_HOME".to_owned(),
+                path_text(&world.join("config")),
+            ),
             ("XDG_DATA_HOME".to_owned(), path_text(&world.join("data"))),
             ("XDG_CACHE_HOME".to_owned(), path_text(&world.join("cache"))),
             ("XDG_STATE_HOME".to_owned(), path_text(&world.join("state"))),
-            ("PDF_STUB_MODE".to_owned(), stub["mode"].as_str().unwrap_or_default().to_owned()),
-            ("PDF_STUB_TOOL".to_owned(), stub["tool"].as_str().unwrap_or_default().to_owned()),
-            ("PDF_STUB_INFO".to_owned(), stub["info"].as_str().unwrap_or_default().to_owned()),
+            (
+                "PDF_STUB_MODE".to_owned(),
+                stub["mode"].as_str().unwrap_or_default().to_owned(),
+            ),
+            (
+                "PDF_STUB_TOOL".to_owned(),
+                stub["tool"].as_str().unwrap_or_default().to_owned(),
+            ),
+            (
+                "PDF_STUB_INFO".to_owned(),
+                stub["info"].as_str().unwrap_or_default().to_owned(),
+            ),
         ]);
         let before = snapshot(&world);
-        let response = run(&examples.join("pdfops_probe"), &world, &env, &case["request"].to_string());
+        let response = run(
+            &examples.join("pdfops_probe"),
+            &world,
+            &env,
+            &case["request"].to_string(),
+        );
         let observed_trace = trace(&world);
         let after = snapshot(&world);
         for name in ["a.pdf", "b.pdf"] {
             assert_eq!(before[name], after[name], "{id}: input changed");
         }
-        assert_eq!(fs::read_dir(world.join("tmp")).expect("tmp").count(), 0, "{id}: workspace leaked");
+        assert_eq!(
+            fs::read_dir(world.join("tmp")).expect("tmp").count(),
+            0,
+            "{id}: workspace leaked"
+        );
         assert!(!has_stage(&world), "{id}: output stage leaked");
         let mut replace = vec![(path_text(&world), "<ROOT>")];
         replace.extend(replacements.iter().cloned());
@@ -313,7 +341,10 @@ fn pdf_adapter_corpus_matches_go_recording() {
 fn has_stage(root: &Path) -> bool {
     fs::read_dir(root).is_ok_and(|entries| {
         entries.flatten().any(|entry| {
-            entry.file_name().to_string_lossy().starts_with(".symdesk-pdf-")
+            entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".symdesk-pdf-")
                 || (entry.path().is_dir() && has_stage(&entry.path()))
         })
     })
@@ -339,8 +370,14 @@ fn press_discovery_corpus_matches_go_recording() {
         let mut env = private_env(&world, "env-");
         env.insert("PATH".to_owned(), path_text(&bindir));
         env.insert("PDF_STUB_TOOL".to_owned(), "typst".to_owned());
-        env.insert("PDF_STUB_MODE".to_owned(), case["stub"]["mode"].as_str().unwrap_or_default().to_owned());
-        env.insert("PDF_STUB_INFO".to_owned(), case["stub"]["info"].as_str().unwrap_or_default().to_owned());
+        env.insert(
+            "PDF_STUB_MODE".to_owned(),
+            case["stub"]["mode"].as_str().unwrap_or_default().to_owned(),
+        );
+        env.insert(
+            "PDF_STUB_INFO".to_owned(),
+            case["stub"]["info"].as_str().unwrap_or_default().to_owned(),
+        );
         let steps = case["steps"]
             .to_string()
             .replace("<TOOL>", &path_text(&tool))
@@ -352,7 +389,9 @@ fn press_discovery_corpus_matches_go_recording() {
             "{id}: one response per step"
         );
         assert_eq!(
-            fs::read_dir(world.join("env-tmpdir")).expect("tmpdir").count(),
+            fs::read_dir(world.join("env-tmpdir"))
+                .expect("tmpdir")
+                .count(),
             0,
             "{id}: discovery capture leaked"
         );
@@ -402,13 +441,22 @@ fn process_safety_corpus_matches_go_recording() {
         env.insert("SAFETY_MODE".to_owned(), mode.to_owned());
         env.insert(
             "SAFETY_OUTPUT".to_owned(),
-            if operation == "split" { "parts/part-001.pdf" } else { "out/result.pdf" }.to_owned(),
+            if operation == "split" {
+                "parts/part-001.pdf"
+            } else {
+                "out/result.pdf"
+            }
+            .to_owned(),
         );
         let original = b"controlled input; input preservation is byte-exact\n";
         for name in ["a.pdf", "b.pdf"] {
             fs::write(world.join(name), original).expect("input");
         }
-        let tool = world.join(if operation == "press" { "typst" } else { "qpdf" });
+        let tool = world.join(if operation == "press" {
+            "typst"
+        } else {
+            "qpdf"
+        });
         write_mode(
             &tool,
             format!("#!{}\n{tool_source}", interpreter.display()).as_bytes(),
@@ -424,10 +472,17 @@ fn process_safety_corpus_matches_go_recording() {
             .to_string()
             .replace("<TOOL>", &path_text(&tool))
             .replace("<INFO>", &path_text(&info));
-        let binary = examples.join(if operation == "press" { "press_probe" } else { "pdfops_probe" });
+        let binary = examples.join(if operation == "press" {
+            "press_probe"
+        } else {
+            "pdfops_probe"
+        });
         let started = Instant::now();
         let response = run(&binary, &world, &env, &request);
-        assert!(started.elapsed() < Duration::from_secs(8), "{id}: bounded operation exceeded eight seconds");
+        assert!(
+            started.elapsed() < Duration::from_secs(8),
+            "{id}: bounded operation exceeded eight seconds"
+        );
         if mode.starts_with("descendant-") {
             let pids: Vec<String> = ["ready", "descendant-ready"]
                 .iter()
@@ -437,7 +492,10 @@ fn process_safety_corpus_matches_go_recording() {
             while pids.iter().any(|pid| alive(pid)) && Instant::now() < deadline {
                 thread::sleep(Duration::from_millis(5));
             }
-            assert!(!pids.iter().any(|pid| alive(pid)), "{id}: product left an owned process alive");
+            assert!(
+                !pids.iter().any(|pid| alive(pid)),
+                "{id}: product left an owned process alive"
+            );
         }
         for marker in ["leader", "ready", "descendant-ready"] {
             if let Ok(pid) = fs::read_to_string(world.join(marker))
@@ -447,7 +505,11 @@ fn process_safety_corpus_matches_go_recording() {
             }
         }
         for name in ["a.pdf", "b.pdf"] {
-            assert_eq!(fs::read(world.join(name)).expect("input"), original, "{id}: input changed");
+            assert_eq!(
+                fs::read(world.join(name)).expect("input"),
+                original,
+                "{id}: input changed"
+            );
         }
         assert!(!has_stage(&world), "{id}: output staging leaked");
         let observed = normalize(&response, &[(path_text(&world), "<ROOT>")]);

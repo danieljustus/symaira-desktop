@@ -166,7 +166,11 @@ pub fn replay_all(recording: &str, stage: &str, expected_cases: usize, binary: &
     assert_eq!(recording.cases.len(), expected_cases, "recorded case count");
     let mut seen = std::collections::BTreeSet::new();
     for recorded in &recording.cases {
-        assert!(seen.insert(recorded.id.clone()), "duplicate {}", recorded.id);
+        assert!(
+            seen.insert(recorded.id.clone()),
+            "duplicate {}",
+            recorded.id
+        );
         assert_eq!(recorded.id, recorded.case.id);
         assert_eq!(recorded.case.stage, stage, "{}", recorded.id);
         replay_case(binary, recorded);
@@ -281,7 +285,9 @@ fn setup_files(
                     .truncate(true)
                     .mode(mode)
                     .open(&path)
-                    .unwrap_or_else(|error| panic!("{}: create {}: {error}", case.id, path.display()));
+                    .unwrap_or_else(|error| {
+                        panic!("{}: create {}: {error}", case.id, path.display())
+                    });
                 file.write_all(replace(&setup.content, replacements).as_bytes())
                     .expect("write setup file");
                 if let Some(nanos) = setup.mtime_ns {
@@ -448,8 +454,16 @@ fn run_process(
         .envs(env)
         .process_group(0)
         .stdin(Stdio::piped())
-        .stdout(if capture { Stdio::piped() } else { Stdio::null() })
-        .stderr(if capture { Stdio::piped() } else { Stdio::null() });
+        .stdout(if capture {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
+        .stderr(if capture {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        });
     let mut child = command.spawn().expect("start symdesk");
     let mut input = child.stdin.take().expect("stdin pipe");
     let stdin_bytes = stdin.as_bytes().to_vec();
@@ -467,8 +481,18 @@ fn run_process(
             bytes
         })
     };
-    let out_reader = reader(child.stdout.take().map(|s| Box::new(s) as Box<dyn Read + Send>));
-    let err_reader = reader(child.stderr.take().map(|s| Box::new(s) as Box<dyn Read + Send>));
+    let out_reader = reader(
+        child
+            .stdout
+            .take()
+            .map(|s| Box::new(s) as Box<dyn Read + Send>),
+    );
+    let err_reader = reader(
+        child
+            .stderr
+            .take()
+            .map(|s| Box::new(s) as Box<dyn Read + Send>),
+    );
     let deadline = Instant::now() + timeout;
     let status = loop {
         if let Some(status) = child.try_wait().expect("poll symdesk") {
@@ -747,11 +771,27 @@ fn replay_case(binary: &str, recorded: &RecordedCase) {
         true,
     );
 
-    assert_eq!(outcome.exit_code, expected.exit_code, "{}: exit code", case.id);
+    assert_eq!(
+        outcome.exit_code, expected.exit_code,
+        "{}: exit code",
+        case.id
+    );
     assert_eq!(outcome.signal, expected.signal, "{}: signal", case.id);
     for (name, mode, recorded_text, recorded_encoded, bytes) in [
-        ("stdout", stdout_mode, &expected.stdout, &expected.stdout_base64, &outcome.stdout),
-        ("stderr", stderr_mode, &expected.stderr, &expected.stderr_base64, &outcome.stderr),
+        (
+            "stdout",
+            stdout_mode,
+            &expected.stdout,
+            &expected.stdout_base64,
+            &outcome.stdout,
+        ),
+        (
+            "stderr",
+            stderr_mode,
+            &expected.stderr,
+            &expected.stderr_base64,
+            &outcome.stderr,
+        ),
     ] {
         if mode == "ignore" {
             continue;
@@ -764,7 +804,11 @@ fn replay_case(binary: &str, recorded: &RecordedCase) {
     if case.compare_sidecar_layout {
         let layout = sidecar_layout(&root);
         assert!(!layout.is_empty(), "{}: sidecar layout is empty", case.id);
-        assert_eq!(layout, expected.sidecar_layout, "{}: sidecar layout", case.id);
+        assert_eq!(
+            layout, expected.sidecar_layout,
+            "{}: sidecar layout",
+            case.id
+        );
     } else {
         assert!(expected.sidecar_layout.is_empty(), "{}", case.id);
     }

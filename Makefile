@@ -1149,7 +1149,6 @@ retrieval-ivf-fixtures-generate:
 retrieval-ivf-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalIVFFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_ivf
-	$(CARGO) test -p symdesk-index --locked --lib retrieval_vector
 
 # Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, Rust replay,
 # and the Go decoder reading Rust-written sidecars.

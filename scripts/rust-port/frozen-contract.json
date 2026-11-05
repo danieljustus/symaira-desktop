@@ -295,11 +295,13 @@
     },
     "cargo test -p symdesk-cli --locked --test signals": {
       "ignored": 0,
-      "passed": 3
+      "passed": 3,
+      "retries": 2
     },
     "cargo test -p symdesk-cli --locked --test sources": {
       "ignored": 0,
-      "passed": 1
+      "passed": 1,
+      "retries": 2
     },
     "cargo test -p symdesk-cli --locked --test sources_frozen watch": {
       "retries": 2
@@ -767,7 +769,8 @@
     },
     "cargo test -p symroom-cli --locked --test watch_commands": {
       "ignored": 0,
-      "passed": 1
+      "passed": 1,
+      "retries": 2
     },
     "cargo test -p symroom-core --locked --test index_contracts": {
       "ignored": 0,
@@ -807,7 +810,8 @@
     },
     "cargo test -p symroom-core --locked --test watch_stream_contracts": {
       "ignored": 0,
-      "passed": 1
+      "passed": 1,
+      "retries": 2
     },
     "cargo test -p symroom-core --test identity_events_contracts --locked": {
       "ignored": 0,

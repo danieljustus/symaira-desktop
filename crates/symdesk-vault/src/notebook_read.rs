@@ -19,6 +19,8 @@ pub struct NotebookSource {
     pub missing: bool,
 }
 
+const MAX_ROOT_READ_BYTES: u64 = 64 * 1024 * 1024;
+
 fn read_source(root: &Path, relative: &str) -> Result<Vec<u8>, String> {
     let absolute = secure_path(root, relative).map_err(|error| error.to_string())?;
     let canonical_root = root.canonicalize().map_err(|error| error.to_string())?;
@@ -27,16 +29,54 @@ fn read_source(root: &Path, relative: &str) -> Result<Vec<u8>, String> {
         .map_err(|error| error.to_string())?;
     let dir = Dir::open_ambient_dir(&canonical_root, ambient_authority())
         .map_err(|error| error.to_string())?;
-    let mut file = dir.open(relative).map_err(|error| {
+    // Go: notebook.Load maps fs.ErrNotExist to ErrNotFound; every other failure
+    // is vault.Root.ReadFile's "open vault file <abs>: openat <rel>: <errno>".
+    let file = dir.open(relative).map_err(|error| {
         if error.kind() == io::ErrorKind::NotFound {
             "notebook not found".to_owned()
         } else {
-            go_path_error("open", &absolute, &error)
+            format!(
+                "open vault file {}: {}",
+                absolute.display(),
+                go_path_error("openat", relative, &error)
+            )
         }
     })?;
+    let metadata = file.metadata().map_err(|error| {
+        format!(
+            "stat vault file {}: {}",
+            absolute.display(),
+            go_path_error("fstat", relative, &error)
+        )
+    })?;
+    if !metadata.is_file() {
+        return Err(format!(
+            "vault path is not a regular file: {}",
+            absolute.display()
+        ));
+    }
+    if metadata.len() > MAX_ROOT_READ_BYTES {
+        return Err(format!(
+            "vault file exceeds {MAX_ROOT_READ_BYTES} byte read limit: {}",
+            absolute.display()
+        ));
+    }
     let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes)
-        .map_err(|error| go_path_error("read", &absolute, &error))?;
+    file.take(MAX_ROOT_READ_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| {
+            format!(
+                "read vault file {}: {}",
+                absolute.display(),
+                go_path_error("read", relative, &error)
+            )
+        })?;
+    if bytes.len() as u64 > MAX_ROOT_READ_BYTES {
+        return Err(format!(
+            "vault file exceeds {MAX_ROOT_READ_BYTES} byte read limit: {}",
+            absolute.display()
+        ));
+    }
     Ok(bytes)
 }
 

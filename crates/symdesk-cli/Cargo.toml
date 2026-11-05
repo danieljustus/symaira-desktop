@@ -35,9 +35,6 @@ noyalib.workspace = true
 ureq = { version = "=3.4.1", default-features = false, features = ["rustls"] }
 notify.workspace = true
 
-[dev-dependencies]
-regex.workspace = true
-
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [
     "Win32_Foundation",
@@ -46,3 +43,9 @@ windows-sys = { version = "=0.61.2", features = [
     "Win32_System_JobObjects",
     "Win32_System_Threading",
 ] }
+
+[dev-dependencies]
+rcgen = { version = "=0.14.10", default-features = false, features = ["ring", "pem"] }
+regex.workspace = true
+rustls.workspace = true
+sha2.workspace = true

@@ -19,7 +19,10 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
     process::ExitCode,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
     time::Duration,
 };
 
@@ -355,7 +358,7 @@ impl Worker {
         let runner = ocr::Runner::default_runner(&self.config.ocr_language);
         let result = runner
             .extract(&self.context, &input.to_string_lossy(), kind)
-            .map_err(|error| format!("OCR failed: {error}"))?;
+            .map_err(|error| format!("OCR failed: extract text: {error}"))?;
         let engine = result.engine.trim();
         let engine = if engine.is_empty() { mode } else { engine };
         Ok((result.text, engine.to_owned(), String::new()))
@@ -528,4 +531,99 @@ pub(crate) fn run(matches: &ArgMatches) -> ExitCode {
         Ok(()) => crate::process_exit(CoreExitCode::Ok),
         Err(error) => crate::emit_error(format!("worker: {error}"), false),
     }
+}
+
+/// Inputs of the worker `serve --local-worker` runs inside the server process
+/// (Go `selfhost.WorkerConfig` with `WorkerID: "server-local-worker"`).
+pub(crate) struct LocalWorkerSettings {
+    pub server_url: String,
+    pub token: String,
+    pub engine: String,
+    pub ollama_url: String,
+    pub ollama_model: String,
+    pub ocr_language: String,
+}
+
+/// A running in-process worker; [`LocalWorker::stop`] mirrors cancelling Go's
+/// signal context.
+pub(crate) struct LocalWorker {
+    stop: Arc<AtomicBool>,
+    cancel: CancelToken,
+    ocr_cancel: Arc<AtomicBool>,
+}
+
+impl LocalWorker {
+    pub(crate) fn stop(&self) {
+        self.stop.store(true, Ordering::SeqCst);
+        self.cancel.cancel();
+        self.ocr_cancel.store(true, Ordering::SeqCst);
+    }
+}
+
+/// Go `selfhost.NewWorker` validation followed by `worker.Run` on a thread.
+pub(crate) fn spawn_local(settings: LocalWorkerSettings) -> Result<LocalWorker, String> {
+    let server_url = bare_http_url(&settings.server_url)
+        .ok_or_else(|| "server must be a bare http(s) base URL".to_owned())?;
+    if settings.token.len() < 32 {
+        return Err("server token must contain at least 32 characters".to_owned());
+    }
+    let ollama = if settings.ollama_url.is_empty() {
+        "http://127.0.0.1:11434"
+    } else {
+        settings.ollama_url.as_str()
+    };
+    if bare_http_url(ollama).is_none() {
+        return Err("ollama host must be a bare http(s) base URL".to_owned());
+    }
+    let config = Config {
+        server_url,
+        token: settings.token,
+        worker_id: "server-local-worker".to_owned(),
+        engine: if settings.engine.is_empty() {
+            "auto".to_owned()
+        } else {
+            settings.engine
+        },
+        ollama_model: settings.ollama_model,
+        ocr_language: if settings.ocr_language.is_empty() {
+            "deu+eng".to_owned()
+        } else {
+            settings.ocr_language
+        },
+        poll: Duration::from_secs(5),
+        once: false,
+    };
+    let cancel = CancelToken::new();
+    let (context, ocr_cancel) = ocr::Context::background().with_cancel();
+    let agent_config = ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .timeout_global(Some(REQUEST_TIMEOUT))
+        .max_idle_connections(0)
+        .build();
+    let worker = Worker {
+        agent: cancel.agent(agent_config),
+        cancel: cancel.clone(),
+        context,
+        config,
+    };
+    let stop = Arc::new(AtomicBool::new(false));
+    let handle = LocalWorker {
+        stop: Arc::clone(&stop),
+        cancel,
+        ocr_cancel,
+    };
+    std::thread::spawn(move || {
+        while !stop.load(Ordering::SeqCst) {
+            if matches!(worker.run_once(), Ok(true)) {
+                continue;
+            }
+            // Go waits PollEvery after an empty poll or a failure.
+            let mut waited = Duration::ZERO;
+            while waited < worker.config.poll && !stop.load(Ordering::SeqCst) {
+                std::thread::sleep(Duration::from_millis(50));
+                waited += Duration::from_millis(50);
+            }
+        }
+    });
+    Ok(handle)
 }

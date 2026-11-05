@@ -245,8 +245,10 @@ fn consumed_raw_environment_is_rejected_without_defaulting_or_overriding_flags()
             .expect("run flag override control");
         assert_eq!(output.status.code(), Some(1), "{name}");
         let message = String::from_utf8_lossy(&output.stderr);
+        // Go's `net.Listen` text: the winning flag reaches the real listener.
         assert!(
-            message.contains("invalid listen address"),
+            message
+                .contains("listen tcp: address invalid-fixture-address: missing port in address"),
             "{name}: {message}"
         );
         assert!(

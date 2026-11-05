@@ -54,6 +54,9 @@ tokio = { version = "=1.53.3", default-features = false, features = ["io-util", 
 tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }
 hyper = { version = "=1.11.1", default-features = false, features = ["client", "http1", "server"] }
+rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pki-types = { version = "=1.15.1", features = ["std"] }
+tokio-rustls = { version = "=0.26.6", default-features = false, features = ["ring", "tls12"] }
 
 # The layered Mermaid layout is quadratic-heavy; unoptimized it is ~100x
 # slower than release, which makes the debug test gate (draw_hostile_layout,

@@ -769,6 +769,18 @@ cli-admin-bodies-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIAdminBodiesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test cli_admin_bodies --locked
 
+# RUST-015 HTTP slices (HTTP-001/002/003/005/006/007, SEC-002 failure paths):
+# the real Go `symdesk serve` process is probed over a raw socket in a disposable
+# HOME/vault with generated tokens and loopback fakes; the Rust server replays
+# the recorded status line, headers, body, connection behavior and vault tree.
+.PHONY: http-surface-fixtures-generate http-surface-differential
+http-surface-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHTTPSurfaceProcessContract$$'
+
+http-surface-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHTTPSurfaceProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test http_surface --locked
+
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.

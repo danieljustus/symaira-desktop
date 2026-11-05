@@ -7,6 +7,8 @@
 //! file ranges are all tested at the HTTP boundary.
 
 pub mod mcp_frame;
+mod go_http;
+mod go_json;
 #[cfg(any(test, unix, target_os = "windows"))]
 mod mime;
 #[cfg(target_os = "windows")]
@@ -14,9 +16,11 @@ mod native_mime;
 mod retrieval_embedding;
 mod retrieval_query_expansion;
 mod retrieval_search;
+mod server_state;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
+mod tls;
 
 pub use retrieval_embedding::{
     LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
@@ -25,6 +29,7 @@ pub use retrieval_query_expansion::expand_local_ollama_query;
 pub(crate) use retrieval_search::hybrid_search_results_if_populated;
 pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 
+use go_http::GoQuery;
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
@@ -48,7 +53,7 @@ use std::{
 use axum::{
     Router,
     body::{Body, Bytes, to_bytes},
-    extract::{DefaultBodyLimit, Extension, Path as AxumPath, Query, State},
+    extract::{DefaultBodyLimit, Extension, Path as AxumPath, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, Uri, header},
     middleware::{self, Next},
     response::Response,
@@ -66,7 +71,7 @@ use hyper_util::{
     service::TowerToHyperService,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::json;
 use symdesk_index::{IndexedDocument, Sidecar, SourceRegistry};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -117,6 +122,9 @@ pub struct HttpConfig {
     pub token: String,
     pub worker_token: Option<String>,
     pub version: String,
+    /// Go `ServerConfig.TLSCert` / `TLSKey`; empty means not configured.
+    pub tls_cert: String,
+    pub tls_key: String,
 }
 
 struct AppState {
@@ -235,7 +243,6 @@ struct FileQuery {
 struct JobQuery {
     limit: Option<String>,
     offset: Option<String>,
-    id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -349,28 +356,35 @@ enum RangeError {
     NoOverlap,
 }
 
-/// Starts the representative HTTP server and waits for SIGINT/SIGTERM.
-///
-/// The listener is bound before readiness is printed, so port `0` is safe for
-/// the differential harness and the emitted address is the actual socket.
-pub async fn run(config: HttpConfig) -> Result<(), String> {
+/// A fully initialised server (Go `selfhost.NewServer`) that has not bound its
+/// listener yet.
+pub struct PreparedServer {
+    listen_address: String,
+    tls_cert: String,
+    tls_key: String,
+    app: Router,
+}
+
+/// Go `NewServer`: token validation, job store, permissions with the legacy
+/// admin migration and the index refresh. Nothing is bound.
+pub fn prepare(config: HttpConfig) -> Result<PreparedServer, String> {
     let root = fs::canonicalize(&config.vault_root)
         .map_err(|error| format!("resolve vault root: {error}"))?;
     if !root.is_dir() {
         return Err("vault root is not a directory".to_owned());
     }
     validate_tokens(&config.token, config.worker_token.as_deref())?;
+    // Go's `NewServer` order: sidecar database, job store, permissions and the
+    // legacy admin migration, share store, then the index refresh.
+    server_state::create_job_store(&root)?;
+    server_state::initialise_permissions(&root, &config.token)?;
+    initialise_share_store(&root)?;
     refresh_server_index(&root)?;
-    let address: SocketAddr = config
-        .listen_address
-        .parse()
-        .map_err(|error| format!("invalid listen address: {error}"))?;
-    let listener = tokio::net::TcpListener::bind(address)
-        .await
-        .map_err(|error| format!("bind HTTP listener: {error}"))?;
-    let actual = listener
-        .local_addr()
-        .map_err(|error| format!("read HTTP listener address: {error}"))?;
+    let listen_address = if config.listen_address.is_empty() {
+        "127.0.0.1:8787".to_owned()
+    } else {
+        config.listen_address
+    };
     let state = Arc::new(AppState {
         vault_root: root.clone(),
         token: Arc::from(config.token.into_bytes()),
@@ -383,9 +397,92 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         job_retry: Mutex::new(()),
         share_write: Mutex::new(()),
     });
-    let app = router(state);
-    eprintln!("LISTENING http://{actual}");
-    serve(listener, app, shutdown_signal()).await
+    Ok(PreparedServer {
+        listen_address,
+        tls_cert: config.tls_cert,
+        tls_key: config.tls_key,
+        app: router(state),
+    })
+}
+
+/// Go `net.Listen("tcp", addr)` address forms: `host:port` with an IP or a
+/// resolvable name, and `:port` for every interface.
+async fn bind_listener(address: &str) -> Result<tokio::net::TcpListener, String> {
+    let go_error = |detail: String| format!("listen tcp {address}: {detail}");
+    // Go's `net.SplitHostPort` and port lookup wording.
+    let Some(colon) = address.rfind(':') else {
+        return Err(format!(
+            "listen tcp: address {address}: missing port in address"
+        ));
+    };
+    let (host, port) = (&address[..colon], &address[colon + 1..]);
+    if !host.starts_with('[') && host.contains(':') {
+        return Err(format!(
+            "listen tcp: address {address}: too many colons in address"
+        ));
+    }
+    let port_number: u16 = if port.chars().all(|c| c.is_ascii_digit()) && !port.is_empty() {
+        port.parse()
+            .map_err(|_| format!("listen tcp: address {port}: invalid port"))?
+    } else if port.is_empty() {
+        0
+    } else {
+        return Err(format!("listen tcp: lookup tcp/{port}: unknown port"));
+    };
+    let host = host.trim_start_matches('[').trim_end_matches(']');
+    let target = if host.is_empty() {
+        format!("[::]:{port_number}")
+    } else if host.contains(':') {
+        format!("[{host}]:{port_number}")
+    } else {
+        format!("{host}:{port_number}")
+    };
+    let mut candidates = tokio::net::lookup_host(target.as_str())
+        .await
+        .map_err(|_| format!("listen tcp: lookup {host}: no such host"))?;
+    let socket_address = candidates
+        .next()
+        .ok_or_else(|| format!("listen tcp: lookup {host}: no such host"))?;
+    tokio::net::TcpListener::bind(socket_address)
+        .await
+        .map_err(|error| match error.kind() {
+            io::ErrorKind::AddrInUse => go_error("bind: address already in use".to_owned()),
+            io::ErrorKind::PermissionDenied => go_error("bind: permission denied".to_owned()),
+            io::ErrorKind::AddrNotAvailable => {
+                go_error("bind: can't assign requested address".to_owned())
+            }
+            _ => go_error(error.to_string()),
+        })
+}
+
+impl PreparedServer {
+    /// Go `ListenAndServe` / `ListenAndServeTLS` followed by the signal-driven
+    /// graceful stop.
+    pub async fn serve(self) -> Result<(), String> {
+        if self.tls_cert.is_empty() != self.tls_key.is_empty() {
+            return Err("both TLS certificate and key are required".to_owned());
+        }
+        let listener = bind_listener(&self.listen_address).await?;
+        let acceptor = if self.tls_cert.is_empty() {
+            None
+        } else {
+            Some(tls::acceptor(&self.tls_cert, &self.tls_key)?)
+        };
+        let actual = listener
+            .local_addr()
+            .map_err(|error| format!("read HTTP listener address: {error}"))?;
+        let scheme = if acceptor.is_some() { "https" } else { "http" };
+        eprintln!("LISTENING {scheme}://{actual}");
+        serve(listener, self.app, shutdown_signal(), acceptor).await
+    }
+}
+
+/// Starts the representative HTTP server and waits for SIGINT/SIGTERM.
+///
+/// The listener is bound before readiness is printed, so port `0` is safe for
+/// the differential harness and the emitted address is the actual socket.
+pub async fn run(config: HttpConfig) -> Result<(), String> {
+    prepare(config)?.serve().await
 }
 
 /// Accepts connections until `shutdown` resolves, then drains active ones.
@@ -393,13 +490,16 @@ async fn serve(
     listener: tokio::net::TcpListener,
     app: Router,
     shutdown: impl std::future::Future<Output = ()>,
+    acceptor: Option<tokio_rustls::TlsAcceptor>,
 ) -> Result<(), String> {
     let mut make_service = app.into_make_service_with_connect_info::<SocketAddr>();
     let mut connection_builder = ConnectionBuilder::new();
     connection_builder
         .timer(TokioTimer::new())
         .header_read_timeout(Some(HTTP_HEADER_READ_TIMEOUT))
-        .max_buf_size(HTTP_MAX_HEADER_BYTES)
+        // Hyper's limit must stay above Go's header budget so that the
+        // 431 decision is `go_http::connection_precheck`'s and deterministic.
+        .max_buf_size(HTTP_MAX_HEADER_BYTES + 8192)
         .max_headers(HTTP_MAX_HEADER_FIELDS);
     let connection_builder = connection_builder;
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(());
@@ -449,7 +549,18 @@ async fn serve(
                 continue;
             }
         };
-        let io = TokioIo::new(io);
+        // A second handle on the socket lets the front door write Go's
+        // close-delimited connection errors byte for byte (hyper frames
+        // every streamed HTTP/1.1 body as chunked).
+        // Not over TLS: the plaintext socket handle must never carry bytes of a
+        // TLS session (the connection error then uses hyper's framing).
+        let raw_socket: Option<Arc<std::net::TcpStream>> = linger_socket
+            .as_ref()
+            .filter(|_| acceptor.is_none())
+            .and_then(|socket| socket.try_clone().ok())
+            .map(Arc::new);
+        let raw_answered = Arc::new(AtomicBool::new(false));
+        let request_raw_answered = Arc::clone(&raw_answered);
         let unread_body = ConnectionLinger::default();
         let request_linger = unread_body.clone();
         let tower_service = make_service
@@ -461,6 +572,8 @@ async fn serve(
         let tower_service = tower::service_fn(move |request: Request<hyper::body::Incoming>| {
             let service = tower_service.clone();
             let linger = request_linger.clone();
+            let raw_socket = raw_socket.clone();
+            let raw_answered = Arc::clone(&request_raw_answered);
             async move {
                 let complete = Arc::new(AtomicBool::new(false));
                 let body_complete = Arc::clone(&complete);
@@ -472,7 +585,28 @@ async fn serve(
                         complete: body_complete,
                     })
                 });
-                let mut response = service.oneshot(request).await?;
+                // Go's http.Server answers some requests before routing.
+                let (parts, body) = request.into_parts();
+                let rejected = go_http::connection_precheck(&parts);
+                let request = Request::from_parts(parts, body);
+                let mut response = match rejected {
+                    Some(response) => response,
+                    None => service
+                        .oneshot(request)
+                        .await
+                        .unwrap_or_else(|error| match error {}),
+                };
+                if let Some(wire) = go_http::close_delimited_wire(&response) {
+                    // Go writes these itself and closes after a bounded
+                    // linger; the hyper response is never sent.
+                    if let Some(socket) = raw_socket.as_deref() {
+                        raw_answered.store(true, Ordering::SeqCst);
+                        linger.set();
+                        write_raw(socket, &wire).await;
+                        return Err(RawAnswered);
+                    }
+                }
+                go_http::apply_go_reason_phrase(&mut response);
                 if !complete.load(Ordering::SeqCst) {
                     linger.set();
                     // An unread body must never be interpreted as the next
@@ -481,24 +615,79 @@ async fn serve(
                         .headers_mut()
                         .insert(header::CONNECTION, HeaderValue::from_static("close"));
                 }
-                Ok::<_, std::convert::Infallible>(response)
+                Ok::<_, RawAnswered>(response)
             }
         });
         let hyper_service = TowerToHyperService::new(tower_service);
         let builder = connection_builder.clone();
         let mut connection_shutdown = shutdown_rx.clone();
+        let tls_acceptor = acceptor.clone();
         active.spawn(async move {
-            let connection = builder.serve_connection(io, hyper_service);
-            let mut connection = std::pin::pin!(connection);
-            tokio::select! {
-                result = &mut connection => {
-                    if let Err(error) = result {
-                        eprintln!("HTTP connection failed: {error}");
+            // The same drive loop for a plaintext socket and a TLS session.
+            macro_rules! drive {
+                ($io:expr) => {{
+                    let connection = builder.serve_connection(TokioIo::new($io), hyper_service);
+                    let mut connection = std::pin::pin!(connection);
+                    tokio::select! {
+                        result = &mut connection => {
+                            if let Err(error) = result
+                                && !raw_answered.load(Ordering::SeqCst)
+                            {
+                                eprintln!("HTTP connection failed: {error}");
+                            }
+                        }
+                        _ = connection_shutdown.changed() => {
+                            connection.as_mut().graceful_shutdown();
+                            let _ = connection.await;
+                        }
                     }
-                }
-                _ = connection_shutdown.changed() => {
-                    connection.as_mut().graceful_shutdown();
-                    let _ = connection.await;
+                }};
+            }
+            match tls_acceptor {
+                None => drive!(io),
+                Some(tls_acceptor) => {
+                    let mut io = io;
+                    let Some(header) = tls::peek_record_header(&io).await else {
+                        return;
+                    };
+                    if tls::looks_like_http(&header) {
+                        let _ = tls::reply_plaintext_on_tls(&mut io).await;
+                        return;
+                    }
+                    match tokio::time::timeout(tls::HANDSHAKE_TIMEOUT, tls_acceptor.accept(io))
+                        .await
+                    {
+                        Ok(Ok(session)) => drive!(session),
+                        Ok(Err(error)) => {
+                            eprintln!("http: TLS handshake error from {remote_addr}: {error}");
+                            // Go answers a failed handshake with a fatal alert
+                            // record (rustls does not flush one for malformed
+                            // records); the alert bytes differ between stacks.
+                            let text = error.to_string();
+                            if !text.contains("received fatal alert")
+                                && let Some(socket) = linger_socket.as_ref()
+                            {
+                                let description: u8 = if text.contains("corrupt message") {
+                                    50 // decode_error
+                                } else if text.contains("protocol version") {
+                                    70 // protocol_version
+                                } else {
+                                    40 // handshake_failure
+                                };
+                                write_raw(
+                                    socket,
+                                    &[0x15, 0x03, 0x03, 0x00, 0x02, 0x02, description],
+                                )
+                                .await;
+                            }
+                            // Unread handshake bytes would turn the close into a
+                            // reset and destroy the alert the client is owed.
+                            unread_body.set();
+                        }
+                        Err(_) => {
+                            eprintln!("http: TLS handshake error from {remote_addr}: timeout");
+                        }
+                    }
                 }
             }
             if unread_body.is_set()
@@ -509,6 +698,34 @@ async fn serve(
         });
     }
     Ok(())
+}
+
+/// Ends a connection whose reply the front door wrote on the socket itself.
+#[derive(Debug)]
+struct RawAnswered;
+
+impl std::fmt::Display for RawAnswered {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("connection answered at the front door")
+    }
+}
+
+impl std::error::Error for RawAnswered {}
+
+/// Writes `bytes` to a non-blocking socket, waiting out a full send buffer.
+async fn write_raw(mut socket: &std::net::TcpStream, bytes: &[u8]) {
+    use std::io::Write as _;
+    let mut written = 0;
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    while written < bytes.len() && tokio::time::Instant::now() < deadline {
+        match socket.write(&bytes[written..]) {
+            Ok(0) | Err(_) => break,
+            Ok(count) => written += count,
+        }
+        if written < bytes.len() {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+    }
 }
 
 /// Observes actual body consumption without buffering or changing body limits.
@@ -608,6 +825,25 @@ fn refresh_server_index(vault_root: &Path) -> Result<(), String> {
         .map_err(|error| format!("index vault: {error}"))
 }
 
+/// A write through the API changes the vault, so the next snapshot must not
+/// wait for the file watcher to say so (Go's watcher event arrives before the
+/// next request; FSEvents can lag behind it).
+async fn invalidate_snapshot_after_write(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    let reads = matches!(
+        *request.method(),
+        Method::GET | Method::HEAD | Method::OPTIONS
+    );
+    let response = next.run(request).await;
+    if !reads {
+        state.snapshot_cache.mark_dirty();
+    }
+    response
+}
+
 fn router(state: Arc<AppState>) -> Router {
     let protected = Router::new()
         .route("/api/v1/status", get(handle_status))
@@ -646,16 +882,27 @@ fn router(state: Arc<AppState>) -> Router {
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
+        ))
+        .layer(middleware::from_fn_with_state(
+            Arc::clone(&state),
+            invalidate_snapshot_after_write,
         ));
-    Router::new()
+    let routes = Router::new()
         .route("/healthz", get(handle_health))
         .route("/s/{token}", get(handle_access_share))
         .merge(protected)
         .fallback(handle_not_found)
-        .layer(middleware::from_fn(normalize_method_not_allowed))
-        .layer(middleware::from_fn(request_timeout))
+        .with_state(state);
+    // `Router::layer` only wraps routes that matched, so Go's ServeMux
+    // decisions (path cleaning, 404/405 before authentication) must run in
+    // front of the whole router.
+    let app = tower::ServiceBuilder::new()
         .layer(middleware::from_fn(security_headers))
-        .with_state(state)
+        .layer(middleware::from_fn(go_http::serve_mux))
+        .layer(middleware::from_fn(request_timeout))
+        .layer(middleware::from_fn(normalize_method_not_allowed))
+        .service(routes);
+    Router::new().fallback_service(app)
 }
 
 async fn authenticate(
@@ -930,6 +1177,31 @@ mod ai_ask_score_tests {
     }
 }
 
+/// SEC-002: values that must never reach a client through an upstream error
+/// text: the provider API key (configuration and environment) and the server
+/// bearer tokens. Go forwards the upstream body verbatim, so a provider that
+/// echoes its credential would hand it to the caller; Rust redacts it.
+fn ai_secret_values(state: &AppState, config: &symdesk_core::config::Config) -> Vec<String> {
+    let mut values = vec![
+        config.api_key_reference().to_owned(),
+        String::from_utf8_lossy(&state.token).into_owned(),
+    ];
+    if let Some(worker) = &state.worker_token {
+        values.push(String::from_utf8_lossy(worker).into_owned());
+    }
+    if let Ok(Some(key)) = symdesk_core::config::environment_value("SYMDESK_LLM_API_KEY") {
+        values.push(key);
+    }
+    values.retain(|value| value.len() >= 8);
+    values
+}
+
+fn redact_ai_secrets(secrets: &[String], text: &str) -> String {
+    secrets.iter().fold(text.to_owned(), |text, secret| {
+        text.replace(secret, "[redacted]")
+    })
+}
+
 async fn handle_ai_transform(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
@@ -951,11 +1223,18 @@ async fn handle_ai_transform(
             return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
         }
     };
-    let mut input: AiTransformRequest = match decode_first_json_value(&body) {
-        Ok(input) => input,
-        Err(error) => {
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+    let decoded = match go_json::decode(&go_json::AI_TRANSFORM, &body) {
+        Ok(decoded) => decoded,
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
+    };
+    let mut input = AiTransformRequest {
+        text: decoded.text("text"),
+        intent: decoded.text("intent"),
     };
     input.text = input.text.trim().to_owned();
     input.intent = input.intent.trim().to_owned();
@@ -1022,6 +1301,7 @@ async fn handle_ai_transform(
         .filter(|model| !model.is_empty())
         .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
+        let secrets = ai_secret_values(&state, &config);
         tokio::spawn(async move {
             let mut answer_capture = None;
             match stream_ollama(
@@ -1038,7 +1318,10 @@ async fn handle_ai_transform(
                 Ok(true) => {}
                 Ok(false) => return,
                 Err(error) => {
-                    let message = format!("⚠️ Request failed: {error}\n");
+                    let message = format!(
+                        "⚠️ Request failed: {}\n",
+                        redact_ai_secrets(&secrets, &error.to_string())
+                    );
                     if !send_ai_transform_answer(&provider_sender, &message).await {
                         return;
                     }
@@ -1487,25 +1770,30 @@ async fn handle_ai_ask(
     if let Some(response) = ai_rate_limit_response(&state, &request) {
         return response;
     }
-    let body = match read_ai_request_body(request.into_body(), MAX_AI_ASK_BODY_BYTES).await {
-        Ok(body) => body,
-        Err(AiBodyReadError::Invalid(error)) => {
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
-        }
-        Err(AiBodyReadError::Timeout) => {
-            return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
+    let body =
+        match read_ai_request_body(request.into_body(), MAX_AI_ASK_BODY_BYTES.saturating_add(1))
+            .await
+        {
+            Ok(body) => body,
+            Err(AiBodyReadError::Invalid(error)) => {
+                return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+            }
+            Err(AiBodyReadError::Timeout) => {
+                return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
+            }
+        };
+    let decoded = match go_json::decode(&go_json::AI_ASK, &body) {
+        Ok(decoded) => decoded,
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
     };
-    let mut input: AiAskRequest = match decode_first_json_value(&body) {
-        Ok(input) => input,
-        Err(error) => {
-            let detail = if error.is_eof() {
-                "unexpected EOF".to_owned()
-            } else {
-                error.to_string()
-            };
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {detail}"));
-        }
+    let mut input = AiAskRequest {
+        query: decoded.text("query"),
+        notebook: decoded.text("notebook"),
     };
     input.query = input.query.trim().to_owned();
     input.notebook = input.notebook.trim().to_owned();
@@ -1813,6 +2101,7 @@ async fn handle_ai_ask(
     }
     .filter(|model| !model.is_empty())
     .unwrap_or_else(|| "llama3.2".to_owned());
+    let secrets = ai_secret_values(&state, &config);
     tokio::spawn(async move {
         for event in events {
             if sender.send(Ok(event)).await.is_err() {
@@ -1837,7 +2126,10 @@ async fn handle_ai_ask(
             Ok(true) => {}
             Ok(false) => return,
             Err(error) => {
-                let message = format!("⚠️ Request failed: {error}\n");
+                let message = format!(
+                    "⚠️ Request failed: {}\n",
+                    redact_ai_secrets(&secrets, &error.to_string())
+                );
                 if let Some(answer) = answer_capture.as_mut() {
                     answer.push_str(&message);
                 }
@@ -2680,89 +2972,15 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
 /// ignored), case-insensitive keys, last duplicate wins, `null` is a no-op
 /// and the first saved type/unknown-field error is reported.
 fn parse_command_request(body: &[u8]) -> Result<RemoteCommandRequest, CommandParseError> {
-    let mut decoder = serde_json::Deserializer::from_slice(body);
-    let value = Value::deserialize(&mut decoder).map_err(|error| {
-        if error.is_eof() {
-            CommandParseError::Incomplete
-        } else {
-            CommandParseError::Go(error.to_string())
+    match go_json::decode(&go_json::COMMAND, body) {
+        Ok(decoded) => Ok(RemoteCommandRequest {
+            arguments: decoded.list("arguments"),
+            stdin: decoded.is_set("stdin").then(|| decoded.text("stdin")),
+        }),
+        Err(go_json::Failure::Empty | go_json::Failure::Incomplete) => {
+            Err(CommandParseError::Incomplete)
         }
-    })?;
-    fn kind(value: &Value) -> &'static str {
-        match value {
-            Value::Null => "null",
-            Value::Bool(_) => "bool",
-            Value::Number(_) => "number",
-            Value::String(_) => "string",
-            Value::Array(_) => "array",
-            Value::Object(_) => "object",
-        }
-    }
-    let field_error = |field: &str, value: &Value, go_type: &str| {
-        CommandParseError::Go(format!(
-            "json: cannot unmarshal {} into Go struct field commandRequest.{field} of type {go_type}",
-            kind(value)
-        ))
-    };
-    let mut request = RemoteCommandRequest {
-        arguments: None,
-        stdin: None,
-    };
-    let map = match &value {
-        Value::Null => return Ok(request),
-        Value::Object(map) => map,
-        other => {
-            return Err(CommandParseError::Go(format!(
-                "json: cannot unmarshal {} into Go value of type selfhost.commandRequest",
-                kind(other)
-            )));
-        }
-    };
-    let mut first_error = None;
-    for (key, item) in map {
-        if key.eq_ignore_ascii_case("arguments") {
-            match item {
-                Value::Null => request.arguments = None,
-                Value::Array(items) => {
-                    let mut arguments = Vec::with_capacity(items.len());
-                    for element in items {
-                        match element {
-                            Value::String(text) => arguments.push(text.clone()),
-                            Value::Null => arguments.push(String::new()),
-                            other => {
-                                first_error.get_or_insert_with(|| {
-                                    field_error("arguments", other, "string")
-                                });
-                                arguments.push(String::new());
-                            }
-                        }
-                    }
-                    request.arguments = Some(arguments);
-                }
-                other => {
-                    first_error.get_or_insert_with(|| field_error("arguments", other, "[]string"));
-                }
-            }
-        } else if key.eq_ignore_ascii_case("stdin") {
-            match item {
-                Value::Null => {}
-                Value::String(text) => request.stdin = Some(text.clone()),
-                other => {
-                    first_error.get_or_insert_with(|| field_error("stdin", other, "string"));
-                }
-            }
-        } else {
-            first_error.get_or_insert_with(|| {
-                CommandParseError::Go(format!(
-                    "json: unknown field {}",
-                    serde_json::to_string(key).unwrap_or_default()
-                ))
-            });
-        }
-    }
-    match first_error {
-        Some(error) => Err(error),
-        None => Ok(request),
+        Err(go_json::Failure::Message(message)) => Err(CommandParseError::Go(message)),
     }
 }
 
@@ -3382,11 +3600,8 @@ struct ShareLink {
     revoked_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
 struct CreateShareRequest {
-    #[serde(default)]
     path: String,
-    #[serde(default)]
     expiry: i64,
 }
 
@@ -3412,8 +3627,11 @@ async fn handle_create_share(
         Ok(body) => body,
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
     };
-    let request = match serde_json::from_slice::<CreateShareRequest>(&body) {
-        Ok(request) => request,
+    let request = match go_json::decode(&go_json::SHARE_CREATE, &body) {
+        Ok(decoded) => CreateShareRequest {
+            path: decoded.text("path"),
+            expiry: decoded.int("expiry"),
+        },
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
     };
     if request.path.is_empty() {
@@ -3661,6 +3879,74 @@ fn share_lookup_failure(state: &AppState, request: &Request<Body>) -> Response {
     json_error(StatusCode::NOT_FOUND, "not found")
 }
 
+/// Go `NewShareStore`: creates the server state directory and rewrites a store
+/// that still carries plain-text `token` fields (a legacy format) without them.
+/// A store that does not parse stops the server from starting.
+fn initialise_share_store(vault_root: &Path) -> Result<(), String> {
+    let wrap = |detail: String| format!("shares: shares: {detail}");
+    let directory = vault_root.join(".symdesk/server");
+    let mut builder = fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder
+        .create(&directory)
+        .map_err(|error| format!("shares: create config dir: {error}"))
+        .map_err(|error| format!("shares: {error}"))?;
+    let path = directory.join("shares.json");
+    let data = match fs::read(&path) {
+        Ok(data) => data,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(wrap(format!("read store: {error}"))),
+    };
+    symdesk_vault::go_json_validate_syntax(&data)
+        .map_err(|message| wrap(format!("parse store: {message}")))?;
+    let value: serde_json::Value =
+        serde_json::from_slice(&data).map_err(|error| wrap(format!("parse store: {error}")))?;
+    let items = match value {
+        serde_json::Value::Null => return Ok(()),
+        serde_json::Value::Array(items) => items,
+        other => {
+            let kind = match other {
+                serde_json::Value::Bool(_) => "bool",
+                serde_json::Value::Number(_) => "number",
+                serde_json::Value::String(_) => "string",
+                _ => "object",
+            };
+            return Err(wrap(format!(
+                "parse store: json: cannot unmarshal {kind} into Go value of type []selfhost.ShareLink"
+            )));
+        }
+    };
+    let has_legacy_token = items.iter().any(|item| {
+        item.as_object().is_some_and(|object| {
+            object.iter().any(|(key, value)| {
+                key.eq_ignore_ascii_case("token")
+                    && value.as_str().is_some_and(|text| !text.is_empty())
+            })
+        })
+    });
+    if !has_legacy_token {
+        return Ok(());
+    }
+    let links: Vec<ShareLink> =
+        serde_json::from_slice(&data).map_err(|error| wrap(format!("parse store: {error}")))?;
+    let rewritten = serde_json::to_vec_pretty(&links)
+        .map_err(|error| wrap(format!("marshal store: {error}")))?;
+    let root = cap_std::fs::Dir::open_ambient_dir(vault_root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))?;
+    write_atomic_root(
+        &root,
+        Path::new(".symdesk/server/shares.json"),
+        &rewritten,
+        0o600,
+    )
+    .map_err(|error| wrap(format!("create temp file: {error}")))
+}
+
 fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
     let shares_dir = match root.open_dir(".symdesk/server") {
         Ok(directory) => directory,
@@ -3839,11 +4125,12 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
     )
 }
 
-async fn handle_jobs(
-    State(state): State<Arc<AppState>>,
-    Query(query): Query<JobQuery>,
-) -> Response {
-    let paged = query.limit.is_some() || query.offset.is_some();
+async fn handle_jobs(State(state): State<Arc<AppState>>, query: GoQuery) -> Response {
+    let paged = query.has("limit") || query.has("offset");
+    let query = JobQuery {
+        limit: query.get("limit"),
+        offset: query.get("offset"),
+    };
     let limit = match query.limit.as_deref().filter(|value| !value.is_empty()) {
         Some(value) => match value.parse::<i64>() {
             Ok(value) if value > 0 => value as usize,
@@ -3895,11 +4182,12 @@ async fn handle_jobs(
 
 async fn handle_worker_input(
     State(state): State<Arc<AppState>>,
-    Query(query): Query<JobQuery>,
+    query: GoQuery,
     headers: HeaderMap,
     method: Method,
 ) -> Response {
-    let id = query.id.as_deref().unwrap_or_default();
+    let id = query.get_or_empty("id");
+    let id = id.as_str();
     if !valid_job_id(id) {
         return json_error(StatusCode::NOT_FOUND, "job not found");
     }
@@ -3925,24 +4213,30 @@ async fn handle_worker_fail(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
-    let body = match to_bytes(
+    // Go reads limit+1 bytes, so an oversized body is a cut-off document.
+    let body = match read_capped_body(
         request.into_body(),
         MAX_WORKER_FAIL_BODY_BYTES.saturating_add(1),
     )
     .await
     {
-        Ok(body) if body.len() <= MAX_WORKER_FAIL_BODY_BYTES => body,
-        _ => {
-            return json_error(
-                StatusCode::BAD_REQUEST,
-                "invalid JSON: request body too large",
-            );
-        }
-    };
-    let request: WorkerFailRequest = match serde_json::from_slice(&body) {
-        Ok(request) => request,
+        Ok(body) => body,
         Err(error) => {
             return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    let request = match go_json::decode(&go_json::WORKER_FAIL, &body) {
+        Ok(decoded) => WorkerFailRequest {
+            job_id: decoded.text("job_id"),
+            worker_id: decoded.text("worker_id"),
+            error: decoded.text("error"),
+            retry: decoded.flag("retry"),
+        },
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
     };
     if !valid_job_id(&request.job_id) {
@@ -4117,15 +4411,19 @@ async fn handle_worker_complete(
     let parse_body = &body[..body
         .len()
         .min(MAX_WORKER_COMPLETE_BODY_BYTES.saturating_add(1))];
-    let request: WorkerCompleteRequest = match decode_first_json_value(parse_body) {
-        Ok(request) => request,
-        Err(error) => {
-            let message = if error.is_eof() {
-                "unexpected EOF".to_owned()
-            } else {
-                error.to_string()
-            };
-            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {message}"));
+    let request = match go_json::decode(&go_json::WORKER_COMPLETE, parse_body) {
+        Ok(decoded) => WorkerCompleteRequest {
+            job_id: decoded.text("job_id"),
+            worker_id: decoded.text("worker_id"),
+            text: decoded.text("text"),
+            engine: decoded.text("engine"),
+            model: decoded.text("model"),
+        },
+        Err(failure) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                &format!("invalid JSON: {}", failure.text()),
+            );
         }
     };
     if !valid_job_id(&request.job_id) {
@@ -4550,13 +4848,13 @@ fn safe_upload_filename(name: &str) -> String {
     }
 }
 
-async fn handle_retry_job(
-    State(state): State<Arc<AppState>>,
-    Query(query): Query<JobRetryQuery>,
-) -> Response {
+async fn handle_retry_job(State(state): State<Arc<AppState>>, query: GoQuery) -> Response {
     let _guard = match state.job_retry.lock() {
         Ok(guard) => guard,
         Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let query = JobRetryQuery {
+        id: query.get("id"),
     };
     let Some(id) = query.id.as_deref().filter(|id| valid_job_id(id)) else {
         return json_error(StatusCode::CONFLICT, "invalid job id");
@@ -4583,7 +4881,11 @@ async fn handle_retry_job(
     let file = match jobs.open_with(&relative, &options) {
         Ok(file) => file,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            return json_error(StatusCode::CONFLICT, "job not found");
+            // Go: os.OpenInRoot's *PathError text, returned verbatim by Retry.
+            return json_error(
+                StatusCode::CONFLICT,
+                &format!("openat {id}.json: no such file or directory"),
+            );
         }
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
     };
@@ -4790,41 +5092,20 @@ async fn handle_notebook(
         return json_error(StatusCode::BAD_REQUEST, "notebook id is required");
     }
 
-    let mut relative = reference.to_owned();
-    if !relative.ends_with(".md") {
-        relative.push_str(".md");
-    }
-    if !relative.starts_with(&format!("notebooks{}", std::path::MAIN_SEPARATOR)) {
-        let Some(name) = Path::new(&relative).file_name() else {
-            return json_error(StatusCode::NOT_FOUND, "notebook not found");
-        };
-        relative = format!(
-            "notebooks{}{}",
-            std::path::MAIN_SEPARATOR,
-            name.to_string_lossy()
-        );
-    }
     let root_dir = match open_current_root(&state) {
         Ok(root_dir) => root_dir,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
-    match secure_path(&state.vault_root, &relative) {
-        Ok(_) => {}
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
-    }
-    let contents = match read_root_file(&root_dir, Path::new(&relative)) {
-        Ok(contents) => contents,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+    // Go: svc.NotebookGet(id) -> notebook.Resolve; every failure is wrapped as
+    // "notebook not found: <err>" (path, read and "is not a notebook note").
+    let notebook = match symdesk_vault::load_notebook(&state.vault_root, reference) {
+        Ok(notebook) => notebook,
+        Err(error) => {
             return json_error(
                 StatusCode::NOT_FOUND,
-                "notebook not found: notebook not found",
+                &format!("notebook not found: {error}"),
             );
         }
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
-    };
-    let notebook = match parse_notebook(&relative, &contents) {
-        Ok(notebook) => notebook,
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
 
     let source_paths = notebook.sources.clone();
@@ -4986,10 +5267,13 @@ fn filtered_snapshot_payload(
 async fn handle_file(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
-    Query(query): Query<FileQuery>,
+    query: GoQuery,
     headers: HeaderMap,
     method: Method,
 ) -> Response {
+    let query = FileQuery {
+        path: query.get("path"),
+    };
     let requested = query.path.as_deref().unwrap_or_default();
     if requested == ".symdesk" || requested.starts_with(".symdesk/") {
         return json_error(
@@ -5048,96 +5332,342 @@ fn serve_vault_file_as(
         .modified()
         .map(|value| value.into_std())
         .unwrap_or(UNIX_EPOCH);
+    let zero_time = modified == UNIX_EPOCH;
     let last_modified = fmt_http_date(modified);
+    let disposition = format!("{disposition}; filename={filename:?}");
+    // Go `http.ServeContent`: Last-Modified, then RFC 7232 preconditions (the
+    // vault files carry no ETag), then the content type and ranges.
+    let mut early = vec![(header::CONTENT_DISPOSITION, disposition.clone())];
+    if !zero_time {
+        early.push((header::LAST_MODIFIED, last_modified.clone()));
+    }
+    let range_header = match check_preconditions(headers, &method, modified, zero_time) {
+        Preconditions::Failed => {
+            return bytes_response(StatusCode::PRECONDITION_FAILED, early, Vec::new());
+        }
+        Preconditions::NotModified => {
+            return bytes_response(StatusCode::NOT_MODIFIED, early, Vec::new());
+        }
+        Preconditions::Proceed(range) => range,
+    };
     let sample = match read_sample(&mut file, length) {
         Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let disposition = format!("{disposition}; filename={filename:?}");
+    let content_type = content_type(relative, &sample);
     let mut common = vec![
-        (header::CONTENT_TYPE, content_type(relative, &sample)),
-        (header::CONTENT_DISPOSITION, disposition.clone()),
-        (header::ACCEPT_RANGES, "bytes".to_owned()),
-        (header::LAST_MODIFIED, last_modified.clone()),
+        (header::CONTENT_TYPE, content_type.clone()),
+        (header::CONTENT_DISPOSITION, disposition),
     ];
-    if let Some(value) = headers
-        .get(header::IF_MODIFIED_SINCE)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| parse_http_date(value).ok())
-        && modified <= value
-    {
-        return bytes_response(
-            StatusCode::NOT_MODIFIED,
-            vec![
-                (header::CONTENT_DISPOSITION, disposition),
-                (header::LAST_MODIFIED, last_modified),
-            ],
-            Vec::new(),
-        );
+    if !zero_time {
+        common.push((header::LAST_MODIFIED, last_modified));
     }
-
-    let if_range_matches = headers.get(header::IF_RANGE).is_none_or(|value| {
-        value
-            .to_str()
-            .ok()
-            .and_then(|value| parse_http_date(value).ok())
-            .is_some_and(|value| fmt_http_date(value) == last_modified)
-    });
-    let range = if length == 0 || !if_range_matches {
-        None
-    } else {
-        match headers
-            .get(header::RANGE)
-            .and_then(|value| value.to_str().ok())
-            .map(|value| parse_range(value, length))
-        {
-            Some(Ok(range)) => Some(range),
-            Some(Err(RangeError::Invalid)) => {
-                return range_error_response(relative, "invalid range", None);
-            }
-            Some(Err(RangeError::NoOverlap)) => {
-                return range_error_response(
-                    relative,
-                    "invalid range: failed to overlap",
-                    Some(format!("bytes */{length}")),
-                );
-            }
-            None => None,
+    let mut ranges = match parse_range(&range_header, length) {
+        Ok(ranges) => ranges,
+        Err(RangeError::NoOverlap) if length == 0 => Vec::new(),
+        Err(RangeError::NoOverlap) => {
+            return range_error_response(
+                relative,
+                "invalid range: failed to overlap",
+                Some(format!("bytes */{length}")),
+            );
+        }
+        Err(RangeError::Invalid) => {
+            return range_error_response(relative, "invalid range", None);
         }
     };
-    let (status, body_length, content_range) = if let Some((start, end)) = range {
-        (
-            StatusCode::PARTIAL_CONTENT,
-            end - start + 1,
-            Some(format!("bytes {start}-{end}/{length}")),
-        )
-    } else {
-        (StatusCode::OK, length, None)
-    };
-    if let Some(content_range) = content_range {
-        common.push((header::CONTENT_RANGE, content_range));
+    if ranges.iter().map(|(_, size)| *size).sum::<u64>() > length {
+        ranges.clear();
     }
-    common.push((header::CONTENT_LENGTH, body_length.to_string()));
+    let mut status = StatusCode::OK;
+    let mut send_size = length;
+    let mut segments = vec![Segment::File(0, length)];
+    match ranges.len() {
+        0 => {}
+        1 => {
+            let (start, size) = ranges[0];
+            send_size = size;
+            status = StatusCode::PARTIAL_CONTENT;
+            segments = vec![Segment::File(start, size)];
+            common.push((header::CONTENT_RANGE, range_label(start, size, length)));
+        }
+        _ => {
+            status = StatusCode::PARTIAL_CONTENT;
+            let mut boundary = [0_u8; 30];
+            if getrandom::fill(&mut boundary).is_err() {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, "multipart boundary");
+            }
+            let boundary = hex_lower(&boundary);
+            segments = Vec::new();
+            for (index, (start, size)) in ranges.iter().enumerate() {
+                let lead = if index == 0 { "" } else { "\r\n" };
+                segments.push(Segment::Text(format!(
+                    "{lead}--{boundary}\r\nContent-Range: {}\r\nContent-Type: {content_type}\r\n\r\n",
+                    range_label(*start, *size, length)
+                )));
+                segments.push(Segment::File(*start, *size));
+            }
+            segments.push(Segment::Text(format!("\r\n--{boundary}--\r\n")));
+            send_size = segments
+                .iter()
+                .map(|segment| match segment {
+                    Segment::Text(text) => text.len() as u64,
+                    Segment::File(_, size) => *size,
+                })
+                .sum();
+            common.retain(|(name, _)| *name != header::CONTENT_TYPE);
+            common.push((
+                header::CONTENT_TYPE,
+                format!("multipart/byteranges; boundary={boundary}"),
+            ));
+        }
+    }
+    common.push((header::ACCEPT_RANGES, "bytes".to_owned()));
+    common.push((header::CONTENT_LENGTH, send_size.to_string()));
     if method == Method::HEAD {
         return bytes_response(status, common, Vec::new());
     }
-    let start = range.map_or(0, |(start, _)| start);
-    if body_length > MAX_NOTE_BYTES {
-        return bytes_response(status, common, stream_file(file, start, body_length));
+    if send_size > MAX_NOTE_BYTES {
+        return bytes_response(status, common, stream_segments(file, segments));
     }
-    let body = match read_at(&mut file, start, body_length) {
-        Ok(body) => body,
-        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
-    };
+    let mut body = Vec::with_capacity(send_size as usize);
+    for segment in segments {
+        match segment {
+            Segment::Text(text) => body.extend_from_slice(text.as_bytes()),
+            Segment::File(start, size) => match read_at(&mut file, start, size) {
+                Ok(part) => body.extend_from_slice(&part),
+                Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
+            },
+        }
+    }
     bytes_response(status, common, body)
+}
+
+/// One piece of a (possibly multipart) file response.
+enum Segment {
+    Text(String),
+    File(u64, u64),
+}
+
+/// Go `httpRange.contentRange` (an empty range prints `bytes 0--1/0`).
+fn range_label(start: u64, size: u64, length: u64) -> String {
+    format!(
+        "bytes {start}-{}/{length}",
+        i128::from(start) + i128::from(size) - 1
+    )
+}
+
+fn hex_lower(bytes: &[u8]) -> String {
+    use std::fmt::Write as _;
+    bytes.iter().fold(String::new(), |mut out, byte| {
+        let _ = write!(out, "{byte:02x}");
+        out
+    })
+}
+
+enum Preconditions {
+    Failed,
+    NotModified,
+    Proceed(String),
+}
+
+/// Go `net/http.checkPreconditions` for a resource without an ETag.
+fn check_preconditions(
+    headers: &HeaderMap,
+    method: &Method,
+    modified: SystemTime,
+    zero_time: bool,
+) -> Preconditions {
+    fn trim(text: &str) -> &str {
+        text.trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
+    }
+    fn value(headers: &HeaderMap, name: header::HeaderName) -> &str {
+        headers
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or_default()
+    }
+    // `scanETag`: returns the entity tag and the text after it.
+    fn scan_etag(text: &str) -> Option<(&str, &str)> {
+        let text = trim(text);
+        let start = if text.starts_with("W/") { 2 } else { 0 };
+        let bytes = text.as_bytes();
+        if bytes.len() < start + 2 || bytes[start] != b'"' {
+            return None;
+        }
+        for index in start + 1..bytes.len() {
+            match bytes[index] {
+                0x21 | 0x23..=0x7e | 0x80..=0xff => {}
+                b'"' => return Some((&text[..=index], &text[index + 1..])),
+                _ => return None,
+            }
+        }
+        None
+    }
+    let seconds = |time: SystemTime| {
+        time.duration_since(UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_secs())
+    };
+    let get_or_head = method == Method::GET || method == Method::HEAD;
+    let parse_time = |text: &str| parse_http_date(text).ok();
+
+    // If-Match: no ETag exists, so only `*` can match.
+    let mut if_match = None;
+    let header_value = value(headers, header::IF_MATCH);
+    if !header_value.is_empty() {
+        let mut rest = header_value;
+        let mut matched = false;
+        loop {
+            rest = trim(rest);
+            if rest.is_empty() {
+                break;
+            }
+            if let Some(after) = rest.strip_prefix(',') {
+                rest = after;
+                continue;
+            }
+            if rest.starts_with('*') {
+                matched = true;
+                break;
+            }
+            match scan_etag(rest) {
+                Some((_, remain)) => rest = remain,
+                None => break,
+            }
+        }
+        if_match = Some(matched);
+    }
+    let mut failed = if_match == Some(false);
+    if if_match.is_none() {
+        let header_value = value(headers, header::IF_UNMODIFIED_SINCE);
+        if !header_value.is_empty()
+            && !zero_time
+            && let Some(time) = parse_time(header_value)
+        {
+            failed = seconds(modified) > seconds(time);
+        }
+    }
+    if failed {
+        return Preconditions::Failed;
+    }
+    // If-None-Match.
+    let header_value = value(headers, header::IF_NONE_MATCH);
+    if header_value.is_empty() {
+        if get_or_head {
+            let header_value = value(headers, header::IF_MODIFIED_SINCE);
+            if !header_value.is_empty()
+                && !zero_time
+                && let Some(time) = parse_time(header_value)
+                && seconds(modified) <= seconds(time)
+            {
+                return Preconditions::NotModified;
+            }
+        }
+    } else {
+        let mut rest = header_value;
+        let mut matches_any = false;
+        loop {
+            rest = trim(rest);
+            if rest.is_empty() {
+                break;
+            }
+            if let Some(after) = rest.strip_prefix(',') {
+                rest = after;
+                continue;
+            }
+            if rest.starts_with('*') {
+                matches_any = true;
+                break;
+            }
+            match scan_etag(rest) {
+                Some((etag, remain)) => {
+                    // The weak comparison against the missing ETag.
+                    if etag.strip_prefix("W/").unwrap_or(etag).is_empty() {
+                        matches_any = true;
+                        break;
+                    }
+                    rest = remain;
+                }
+                None => break,
+            }
+        }
+        if matches_any {
+            return if get_or_head {
+                Preconditions::NotModified
+            } else {
+                Preconditions::Failed
+            };
+        }
+    }
+    let mut range = value(headers, header::RANGE).to_owned();
+    if !range.is_empty() && get_or_head {
+        let if_range = value(headers, header::IF_RANGE);
+        if !if_range.is_empty() {
+            // An entity tag never matches (there is none); a date must be the
+            // modification time to the second.
+            let matches_date = scan_etag(if_range).is_none()
+                && parse_time(if_range).is_some_and(|time| seconds(time) == seconds(modified));
+            if !matches_date {
+                range.clear();
+            }
+        }
+    }
+    Preconditions::Proceed(range)
+}
+
+fn stream_segments(file: cap_std::fs::File, segments: Vec<Segment>) -> Body {
+    let (sender, receiver) = tokio::sync::mpsc::channel(2);
+    tokio::task::spawn_blocking(move || {
+        let mut file = file;
+        for segment in segments {
+            let (start, mut remaining) = match segment {
+                Segment::Text(text) => {
+                    if sender.blocking_send(Ok(text.into_bytes())).is_err() {
+                        return;
+                    }
+                    continue;
+                }
+                Segment::File(start, size) => (start, size),
+            };
+            if let Err(error) = file.seek(SeekFrom::Start(start)) {
+                let _ = sender.blocking_send(Err(error));
+                return;
+            }
+            while remaining > 0 {
+                let mut chunk = vec![0; remaining.min(64 * 1024) as usize];
+                match file.read(&mut chunk) {
+                    Ok(0) => {
+                        let _ = sender
+                            .blocking_send(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
+                        return;
+                    }
+                    Ok(read) => {
+                        remaining -= read as u64;
+                        chunk.truncate(read);
+                        if sender.blocking_send(Ok(chunk)).is_err() {
+                            return;
+                        }
+                    }
+                    Err(error) => {
+                        let _ = sender.blocking_send(Err(error));
+                        return;
+                    }
+                }
+            }
+        }
+    });
+    Body::from_stream(BodyReceiver(receiver))
 }
 
 async fn handle_put_file(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
-    Query(query): Query<FileQuery>,
+    query: GoQuery,
     body: Body,
 ) -> Response {
+    let query = FileQuery {
+        path: query.get("path"),
+    };
     let requested = query.path.as_deref().unwrap_or_default();
     let relative = match confined_path(&state, requested) {
         Ok(path) if extension_is_markdown(&path) => path,
@@ -5224,6 +5754,19 @@ fn extension_is_markdown(path: &Path) -> bool {
 }
 
 fn create_parent_directories(root: &cap_std::fs::Dir, path: &Path) -> io::Result<()> {
+    // Go `os.Root.MkdirAll` reports an existing last component that is a
+    // symlink leaving the root as `mkdirat X: statat X: path escapes from parent`.
+    if root
+        .symlink_metadata(path)
+        .is_ok_and(|metadata| metadata.is_symlink())
+        && let Err(error) = root.metadata(path)
+        && error.kind() == io::ErrorKind::PermissionDenied
+    {
+        let name = path.to_string_lossy();
+        return Err(io::Error::other(format!(
+            "mkdirat {name}: statat {name}: path escapes from parent"
+        )));
+    }
     let mut builder = cap_std::fs::DirBuilder::new();
     builder.recursive(true);
     #[cfg(unix)]
@@ -5309,40 +5852,6 @@ fn read_at(file: &mut cap_std::fs::File, start: u64, length: u64) -> io::Result<
     let mut body = vec![0; length];
     file.read_exact(&mut body)?;
     Ok(body)
-}
-
-fn stream_file(file: cap_std::fs::File, start: u64, length: u64) -> Body {
-    let (sender, receiver) = tokio::sync::mpsc::channel(2);
-    tokio::task::spawn_blocking(move || {
-        let mut file = file;
-        if let Err(error) = file.seek(SeekFrom::Start(start)) {
-            let _ = sender.blocking_send(Err(error));
-            return;
-        }
-        let mut remaining = length;
-        while remaining > 0 {
-            let mut chunk = vec![0; remaining.min(64 * 1024) as usize];
-            match file.read(&mut chunk) {
-                Ok(0) => {
-                    let _ =
-                        sender.blocking_send(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
-                    return;
-                }
-                Ok(read) => {
-                    remaining -= read as u64;
-                    chunk.truncate(read);
-                    if sender.blocking_send(Ok(chunk)).is_err() {
-                        return;
-                    }
-                }
-                Err(error) => {
-                    let _ = sender.blocking_send(Err(error));
-                    return;
-                }
-            }
-        }
-    });
-    Body::from_stream(BodyReceiver(receiver))
 }
 
 struct BodyReceiver<T>(tokio::sync::mpsc::Receiver<T>);
@@ -5585,34 +6094,67 @@ fn confined_path(_state: &AppState, requested: &str) -> Result<PathBuf, PathErro
     Ok(relative.to_path_buf())
 }
 
-fn parse_range(value: &str, length: u64) -> Result<(u64, u64), RangeError> {
-    let value = value.strip_prefix("bytes=").ok_or(RangeError::Invalid)?;
-    if value.contains(',') {
-        return Err(RangeError::Invalid);
+/// Go `net/http.parseRange`: `(start, length)` pairs, empty when the header is
+/// absent, empty or lists more than 200 ranges.
+fn parse_range(value: &str, size: u64) -> Result<Vec<(u64, u64)>, RangeError> {
+    const MAX_RANGES: usize = 200;
+    fn trim(text: &str) -> &str {
+        text.trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
     }
-    let (start, end) = value.split_once('-').ok_or(RangeError::Invalid)?;
-    if start.is_empty() {
-        let suffix = end.parse::<u64>().map_err(|_| RangeError::Invalid)?;
-        if suffix == 0 || length == 0 {
-            return Err(RangeError::Invalid);
+    // strconv.ParseInt(text, 10, 64) as a non-negative number.
+    fn parse_int(text: &str) -> Option<i64> {
+        text.parse::<i64>().ok()
+    }
+    if value.is_empty() {
+        return Ok(Vec::new());
+    }
+    let list = value.strip_prefix("bytes=").ok_or(RangeError::Invalid)?;
+    if list.matches(',').count() + 1 > MAX_RANGES {
+        return Ok(Vec::new());
+    }
+    let size_signed = i64::try_from(size).unwrap_or(i64::MAX);
+    let mut ranges = Vec::new();
+    let mut no_overlap = false;
+    for item in list.split(',') {
+        let item = trim(item);
+        if item.is_empty() {
+            continue;
         }
-        return Ok((length.saturating_sub(suffix), length - 1));
+        let (start, end) = item.split_once('-').ok_or(RangeError::Invalid)?;
+        let (start, end) = (trim(start), trim(end));
+        if start.is_empty() {
+            if end.is_empty() || end.starts_with('-') {
+                return Err(RangeError::Invalid);
+            }
+            let suffix = parse_int(end)
+                .filter(|value| *value >= 0)
+                .ok_or(RangeError::Invalid)?
+                .min(size_signed);
+            let begin = size_signed - suffix;
+            ranges.push((begin as u64, (size_signed - begin) as u64));
+        } else {
+            let begin = parse_int(start)
+                .filter(|value| *value >= 0)
+                .ok_or(RangeError::Invalid)?;
+            if begin >= size_signed {
+                no_overlap = true;
+                continue;
+            }
+            let length = if end.is_empty() {
+                size_signed - begin
+            } else {
+                let last = parse_int(end)
+                    .filter(|value| begin <= *value)
+                    .ok_or(RangeError::Invalid)?;
+                last.min(size_signed - 1) - begin + 1
+            };
+            ranges.push((begin as u64, length as u64));
+        }
     }
-    let start = start.parse::<u64>().map_err(|_| RangeError::Invalid)?;
-    if start >= length {
+    if no_overlap && ranges.is_empty() {
         return Err(RangeError::NoOverlap);
     }
-    let end = if end.is_empty() {
-        length - 1
-    } else {
-        end.parse::<u64>()
-            .map_err(|_| RangeError::Invalid)?
-            .min(length - 1)
-    };
-    if start > end {
-        return Err(RangeError::Invalid);
-    }
-    Ok((start, end))
+    Ok(ranges)
 }
 
 fn content_type(path: &Path, sample: &[u8]) -> String {
@@ -7079,11 +7621,12 @@ mod tests {
 
     #[test]
     fn ranges_are_bounded_and_support_suffixes() {
-        assert_eq!(parse_range("bytes=0-2", 5), Ok((0, 2)));
-        assert_eq!(parse_range("bytes=2-", 5), Ok((2, 4)));
-        assert_eq!(parse_range("bytes=-2", 5), Ok((3, 4)));
-        assert!(parse_range("bytes=9-", 5).is_err());
-        assert!(parse_range("bytes=0-1,2-3", 5).is_err());
+        assert_eq!(parse_range("bytes=0-2", 5), Ok(vec![(0, 3)]));
+        assert_eq!(parse_range("bytes=2-", 5), Ok(vec![(2, 3)]));
+        assert_eq!(parse_range("bytes=-2", 5), Ok(vec![(3, 2)]));
+        assert_eq!(parse_range("bytes=9-", 5), Err(RangeError::NoOverlap));
+        assert_eq!(parse_range("bytes=0-1,2-3", 5), Ok(vec![(0, 2), (2, 2)]));
+        assert_eq!(parse_range("bytes=", 5), Ok(Vec::new()));
     }
 
     #[test]
@@ -7435,9 +7978,14 @@ mod tests {
 
     #[test]
     fn range_parser_rejects_overflow_without_unbounded_allocation() {
+        // Go parses with ParseInt(…, 10, 64): anything above i64::MAX is invalid.
         assert!(parse_range("bytes=18446744073709551616-", 5).is_err());
         assert!(parse_range("bytes=-18446744073709551616", 5).is_err());
-        assert_eq!(parse_range("bytes=0-18446744073709551615", 5), Ok((0, 4)));
+        assert!(parse_range("bytes=0-18446744073709551615", 5).is_err());
+        assert_eq!(
+            parse_range("bytes=0-9223372036854775807", 5),
+            Ok(vec![(0, 5)])
+        );
     }
 
     #[test]
@@ -7659,9 +8207,14 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
-        let server = tokio::spawn(serve(listener, app, async {
-            let _ = stop_rx.await;
-        }));
+        let server = tokio::spawn(serve(
+            listener,
+            app,
+            async {
+                let _ = stop_rx.await;
+            },
+            None,
+        ));
         let client = tokio::task::spawn_blocking(move || {
             use std::io::{BufRead, BufReader, Read, Write};
             let socket = std::net::TcpStream::connect(address).unwrap();
@@ -7751,9 +8304,14 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
-        let server = tokio::spawn(serve(listener, app, async {
-            let _ = stop_rx.await;
-        }));
+        let server = tokio::spawn(serve(
+            listener,
+            app,
+            async {
+                let _ = stop_rx.await;
+            },
+            None,
+        ));
 
         let client = tokio::task::spawn_blocking(move || {
             let token = if authorized { token } else { "" };

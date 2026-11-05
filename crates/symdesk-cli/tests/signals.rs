@@ -650,6 +650,12 @@ fn run_case(case: &Case, rust_steps: bool) -> Result<Outcome, String> {
         }
     }
 
+    // macOS delivers FSEvents for paths written just before a stream starts
+    // when fseventsd lags (a host running other builds), so the seeding writes
+    // above surface as events of the command under test. Go's kqueue watcher
+    // never replays them; give the host time to drain before starting.
+    #[cfg(target_os = "macos")]
+    thread::sleep(Duration::from_millis(4000));
     let mut argv = vec!["--vault".to_owned(), scratch.vault.display().to_string()];
     argv.extend(case.args.iter().map(|arg| scratch.substitute(arg, &server)));
     let mut command = Command::new(binary());

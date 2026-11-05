@@ -723,7 +723,7 @@ the Rust port after Go is deleted. It needs only Python 3 and Cargo:
   replays: `mcp-differential` and `mcp-initialize-differential`
   (`mcpdiff --record`, `mcp_representative`, 23 raw-process cases of which 7 are
   MCP-001), `index-status-cli-differential` (`index-status/frozen.py`, 126 cases from
-  the canonical Go oracle `19110081`) and `render-pdfops-hostile-differential`
+  the Go oracle P) and `render-pdfops-hostile-differential`
   (`hostile_replay.py --record`, 455 hostile PDF cases through the real
   Poppler/qpdf, one recording per OS because the tool versions differ).
   `http-differential` is **retired**: see "Retired live HTTP comparison" below.

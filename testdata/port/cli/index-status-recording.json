@@ -1,6 +1,9 @@
 {
  "schema_version": 1,
- "oracle_commit": "191100811b7e61a0b43d21bd80963281c4c9cf8c",
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
  "case_inventory_sha256": "b67aef53a6094a5efa6fa0cc845141b5461971b7346591fca97893727fcf5520",
  "cases": [
   {

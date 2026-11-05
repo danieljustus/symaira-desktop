@@ -56,7 +56,7 @@
     "testdata/port/cli/index-maintenance-process.json": "14d26a169f68dfad537da57979e77781c94b149bf9ce1f2d21d9c03b9badcbd0",
     "testdata/port/cli/index-retrieval-process.json": "2c91082f03c701e8b81b2bedaaca4ad8533e3a4946dab758d2883dd1a1c2c2c4",
     "testdata/port/cli/index-retry-process.json": "7e47219100fa286159ee986021876b6e13e38194599b270703d63a63edcaad48",
-    "testdata/port/cli/index-status-recording.json": "568be328ca39051b965f5e8fd55cabd4afff7ee7d87e93b9741efca97cb2d167",
+    "testdata/port/cli/index-status-recording.json": "03fa20b44ceeac8cb6cfd1dadf91380fceb15ca10fa0b625ae56c1521bf53292",
     "testdata/port/cli/index-symlink-process.json": "e82e9283407c1d49c4ec3989dbeae038912d8f1a9fc7fbb57ca424f86d6bb586",
     "testdata/port/cli/note-doc-process.json": "83c4996812e9a3bc2bdf723706d6a38bae38a9e32ff10da457312ebac6505e7e",
     "testdata/port/cli/notebook-read-process.json": "7968b6b5f78a01941fe41a67c9d3eef2fd05e179121abd9dc99a6a76d38087be",

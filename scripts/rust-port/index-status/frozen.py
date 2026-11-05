@@ -6,8 +6,9 @@
 paired runs live. After the Go deletion (RUST-019) nothing may need Go, so the
 Go side is recorded once and replayed:
 
-* `record`  - build the canonical Go oracle from `git archive` of the oracle
-  commit, run the whole case inventory against it in disposable worlds (the
+* `record`  - build the Go oracle P (the production commit pinned in
+  `testdata/port/provenance.json`, like every other recording) from
+  `git archive`, run the whole case inventory against it in disposable worlds (the
   reviewed `capture.py` world builder, seed and case runner, role `go`) and write
   `testdata/port/cli/index-status-recording.json` with each case's exit code and
   stdout/stderr, the disposable world root replaced by a token. Nothing is
@@ -41,7 +42,6 @@ sys.path.insert(0, str(HERE))
 
 import capture  # noqa: E402
 from compare import (  # noqa: E402
-    CANONICAL_ORACLE_COMMIT,
     DEADLINE_CONTROL_CASE,
     DEADLINE_CONTROL_STDOUT,
     EMPTY_CASES,
@@ -51,7 +51,14 @@ from compare import (  # noqa: E402
 )
 
 DEFAULT_RECORDING = ROOT / "testdata/port/cli/index-status-recording.json"
+PROVENANCE = ROOT / "testdata/port/provenance.json"
 TOKENS = {"empty": b"<WORLD_EMPTY>", "populated": b"<WORLD_POPULATED>"}
+
+
+def pinned_oracle() -> dict[str, str]:
+    """The production commit P every recording is bound to (portgen verifies it)."""
+    oracle = json.loads(PROVENANCE.read_text())["oracle"]
+    return {"commit": oracle["commit"], "release": oracle["release"]}
 
 
 def run_role(binary: Path, role: str, base: Path) -> dict[str, dict[str, Any]]:
@@ -103,10 +110,10 @@ def decode_stream(entry: dict[str, str]) -> bytes:
 
 
 def build_oracle(base: Path) -> Path:
-    """Compile the canonical Go oracle from the exact commit, never from the working tree."""
+    """Compile the Go oracle P from the exact commit, never from the working tree."""
     source = base / "oracle-src"
     source.mkdir()
-    archive = subprocess.run(["git", "-C", str(ROOT), "archive", CANONICAL_ORACLE_COMMIT], capture_output=True, check=True)
+    archive = subprocess.run(["git", "-C", str(ROOT), "archive", pinned_oracle()["commit"]], capture_output=True, check=True)
     subprocess.run(["tar", "-x", "-C", str(source)], input=archive.stdout, check=True)
     binary = base / "symdesk-go"
     go = shutil.which("go")
@@ -127,12 +134,12 @@ def record(args: argparse.Namespace) -> int:
         item = observed[case_id]
         cases.append({"id": case_id, "exit_code": item["exit_code"],
                       "stdout": encode_stream(item["stdout"]), "stderr": encode_stream(item["stderr"])})
-    document = {"schema_version": 1, "oracle_commit": CANONICAL_ORACLE_COMMIT,
+    document = {"schema_version": 1, "oracle": pinned_oracle(),
                 "case_inventory_sha256": inventory_sha256(), "cases": cases}
     encoded = (json.dumps(document, indent=1, ensure_ascii=False) + "\n").encode()
     if args.check:
         if not args.recording.is_file() or args.recording.read_bytes() != encoded:
-            print(f"{args.recording.name} drifted from the live Go oracle {CANONICAL_ORACLE_COMMIT[:10]}", file=sys.stderr)
+            print(f"{args.recording.name} drifted from the live Go oracle {pinned_oracle()["commit"][:10]}", file=sys.stderr)
             return 1
         print(f"PASS {args.recording.name} matches the live Go oracle ({len(cases)} cases)")
         return 0
@@ -144,7 +151,7 @@ def record(args: argparse.Namespace) -> int:
 
 def replay(args: argparse.Namespace) -> int:
     recording = json.loads(args.recording.read_text())
-    if (recording["schema_version"] != 1 or recording["oracle_commit"] != CANONICAL_ORACLE_COMMIT
+    if (recording["schema_version"] != 1 or recording["oracle"] != pinned_oracle()
             or recording["case_inventory_sha256"] != inventory_sha256()
             or [case["id"] for case in recording["cases"]] != list(REQUIRED_CASE_IDS)):
         print("recording does not match the reviewed case inventory", file=sys.stderr)

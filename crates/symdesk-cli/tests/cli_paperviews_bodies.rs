@@ -183,7 +183,8 @@ fn files_under(directory: &Path, out: &mut Vec<PathBuf>) {
         };
         if kind.is_dir() {
             files_under(&path, out);
-        } else if kind.is_file() {
+        } else if kind.is_file() && entry.file_name() != ".DS_Store" {
+            // .DS_Store is Finder metadata of the host, never command output.
             out.push(path);
         }
     }

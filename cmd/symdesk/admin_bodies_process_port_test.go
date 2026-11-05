@@ -193,7 +193,8 @@ func snapshotAdminTree(t *testing.T, dir, root string, volatile, hashFiles bool)
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() || !entry.Type().IsRegular() {
+		if entry.IsDir() || !entry.Type().IsRegular() || entry.Name() == ".DS_Store" {
+			// .DS_Store is Finder metadata of the host, never command output.
 			return nil
 		}
 		rel, err := filepath.Rel(dir, path)

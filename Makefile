@@ -1938,3 +1938,21 @@ restore-cli-differential:
 swift-consumer:
 	@test -n "$(SYMDESK_CONSUMER_BINARY)" || { echo "swift-consumer: SYMDESK_CONSUMER_BINARY (absolute path of the Rust symdesk binary) is required" >&2; exit 2; }
 	SYMDESK_CONSUMER_BINARY="$(SYMDESK_CONSUMER_BINARY)" scripts/rust-port/swift-consumer.sh
+
+# DIST-001/002: Rust release archives (replacing GoReleaser). Builds the host
+# target with a contract version, packages it and checks the member contract
+# and `version` output of both binaries. CI's release workflow runs the same
+# scripts for every target.
+RELEASE_VERSION ?= 0.0.0-contract
+RELEASE_DIST ?= $(RUST_TARGET_DIR)/release-contract
+RELEASE_HOST := $(shell python3 -c "import platform;print({'Darwin':'darwin','Linux':'linux'}.get(platform.system(),'unsupported'), {'arm64':'arm64','aarch64':'arm64','x86_64':'amd64'}.get(platform.machine(),'unsupported'))")
+.PHONY: release-contract container-smoke
+release-contract:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/release/test_package.py
+	rm -rf "$(RELEASE_DIST)"
+	scripts/release/build.sh $(RELEASE_HOST) "$(RELEASE_VERSION)" "$(RELEASE_DIST)"
+
+# DIST-004: build the server image and run the ecosystem smoke against it.
+container-smoke:
+	docker build --build-arg VERSION=$(RELEASE_VERSION) -t symdesk-smoke:local .
+	scripts/release/container-smoke.sh symdesk-smoke:local "$(RELEASE_VERSION)"

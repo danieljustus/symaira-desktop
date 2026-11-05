@@ -127,8 +127,29 @@ def go_free_env(root):
     home = Path.home()
     env.setdefault("CARGO_HOME", str(home / ".cargo"))
     env.setdefault("RUSTUP_HOME", str(home / ".rustup"))
-    keep = [entry for entry in env.get("PATH", "").split(os.pathsep)
-            if entry and not any(Path(entry, name).is_file() for name in GO_NAMES)]
+    keep = []
+    for number, entry in enumerate(env.get("PATH", "").split(os.pathsep)):
+        if not entry:
+            continue
+        if not any(Path(entry, name).is_file() for name in GO_NAMES):
+            keep.append(entry)
+            continue
+        # A shared bin directory (Homebrew, /usr/local/bin) also holds python3, qpdf, pdftoppm
+        # that the render replays need: shadow it without the Go executables instead of
+        # dropping every tool next to them.
+        shadow = Path(root, "path", str(number))
+        shadow.mkdir(parents=True, exist_ok=True)
+        try:
+            names = sorted(os.listdir(entry))
+        except OSError:
+            continue
+        for name in names:
+            if name in GO_NAMES or name in ("gofmt", "gofmt.exe"):
+                continue
+            link = shadow / name
+            if not link.exists() and not link.is_symlink():
+                link.symlink_to(Path(entry, name))
+        keep.append(str(shadow))
     env["PATH"] = os.pathsep.join(keep)
     for name in ("GOROOT", "GOPATH", "GOTOOLCHAIN", "GOFLAGS", "GOWORK", "GOENV"):
         env.pop(name, None)

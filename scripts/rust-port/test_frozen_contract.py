@@ -121,6 +121,8 @@ class FrozenContractControls(unittest.TestCase):
             go = bin_dir / "go"
             go.write_text("#!/bin/sh\nexit 0\n")
             go.chmod(go.stat().st_mode | stat.S_IXUSR)
+            (bin_dir / "qpdf").write_text("#!/bin/sh\nexit 0\n")
+            (bin_dir / "qpdf").chmod(0o755)
             root = Path(directory, "root")
             root.mkdir()
             saved = os.environ.get("PATH", "")
@@ -130,6 +132,9 @@ class FrozenContractControls(unittest.TestCase):
             finally:
                 os.environ["PATH"] = saved
             self.assertNotIn(str(bin_dir), env["PATH"].split(os.pathsep))
+            # The sibling tool stays reachable through a shadow directory; Go does not.
+            self.assertIsNotNone(shutil.which("qpdf", path=env["PATH"]))
+            self.assertIsNone(shutil.which("go", path=env["PATH"]))
             self.assertEqual(env["HOME"], str(root / "home"))
             self.assertTrue(env["XDG_CONFIG_HOME"].startswith(str(root)))
             self.assertNotIn("GOROOT", env)

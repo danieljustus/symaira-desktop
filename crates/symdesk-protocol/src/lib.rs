@@ -6,9 +6,9 @@
 //! Axum defaults: authentication, headers, path confinement, snapshots, and
 //! file ranges are all tested at the HTTP boundary.
 
-pub mod mcp_frame;
 mod go_http;
 mod go_json;
+pub mod mcp_frame;
 #[cfg(any(test, unix, target_os = "windows"))]
 mod mime;
 #[cfg(target_os = "windows")]

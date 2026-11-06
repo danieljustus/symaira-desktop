@@ -104,3 +104,25 @@ make value-002-validate VALUE002_OUTPUT=... VALUE002_CANDIDATE=<40-hex>
 ```
 
 Smoke (any host, no evidence): `value002.py run ... --profile smoke --samples 4 --warmups 2`.
+
+## Capture log (declared before each run)
+
+**Run 1 (candidate `8ba6eb5b`, 2026-11-06 05:58-06:14 CET):** retained as
+`results/value002-8ba6eb5b-run1.json`, `passed: false`. Improvement passed
+(combined binaries 25.14 % smaller, representative RSS 54.09 % lower, sustained
+mixed-load RSS 55.67 % lower), contracts and sustained checks passed, every
+latency cohort's interval lower bound stayed below +10 %, but the run failed
+closed on precision: `http.snapshot.go-rust` interval width 0.4769 > 0.40
+(interval [-57.89 %, -10.20 %], i.e. Rust faster, but too wide to carry
+acceptance information). The host was not quiet during the run: load1 4.94 at
+start, timeline mean 12.07, max 22.76, 19.34 at the end (concurrent agent
+sessions; `fseventsd` wedged at ~100 % CPU).
+
+**Declared procedure for run 2 (written before it starts):** the precision rule
+says such a run "carries no acceptance information"; it is not evidence of a
+regression. Following the VALUE-001 practice of comparing repeated full runs
+(`value001-order-bias-repair.md`), exactly **one** confirmation run is made on the
+same candidate, same build record, same thresholds and same rule, started only
+below load1 5.5. Run 2 decides VALUE-002: if it fails for any reason, VALUE-002
+is FAIL and the port stops for a decision by the owner. Run 1 stays retained and
+is reported next to run 2 either way; no further reruns.

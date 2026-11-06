@@ -139,3 +139,19 @@ because run 2 produced no data, it does not count as the confirmation run; the
 single confirmation run is repeated under exactly the rules declared above (same
 candidate, build record, thresholds and rule; start below load1 5.5). Its result
 decides VALUE-002; if it fails or aborts again, VALUE-002 is FAIL.
+
+**Run 3, the confirmation run (2026-11-06 07:01-07:16 CET): FAIL.** Retained as
+`results/value002-8ba6eb5b-run3.json`, `passed: false`. Started at load1 4.47;
+timeline mean 8.99, max 27.03. Improvement passed (binaries 25.14 % smaller,
+representative RSS 36.54 % lower, sustained mixed-load RSS 50.48 % lower);
+contracts and sustained passed; no cohort's interval lower bound exceeded +10 %.
+Failed closed on precision again: `http.snapshot.rust-go` interval width 0.5016
+> 0.40 (point +7.55 %, interval [-5.62 %, +44.54 %]); the other order was
+-42.05 % [-60.29 %, -24.09 %].
+
+**Verdict under the declared procedure: VALUE-002 FAIL for candidate
+`8ba6eb5b`.** The port stops here for an owner decision. Observation, not a
+verdict change: in both runs the only failing check is the precision rule on
+`http.snapshot`, in alternating order cohorts, with Rust faster in the other
+cohort, on a host that was busy throughout (mean load 9-12, peaks 23-27).
+No run showed a demonstrated latency regression; none could exclude one either.

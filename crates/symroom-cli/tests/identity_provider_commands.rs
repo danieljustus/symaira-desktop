@@ -20,7 +20,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 
 /// Cases in the committed fixture (macOS-only and Unix-only ones included).
 const EXPECTED_CASES: usize = 119;

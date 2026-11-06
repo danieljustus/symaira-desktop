@@ -21,7 +21,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::Digest;
 use symroom_core::{event::Event, identity};
 
 #[derive(Deserialize)]

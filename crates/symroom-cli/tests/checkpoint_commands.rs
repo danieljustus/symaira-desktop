@@ -22,7 +22,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::Digest;
 use symroom_core::{event::Event, identity};
 
 const NORMALIZATION: &str = "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event";

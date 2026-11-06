@@ -1,14 +1,13 @@
 #[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
 mod oracle_sources;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 use symdesk_contacts::import::{ColumnMapping, detect_column_mapping, parse_csv};
 use symdesk_contacts::pipeline::normalize;
 #[test]
 fn go_csv_contracts() {
     let fixture: Value =
         serde_json::from_str(include_str!("../../../testdata/port/contacts/csv.json")).unwrap();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let _root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, expected) in fixture["source_hashes"].as_object().unwrap() {
         oracle_sources::assert_recorded_source_hash(path, expected.as_str().unwrap());
     }

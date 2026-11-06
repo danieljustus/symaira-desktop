@@ -16,10 +16,7 @@ use std::{
 };
 
 use serde::Deserialize;
-use symdesk_vault::{
-    retention_state::{RetentionState, RetentionStateError, retention_state},
-    sha256,
-};
+use symdesk_vault::retention_state::{RetentionState, RetentionStateError, retention_state};
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -441,13 +438,6 @@ fn sanitise_error(message: &str, sandbox: &Sandbox) -> String {
             "{{OUTSIDE_FILE}}",
         )
         .replace('\\', "/")
-}
-
-fn sha256_hex(data: &[u8]) -> String {
-    sha256::digest(data)
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
 }
 
 static NEXT_SANDBOX: AtomicU64 = AtomicU64::new(0);

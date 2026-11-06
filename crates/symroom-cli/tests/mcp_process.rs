@@ -33,7 +33,6 @@ use std::{
 
 use serde::Deserialize;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 

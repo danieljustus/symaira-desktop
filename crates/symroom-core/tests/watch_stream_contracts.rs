@@ -5,7 +5,6 @@ mod oracle_sources;
 use std::{fs, io::BufReader, path::Path};
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::desk_watch::{EventStreamItem, watch_stream};
 
 #[derive(Deserialize)]

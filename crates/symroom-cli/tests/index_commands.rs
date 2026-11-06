@@ -17,7 +17,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::index;
 
 #[derive(Deserialize)]

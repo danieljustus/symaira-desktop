@@ -7,12 +7,10 @@ mod oracle_sources;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
-use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde::Deserialize;
 use serde_json::value::RawValue;
-use sha2::{Digest, Sha256};
 use symroom_core::{
     event::Event,
     journal,

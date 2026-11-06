@@ -10,7 +10,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::{
     event::{self, Event},
     journal::{VerifyChainError, verify_chain},
@@ -55,7 +54,7 @@ fn go_outer_surrogate_event_boundary() {
     .expect("Go-owned outer surrogate fixture parses");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 45, "nonempty, complete oracle corpus");
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let _root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     assert_eq!(fixture.source_hashes.len(), 5);
     for source in [
         "internal/room/event/event.go",

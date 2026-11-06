@@ -6,7 +6,6 @@ use std::{fs, path::PathBuf};
 
 use rusqlite::Connection;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::{index, journal};
 
 #[derive(Deserialize)]

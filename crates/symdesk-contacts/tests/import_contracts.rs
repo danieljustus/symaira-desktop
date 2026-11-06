@@ -9,7 +9,7 @@ use symdesk_contacts::{
 fn go_import_plan_apply_and_database() {
     let fixture: Value =
         serde_json::from_str(include_str!("../../../testdata/port/contacts/import.json")).unwrap();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let _root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, expected) in fixture["source_hashes"].as_object().unwrap() {
         oracle_sources::assert_recorded_source_hash(path, expected.as_str().unwrap());
     }

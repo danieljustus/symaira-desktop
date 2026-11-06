@@ -22,7 +22,6 @@ use std::{
 
 use serde::Deserialize;
 use serde_json::value::RawValue;
-use sha2::{Digest, Sha256};
 use symroom_core::{event::Event, identity};
 
 #[derive(Deserialize)]

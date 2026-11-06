@@ -18,7 +18,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::{event::Event, identity};
 
 const ROOM_ID: &str = "rm_0123456789abcdef";

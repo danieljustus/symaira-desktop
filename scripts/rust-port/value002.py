@@ -1277,7 +1277,10 @@ def run_value002(args: argparse.Namespace) -> dict[str, Any]:
         marker = v1.mark_output_incomplete(output)
         done = False
         try:
-            with tempfile.TemporaryDirectory(prefix="symdesk-value002-") as temp_name, LoadTimeline() as timeline:
+            # ignore_cleanup_errors: Finder/Spotlight can drop a .DS_Store into the
+            # scratch dir after the measurement; a failed rmdir must not discard
+            # a completed capture (run 2 of 2026-11-06 was lost that way).
+            with tempfile.TemporaryDirectory(prefix="symdesk-value002-", ignore_cleanup_errors=True) as temp_name, LoadTimeline() as timeline:
                 temp_root = Path(temp_name)
                 binary_dir = args.binary_dir / output.stem
                 members: dict[str, dict[str, dict[str, Any]]] = {}

@@ -126,3 +126,16 @@ same candidate, same build record, same thresholds and same rule, started only
 below load1 5.5. Run 2 decides VALUE-002: if it fails for any reason, VALUE-002
 is FAIL and the port stops for a decision by the owner. Run 1 stays retained and
 is reported next to run 2 either way; no further reruns.
+
+**Run 2 (2026-11-06 06:24-06:39 CET): aborted, no result.** Started at load1
+4.07. The measurement ran to the end, but the harness crashed in
+`TemporaryDirectory.__exit__` (`OSError: [Errno 66] Directory not empty`: a
+`.DS_Store` written by Finder into the scratch directory on the external volume),
+so no result file and no verdict were produced and nothing was printed or seen.
+This is a harness defect, not a measurement outcome. Fix: scratch cleanup
+ignores such errors, and the runtime root moves to the internal disk
+(`VALUE_RUNTIME_ROOT=/private/tmp/...`). Amendment, declared before the rerun:
+because run 2 produced no data, it does not count as the confirmation run; the
+single confirmation run is repeated under exactly the rules declared above (same
+candidate, build record, thresholds and rule; start below load1 5.5). Its result
+decides VALUE-002; if it fails or aborts again, VALUE-002 is FAIL.

@@ -165,3 +165,21 @@ owner's video-conference client (alfaview, ~0.6-0.8 core, steady) stays open by
 choice and is recorded as known background load. Run 4 decides VALUE-002 for
 this candidate; runs 1-3 stay retained and are reported next to it. A failure
 or abort returns to the owner; no automatic rerun.
+
+**Run 4 (2026-11-06 09:54-10:11 CET): FAIL on latency.** Retained as
+`results/value002-8ba6eb5b-run4.json`, `passed: false`. Start load1 5.07, mean
+7.53, max 11.71 (`fseventsd` healthy, alfaview open). Improvement passed
+(binaries 25.14 % smaller, representative RSS 58.42 % lower, sustained
+mixed-load RSS 27.63 % lower); contracts and sustained passed. Latency failed on
+the ceiling, not on precision: `http.snapshot.rust-go` +39.51 %
+[+22.98 %, +73.37 %], lower bound above +10 %. The other order was -38.26 %
+[-50.45 %, -28.73 %].
+
+**Verdict: VALUE-002 FAIL for candidate `8ba6eb5b`.** Pattern across runs 1, 3
+and 4: `http.snapshot` is consistently faster for Rust when Go is requested
+first (-31.7 %, -42.1 %, -38.3 %) and slower when Rust is requested first
+(+10.5 %, +7.6 %, +39.5 %). That is a systematic order effect on one route.
+Whether it is a positional artefact of the paired schedule or a real Rust
+first-request cost is not established; the fixed-order control experiment from
+#936 has to decide it before any further candidate run. Port stopped for the
+owner.

@@ -1,0 +1,167 @@
+{
+  "schema": 1,
+  "rounds": 100,
+  "warmups": 10,
+  "blocks": [
+    {
+      "block": "fixed-go-rust",
+      "load1_after": 5.00048828125,
+      "go": {
+        "headers_ms": 1.7098125,
+        "total_ms": 3.776021,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 1.7414795,
+        "total_ms": 3.7660835,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.0185207442336515,
+      "ratio_total_ms": 0.9973682614582917,
+      "paired_total_ratio_median": 1.0372428765582673,
+      "paired_total_ratio_above_1_10": 40
+    },
+    {
+      "block": "fixed-rust-go",
+      "load1_after": 4.83984375,
+      "go": {
+        "headers_ms": 1.911,
+        "total_ms": 4.137292,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 2.019354,
+        "total_ms": 4.3049165,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.0567001569858712,
+      "ratio_total_ms": 1.0405155111120994,
+      "paired_total_ratio_median": 0.9770304309905093,
+      "paired_total_ratio_above_1_10": 35
+    },
+    {
+      "block": "isolated-go-first",
+      "load1_after": 4.64306640625,
+      "go": {
+        "headers_ms": 1.6070415,
+        "total_ms": 3.6312715,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 0.659708,
+        "total_ms": 1.71375,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 0.4105108673298107,
+      "ratio_total_ms": 0.47194212826003235,
+      "paired_total_ratio_median": 0.4836267204954428,
+      "paired_total_ratio_above_1_10": 24
+    },
+    {
+      "block": "gate-fixed-go-rust",
+      "load1_after": 4.361328125,
+      "go": {
+        "headers_ms": 1.0761669999999999,
+        "total_ms": 3.088646,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 1.2448955000000002,
+        "total_ms": 2.836271,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.1567865396355772,
+      "ratio_total_ms": 0.918289438155101,
+      "paired_total_ratio_median": 1.0315665674358212,
+      "paired_total_ratio_above_1_10": 42
+    },
+    {
+      "block": "gate-fixed-rust-go",
+      "load1_after": 4.26953125,
+      "go": {
+        "headers_ms": 1.4920415,
+        "total_ms": 3.8506875000000003,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 1.8130005,
+        "total_ms": 3.641792,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.2151139897918388,
+      "ratio_total_ms": 0.9457511158721656,
+      "paired_total_ratio_median": 0.9605572688286138,
+      "paired_total_ratio_above_1_10": 36
+    },
+    {
+      "block": "fixed-rust-go#2",
+      "load1_after": 3.83984375,
+      "go": {
+        "headers_ms": 1.7653125,
+        "total_ms": 3.9023335,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 1.913792,
+        "total_ms": 3.9235415,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.0841094707027792,
+      "ratio_total_ms": 1.0054346969576022,
+      "paired_total_ratio_median": 0.9393981501725677,
+      "paired_total_ratio_above_1_10": 32
+    },
+    {
+      "block": "fixed-go-rust#2",
+      "load1_after": 4.0048828125,
+      "go": {
+        "headers_ms": 1.8874170000000001,
+        "total_ms": 4.410708,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 2.1685415,
+        "total_ms": 4.421291500000001,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.1489466821587384,
+      "ratio_total_ms": 1.0023995013952411,
+      "paired_total_ratio_median": 1.0626399190241966,
+      "paired_total_ratio_above_1_10": 45
+    },
+    {
+      "block": "isolated-rust-first",
+      "load1_after": 5.0,
+      "go": {
+        "headers_ms": 1.2525,
+        "total_ms": 3.118979,
+        "bytes": 2489120.0,
+        "n": 100
+      },
+      "rust": {
+        "headers_ms": 1.8891040000000001,
+        "total_ms": 3.622188,
+        "bytes": 2489099.0,
+        "n": 100
+      },
+      "ratio_headers_ms": 1.5082666666666669,
+      "ratio_total_ms": 1.1613377326362249,
+      "paired_total_ratio_median": 1.0356821017596125,
+      "paired_total_ratio_above_1_10": 46
+    }
+  ]
+}

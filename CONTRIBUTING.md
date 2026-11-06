@@ -6,25 +6,21 @@ Thanks for helping improve SymDesk. Contributions should preserve the project’
 
 - Explain the user-visible problem and the smallest useful change.
 - Keep public and Pro boundaries intact; do not add cloud, billing, or tenant-management code to this repository.
-- Preserve CGO-free Go builds and zero stdout pollution for the MCP server.
+- Preserve zero stdout pollution for the MCP server and the frozen Go-recorded contracts.
 - Update tests and documentation when behavior or contracts change.
 
 ## Local checks
 
-The frozen Go/Rust oracle contracts require Go 1.26.10. Select that toolchain
-explicitly rather than regenerating fixtures after a newer Go version changes
-the recorded behavior.
+The core is Rust (toolchain pinned in `rust-toolchain.toml`); no Go toolchain is needed. The Go implementation was retired in RUST-019: its last commit is `075fdf94` (tag `v0.12.2`), where the Go sources stay readable in git history.
 
 ```sh
-export GOTOOLCHAIN=go1.26.10
 make build
 make lint
-make test # macOS: CGO_ENABLED=0 go test -race ./...
+make test
+make port-contract # fixture checksums + frozen replay of the Go-recorded fixtures
 ```
 
-On Linux and Windows, run `CGO_ENABLED=1 go test -race -count=1 ./...` with a
-C toolchain instead of `make test`: the race detector requires CGO on those
-platforms. This matches the CI test command; production builds stay CGO-free.
+Never edit committed fixtures under `testdata/port/` by hand or regenerate them: the Go generators are gone, so `scripts/rust-port/provenance_check.py` pins every fixture byte.
 
 For macOS app changes, also run:
 

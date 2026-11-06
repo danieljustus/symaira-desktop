@@ -1,3 +1,5 @@
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use symdesk_contacts::vcard::parse_vcard;
@@ -7,14 +9,7 @@ fn go_vcard_contracts() {
         serde_json::from_str(include_str!("../../../testdata/port/contacts/vcard.json")).unwrap();
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, expected) in fixture["source_hashes"].as_object().unwrap() {
-        assert_eq!(
-            format!(
-                "{:x}",
-                Sha256::digest(std::fs::read(root.join(path)).unwrap())
-            ),
-            expected.as_str().unwrap(),
-            "{path}"
-        );
+        oracle_sources::assert_recorded_source_hash(path, expected.as_str().unwrap());
     }
     let cases = fixture["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 40);

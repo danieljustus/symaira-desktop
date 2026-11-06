@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -74,8 +76,7 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
     assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 4);
     for (path, expected) in &fixture.source_hashes {
-        let digest = Sha256::digest(fs::read(root.join(path)).expect("read Go oracle source"));
-        assert_eq!(hex::encode(digest), *expected, "Go source hash: {path}");
+        oracle_sources::assert_recorded_source_hash(path, expected);
     }
 
     let temp = TempDir::new();

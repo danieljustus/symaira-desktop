@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::{fs, path::PathBuf};
 
 use serde::Deserialize;
@@ -62,12 +64,9 @@ fn go_merge_all_disk_order_corruption_and_scanner_prefix() {
     .expect("fixture JSON");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 3);
-    let mut source =
-        fs::read(root.join("internal/room/journal/merge.go")).expect("Go merge source");
-    source.extend_from_slice(
-        &fs::read(root.join("internal/room/journal/journal.go")).expect("Go reader source"),
-    );
-    assert_eq!(fixture.source_hash, hex::encode(Sha256::digest(source)));
+    // Concatenation of internal/room/journal/merge.go and
+    // internal/room/journal/journal.go at the last Go commit (075fdf94).
+    oracle_sources::assert_recorded_source_hash("internal/room/journal", &fixture.source_hash);
 
     for case in fixture.cases {
         let room = scratch(&case.id);

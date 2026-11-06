@@ -15,7 +15,7 @@ Cargo.lock text eol=lf
 /VAULT.md text eol=lf
 /.github/workflows/release.yml text eol=lf
 /home-assistant-addon/symdesk/config.yaml text eol=lf
-/internal/pdf/internal/assets/** text=auto eol=lf
+/crates/symdesk-render/assets/pdf/** text=auto eol=lf
 /testdata/port/** -text
 
 # Generated JSON fixtures and retained evidence are byte-checked on every OS.
@@ -23,3 +23,5 @@ Cargo.lock text eol=lf
 /docs/rust-port/results/*.json text eol=lf
 /crates/symdesk-index/tests/data/dataset_sync_time/*.json text eol=lf
 /crates/symdesk-index/tests/data/dataset_sync_time/*.jsonl text eol=lf
+# Pure fixture input (the Go time probe, renamed from .go in RUST-019 so the tree has no Go source).
+/crates/symdesk-index/tests/data/dataset_sync_time/go_time_probe.go.txt text eol=lf

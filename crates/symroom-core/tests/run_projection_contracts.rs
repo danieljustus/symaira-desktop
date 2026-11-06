@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -112,14 +114,12 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         "internal/room/journal/merge.go",
         "internal/room/members/members.go",
     ] {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../..")
-            .join(source);
-        let bytes = fs::read(&path).unwrap_or_else(|err| panic!("read {}: {err}", path.display()));
-        assert_eq!(
-            fixture.source_hashes.get(source),
-            Some(&hex::encode(Sha256::digest(bytes))),
-            "oracle source hash {source}"
+        oracle_sources::assert_recorded_source_hash(
+            source,
+            fixture
+                .source_hashes
+                .get(source)
+                .unwrap_or_else(|| panic!("missing source hash for {source}")),
         );
     }
 

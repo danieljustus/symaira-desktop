@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::{
     collections::BTreeMap,
     fs,
@@ -44,8 +46,7 @@ fn replays_go_verify_chain_cases() {
     assert_eq!(fixture.cases.len(), 15, "Go case inventory");
     assert_eq!(fixture.source_hashes.len(), 4, "Go source inventory");
     for (relative, expected) in &fixture.source_hashes {
-        let source = fs::read(repository.join(relative)).expect("read Go source");
-        assert_eq!(hex::encode(Sha256::digest(source)), *expected, "{relative}");
+        oracle_sources::assert_recorded_source_hash(relative, expected);
     }
     let mut names = std::collections::BTreeSet::new();
     for case in &fixture.cases {

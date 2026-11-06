@@ -8,6 +8,8 @@
 //! changed). Random key material of freshly created identities is checked for
 //! consistency and masked on both sides.
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -454,13 +456,7 @@ fn identity_store_and_index_rebuild_match_go_process_contract() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.source_hashes.len(), 5);
     for (source, expected) in &fixture.source_hashes {
-        let bytes =
-            fs::read(root.join(source)).unwrap_or_else(|error| panic!("read {source}: {error}"));
-        assert_eq!(
-            expected,
-            &hex::encode(Sha256::digest(bytes)),
-            "Go oracle source hash {source}"
-        );
+        oracle_sources::assert_recorded_source_hash(source, expected);
     }
     let temp = TempDir::new();
     let is_root = cfg!(unix) && running_as_root(&temp.0);

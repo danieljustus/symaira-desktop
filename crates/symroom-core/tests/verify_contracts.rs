@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -40,12 +42,7 @@ fn room_verify_matches_go_findings_and_error_class() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.source_hashes.len(), 4);
     for (path, hash) in &fixture.source_hashes {
-        assert_eq!(
-            hex::encode(Sha256::digest(
-                fs::read(root.join(path)).expect("Go source")
-            )),
-            *hash
-        );
+        oracle_sources::assert_recorded_source_hash(path, hash);
     }
     let temp = TempDir::new();
     for case in fixture.cases {

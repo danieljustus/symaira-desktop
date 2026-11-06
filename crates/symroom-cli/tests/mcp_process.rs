@@ -11,6 +11,8 @@
 //! queue behind them. A case marks the calls whose answer Go sends at once
 //! (`cap_sensitive_ids`); Rust answers them only after a worker is free.
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -435,13 +437,7 @@ fn mcp_process_matches_go_for_cancellation_shutdown_and_concurrency() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.source_hashes.len(), 3);
     for (source, expected) in &fixture.source_hashes {
-        let bytes =
-            fs::read(root.join(source)).unwrap_or_else(|error| panic!("read {source}: {error}"));
-        assert_eq!(
-            expected,
-            &hex::encode(Sha256::digest(bytes)),
-            "Go oracle source hash {source}"
-        );
+        oracle_sources::assert_recorded_source_hash(source, expected);
     }
     let temp = TempDir::new();
     let (mut replayed, mut skipped) = (0_usize, 0_usize);

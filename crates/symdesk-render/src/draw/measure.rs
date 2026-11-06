@@ -1,6 +1,6 @@
 //! Port of Go `internal/draw/measure` (text measurement, line breaking and
 //! intrinsic node sizing against the embedded Inter fonts) and of the
-//! `internal/draw/fonts` embedding/hash helpers it depends on.
+//! `crates/symdesk-render/assets/fonts` embedding/hash helpers it depends on.
 //!
 //! Glyph outlines use the unhinted TrueType decoder; SVG path formatting lives
 //! in `draw::emit`.
@@ -20,9 +20,9 @@ use super::sfnt::{Font, FontError};
 
 /// Go `fonts.Regular`: raw bytes of `Inter-Regular.ttf`.
 pub const INTER_REGULAR: &[u8] =
-    include_bytes!("../../../../internal/draw/fonts/Inter-Regular.ttf");
+    include_bytes!("../../assets/fonts/Inter-Regular.ttf");
 /// Go `fonts.Bold`: raw bytes of `Inter-Bold.ttf`.
-pub const INTER_BOLD: &[u8] = include_bytes!("../../../../internal/draw/fonts/Inter-Bold.ttf");
+pub const INTER_BOLD: &[u8] = include_bytes!("../../assets/fonts/Inter-Bold.ttf");
 
 const REGULAR_NAME: &str = "Inter-Regular.ttf";
 const BOLD_NAME: &str = "Inter-Bold.ttf";

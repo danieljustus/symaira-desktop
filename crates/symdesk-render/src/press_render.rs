@@ -29,7 +29,7 @@ const MITEX_VERSION: &str = "0.2.7";
 
 macro_rules! asset {
     ($path:literal) => {
-        include_bytes!(concat!("../../../internal/pdf/internal/assets/", $path)) as &[u8]
+        include_bytes!(concat!("../assets/pdf/", $path)) as &[u8]
     };
 }
 
@@ -103,11 +103,11 @@ const PACKAGES: &[(&str, &[u8])] = &[
 const FONTS: &[(&str, &[u8])] = &[
     (
         "Inter-Bold.ttf",
-        include_bytes!("../../../internal/draw/fonts/Inter-Bold.ttf"),
+        include_bytes!("../assets/fonts/Inter-Bold.ttf"),
     ),
     (
         "Inter-Regular.ttf",
-        include_bytes!("../../../internal/draw/fonts/Inter-Regular.ttf"),
+        include_bytes!("../assets/fonts/Inter-Regular.ttf"),
     ),
 ];
 

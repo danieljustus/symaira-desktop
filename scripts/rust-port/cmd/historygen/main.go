@@ -791,7 +791,12 @@ func stableForCheck(raw []byte) []byte {
 				continue
 			}
 			path, _ := entry["path"].(string)
-			if isDir, _ := entry["is_dir"].(bool); !isDir && strings.HasPrefix(path, ".symdesk/history/manifest/") {
+			isDir, _ := entry["is_dir"].(bool)
+			if isDir {
+				// Directory sizes are filesystem metadata (APFS vs ext4/overlay).
+				delete(entry, "size")
+			}
+			if !isDir && strings.HasPrefix(path, ".symdesk/history/manifest/") {
 				delete(entry, "content_base64")
 				delete(entry, "sha256")
 				delete(entry, "size")

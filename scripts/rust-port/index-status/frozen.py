@@ -1,39 +1,29 @@
 #!/usr/bin/env python3
 """Frozen (Go-free) index-status CLI contract.
 
-`verify.py` is the native evidence gate: it builds the canonical Go oracle
-(CANONICAL_ORACLE_COMMIT) and the exact clean Rust candidate and compares 85
-paired runs live. After the Go deletion (RUST-019) nothing may need Go, so the
-Go side is recorded once and replayed:
+The Go side was recorded once (canonical oracle commit pinned in
+`testdata/port/provenance.json`; the recorder left the tree with the Go code in
+RUST-019, last Go commit 075fdf94 / v0.12.2) into
+`testdata/port/cli/index-status-recording.json`: each case's exit code and
+stdout/stderr with the disposable world root replaced by a token.
 
-* `record`  - build the Go oracle P (the production commit pinned in
-  `testdata/port/provenance.json`, like every other recording) from
-  `git archive`, run the whole case inventory against it in disposable worlds (the
-  reviewed `capture.py` world builder, seed and case runner, role `go`) and write
-  `testdata/port/cli/index-status-recording.json` with each case's exit code and
-  stdout/stderr, the disposable world root replaced by a token. Nothing is
-  hand-written; `--check` fails when the file drifts from a fresh Go run.
-* `replay`  - run the very same world builder and case runner with a Rust binary
-  (the populated world is seeded by the Rust `index` instead of the Go one) and
-  compare every case with the recording through `compare.normalize` (world roots,
-  Go pointer fields); the 150ms deadline control keeps its two admitted phases.
-  It never starts Go. `crates/symdesk-cli/tests/index_status_frozen.rs` drives it.
+* `replay`  - run the reviewed `capture.py` world builder and case runner with a
+  Rust binary (the populated world is seeded by the Rust `index`) and compare
+  every case with the recording through `compare.normalize` (world roots, Go
+  pointer fields); the 150ms deadline control keeps its two admitted phases.
+  `crates/symdesk-cli/tests/index_status_frozen.rs` drives it.
 
 Usage:
-    frozen.py record [--check] [--recording FILE] [--go-bin PATH]
     frozen.py replay --rust-bin PATH [--recording FILE]
 """
 from __future__ import annotations
 
 import argparse
 import contextlib
-import io
 import json
 import os
 import shutil
-import subprocess
 import sys
-import tarfile
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -133,47 +123,6 @@ def decode_stream(entry: dict[str, str]) -> bytes:
     return entry["text"].encode("utf-8") if "text" in entry else bytes.fromhex(entry["hex"])
 
 
-def build_oracle(base: Path) -> Path:
-    """Compile the Go oracle P from the exact commit, never from the working tree."""
-    source = base / "oracle-src"
-    source.mkdir()
-    archive = subprocess.run(["git", "-C", str(ROOT), "archive", pinned_oracle()["commit"]], capture_output=True, check=True)
-    # Extract in-process: the fixture check runs under a toolchain-only PATH without tar.
-    with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as bundle:
-        bundle.extractall(source, filter="data")
-    binary = base / "symdesk-go"
-    go = shutil.which("go")
-    if go is None:
-        raise RuntimeError("recording the Go oracle needs a Go toolchain on PATH")
-    env = dict(os.environ, GOTOOLCHAIN="go1.26.10", GOENV="off", GOWORK="off", GOFLAGS="-mod=readonly", CGO_ENABLED="0")
-    subprocess.run([go, "build", "-o", str(binary), "./cmd/symdesk"], cwd=source, env=env, check=True, timeout=1200)
-    return binary
-
-
-def record(args: argparse.Namespace) -> int:
-    with short_temp() as base:
-        binary = args.go_bin.resolve(strict=True) if args.go_bin else build_oracle(base)
-        observed = run_role(binary, "go", base)
-    cases = []
-    for case_id in REQUIRED_CASE_IDS:
-        item = observed[case_id]
-        cases.append({"id": case_id, "exit_code": item["exit_code"],
-                      "stdout": encode_stream(item["stdout"]), "stderr": encode_stream(item["stderr"])})
-    document = {"schema_version": 1, "oracle": pinned_oracle(),
-                "case_inventory_sha256": inventory_sha256(), "cases": cases}
-    encoded = (json.dumps(document, indent=1, ensure_ascii=False) + "\n").encode()
-    if args.check:
-        if not args.recording.is_file() or args.recording.read_bytes() != encoded:
-            print(f"{args.recording.name} drifted from the live Go oracle {pinned_oracle()["commit"][:10]}", file=sys.stderr)
-            return 1
-        print(f"PASS {args.recording.name} matches the live Go oracle ({len(cases)} cases)")
-        return 0
-    args.recording.parent.mkdir(parents=True, exist_ok=True)
-    args.recording.write_bytes(encoded)
-    print(f"recorded {args.recording} ({len(cases)} cases)")
-    return 0
-
-
 def replay(args: argparse.Namespace) -> int:
     recording = json.loads(args.recording.read_text())
     if (recording["schema_version"] != 1 or recording["oracle"] != pinned_oracle()
@@ -209,15 +158,11 @@ def replay(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="mode", required=True)
-    rec = sub.add_parser("record")
-    rec.add_argument("--check", action="store_true")
-    rec.add_argument("--recording", type=Path, default=DEFAULT_RECORDING)
-    rec.add_argument("--go-bin", type=Path, help="prebuilt canonical Go oracle (default: build it from the oracle commit)")
     rep = sub.add_parser("replay")
     rep.add_argument("--rust-bin", type=Path, required=True)
     rep.add_argument("--recording", type=Path, default=DEFAULT_RECORDING)
     args = parser.parse_args()
-    return record(args) if args.mode == "record" else replay(args)
+    return replay(args)
 
 
 if __name__ == "__main__":

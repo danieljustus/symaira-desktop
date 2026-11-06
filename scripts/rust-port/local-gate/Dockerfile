@@ -1,10 +1,10 @@
 # Native Linux (arm64 on Apple Silicon) image for scripts/rust-port/local-gate.sh.
 # Mirrors the ubuntu Rust jobs in .github/workflows/ci.yml; keep pins in sync.
+# No Go toolchain (RUST-019): the Go tree is retired.
 # ponytail: same Ubuntu 24.04 as ubuntu-latest, but arm64 instead of x86_64;
 # the single CI run of the closing push remains the x86_64 evidence.
 FROM ubuntu:24.04
 
-ARG GO_VERSION=1.26.10
 ARG NIGHTLY=nightly-2026-09-03
 # Pinned to the typst the macOS host runs (the press render oracle records it).
 ARG TYPST_VERSION=0.15.1
@@ -20,17 +20,13 @@ RUN apt-get update \
       build-essential pkg-config poppler-utils qpdf sqlite3 \
  && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz" \
-    | tar -C /usr/local -xz
-
 RUN userdel -r ubuntu 2>/dev/null; useradd -m -u 1000 -s /bin/bash dev \
  && echo 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev
 
 USER dev
-ENV PATH=/usr/local/go/bin:/home/dev/go/bin:/home/dev/.cargo/bin:$PATH \
+ENV PATH=/home/dev/.cargo/bin:$PATH \
     CARGO_HOME=/home/dev/.cargo \
-    RUSTUP_HOME=/home/dev/.rustup \
-    GOTOOLCHAIN=local
+    RUSTUP_HOME=/home/dev/.rustup
 
 RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.98.0 \
       --component clippy,rustfmt,llvm-tools-preview \
@@ -41,11 +37,11 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-to
       cargo-hack@0.6.45 cargo-llvm-cov@0.9.0 cargo-fuzz@0.13.2 \
  && git config --global safe.directory '*' \
  && git --version \
- && mkdir -p /home/dev/.cargo/registry /home/dev/go /home/dev/target
+ && mkdir -p /home/dev/.cargo/registry /home/dev/target
 
 # Typst for the press render differential (RENDER-002). Last layer, so changing
-# the pin does not rebuild the toolchain layers above. It goes to /usr/bin: the
-# fixture checks (portgen) run with a PATH reduced to git's directory and GOROOT.
+# the pin does not rebuild the toolchain layers above. It goes to /usr/bin so
+# it stays on the reduced PATH of the frozen-contract replays.
 RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils \
  && sudo rm -rf /var/lib/apt/lists/* \
  && arch="$(dpkg --print-architecture)" \

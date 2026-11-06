@@ -1,29 +1,16 @@
 #!/usr/bin/env python3
-"""Go-oracle hostile PDF replay with REAL Poppler/qpdf (no stub tools).
+"""Frozen hostile PDF replay with REAL Poppler/qpdf (no stub tools, no Go).
 
-Builds the Go oracle driver (internal/ingest/testdata/portpdfops, which calls
-the production ingest facade) and the Rust probe (symdesk-render pdfops_probe),
-generates the deterministic hostile corpus (hostile_inputs.py) plus valid
-multi-page documents, then runs every operation (split/merge/rotate) with the
-installed pdfinfo/pdfseparate/pdfunite/qpdf on both sides in disposable worlds.
-Compared per case: response/error text, every filesystem side effect (whole
-world incl. a sibling directory and the HOME/XDG/tmp dirs), and for each produced
-PDF the real qpdf/pdfinfo view of it (page count, --check status, semantic JSON
-without /ID, pdfinfo text) plus byte hashes (reported; required equal with the random /ID neutralized; raw equality is reported).
-Resource bounds: wall clock, RLIMIT_FSIZE, delta size, response size.
-Mutation controls prove the comparator and the real pipeline reject faults.
-Inputs are generated, never oracle output; expectations come from the Go run.
+The Go PDF adapters were run once over the deterministic hostile corpus
+(hostile_inputs.py, 455 cases) with the installed pdfinfo/pdfseparate/pdfunite/
+qpdf and recorded per OS in
+`testdata/port/render/pdfops-hostile-recording-<os>.json` (last Go commit
+075fdf94, tag v0.12.2; the Go recorder left the tree in RUST-019).
 
-Frozen mode (RUST-019, no Go needed afterwards):
-
-* `--record [FILE]` / `--check`: run only the Go driver over the whole corpus with
-  the real tools and write (or verify) the per-OS recording
-  `testdata/port/render/pdfops-hostile-recording-<os>.json`: tool versions plus one
-  normalized observation per case (`make render-pdfops-hostile-fixtures-generate`);
-* `--replay FILE --rust-binary PROBE`: rebuild each world, run the Rust probe with the
-  same real tools and compare with the recorded Go observation
-  (`crates/symdesk-render/tests/pdfops_hostile_frozen.rs`). It starts no Go and needs
-  the same tool versions the recording names.
+`--replay FILE --rust-binary PROBE` rebuilds each world, runs the Rust probe
+with the same real tools and compares every observation with the recorded Go
+one (`crates/symdesk-render/tests/pdfops_hostile_frozen.rs`). It needs the same
+tool versions the recording names.
 """
 import argparse
 import hashlib
@@ -46,8 +33,7 @@ ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / 'scripts/rust-port'))
 from hostile_inputs import document  # noqa: E402
-from real_tools import pdf as make_pdf  # noqa: E402
-from verify import compare, normalized  # noqa: E402
+from common import compare, normalized, pdf as make_pdf  # noqa: E402
 
 TOOLS = ('PDFInfo', 'PDFSeparate', 'PDFUnite', 'QPDF')
 NAMES = ('pdfinfo', 'pdfseparate', 'pdfunite', 'qpdf')
@@ -281,22 +267,6 @@ class Harness:
         return normalized(view, world), normalized(info, world)
 
 
-def compare_case(harness, case, tools_rust=None):
-    seen = []
-    infos = []
-    for language, binary in (('go', harness.go), ('rust', harness.rust)):
-        view, info = harness.observe(case, language, binary, tools_rust if language == 'rust' else None)
-        seen.append(view)
-        infos.append(info)
-    (harness.out / f'{case["id"]}.json').write_text(json.dumps(seen, indent=1, sort_keys=True) + '\n')
-    try:
-        compare(*seen)
-        error = None
-    except AssertionError as exc:
-        error = str(exc)
-    return seen, infos, error
-
-
 def host_os():
     if sys.platform == 'darwin': return 'darwin'
     if sys.platform.startswith('linux'): return 'linux'
@@ -331,49 +301,6 @@ def hostile_inputs(runtime, paths):
     return inputs_for(generated)
 
 
-def build_go_driver(runtime):
-    go = runtime / 'bin/pdfops-go'
-    go.parent.mkdir(parents=True)
-    # The Go tool this process was started with (the portgen check puts its own GOROOT first).
-    toolchain = dict(os.environ, GOTOOLCHAIN='go1.26.10', GOENV='off', GOWORK='off')
-    go_root = subprocess.check_output(['go', 'env', 'GOROOT'], text=True, env=toolchain, cwd=ROOT).strip()
-    subprocess.run([f'{go_root}/bin/go', 'build', '-o', str(go), './internal/ingest/testdata/portpdfops'], cwd=ROOT, check=True,
-                   timeout=900, env=dict(os.environ, GOTOOLCHAIN='local', GOENV='off', GOWORK='off', CGO_ENABLED='0'))
-    identity = json.loads(subprocess.check_output([str(go), '--identity'], timeout=30))
-    assert identity['compiler'] == 'go1.26.10', identity
-    return go, identity
-
-
-def record_document(runtime, out):
-    paths = real_tool_paths()
-    go, identity = build_go_driver(runtime)
-    harness = Harness(out, runtime, paths, go, None, hostile_inputs(runtime, paths))
-    cases = []
-    for case in corpus():
-        view, _ = harness.observe(case, 'go', go)
-        cases.append({'id': case['id'], 'view': view})
-    return {'schema_version': 1, 'oracle': identity['oracle'], 'compiler': identity['compiler'], 'os': host_os(),
-            'tools': tool_versions(paths), 'cases': cases}
-
-
-def record_main(args):
-    out, runtime = args.output.resolve(), args.runtime_root.resolve()
-    for path in (out, runtime): path.mkdir(parents=True, exist_ok=False)
-    document = record_document(runtime, out)
-    encoded = (json.dumps(document, indent=1, sort_keys=True, ensure_ascii=False) + '\n').encode()
-    target = args.recording or default_recording()
-    if args.check:
-        if not target.is_file() or target.read_bytes() != encoded:
-            print(f'{target.name} drifted from the live Go PDF adapters on {host_os()}', file=sys.stderr)
-            return 1
-        print(f'PASS {target.name} matches the live Go PDF adapters ({len(document["cases"])} cases, real tools {document["tools"]})')
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(encoded)
-    print(f'recorded {target} ({len(document["cases"])} cases)')
-    return 0
-
-
 def replay_main(args):
     """Replay the recorded Go observations through the Rust probe; Go is never started."""
     out, runtime = args.output.resolve(), args.runtime_root.resolve()
@@ -383,8 +310,8 @@ def replay_main(args):
     paths = real_tool_paths()
     versions = tool_versions(paths)
     if versions != recording['tools']:
-        print(f'installed tools {versions} differ from the recorded {recording["tools"]}; re-record with '
-              f'make render-pdfops-hostile-fixtures-generate', file=sys.stderr)
+        print(f'installed tools {versions} differ from the recorded {recording["tools"]}; the recording needs the '
+              f'same tool versions (the Go recorder is retired)', file=sys.stderr)
         return 1
     rust = args.rust_binary.resolve(strict=True)
     harness = Harness(out, runtime, paths, None, rust, hostile_inputs(runtime, paths))
@@ -409,148 +336,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--runtime-root', type=Path)
-    parser.add_argument('--record', action='store_true', help='record the Go observations (no Rust side)')
-    parser.add_argument('--check', action='store_true', help='with --record: verify the committed recording instead of writing it')
-    parser.add_argument('--recording', type=Path, help='recording file for --record/--check (default: per-OS file)')
-    parser.add_argument('--replay', type=Path, help='replay this recording through --rust-binary (no Go)')
-    parser.add_argument('--go-binary', type=Path)
-    parser.add_argument('--rust-binary', type=Path)
-    parser.add_argument('--only', help='regex of case ids (diagnostics; never certifies)')
+    parser.add_argument('--replay', type=Path, required=True, help='recording to replay through --rust-binary')
+    parser.add_argument('--rust-binary', type=Path, required=True)
     args = parser.parse_args()
-    if args.check and not args.record: parser.error('--check needs --record')
-    if args.record or args.replay:
-        scratch = None
-        if not args.output or not args.runtime_root:
-            scratch = Path(tempfile.mkdtemp(prefix='symdesk-hostile-'))
-            args.output, args.runtime_root = args.output or scratch / 'out', args.runtime_root or scratch / 'runtime'
-        try:
-            return record_main(args) if args.record else replay_main(args)
-        finally:
-            if scratch: shutil.rmtree(scratch, ignore_errors=True)
-    if not args.output or not args.runtime_root: parser.error('--output and --runtime-root are required')
-    out, runtime = args.output.resolve(), args.runtime_root.resolve()
-    out.mkdir(parents=True, exist_ok=False)
-    runtime.mkdir(parents=True, exist_ok=False)
-    found = {name: shutil.which(name) for name in NAMES}
-    if not all(found.values()): raise RuntimeError(f'real Poppler/qpdf tools required: {found}')
-    paths = {name: str(Path(path or '').resolve()) for name, path in found.items()}
-    report = {'passed': False, 'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-              'dirty': subprocess.check_output(['git', 'status', '--porcelain=v1'], cwd=ROOT, text=True),
-              'native_os': platform.system(), 'native_arch': platform.machine(), 'tools': {}, 'cases': [], 'filtered': bool(args.only)}
+    scratch = None
+    if not args.output or not args.runtime_root:
+        scratch = Path(tempfile.mkdtemp(prefix='symdesk-hostile-'))
+        args.output, args.runtime_root = args.output or scratch / 'out', args.runtime_root or scratch / 'runtime'
     try:
-        for name, path in paths.items():
-            raw = subprocess.run([path, '--version' if name == 'qpdf' else '-v'], capture_output=True, text=True, timeout=15)
-            report['tools'][name] = {'path': path, 'sha256': digest(Path(path).read_bytes()), 'version': (raw.stdout + raw.stderr).splitlines()[0]}
-        if args.go_binary and args.rust_binary:
-            go, rust = args.go_binary.resolve(), args.rust_binary.resolve()
-        else:
-            go = runtime / 'bin/pdfops-go'
-            go.parent.mkdir()
-            toolchain = dict(os.environ, GOTOOLCHAIN='go1.26.10', GOENV='off', GOWORK='off')
-            go_root = subprocess.check_output(['go', 'env', 'GOROOT'], text=True, env=toolchain, cwd=ROOT).strip()
-            subprocess.run([f'{go_root}/bin/go', 'build', '-o', str(go), './internal/ingest/testdata/portpdfops'], cwd=ROOT, check=True,
-                           timeout=900, env=dict(os.environ, GOTOOLCHAIN='local', GOENV='off', GOWORK='off', CGO_ENABLED='0'))
-            # The fixture check runs under a toolchain-only PATH; cargo still
-            # needs the system linker driver and its own proxies.
-            cargo_env = dict(os.environ, PATH=os.pathsep.join([os.environ.get('PATH', ''), str(Path.home() / '.cargo/bin'), '/usr/bin', '/bin']))
-            cargo = str(Path.home() / '.cargo/bin/cargo')
-            subprocess.run([cargo, 'build', '--locked', '-p', 'symdesk-render', '--examples'], cwd=ROOT, check=True, timeout=1800, env=cargo_env)
-            target = json.loads(subprocess.check_output([cargo, 'metadata', '--no-deps', '--format-version', '1'], cwd=ROOT, env=cargo_env))['target_directory']
-            rust = Path(target) / 'debug/examples/pdfops_probe'
-        report['binaries'] = {str(p): digest(p.read_bytes()) for p in (go, rust)}
-        identity = json.loads(subprocess.check_output([str(go), '--identity'], timeout=30))
-        assert identity['compiler'] == 'go1.26.10', identity
-        report['oracle'] = identity
-        # generate (and check determinism of) the hostile inputs with the real qpdf
-        generated = runtime / 'inputs'
-        subprocess.run([sys.executable, '-I', str(HERE / 'hostile_inputs.py'), str(generated), paths['qpdf']], check=True, capture_output=True, timeout=60)
-        again = runtime / 'inputs-again'
-        subprocess.run([sys.executable, '-I', str(HERE / 'hostile_inputs.py'), str(again), paths['qpdf']], check=True, capture_output=True, timeout=60)
-        report['input_manifest'] = json.loads((generated / 'manifest.json').read_text())
-        assert report['input_manifest'] == json.loads((again / 'manifest.json').read_text()), 'hostile inputs not deterministic'
-        inputs = inputs_for(generated)
-        harness = Harness(out, runtime, paths, go, rust, inputs)
-        # valid inputs must really be valid, hostile ones must really be hostile to the real tools
-        scratch = runtime / 'inputs-check'
-        scratch.mkdir()
-        env = harness.tool_env(scratch)
-        report['input_checks'] = {}
-        for name, data in sorted(inputs.items()):
-            (scratch / f'{name}.pdf').write_bytes(data)
-            code, _, _ = harness.run([paths['qpdf'], '--check', str(scratch / f'{name}.pdf')], scratch, env)
-            report['input_checks'][name] = code
-        for name in ('good', 'b', 'valid'): assert report['input_checks'][name] == 0, f'{name} must pass qpdf --check'
-        assert any(report['input_checks'][n] != 0 for n in HOSTILE), 'no input hostile to the real tools'
-        cases = [c for c in corpus() if not args.only or re.search(args.only, c['id'])]
-        failures = byte_equal = byte_total = 0
-        stats = {'ok': {'split': 0, 'merge': 0, 'rotate': 0}, 'error': {'split': 0, 'merge': 0, 'rotate': 0}}
-        last_ok = None
-        for case in cases:
-            seen, infos, error = compare_case(harness, case)
-            go_view = seen[0]
-            stats['error' if go_view['response']['error'] else 'ok'][case['operation']] += 1
-            if case['id'] == 'merge-good-b': last_ok = case
-            for rel, digest_go in infos[0]['bytes'].items():
-                byte_total += 1
-                byte_equal += digest_go == infos[1]['bytes'].get(rel)
-            record = {'id': case['id'], 'operation': case['operation'], 'passed': error is None,
-                      'go_error': go_view['response']['error'][:120], 'outputs': len(go_view['outputs'])}
-            if error: record['error'] = error; failures += 1
-            report['cases'].append(record)
-            print(f'{case["id"]}: {"PASS" if error is None else "FAIL " + error[:200]}', flush=True)
-        report.update(case_count=len(cases), stats=stats, raw_byte_identical_outputs=byte_equal, id_neutral_identical_outputs=byte_total, total_outputs=byte_total,
-                      peak_child_rss_bytes=harness.maxrss, tool_invocations=harness.commands)
-        assert report['cases'] and failures == 0, f'{failures} hostile differential mismatches'
-        if not args.only:
-            for op in ('split', 'merge', 'rotate'):
-                assert stats['ok'][op] >= 10 and stats['error'][op] >= 10, f'corpus does not exercise both outcomes for {op}: {stats}'
-            assert byte_total > 50
-            # ---- mutation controls -------------------------------------------------
-            assert last_ok is not None
-            seen, _, _ = compare_case(harness, last_ok)
-            good = seen[0]
-            output_key = next(iter(good['outputs']))
-            bad_pages = json.loads(json.dumps(good))
-            bad_pages['outputs'][output_key]['npages']['stdout'] = '99'
-            bad_error = json.loads(json.dumps(good)); bad_error['response']['error'] = 'tampered'
-            bad_extra = json.loads(json.dumps(good)); bad_extra['delta']['work/extra.pdf'] = {'type': 'file', 'mode': 420, 'size': 1}
-            bad_sem = json.loads(json.dumps(good)); bad_sem['outputs'][output_key]['semantic_sha256'] = '0' * 64
-            bad_missing = json.loads(json.dumps(good)); bad_missing['outputs'].pop(output_key)
-            controls = 0
-            for bad in (bad_pages, bad_error, bad_extra, bad_sem, bad_missing):
-                try: compare(good, bad)
-                except AssertionError: controls += 1
-                else: raise AssertionError('comparator mutation accepted')
-            # injected faults in the REAL Rust pipeline must be caught by the same replay
-            shims = runtime / 'shims'
-            shims.mkdir()
-            faults = {
-                'rotate-wrong-angle': ('rotate-good-90', "args = [a.replace('--rotate=+90', '--rotate=+180') for a in args]"),
-                'check-always-fails': ('split-good-range', "if '--check' in args: sys.exit(2)"),
-                'merge-truncates-ranges': ('merge-good-b', "args = ['1' if a == '1-z' else a for a in args]"),
-            }
-            report['fault_controls'] = {}
-            for fault, (case_id, body) in faults.items():
-                shim = shims / f'{fault}-qpdf'
-                shim.write_text(f"#!{sys.executable}\nimport os, sys\nargs = sys.argv[1:]\n{body}\nos.execv({paths['qpdf']!r}, [{paths['qpdf']!r}] + args)\n")
-                shim.chmod(0o755)
-                case = next(c for c in corpus() if c['id'] == case_id)
-                tools = {key: paths[name] for key, name in zip(TOOLS, NAMES)} | {'QPDF': str(shim)}
-                _, _, error = compare_case(harness, case | {'id': f'fault-{fault}'}, tools)
-                assert error, f'fault {fault} was not detected by the comparator'
-                report['fault_controls'][fault] = error[:200]
-                controls += 1
-            report['mutation_controls'] = controls
-        report['binaries_unchanged'] = report['binaries'] == {str(p): digest(p.read_bytes()) for p in (go, rust)}
-        report['tools_unchanged'] = all(digest(Path(t['path']).read_bytes()) == t['sha256'] for t in report['tools'].values())
-        assert report['binaries_unchanged'] and report['tools_unchanged']
-        report['passed'] = not args.only
-        print(f'{"PASS" if report["passed"] else "FILTERED"} {len(cases)} hostile real-tool Go/Rust pairs; '
-              f'{byte_total} outputs byte-identical after /ID neutralisation ({byte_equal} raw); stats {stats}', flush=True)
+        return replay_main(args)
     finally:
-        (out / 'report.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
-    return 0 if report['passed'] or args.only else 1
+        if scratch: shutil.rmtree(scratch, ignore_errors=True)
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    sys.exit(main())

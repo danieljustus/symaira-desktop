@@ -5,7 +5,8 @@
 #
 #   scripts/rust-port/local-gate.sh macos|linux|all [make-target ...]
 #
-# Default targets: rust-check rust-lint rust-test port-contract.
+# Default targets: rust-check rust-lint rust-test port-contract (Go-free:
+# provenance checksums + the frozen replay of every Go-recorded fixture).
 # Env: LOCAL_GATE_LOG_DIR / LOCAL_GATE_RECEIPTS, LOCAL_GATE_SLUG (separates
 #      the container cache volumes of parallel worktrees), ALLOW_DIRTY=1
 #      (receipt is marked dirty and is not evidence), MAKE_PREFIX (e.g. the
@@ -68,11 +69,9 @@ run_linux() {
   # shellcheck disable=SC2086 # $targets is a word list
   docker run --rm ${pg_args[@]+"${pg_args[@]}"} -v "$root:$root" -v "$common:$common" -w "$root" \
     -v "symdesk-gate-registry:/home/dev/.cargo/registry" \
-    -v "symdesk-gate-go-$slug:/home/dev/go" \
     -v "symdesk-gate-target-$slug:/home/dev/target" \
     -e CARGO_TARGET_DIR=/home/dev/target -e MIRI_TARGET_DIR=/home/dev/target/miri \
-    -e CARGO_INCREMENTAL=0 -e GOCACHE=/home/dev/go/cache -e GOMODCACHE=/home/dev/go/pkg/mod \
-    -e GOPROXY=https://proxy.golang.org,direct \
+    -e CARGO_INCREMENTAL=0 \
     -e RENDER_EVIDENCE_ROOT="${RENDER_EVIDENCE_ROOT:+${RENDER_EVIDENCE_ROOT}-linux}" \
     -e RENDER_RUNTIME_ROOT="${RENDER_RUNTIME_ROOT:+${RENDER_RUNTIME_ROOT}-linux}" \
     "$image" make $targets

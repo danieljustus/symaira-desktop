@@ -92,7 +92,13 @@ class QuietHostTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "out.json"
             record = Path(directory) / "record.json"
-            record.write_text(json.dumps(load_fixture()["build_record"]))
+            build_record = load_fixture()["build_record"]
+            # The busy-host refusal must not depend on how far the checkout has
+            # moved past the fixture's candidate: bind the record to HEAD.
+            build_record["candidate"]["commit"] = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+            ).strip()
+            record.write_text(json.dumps(build_record))
             args = value002.parse_args(
                 [
                     "run", "--root", str(ROOT), "--build-record", str(record), "--go-archive", "g",

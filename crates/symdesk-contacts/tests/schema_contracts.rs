@@ -16,9 +16,11 @@ fn go_schema_and_migration_bookkeeping() {
             // The Go migration bytes are retired; the recorded hash must still
             // match the byte-identical copy owned by this crate.
             let filename = std::path::Path::new(path).file_name().unwrap();
-            let bytes =
-                std::fs::read(root.join("crates/symdesk-contacts/migrations").join(filename))
-                    .unwrap();
+            let bytes = std::fs::read(
+                root.join("crates/symdesk-contacts/migrations")
+                    .join(filename),
+            )
+            .unwrap();
             assert_eq!(
                 format!("{:x}", Sha256::digest(&bytes)),
                 expected.as_str().unwrap(),

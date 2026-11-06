@@ -19,8 +19,7 @@ use super::ir::{write_f64, write_string};
 use super::sfnt::{Font, FontError};
 
 /// Go `fonts.Regular`: raw bytes of `Inter-Regular.ttf`.
-pub const INTER_REGULAR: &[u8] =
-    include_bytes!("../../assets/fonts/Inter-Regular.ttf");
+pub const INTER_REGULAR: &[u8] = include_bytes!("../../assets/fonts/Inter-Regular.ttf");
 /// Go `fonts.Bold`: raw bytes of `Inter-Bold.ttf`.
 pub const INTER_BOLD: &[u8] = include_bytes!("../../assets/fonts/Inter-Bold.ttf");
 

@@ -1,9 +1,9 @@
 #![deny(unsafe_code)]
 
-#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
-mod oracle_sources;
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;

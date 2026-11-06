@@ -40,7 +40,10 @@ fn watch_stream_replays_go_scanner_and_handler_contract() {
     )
     .expect("parse Go watch fixture");
     assert_eq!(fixture.schema_version, 1);
-    oracle_sources::assert_recorded_source_hash("internal/room/desk/watch.go", &fixture.source_hash);
+    oracle_sources::assert_recorded_source_hash(
+        "internal/room/desk/watch.go",
+        &fixture.source_hash,
+    );
     for case in fixture.cases {
         let mut input = if case.input_hex.is_empty() {
             case.input.into_bytes()

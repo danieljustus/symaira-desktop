@@ -38,118 +38,11 @@ jobs:
     with:
       hosted: macos-26
 
-  test:
-    strategy:
-      matrix:
-        # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
-        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
-        go-version: ["1.26.10"]
-    needs: [decide]
-    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          clean: ${{ runner.environment != 'self-hosted' }}
-          # portgen provenance tests read the pinned oracle revision via git.
-          fetch-depth: 0
-      - name: Prune stale gate worktrees on the persistent self-hosted checkout
-        if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
-        run: git worktree prune
-
-
-      # Source-provenance tests read several pinned Go revisions with `git show`.
-      # Keep every pinned oracle reachable through local branches because
-      # FETCH_HEAD alone is not transferred by git clone --no-local.
-      - name: Materialize pinned Go oracle for source guards
-        run: |
-          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
-          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
-          git fetch --no-tags origin +e077104b1be0c2c82ddfc64109a46aaeb4a114cf:refs/heads/rust-port-oracle-e077104b1be0c2c82ddfc64109a46aaeb4a114cf
-          git fetch --no-tags origin +09245b243154f484d8e14afdc9056b9999dd530d:refs/heads/rust-port-oracle-09245b243154f484d8e14afdc9056b9999dd530d
-          git fetch --no-tags origin +7035aab79df453f7e9d5c1a5084ac46e9a39b2a2:refs/heads/rust-port-oracle-7035aab79df453f7e9d5c1a5084ac46e9a39b2a2
-          git fetch --no-tags origin +3a8b461ade6fe3682a9d983bae697ad02c411b31:refs/heads/rust-port-oracle-3a8b461ade6fe3682a9d983bae697ad02c411b31
-          git fetch --no-tags origin +68095b7eabff2de0e901c90931432b125df7ebc4:refs/heads/rust-port-oracle-68095b7eabff2de0e901c90931432b125df7ebc4
-          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
-          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          cache: ${{ runner.environment != 'self-hosted' }}
-          go-version: ${{ matrix.go-version }}
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Verify dependencies
-        run: go mod verify
-
-      - name: Build
-        run: go build ./...
-
-      # The archive stamp Go oracle (internal/archive) recovers stamps with
-      # pdftotext; without Poppler the test fails instead of skipping.
-      - name: Install Poppler for the archive stamp oracle
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sudo apt-get update && sudo apt-get install -y poppler-utils
-          else
-            brew install poppler
-          fi
-
-      - name: Test
-        if: matrix.os != 'ubuntu-latest'
-        run: go test -race -count=1 -timeout 20m ./...
-
-      - name: Test with coverage
-        if: matrix.os == 'ubuntu-latest'
-        run: go test -race -count=1 -timeout 20m -coverprofile=coverage.out ./...
-
-      - name: Native retention runner negative controls
-        if: matrix.os == 'ubuntu-latest'
-        run: make retention-cli-regressions-test
-
-      - name: Coverage gate
-        if: matrix.os == 'ubuntu-latest'
-        # Floor set to the measured baseline (issue #488: 73.6%) minus a small
-        # buffer, so the gate blocks regressions without failing on today's
-        # code. Raise COVERAGE_THRESHOLD as coverage improves.
-        env:
-          COVERAGE_THRESHOLD: "70"
-        run: |
-          set -euo pipefail
-          ./scripts/check-go-coverage-threshold.sh --self-test "$COVERAGE_THRESHOLD"
-          ./scripts/check-go-coverage-threshold.sh coverage.out "$COVERAGE_THRESHOLD"
-
-  # Preserve the existing ruleset context without mislabeling the real matrix.
-  # Remove this compatibility job when the ruleset adopts a versionless name.
-  required-go-tests:
-    name: test (ubuntu-latest, 1.26.6)
-    needs: test
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require the current Go test matrix to pass
-        env:
-          TEST_RESULT: ${{ needs.test.result }}
-        run: test "$TEST_RESULT" = success
-
   lint:
+    # Swift design-system guard. Rust fmt/clippy run in the `rust` job.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.26.10"
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Check formatting
-        run: test -z "$(gofmt -l .)"
 
       - name: Design-system font guard (no inline role font literals)
         # Issue #352: app text must use .symairaText(role) instead of inline
@@ -161,20 +54,10 @@ jobs:
             exit 1
           fi
 
-      - name: Corekit manifest pin guard
-        # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
-        run: ./scripts/check-corekit-pins.sh
-
-      - name: Nested module version guard
-        # Issue #535: Go version directive and shared dependency versions must stay aligned across root and nested modules.
-        run: ./scripts/check-nested-versions.sh
-
-      - name: Module boundary guard
-        # Issue #536: packages outside permitted facades must not import absorbed library internals.
-        run: ./scripts/check-module-boundaries.sh
-
   port-contract:
-    # Advisory parity coverage is retained on main, weekly, and manual suites.
+    # Go-free: fixture provenance checksums plus the frozen replay of every
+    # Go-recorded fixture (make port-contract). Retained on main, weekly and
+    # manual suites.
     if: github.event_name != 'pull_request'
     name: Rust port contract
     strategy:
@@ -189,41 +72,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           clean: ${{ runner.environment != 'self-hosted' }}
-          # portgen provenance checks read the pinned oracle revision via git.
+          # The oracle bundle's prerequisite commit and the last Go commit
+          # (075fdf94) must be present for --history checks and bundle replays.
           fetch-depth: 0
       - name: Prune stale gate worktrees on the persistent self-hosted checkout
         if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
+        # Stale worktree registrations survive in the kept checkout.
         run: git worktree prune
 
-
-      # Windows runs clone-based Go source-provenance checks in the contracts.
-      - name: Materialize pinned Go oracle for source guards
-        shell: bash
-        run: |
-          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
-          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
-          git fetch --no-tags origin +e077104b1be0c2c82ddfc64109a46aaeb4a114cf:refs/heads/rust-port-oracle-e077104b1be0c2c82ddfc64109a46aaeb4a114cf
-          git fetch --no-tags origin +09245b243154f484d8e14afdc9056b9999dd530d:refs/heads/rust-port-oracle-09245b243154f484d8e14afdc9056b9999dd530d
-          git fetch --no-tags origin +7035aab79df453f7e9d5c1a5084ac46e9a39b2a2:refs/heads/rust-port-oracle-7035aab79df453f7e9d5c1a5084ac46e9a39b2a2
-          git fetch --no-tags origin +3a8b461ade6fe3682a9d983bae697ad02c411b31:refs/heads/rust-port-oracle-3a8b461ade6fe3682a9d983bae697ad02c411b31
-          git fetch --no-tags origin +68095b7eabff2de0e901c90931432b125df7ebc4:refs/heads/rust-port-oracle-68095b7eabff2de0e901c90931432b125df7ebc4
-          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
-          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          cache: ${{ runner.environment != 'self-hosted' }}
-          go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
 
-      # The archive stamp Go oracle needs pdftotext; Windows validates the
-      # stored oracle without regenerating it, so it needs no Poppler.
-      - name: Install Poppler for the archive stamp oracle
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
+      # The Rust archive stamp contract measures its own output with Poppler.
+      - name: Install Poppler for the archive stamp contract
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
@@ -232,30 +94,14 @@ jobs:
             brew install poppler
           fi
 
-      - name: Verify frozen Go oracle fixtures and differential harness
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
+      - name: Verify fixture provenance and replay the frozen Go oracle fixtures
         run: make port-contract
 
-      - name: Verify Windows migration failure controls
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: python3 scripts/rust-port/test_native_ci_contract.py
-
-      - name: Verify frozen oracle and differential harness on Windows
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p bin
-          go run ./scripts/rust-port/cmd/portgen --check
-          go test -count=1 ./scripts/rust-port/...
-          go build -ldflags "-X main.version=0.12.2" -o bin/symdesk.exe ./cmd/symdesk
-          go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/symroom.exe ./cmd/symroom
-          go run ./scripts/rust-port/cmd/diffharness --allow-same-binary --symdesk-left bin/symdesk.exe --symdesk-right bin/symdesk.exe --symroom-left bin/symroom.exe --symroom-right bin/symroom.exe --cases testdata/port/cli/cases.json
+      - name: Bind recorded Go source hashes to the last Go commit
+        run: make port-provenance-history
 
   rust:
-    # Full Rust gates are advisory; keep the required PR path focused on Go.
-    if: github.event_name != 'pull_request'
+    # RUST-019: the Go gates are gone, so the full Rust gates are the PR path too.
     name: Rust
     runs-on: ubuntu-latest
     steps:
@@ -263,10 +109,6 @@ jobs:
         with:
           # Historical evidence gates compare immutable prior revisions.
           fetch-depth: 0
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
         run: |
@@ -299,8 +141,8 @@ jobs:
         run: make rust-fuzz-smoke
 
   frozen-contract:
-    # Issue #1153: the Rust contract suite must keep protecting the port after
-    # Go is deleted, so this job deliberately installs no Go toolchain.
+    # Issue #1153 / RUST-019: the Rust contract suite protects the port without
+    # Go; this job proves it by removing any preinstalled Go toolchain.
     if: github.event_name != 'pull_request'
     name: Rust frozen contract (no Go)
     runs-on: ubuntu-latest
@@ -364,42 +206,20 @@ jobs:
           clean: ${{ runner.environment != 'self-hosted' }}
           # Detach even on main pushes; the gate owns an exact-SHA temporary branch.
           ref: ${{ github.sha }}
-          # The pinned Go source oracles are validated from Git history.
+          # Replays read the embedded oracle bundle and the last Go commit.
           fetch-depth: 0
       - name: Prune stale gate worktrees on the persistent self-hosted checkout
         if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
+        # Stale worktree registrations survive in the kept checkout.
         run: git worktree prune
 
-
-      # The source-guard tests clone this checkout, so retain every pinned Go
-      # source revision through local branches rather than only FETCH_HEAD.
-      - name: Materialize pinned Go oracle for source guards
-        shell: bash
-        run: |
-          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
-          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
-          git fetch --no-tags origin +e077104b1be0c2c82ddfc64109a46aaeb4a114cf:refs/heads/rust-port-oracle-e077104b1be0c2c82ddfc64109a46aaeb4a114cf
-          git fetch --no-tags origin +09245b243154f484d8e14afdc9056b9999dd530d:refs/heads/rust-port-oracle-09245b243154f484d8e14afdc9056b9999dd530d
-          git fetch --no-tags origin +7035aab79df453f7e9d5c1a5084ac46e9a39b2a2:refs/heads/rust-port-oracle-7035aab79df453f7e9d5c1a5084ac46e9a39b2a2
-          git fetch --no-tags origin +3a8b461ade6fe3682a9d983bae697ad02c411b31:refs/heads/rust-port-oracle-3a8b461ade6fe3682a9d983bae697ad02c411b31
-          git fetch --no-tags origin +68095b7eabff2de0e901c90931432b125df7ebc4:refs/heads/rust-port-oracle-68095b7eabff2de0e901c90931432b125df7ebc4
-          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
-          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          cache: ${{ runner.environment != 'self-hosted' }}
-          go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
 
       # The Rust archive stamp contract measures its own output with Poppler
-      # (pdftotext/pdftoppm); Windows skips only those measurements.
+      # (pdftotext/pdftoppm).
       - name: Install Poppler for the archive stamp contract
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
@@ -407,28 +227,6 @@ jobs:
           else
             brew install poppler
           fi
-
-      - name: Run native config paths differential
-        shell: bash
-        env:
-          CONFIG_PATHS_EVIDENCE_DIR: ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}
-        run: |
-          set -euo pipefail
-          make config-paths-native CONFIG_PATHS_EVIDENCE_DIR="$CONFIG_PATHS_EVIDENCE_DIR"
-
-      - name: Retain native config paths evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: config-paths-native-${{ matrix.os }}-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/gate.json
-            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/sources.before.json
-            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/sources.after.json
-            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/commands/
-            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/capture/
-          retention-days: 14
-          if-no-files-found: error
 
       - name: Replay native contacts and ingest path contracts
         shell: bash
@@ -447,24 +245,10 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Replay native Windows config paths and filesystem regressions
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: make config-verbatim-differential
-
-      - name: Replay dataset service contract on Windows
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: cargo test -p symdesk-index --test dataset_service_contracts --locked
-
       - name: Check, lint, and test Rust workspace
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/rust-port/test_native_ci_contract.py
-          python3 scripts/rust-port/test_download_go_modules.py
-          go run ./scripts/rust-port/cmd/vaultwritegen --check
-          go test -count=1 ./scripts/rust-port/cmd/vaultwritegen
           cargo fmt --all --check
           cargo check --workspace --all-targets --all-features --locked
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
@@ -515,18 +299,6 @@ jobs:
         shell: bash
         run: make retention-cli-differential
 
-      - name: Run native retention CLI raw-state regressions
-        shell: bash
-        run: |
-          suffix=""
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then suffix=".exe"; fi
-          target_dir="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
-          python3 scripts/retention_cli_regressions.py \
-            --go-binary "bin/port/symdesk-go${suffix}" \
-            --rust-binary "${target_dir}/debug/symdesk${suffix}" \
-            --repo-root "${PWD}" \
-            --output "bin/port/retention-cli-regressions.json"
-
       - name: Run native authoritative retention state differential
         shell: bash
         run: make retention-state-differential
@@ -543,9 +315,6 @@ jobs:
         shell: bash
         run: make config-precedence-differential
 
-      # The byte fixture and its modes contract are portable: Go skips the
-      # 0700/0600 assertions on Windows and the Rust replay gates them with
-      # #[cfg(unix)], so all three platforms can run the same target.
       - name: Run native sidecar metadata differential
         shell: bash
         run: make sidecar-metadata-differential
@@ -561,23 +330,6 @@ jobs:
       - name: Run native room journal differential
         shell: bash
         run: make room-journal-differential
-
-      - name: Run native SymRoom rollback handoff
-        shell: bash
-        env:
-          SYMROOM_ROLLBACK_REPORT: ${{ runner.temp }}/symroom-rollback-${{ matrix.os }}.json
-        run: |
-          set -euo pipefail
-          python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD --report "$SYMROOM_ROLLBACK_REPORT" >/dev/null
-
-      - name: Run native dataset rollback handoff
-        shell: bash
-        env:
-          DATASET_ROLLBACK_REPORT: ${{ runner.temp }}/dataset-rollback-${{ matrix.os }}.json
-        run: |
-          set -euo pipefail
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/test_dataset_rollback.py
-          PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD --report "$DATASET_ROLLBACK_REPORT" >/dev/null
 
       - name: Run native room merge read differential
         shell: bash
@@ -620,12 +372,10 @@ jobs:
         run: make recipe-validate-differential
 
       - name: Run native AI composition and Hermes backend differentials
-        if: runner.os != 'Windows'
         shell: bash
         run: make ai-compose-hermes-differential transform-hermes-differential compose-memory-differential secrets-resolve-differential secret-canary-differential
 
       - name: Run native recipe run CLI differential
-        if: runner.os != 'Windows'
         shell: bash
         run: make recipe-run-differential
 
@@ -754,7 +504,6 @@ jobs:
         run: make render-export-differential
 
       - name: Run native render vault export differential
-        if: runner.os != 'Windows'
         shell: bash
         run: make render-export-vault-differential
 
@@ -811,33 +560,20 @@ jobs:
         run: make index-retry-cli-differential
 
       - name: Run native index symlink CLI differential
-        if: runner.os != 'Windows'
         shell: bash
         run: make index-symlink-cli-differential
 
       - name: Run native sources CLI differential
-        if: runner.os != 'Windows'
         shell: bash
         run: make sources-cli-differential
 
       - name: Run native index status CLI differential
         shell: bash
-        env:
-          INDEX_STATUS_OUTPUT: ${{ runner.temp }}/index-status
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: python3 scripts/rust-port/index-status/verify.py --output "$INDEX_STATUS_OUTPUT"
+        run: make index-status-cli-differential
 
-      - name: Retain native index status evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: index-status-${{ matrix.os }}-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/index-status/native-gate.json
-            ${{ runner.temp }}/index-status/*.log
-            ${{ runner.temp }}/index-status/capture/
-          retention-days: 14
-          if-no-files-found: warn
+      - name: Run native history differential
+        shell: bash
+        run: make history-differential
 
       - name: Run native room run projection differential
         shell: bash
@@ -887,13 +623,6 @@ jobs:
         shell: bash
         run: make dataset-purge-differential
 
-      - name: Run native history differential
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/rust-port/test_history_live.py
-          python3 scripts/rust-port/history_live.py
-
       - name: Run native history purge differential
         shell: bash
         run: make history-purge-differential
@@ -910,52 +639,8 @@ jobs:
         shell: bash
         run: make history-trash-purge-differential
 
-      - name: Retain native history evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: history-${{ matrix.os }}-${{ github.sha }}
-          path: target/history-live/
-          retention-days: 14
-          if-no-files-found: warn
-
-      - name: Run native Unix sidecar round-trip and lock suite
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        run: SIDECAR_NATIVE=1 make sidecar-roundtrip
-
       - name: Run native Unix representative CLI HTTP and MCP parity
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: make representative-differential mcp-differential
-
-      - name: Run native Unix SEC-003 resource and cleanup stress
-        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
-
-      - name: Run native Windows representative CLI HTTP and MCP parity
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p bin/port
-          go run ./scripts/rust-port/cmd/representativegen --check
-          go run ./scripts/rust-port/cmd/mcpgen --check
-          go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
-          SYMDESK_VERSION=0.12.2 cargo build -p symdesk-cli --locked
-          go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative
-          go run ./scripts/rust-port/cmd/httpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe --fixture testdata/port/http/representative.json
-          go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
-
-      - name: Run native Windows SEC-003 resource and cleanup stress
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
-
-      - name: Run native Windows sidecar round-trip suite
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          SIDECAR_NATIVE=1 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
       - name: Run native macOS version differential
         if: ${{ matrix.os == 'macos-latest' }}
@@ -976,142 +661,6 @@ jobs:
           path: ${{ runner.temp }}/symdesk-native-record
           retention-days: 14
           if-no-files-found: warn
-
-      - name: Run native Windows version differential
-        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p bin/port
-          go build -ldflags "-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
-          go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go.exe ./cmd/symroom
-          export SYMDESK_VERSION="0.12.2"
-          export SYMROOM_VERSION="0.12.2"
-          cargo build --release --workspace --locked
-          go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/release/symdesk.exe --symroom-left bin/port/symroom-go.exe --symroom-right target/release/symroom.exe --cases testdata/port/cli/cases.json --stage version
-
-  # Explicit acceptance of the unfinished PDF/MCP slice. No secrets, user
-  # documents, caches or remote services are required by this paired probe.
-  pdf-mcp-native:
-    name: PDF MCP native (${{ matrix.os }})
-    if: github.event_name == 'workflow_dispatch'
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    needs: [decide]
-    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          clean: ${{ runner.environment != 'self-hosted' }}
-          fetch-depth: 0
-      - name: Prune stale gate worktrees on the persistent self-hosted checkout
-        if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
-        run: git worktree prune
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          cache: ${{ runner.environment != 'self-hosted' }}
-          go-version: "1.26.10"
-      - name: Install pinned Rust and real PDF tools
-        shell: bash
-        run: |
-          set -euo pipefail
-          rustup toolchain install 1.98.0 --profile minimal
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            sudo apt-get update
-            sudo apt-get install -y qpdf poppler-utils
-          else
-            brew install qpdf poppler
-          fi
-      - name: Build and replay source-bound PDF MCP consumers
-        shell: bash
-        env:
-          CGO_ENABLED: "0"
-          GOFLAGS: "-mod=readonly -p=2"
-          CARGO_BUILD_JOBS: "2"
-          PYTHONDONTWRITEBYTECODE: "1"
-          # Verify the exact dependency adopted by the production manifest.
-          PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012110002-27d2daf8ec1e"
-        run: |
-          set -euo pipefail
-          evidence="$RUNNER_TEMP/pdf-mcp"
-          runtime_parent="$HOME/pdf-mcp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          mkdir -m 700 "$evidence" "$runtime_parent"
-          git diff --exit-code
-          git rev-parse HEAD > "$evidence/source-head.txt"
-          go version > "$evidence/go-version.txt"
-          rustc --version > "$evidence/rust-version.txt"
-          go test -count=1 ./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle
-          cp go.mod "$evidence/consumer.mod"
-          cp go.sum "$evidence/consumer.sum"
-          test "$(go list -m -f '{{.Version}}' github.com/danieljustus/symaira-corekit)" = "$PDF_MCP_COREKIT_VERSION"
-          go mod download -modfile="$evidence/consumer.mod" -json "github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION" > "$evidence/corekit-module.json"
-          go test -modfile="$evidence/consumer.mod" -count=1 github.com/danieljustus/symaira-corekit/mcpserver
-          go build -ldflags "-X main.version=0.12.2" -modfile="$evidence/consumer.mod" -o "$evidence/symdesk-go" ./cmd/symdesk
-          go version -m "$evidence/symdesk-go" > "$evidence/go-build-info.txt"
-          SYMDESK_VERSION=0.12.2 cargo build --locked -p symdesk-cli
-          target_dir="$(cargo metadata --no-deps --locked --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
-          python3 crates/symdesk-cli/tests/mcp_pdf_differential.py \
-            --go-binary "$evidence/symdesk-go" --rust-binary "$target_dir/debug/symdesk" \
-            --runtime-root "$runtime_parent/mcp" --output "$evidence/mcp" \
-            --pdfinfo "$(command -v pdfinfo)" --qpdf "$(command -v qpdf)" --pdftotext "$(command -v pdftotext)"
-          git diff --exit-code
-      - name: Retain PDF MCP acceptance observations
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: pdf-mcp-${{ matrix.os }}-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/pdf-mcp/*.txt
-            ${{ runner.temp }}/pdf-mcp/*.mod
-            ${{ runner.temp }}/pdf-mcp/*.sum
-            ${{ runner.temp }}/pdf-mcp/corekit-module.json
-            ${{ runner.temp }}/pdf-mcp/mcp/
-          retention-days: 14
-          if-no-files-found: error
-
-  govulncheck:
-    name: govulncheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      # Issue #753: fails the job only on vulnerabilities reachable from this
-      # module's code (govulncheck's default text summary already excludes
-      # unreachable/informational findings; no extra flags needed).
-      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
-        with:
-          go-version-input: "1.26.10"
-
-  golangci-lint:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          # only-new-issues needs the full history to compute the PR base;
-          # with the default shallow fetch the action falls back to reporting
-          # the whole pre-existing errcheck/gosec backlog (issue #492).
-          fetch-depth: 0
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: "1.26.10"
-
-      # The pre-existing errcheck/gosec backlog (issue #752 and its
-      # package-scoped leaves) is cleared, so the gate now covers the full
-      # tree instead of only lines touched by the current push/PR.
-      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: v2.12.2
-          only-new-issues: false
 
   version-consistency:
     name: Version consistency
@@ -1170,19 +719,6 @@ jobs:
           fi
           echo "HA addon config version: OK"
 
-          # 3. main.go version default must be empty (no hardcoded version)
-          if grep -qE 'var version = "(0|[1-9])' cmd/symdesk/main.go; then
-            echo "::error::cmd/symdesk/main.go has a hardcoded version string — use ldflags injection"
-            exit 1
-          fi
-          echo "main.go version default: OK (no hardcoded version)"
-
-          # 4. corekit dependency pin consistency across all 6 go.mod manifests (issue #526)
-          ./scripts/check-corekit-pins.sh
-
-          # 5. nested module Go version and shared dependency consistency (issue #535)
-          ./scripts/check-nested-versions.sh
-
           echo "All version sources consistent with ${EXPECTED_VERSION}"
 
 
@@ -1199,8 +735,7 @@ jobs:
           clean: ${{ runner.environment != 'self-hosted' }}
       - name: Prune stale gate worktrees on the persistent self-hosted checkout
         if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
+        # Stale worktree registrations survive in the kept checkout.
         run: git worktree prune
 
 
@@ -1249,8 +784,7 @@ jobs:
           clean: ${{ runner.environment != 'self-hosted' }}
       - name: Prune stale gate worktrees on the persistent self-hosted checkout
         if: runner.environment == 'self-hosted'
-        # Gates add oracle worktrees under runner.temp, which is wiped after
-        # each job while the registration in the kept checkout survives.
+        # Stale worktree registrations survive in the kept checkout.
         run: git worktree prune
 
 

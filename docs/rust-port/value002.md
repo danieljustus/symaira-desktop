@@ -183,3 +183,25 @@ Whether it is a positional artefact of the paired schedule or a real Rust
 first-request cost is not established; the fixed-order control experiment from
 #936 has to decide it before any further candidate run. Port stopped for the
 owner.
+
+## Owner acceptance (2026-11-06)
+
+**VALUE-002: owner-accepted for candidate `8ba6eb5b`.** The formal gate result
+stays `passed: false` in every retained capture (runs 1, 3, 4); nothing in the
+JSON, the thresholds or the rule was changed. The owner (Daniel Justus) accepted
+the candidate after the preregistered `http.snapshot` control experiment
+(`value002-snapshot-control.md`), on this evidence:
+
+* improvement criterion passed in every run (binaries -25.14 %, representative
+  RSS -36.5 % to -58.4 %, sustained mixed-load RSS -27.6 % to -55.7 %);
+  contracts and sustained checks passed in every run;
+* every failing check was `http.snapshot`, in alternating order cohorts, with
+  Rust 31-42 % faster in the opposite cohort of the same run;
+* with a fixed order the gap disappears (Rust/Go total 0.84-1.04, gate regime
+  0.92-1.12); balanced isolated blocks put Rust ahead; no per-request Rust cost
+  exists in the cached-bytes handler; the VALUE-001 control in #936 found the
+  same schedule-only effect.
+
+Scope of the acceptance: this candidate's latency evidence for `http.snapshot`.
+It is not a rule change and does not carry over to other routes or later
+candidates.

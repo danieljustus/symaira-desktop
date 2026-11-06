@@ -155,3 +155,13 @@ verdict change: in both runs the only failing check is the precision rule on
 `http.snapshot`, in alternating order cohorts, with Rust faster in the other
 cohort, on a host that was busy throughout (mean load 9-12, peaks 23-27).
 No run showed a demonstrated latency regression; none could exclude one either.
+
+**Run 4, declared by owner decision (2026-11-06, before it starts).** The owner
+chose a new run on a repaired host with the rule unchanged: same candidate
+`8ba6eb5b`, same build record, thresholds, schema-6 rule and 0.40 width limit;
+start only below load1 5.5 and load5 6.5. Host change against runs 1-3:
+`fseventsd` (wedged at ~100 % CPU for 6 days) was restarted and now idles; the
+owner's video-conference client (alfaview, ~0.6-0.8 core, steady) stays open by
+choice and is recorded as known background load. Run 4 decides VALUE-002 for
+this candidate; runs 1-3 stay retained and are reported next to it. A failure
+or abort returns to the owner; no automatic rerun.

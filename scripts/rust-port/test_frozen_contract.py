@@ -32,6 +32,14 @@ class FrozenContractControls(unittest.TestCase):
         return {"live_only": {"b-differential": "live"},
                 "replays": replays or {"cargo test -p a --locked": {"passed": 3, "ignored": 1}}}
 
+    def test_prebuilds_are_collected_only_from_differential_targets(self):
+        text = ("a-differential:\n\t$(CARGO) build -p x --examples --locked\n\t$(CARGO) test -p x\n"
+                "b-differential:\n\t$(CARGO) build -p x --examples --locked\n"
+                "build:\n\t$(CARGO) build --release\n")
+        self.assertEqual(runner.differential_prebuilds(text), ["cargo build -p x --examples --locked"])
+        real = (Path(__file__).resolve().parents[2] / "Makefile").read_text()
+        self.assertIn("cargo build -p symdesk-render --examples --locked", runner.differential_prebuilds(real))
+
     def test_parses_and_dedupes_cargo_replays(self):
         targets = runner.differential_targets(MAKEFILE)
         self.assertEqual(targets["a-differential"], ["cargo test -p a --locked"])

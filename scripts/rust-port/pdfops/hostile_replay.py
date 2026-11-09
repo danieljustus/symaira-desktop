@@ -309,10 +309,14 @@ def replay_main(args):
     assert recording['schema_version'] == 1 and recording['os'] == host_os(), 'recording is for another OS'
     paths = real_tool_paths()
     versions = tool_versions(paths)
-    if versions != recording['tools']:
-        print(f'installed tools {versions} differ from the recorded {recording["tools"]}; the recording needs the '
-              f'same tool versions (the Go recorder is retired)', file=sys.stderr)
-        return 1
+    # The Go recorder is retired, so the recording can no longer follow tool
+    # upgrades (Homebrew moves poppler on its own). A version drift is reported
+    # and the replay still runs: the observed tool behaviour must match the
+    # recording case by case, so a drift that changes behaviour still fails.
+    drift = versions != recording['tools']
+    if drift:
+        print(f'note: installed tools {versions} differ from the recorded {recording["tools"]}; '
+              f'replaying against the installed versions', file=sys.stderr)
     rust = args.rust_binary.resolve(strict=True)
     harness = Harness(out, runtime, paths, None, rust, hostile_inputs(runtime, paths))
     cases = corpus()
@@ -326,9 +330,11 @@ def replay_main(args):
             failures += 1
             print(f'FAIL {case["id"]}: {error}'[:400], file=sys.stderr, flush=True)
     if failures:
-        print(f'{failures} hostile replay mismatches of {len(cases)}', file=sys.stderr)
+        hint = f' (tool versions drifted from the recording: {recording["tools"]})' if drift else ''
+        print(f'{failures} hostile replay mismatches of {len(cases)}{hint}', file=sys.stderr)
         return 1
-    print(f'PASS hostile PDF replay: {len(cases)} cases match the Go recording (real tools {versions})')
+    print(f'PASS hostile PDF replay: {len(cases)} cases match the Go recording (real tools {versions}'
+          f'{", recorded " + str(recording["tools"]) if drift else ""})')
     return 0
 
 

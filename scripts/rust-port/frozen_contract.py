@@ -62,6 +62,32 @@ def differential_targets(makefile):
     return targets
 
 
+def differential_prebuilds(makefile):
+    """Ordered unique `$(CARGO) build` lines of the `*-differential` targets.
+
+    Some replays need artefacts that only a preceding build line of their
+    target produces (the pdfops probes in target/<profile>/examples). Replaying
+    only the test lines passed on a warm target directory and failed on a fresh
+    one, so the runner builds these first.
+    """
+    builds, current = [], None
+    for line in makefile.splitlines():
+        match = TARGET.match(line)
+        if match:
+            current = match.group(1)
+        elif line.startswith("\t") and current:
+            command = line.strip()
+            if command.startswith("$(CARGO) build"):
+                command = command.replace("$(CARGO)", "cargo", 1)
+                if "$" in command:
+                    raise ValueError(f"{current}: unexpanded variable in {command!r}")
+                if command not in builds:
+                    builds.append(command)
+        elif line and not line.startswith("\t"):
+            current = None
+    return builds
+
+
 def plan(targets, manifest):
     """Return ordered unique replay commands; reject unclassified targets."""
     live_only = manifest["live_only"]
@@ -338,6 +364,12 @@ def main(argv=None):
         env = go_free_env(root)
         progress = Path(os.environ[PROGRESS_ENV]) if os.environ.get(PROGRESS_ENV) else None
         finished = set(progress.read_text().splitlines()) if progress and progress.exists() else set()
+        for build in differential_prebuilds((ROOT / "Makefile").read_text()):
+            run = subprocess.run(shlex.split(build), cwd=ROOT, env=env, capture_output=True, text=True)
+            if run.returncode != 0:
+                print(f"FAIL prebuild {build}: exit {run.returncode}\n{run.stderr[-4000:]}", file=sys.stderr)
+                return 1
+            print(f"ok prebuild  {build}", flush=True)
         for command in commands:
             entry = manifest["replays"][command]
             if args.record and command in finished:

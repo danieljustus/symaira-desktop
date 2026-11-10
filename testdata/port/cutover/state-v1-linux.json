@@ -17,18 +17,18 @@
     "XDG_DATA_HOME": "$ROOT/home/data"
   },
   "vars": {
-    "ACME": "34a8fd9b-5206-4146-989e-9e13b1231c38",
-    "ADA": "f4996ab0-39d8-497f-a95a-65d6dd59b36e",
-    "BOB": "mem_7b110fa128062981",
-    "BOBKEY": "4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656",
-    "GRACE": "5668730e-1592-40e9-a4f9-b475252bb73e"
+    "ACME": "0b29abce-215e-4142-b2fc-a6d2f2f18dd8",
+    "ADA": "4e7acddb-83f9-40db-921a-500f2994110b",
+    "BOB": "mem_1d86cd7c7eb6919a",
+    "BOBKEY": "70101cafa32ff33693abeb07b1b2c61a237d6c87eacfae948604536b87a07bec",
+    "GRACE": "5c8c729c-05e4-428c-a722-be896948f988"
   },
   "states": [
     {
       "name": "unmigrated",
       "description": "tree as the Go commands left it, before the first read; the first Go read lazily copies the shared retrieval index into the per-vault location",
       "archive": "state-v1-linux-unmigrated.cxa",
-      "archive_sha256": "3c8e69f734ed647c6744f05ba6425a43719a29cab6b821804f0c309d34a1af70",
+      "archive_sha256": "11a6e226ba1aa14f6837413a3438c7467fb40f136e077082b9b20dbdff6bc07c",
       "files": [
         {
           "path": "cwd",
@@ -41,6 +41,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -83,21 +102,21 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+          "sha256": "4a10e238ea1b05ac9208944e2d42fb4fa7469474f5785197428f5acc9f2b4ac7"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+          "sha256": "f08e9e7c2ef0699b65a3266b341db10ad53baa2d726795c78df4e656efa9fdbc"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+          "sha256": "e5f763601b55d4ec0d4aefa3eea145c6c2a8d844b893ccba68c73138e04b05da"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -124,7 +143,7 @@
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+          "sha256": "f1d9784469c481143cfa6e3c969b1ee2812f5b4ef79bc14c85cc1dfab99b5f00"
         },
         {
           "path": "home/data/symroom",
@@ -143,14 +162,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+          "sha256": "d71c5502e392cb45449aed806be66bfa6677547f8eff53e80d1691c64a384b6f"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+          "sha256": "a5004132a247f1428f48cc1d126ef57b501c86aab4de223c9ff3990029c2cf7c"
         },
         {
           "path": "inbox",
@@ -212,25 +231,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_44a09ff945986047.jsonl",
-          "kind": "f",
-          "mode": "0644",
-          "size": 1784,
-          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
-        },
-        {
-          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "path": "room/journal/mem_1d86cd7c7eb6919a.jsonl",
           "kind": "f",
           "mode": "0600",
           "size": 390,
-          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+          "sha256": "f77f2a8d15621904e754bbbba7acd516e7c27722ab6c9ea1c9b5136ac9fac125"
+        },
+        {
+          "path": "room/journal/mem_8f99a0c53aebbbca.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "74d0a246bc897f0baf4e62d9d5058ac9ee4dc3312391dce8d65ba8229f56d12a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+          "sha256": "bf1d3232047f8571c201a5985704d63c8a102a0431d42bf5dc5472aafa2d4b70"
         },
         {
           "path": "vault",
@@ -251,11 +270,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+          "sha256": "961370e576695af043a7809f70bbf325e57602e17de6a8e8e49c02b78b6dc079"
         },
         {
           "path": "vault/archive",
@@ -287,14 +306,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+          "sha256": "c10ecd841bb653b6ba1a0ff2530714d55f1e751ad5d4559ee32588d59ee3b8bc"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+          "sha256": "caef8e4beb773b0feed629ce71ee42dae0242764908c478ca33c4072d8135a41"
         },
         {
           "path": "vault/notes",
@@ -333,8 +352,8 @@
           "path": "vault/report.md.md",
           "kind": "f",
           "mode": "0600",
-          "size": 565,
-          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+          "size": 566,
+          "sha256": "c554f4880a533bef322eeadd68e8ba0b7baedda3011840c730eed124dcf3c0f4"
         }
       ],
       "after_reads": [
@@ -349,6 +368,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -391,21 +429,21 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+          "sha256": "4a10e238ea1b05ac9208944e2d42fb4fa7469474f5785197428f5acc9f2b4ac7"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+          "sha256": "f08e9e7c2ef0699b65a3266b341db10ad53baa2d726795c78df4e656efa9fdbc"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+          "sha256": "e5f763601b55d4ec0d4aefa3eea145c6c2a8d844b893ccba68c73138e04b05da"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -439,7 +477,7 @@
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+          "sha256": "f1d9784469c481143cfa6e3c969b1ee2812f5b4ef79bc14c85cc1dfab99b5f00"
         },
         {
           "path": "home/data/symroom",
@@ -458,14 +496,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+          "sha256": "d71c5502e392cb45449aed806be66bfa6677547f8eff53e80d1691c64a384b6f"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+          "sha256": "a5004132a247f1428f48cc1d126ef57b501c86aab4de223c9ff3990029c2cf7c"
         },
         {
           "path": "inbox",
@@ -527,25 +565,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_44a09ff945986047.jsonl",
-          "kind": "f",
-          "mode": "0644",
-          "size": 1784,
-          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
-        },
-        {
-          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "path": "room/journal/mem_1d86cd7c7eb6919a.jsonl",
           "kind": "f",
           "mode": "0600",
           "size": 390,
-          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+          "sha256": "f77f2a8d15621904e754bbbba7acd516e7c27722ab6c9ea1c9b5136ac9fac125"
+        },
+        {
+          "path": "room/journal/mem_8f99a0c53aebbbca.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "74d0a246bc897f0baf4e62d9d5058ac9ee4dc3312391dce8d65ba8229f56d12a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+          "sha256": "bf1d3232047f8571c201a5985704d63c8a102a0431d42bf5dc5472aafa2d4b70"
         },
         {
           "path": "vault",
@@ -566,11 +604,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+          "sha256": "961370e576695af043a7809f70bbf325e57602e17de6a8e8e49c02b78b6dc079"
         },
         {
           "path": "vault/archive",
@@ -602,14 +640,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+          "sha256": "c10ecd841bb653b6ba1a0ff2530714d55f1e751ad5d4559ee32588d59ee3b8bc"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+          "sha256": "caef8e4beb773b0feed629ce71ee42dae0242764908c478ca33c4072d8135a41"
         },
         {
           "path": "vault/notes",
@@ -648,8 +686,8 @@
           "path": "vault/report.md.md",
           "kind": "f",
           "mode": "0600",
-          "size": 565,
-          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+          "size": 566,
+          "sha256": "c554f4880a533bef322eeadd68e8ba0b7baedda3011840c730eed124dcf3c0f4"
         }
       ],
       "queries": [
@@ -693,7 +731,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.440411028Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.394524646Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.11732507Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118063657Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118195366Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T11:14:23.055414478Z\"}]\n",
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-10T08:27:39.879714755Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-10T08:27:39.837908095Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.751896419Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.752632336Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.752648128Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-10T08:27:40.122908332Z\"}]\n",
           "stderr": ""
         },
         {
@@ -706,7 +744,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T11:14:22.440411028Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T11:14:22.394524646Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T11:14:07.11732507Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T11:14:07.118063657Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T11:14:07.118195366Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T11:14:23.055414478Z}]\n",
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-10T08:27:39.879714755Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-10T08:27:39.837908095Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-10T08:27:25.751896419Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-10T08:27:25.752632336Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-10T08:27:25.752648128Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-10T08:27:40.122908332Z}]\n",
           "stderr": ""
         },
         {
@@ -887,7 +925,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
           "stderr": ""
         },
         {
@@ -904,7 +942,7 @@
             "tasks"
           ],
           "exit_code": 0,
-          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[]}\n",
           "stderr": ""
         },
         {
@@ -919,7 +957,7 @@
             "jobs"
           ],
           "exit_code": 0,
-          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T11:14:23Z\",\n      \"updated_at\": \"2026-11-05T11:14:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-10T08:27:40Z\",\n      \"updated_at\": \"2026-11-10T08:27:40Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": ""
         },
         {
@@ -950,7 +988,7 @@
             "$ADA"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -966,7 +1004,7 @@
             "Ada Lovelace"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -982,7 +1020,7 @@
             "Acme GmbH"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"34a8fd9b-5206-4146-989e-9e13b1231c38\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"0b29abce-215e-4142-b2fc-a6d2f2f18dd8\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -1044,7 +1082,7 @@
             "status"
           ],
           "exit_code": 0,
-          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-05T11:14:22Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-10T08:27:39Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
           "stderr": ""
         },
         {
@@ -1086,7 +1124,7 @@
             "log"
           ],
           "exit_code": 0,
-          "stdout": "[2026-11-05T11:14:23.313Z] mem_44a09ff945986047 (room.created): Cutover Room\n[2026-11-05T11:14:23.385Z] mem_44a09ff945986047 (note.posted): First note\n[2026-11-05T11:14:23.408Z] mem_44a09ff945986047 (decision.recorded): Adopt Rust\n[2026-11-05T11:14:23.444Z] mem_44a09ff945986047 (member.added): Bob\n[2026-11-05T11:14:23.454Z] mem_7b110fa128062981 (note.posted): Bob was here\n",
+          "stdout": "[2026-11-10T08:27:40.259Z] mem_8f99a0c53aebbbca (room.created): Cutover Room\n[2026-11-10T08:27:40.274Z] mem_8f99a0c53aebbbca (note.posted): First note\n[2026-11-10T08:27:40.277Z] mem_8f99a0c53aebbbca (decision.recorded): Adopt Rust\n[2026-11-10T08:27:40.282Z] mem_8f99a0c53aebbbca (member.added): Bob\n[2026-11-10T08:27:40.285Z] mem_1d86cd7c7eb6919a (note.posted): Bob was here\n",
           "stderr": ""
         },
         {
@@ -1098,7 +1136,7 @@
             "-json"
           ],
           "exit_code": 0,
-          "stdout": "{\"author\":\"mem_44a09ff945986047\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\"},\"id\":\"ev_811f979c52acf1a84d95\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:avS12ymhwUF2mcDtDX9yMHNmmto96zKZoT5b3XBBliJJ2Wp5DMO0VqWzi7anRNUzt2zl2wcnOXRhaNvaiZM1DA==\",\"ts\":\"2026-11-05T11:14:23.313Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_48b1c2a09fc6172ac09c\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:43bd679c03c4feb63a52c9d522cc9fbf1797424c3612d434acdd6ae5db74d801\",\"room\":\"rm_2a601765bf37259c\",\"seq\":2,\"sig\":\"ed25519:Ga9Mwt9PD2yCEb1gkxsZ3LHgY24wY/d7raAa5YGxkusGclhDKyPKrL1PFvLaPgG+Oiio0FIYpmix4u/iTohZAA==\",\"ts\":\"2026-11-05T11:14:23.385Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_fc31971920a3e6cffc92\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:cb7efdb7172b890a5ccb6162fc1c7adaa3a9e0d01101161a974201c6d3151782\",\"room\":\"rm_2a601765bf37259c\",\"seq\":3,\"sig\":\"ed25519:c7xPVbwdvbFn/JQDHy+O3D/5GjlgWRsi2V/I3jqrFU59syo7hMtMfdESsnx16tCIThipb6mIqlDHOIUO8OveAw==\",\"ts\":\"2026-11-05T11:14:23.408Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"id\":\"mem_7b110fa128062981\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656\",\"role\":\"member\"},\"id\":\"ev_318a79a0bc6a5c7560dd\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:ea21db28dc29c2415f23aa293a8525daf825b03b85fc8dc8c69e5a45d9e75dda\",\"room\":\"rm_2a601765bf37259c\",\"seq\":4,\"sig\":\"ed25519:aaXGpY05c51JVIOnB/0+wJqH4Dly7ximY+jsYhrUg3+TzuDXTKZTcrVUIsf/oinpNxTmiJQr8x0b6b6iDe7kDg==\",\"ts\":\"2026-11-05T11:14:23.444Z\",\"v\":1}\n{\"author\":\"mem_7b110fa128062981\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_930da50ebf2edb077cdd\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:2ZIqs/gh+gFTH1Iw1KHKS8F54pCH4ElmmIn9PSwHhWpxDLCx8NMxdGtWYYTMqHihDDgTSEgsiLFYhvIj2OdrAg==\",\"ts\":\"2026-11-05T11:14:23.454Z\",\"v\":1}\n",
+          "stdout": "{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"4024d3c9eb64a7b3527cd76a236d80e5629ed704aa71bcea8d76a24adb3bb4ed\"},\"id\":\"ev_f16c8510c13fb6c1c9ed\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_9eb42f268344511d\",\"seq\":1,\"sig\":\"ed25519:f9v8myfukXXbJq+iWtXRrQ1/eawl2M/TZn7uaUnOv+Ky0Rn3+AipCSWkTHNsyBwnsVKUsgvbPnK2mAK0To2tAA==\",\"ts\":\"2026-11-10T08:27:40.259Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_753a8aa07d17f9f650b0\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:834a40fa3eb073348481a71e4082ac89edc21d70c660f13f486ff84d9bab6bdc\",\"room\":\"rm_9eb42f268344511d\",\"seq\":2,\"sig\":\"ed25519:TlFsJA9sLd8E8pjKEB8J+RNO2qgqPQWNmnYEqWa+ED8OPjoKH11JN12wr+TCgQ4O2q19TSSt4TTEABRMjuEIAA==\",\"ts\":\"2026-11-10T08:27:40.274Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_9ba8f8a63e1548d8c0de\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:ce5429f54b71f2cc5b857c8fa500dab6cf6ccaf7d97bb00a9d40489219aacba3\",\"room\":\"rm_9eb42f268344511d\",\"seq\":3,\"sig\":\"ed25519:lLMnKHfN6kQCTfZe2bAwAnr76FCXI+sdNA3FfVtWugWUx4VshDuWzHywerF6iECFbDZW0OJfor2Xu/MDuiJnAA==\",\"ts\":\"2026-11-10T08:27:40.277Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"id\":\"mem_1d86cd7c7eb6919a\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"70101cafa32ff33693abeb07b1b2c61a237d6c87eacfae948604536b87a07bec\",\"role\":\"member\"},\"id\":\"ev_60c6901934e958a2d168\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:a5ec1799411bcff160a531397ee71a7df3a3c637ed8fe01aabbb0458ca0d31bb\",\"room\":\"rm_9eb42f268344511d\",\"seq\":4,\"sig\":\"ed25519:WGVX8fPy7JNncbtkSzIB3e1HQM1XBXKKqqxxXBHfUvZIq9SxcPiyP+6ZgPqMZQE3C/C/CjPcPM0czDFMw460Aw==\",\"ts\":\"2026-11-10T08:27:40.282Z\",\"v\":1}\n{\"author\":\"mem_1d86cd7c7eb6919a\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_428ebde644dc9df0cf0f\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_9eb42f268344511d\",\"seq\":1,\"sig\":\"ed25519:gAH1c+XPO2yzGkF6D/Kkiq9q3KU++hjXPiTcEqG97T4xirMfaue7ctlL54lNSs2sel9kvJHbm9hItraD2tHPDg==\",\"ts\":\"2026-11-10T08:27:40.285Z\",\"v\":1}\n",
           "stderr": ""
         },
         {
@@ -1121,7 +1159,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "ID                    NAME          ROLE    KIND\nmem_44a09ff945986047  Cutover Room  owner   human\nmem_7b110fa128062981  Bob           member  human\n",
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_1d86cd7c7eb6919a  Bob           member  human\nmem_8f99a0c53aebbbca  Cutover Room  owner   human\n",
           "stderr": ""
         },
         {
@@ -1146,7 +1184,7 @@
             "owner"
           ],
           "exit_code": 0,
-          "stdout": "Name: owner\nMember ID: mem_44a09ff945986047\nPublic Key: 97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\n",
+          "stdout": "Name: owner\nMember ID: mem_8f99a0c53aebbbca\nPublic Key: 4024d3c9eb64a7b3527cd76a236d80e5629ed704aa71bcea8d76a24adb3bb4ed\n",
           "stderr": ""
         }
       ],
@@ -1343,7 +1381,7 @@
       "name": "settled",
       "description": "steady state after one Go read pass; further Go reads must leave the tree unchanged",
       "archive": "state-v1-linux-settled.cxa",
-      "archive_sha256": "584d3c8ab2e4007ddf345c2892989d55b9441960d60a84c2bb67691de5e94e76",
+      "archive_sha256": "1278ab44576c7ba9dfd9906e0677f0d5053c61c27e4567ab323220ff8f7adb50",
       "files": [
         {
           "path": "cwd",
@@ -1356,6 +1394,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -1398,21 +1455,21 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+          "sha256": "4a10e238ea1b05ac9208944e2d42fb4fa7469474f5785197428f5acc9f2b4ac7"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+          "sha256": "f08e9e7c2ef0699b65a3266b341db10ad53baa2d726795c78df4e656efa9fdbc"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+          "sha256": "e5f763601b55d4ec0d4aefa3eea145c6c2a8d844b893ccba68c73138e04b05da"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -1439,14 +1496,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "9efb7a147ea254dbe0be7a05d27e9558c617e6ddd504bb3ea929d31b2a7d514d"
+          "sha256": "b46e7845b8e15cb5a0a11e4f4cbbefaa0a77d327dd105e4a021a0687162ee7d2"
         },
         {
           "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+          "sha256": "f1d9784469c481143cfa6e3c969b1ee2812f5b4ef79bc14c85cc1dfab99b5f00"
         },
         {
           "path": "home/data/symroom",
@@ -1465,14 +1522,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+          "sha256": "d71c5502e392cb45449aed806be66bfa6677547f8eff53e80d1691c64a384b6f"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+          "sha256": "a5004132a247f1428f48cc1d126ef57b501c86aab4de223c9ff3990029c2cf7c"
         },
         {
           "path": "inbox",
@@ -1534,25 +1591,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_44a09ff945986047.jsonl",
-          "kind": "f",
-          "mode": "0644",
-          "size": 1784,
-          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
-        },
-        {
-          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "path": "room/journal/mem_1d86cd7c7eb6919a.jsonl",
           "kind": "f",
           "mode": "0600",
           "size": 390,
-          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+          "sha256": "f77f2a8d15621904e754bbbba7acd516e7c27722ab6c9ea1c9b5136ac9fac125"
+        },
+        {
+          "path": "room/journal/mem_8f99a0c53aebbbca.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "74d0a246bc897f0baf4e62d9d5058ac9ee4dc3312391dce8d65ba8229f56d12a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+          "sha256": "bf1d3232047f8571c201a5985704d63c8a102a0431d42bf5dc5472aafa2d4b70"
         },
         {
           "path": "vault",
@@ -1573,11 +1630,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+          "sha256": "961370e576695af043a7809f70bbf325e57602e17de6a8e8e49c02b78b6dc079"
         },
         {
           "path": "vault/archive",
@@ -1609,14 +1666,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+          "sha256": "c10ecd841bb653b6ba1a0ff2530714d55f1e751ad5d4559ee32588d59ee3b8bc"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+          "sha256": "caef8e4beb773b0feed629ce71ee42dae0242764908c478ca33c4072d8135a41"
         },
         {
           "path": "vault/notes",
@@ -1655,8 +1712,8 @@
           "path": "vault/report.md.md",
           "kind": "f",
           "mode": "0600",
-          "size": 565,
-          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+          "size": 566,
+          "sha256": "c554f4880a533bef322eeadd68e8ba0b7baedda3011840c730eed124dcf3c0f4"
         }
       ],
       "after_reads": [
@@ -1673,6 +1730,25 @@
           "size": 0
         },
         {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
+        },
+        {
           "path": "home/cache",
           "kind": "d",
           "mode": "0700",
@@ -1713,21 +1789,21 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "f90b54587fb6ff27519b48be923022d059143b79e560064113bb557bc167bd53"
+          "sha256": "4a10e238ea1b05ac9208944e2d42fb4fa7469474f5785197428f5acc9f2b4ac7"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "af65339aff18fff12f0a477e67b5d843aee786b0baccc899310fbcc09ab61221"
+          "sha256": "f08e9e7c2ef0699b65a3266b341db10ad53baa2d726795c78df4e656efa9fdbc"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "b0dbef719b84d1c082908fb859d438d31e8acf9d7fa787c8734eb7f21b736a62"
+          "sha256": "e5f763601b55d4ec0d4aefa3eea145c6c2a8d844b893ccba68c73138e04b05da"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -1754,14 +1830,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 172032,
-          "sha256": "9efb7a147ea254dbe0be7a05d27e9558c617e6ddd504bb3ea929d31b2a7d514d"
+          "sha256": "b46e7845b8e15cb5a0a11e4f4cbbefaa0a77d327dd105e4a021a0687162ee7d2"
         },
         {
           "path": "home/data/symdesk/vaults/464f72ba6fea84e6/sidecar.db",
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "065f868dc110b4c8dd228bc23140669d9b87099d3a4925275fa029edf10e643d"
+          "sha256": "f1d9784469c481143cfa6e3c969b1ee2812f5b4ef79bc14c85cc1dfab99b5f00"
         },
         {
           "path": "home/data/symroom",
@@ -1780,14 +1856,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "0cc258789e879c37ff19d4fd01353245ea812e576f8ff0060ff15fe758312a2e"
+          "sha256": "d71c5502e392cb45449aed806be66bfa6677547f8eff53e80d1691c64a384b6f"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "ae7beebac7ce2305ea3d9b2cbffa411b4c52bd771df9c7dbdcde139137bfa76e"
+          "sha256": "a5004132a247f1428f48cc1d126ef57b501c86aab4de223c9ff3990029c2cf7c"
         },
         {
           "path": "inbox",
@@ -1849,25 +1925,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_44a09ff945986047.jsonl",
-          "kind": "f",
-          "mode": "0644",
-          "size": 1784,
-          "sha256": "4d2c441c9eedb4656a069f90b2cb152766cfb5cbf4525e2f6cc4ea010fd6f768"
-        },
-        {
-          "path": "room/journal/mem_7b110fa128062981.jsonl",
+          "path": "room/journal/mem_1d86cd7c7eb6919a.jsonl",
           "kind": "f",
           "mode": "0600",
           "size": 390,
-          "sha256": "b67078d9494135026f27774bb650301c179d161526232746ad3cf9aac063551a"
+          "sha256": "f77f2a8d15621904e754bbbba7acd516e7c27722ab6c9ea1c9b5136ac9fac125"
+        },
+        {
+          "path": "room/journal/mem_8f99a0c53aebbbca.jsonl",
+          "kind": "f",
+          "mode": "0644",
+          "size": 1784,
+          "sha256": "74d0a246bc897f0baf4e62d9d5058ac9ee4dc3312391dce8d65ba8229f56d12a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "f2cb6d0c15bc61f996ae0c5ee6b01eb33e0f6ef0dfe5d3c11761fa45b51a7f61"
+          "sha256": "bf1d3232047f8571c201a5985704d63c8a102a0431d42bf5dc5472aafa2d4b70"
         },
         {
           "path": "vault",
@@ -1888,11 +1964,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "da9f7d4594f5edffb3855cd1fe35140ab31d83d76c9be112ec6acaae50a02f32"
+          "sha256": "961370e576695af043a7809f70bbf325e57602e17de6a8e8e49c02b78b6dc079"
         },
         {
           "path": "vault/archive",
@@ -1924,14 +2000,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8ac3ef66151bfcf4eaa3ae62b9660763b11270e4cd5a71acb4c0d744d8010e05"
+          "sha256": "c10ecd841bb653b6ba1a0ff2530714d55f1e751ad5d4559ee32588d59ee3b8bc"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "8730a1d9e082c49938613a06f2ec655e36c4f9bab1890da513b89e4af89d7b16"
+          "sha256": "caef8e4beb773b0feed629ce71ee42dae0242764908c478ca33c4072d8135a41"
         },
         {
           "path": "vault/notes",
@@ -1970,8 +2046,8 @@
           "path": "vault/report.md.md",
           "kind": "f",
           "mode": "0600",
-          "size": 565,
-          "sha256": "c9d6442b8221500983df59954f6d69e63f9794b5c4ca12cdf2105323f1860433"
+          "size": 566,
+          "sha256": "c554f4880a533bef322eeadd68e8ba0b7baedda3011840c730eed124dcf3c0f4"
         }
       ],
       "queries": [
@@ -2015,7 +2091,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.440411028Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T11:14:22.394524646Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.11732507Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118063657Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T11:14:07.118195366Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T11:14:23.055414478Z\"}]\n",
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-10T08:27:39.879714755Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-10T08:27:39.837908095Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.751896419Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.752632336Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-10T08:27:25.752648128Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-10T08:27:40.122908332Z\"}]\n",
           "stderr": ""
         },
         {
@@ -2028,7 +2104,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T11:14:22.440411028Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T11:14:22.394524646Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T11:14:07.11732507Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T11:14:07.118063657Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T11:14:07.118195366Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T11:14:23.055414478Z}]\n",
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-10T08:27:39.879714755Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-10T08:27:39.837908095Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-10T08:27:25.751896419Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-10T08:27:25.752632336Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-10T08:27:25.752648128Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-10T08:27:40.122908332Z}]\n",
           "stderr": ""
         },
         {
@@ -2209,7 +2285,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
           "stderr": ""
         },
         {
@@ -2226,7 +2302,7 @@
             "tasks"
           ],
           "exit_code": 0,
-          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T11:14:22Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:27:39Z\",\"tags\":[\"base\"],\"views\":[]}\n",
           "stderr": ""
         },
         {
@@ -2241,7 +2317,7 @@
             "jobs"
           ],
           "exit_code": 0,
-          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T11:14:23Z\",\n      \"updated_at\": \"2026-11-05T11:14:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-10T08:27:40Z\",\n      \"updated_at\": \"2026-11-10T08:27:40Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": ""
         },
         {
@@ -2272,7 +2348,7 @@
             "$ADA"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2288,7 +2364,7 @@
             "Ada Lovelace"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"f4996ab0-39d8-497f-a95a-65d6dd59b36e\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"4e7acddb-83f9-40db-921a-500f2994110b\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2304,7 +2380,7 @@
             "Acme GmbH"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"34a8fd9b-5206-4146-989e-9e13b1231c38\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"0b29abce-215e-4142-b2fc-a6d2f2f18dd8\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2366,7 +2442,7 @@
             "status"
           ],
           "exit_code": 0,
-          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-05T11:14:22Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-10T08:27:39Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
           "stderr": ""
         },
         {
@@ -2408,7 +2484,7 @@
             "log"
           ],
           "exit_code": 0,
-          "stdout": "[2026-11-05T11:14:23.313Z] mem_44a09ff945986047 (room.created): Cutover Room\n[2026-11-05T11:14:23.385Z] mem_44a09ff945986047 (note.posted): First note\n[2026-11-05T11:14:23.408Z] mem_44a09ff945986047 (decision.recorded): Adopt Rust\n[2026-11-05T11:14:23.444Z] mem_44a09ff945986047 (member.added): Bob\n[2026-11-05T11:14:23.454Z] mem_7b110fa128062981 (note.posted): Bob was here\n",
+          "stdout": "[2026-11-10T08:27:40.259Z] mem_8f99a0c53aebbbca (room.created): Cutover Room\n[2026-11-10T08:27:40.274Z] mem_8f99a0c53aebbbca (note.posted): First note\n[2026-11-10T08:27:40.277Z] mem_8f99a0c53aebbbca (decision.recorded): Adopt Rust\n[2026-11-10T08:27:40.282Z] mem_8f99a0c53aebbbca (member.added): Bob\n[2026-11-10T08:27:40.285Z] mem_1d86cd7c7eb6919a (note.posted): Bob was here\n",
           "stderr": ""
         },
         {
@@ -2420,7 +2496,7 @@
             "-json"
           ],
           "exit_code": 0,
-          "stdout": "{\"author\":\"mem_44a09ff945986047\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\"},\"id\":\"ev_811f979c52acf1a84d95\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:avS12ymhwUF2mcDtDX9yMHNmmto96zKZoT5b3XBBliJJ2Wp5DMO0VqWzi7anRNUzt2zl2wcnOXRhaNvaiZM1DA==\",\"ts\":\"2026-11-05T11:14:23.313Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_48b1c2a09fc6172ac09c\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:43bd679c03c4feb63a52c9d522cc9fbf1797424c3612d434acdd6ae5db74d801\",\"room\":\"rm_2a601765bf37259c\",\"seq\":2,\"sig\":\"ed25519:Ga9Mwt9PD2yCEb1gkxsZ3LHgY24wY/d7raAa5YGxkusGclhDKyPKrL1PFvLaPgG+Oiio0FIYpmix4u/iTohZAA==\",\"ts\":\"2026-11-05T11:14:23.385Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_fc31971920a3e6cffc92\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:cb7efdb7172b890a5ccb6162fc1c7adaa3a9e0d01101161a974201c6d3151782\",\"room\":\"rm_2a601765bf37259c\",\"seq\":3,\"sig\":\"ed25519:c7xPVbwdvbFn/JQDHy+O3D/5GjlgWRsi2V/I3jqrFU59syo7hMtMfdESsnx16tCIThipb6mIqlDHOIUO8OveAw==\",\"ts\":\"2026-11-05T11:14:23.408Z\",\"v\":1}\n{\"author\":\"mem_44a09ff945986047\",\"body\":{\"id\":\"mem_7b110fa128062981\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"4053a6390556d358557d688772861598a54679d6a5754d76bd918892e590d656\",\"role\":\"member\"},\"id\":\"ev_318a79a0bc6a5c7560dd\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:ea21db28dc29c2415f23aa293a8525daf825b03b85fc8dc8c69e5a45d9e75dda\",\"room\":\"rm_2a601765bf37259c\",\"seq\":4,\"sig\":\"ed25519:aaXGpY05c51JVIOnB/0+wJqH4Dly7ximY+jsYhrUg3+TzuDXTKZTcrVUIsf/oinpNxTmiJQr8x0b6b6iDe7kDg==\",\"ts\":\"2026-11-05T11:14:23.444Z\",\"v\":1}\n{\"author\":\"mem_7b110fa128062981\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_930da50ebf2edb077cdd\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_2a601765bf37259c\",\"seq\":1,\"sig\":\"ed25519:2ZIqs/gh+gFTH1Iw1KHKS8F54pCH4ElmmIn9PSwHhWpxDLCx8NMxdGtWYYTMqHihDDgTSEgsiLFYhvIj2OdrAg==\",\"ts\":\"2026-11-05T11:14:23.454Z\",\"v\":1}\n",
+          "stdout": "{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"4024d3c9eb64a7b3527cd76a236d80e5629ed704aa71bcea8d76a24adb3bb4ed\"},\"id\":\"ev_f16c8510c13fb6c1c9ed\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_9eb42f268344511d\",\"seq\":1,\"sig\":\"ed25519:f9v8myfukXXbJq+iWtXRrQ1/eawl2M/TZn7uaUnOv+Ky0Rn3+AipCSWkTHNsyBwnsVKUsgvbPnK2mAK0To2tAA==\",\"ts\":\"2026-11-10T08:27:40.259Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_753a8aa07d17f9f650b0\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:834a40fa3eb073348481a71e4082ac89edc21d70c660f13f486ff84d9bab6bdc\",\"room\":\"rm_9eb42f268344511d\",\"seq\":2,\"sig\":\"ed25519:TlFsJA9sLd8E8pjKEB8J+RNO2qgqPQWNmnYEqWa+ED8OPjoKH11JN12wr+TCgQ4O2q19TSSt4TTEABRMjuEIAA==\",\"ts\":\"2026-11-10T08:27:40.274Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_9ba8f8a63e1548d8c0de\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:ce5429f54b71f2cc5b857c8fa500dab6cf6ccaf7d97bb00a9d40489219aacba3\",\"room\":\"rm_9eb42f268344511d\",\"seq\":3,\"sig\":\"ed25519:lLMnKHfN6kQCTfZe2bAwAnr76FCXI+sdNA3FfVtWugWUx4VshDuWzHywerF6iECFbDZW0OJfor2Xu/MDuiJnAA==\",\"ts\":\"2026-11-10T08:27:40.277Z\",\"v\":1}\n{\"author\":\"mem_8f99a0c53aebbbca\",\"body\":{\"id\":\"mem_1d86cd7c7eb6919a\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"70101cafa32ff33693abeb07b1b2c61a237d6c87eacfae948604536b87a07bec\",\"role\":\"member\"},\"id\":\"ev_60c6901934e958a2d168\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:a5ec1799411bcff160a531397ee71a7df3a3c637ed8fe01aabbb0458ca0d31bb\",\"room\":\"rm_9eb42f268344511d\",\"seq\":4,\"sig\":\"ed25519:WGVX8fPy7JNncbtkSzIB3e1HQM1XBXKKqqxxXBHfUvZIq9SxcPiyP+6ZgPqMZQE3C/C/CjPcPM0czDFMw460Aw==\",\"ts\":\"2026-11-10T08:27:40.282Z\",\"v\":1}\n{\"author\":\"mem_1d86cd7c7eb6919a\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_428ebde644dc9df0cf0f\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_9eb42f268344511d\",\"seq\":1,\"sig\":\"ed25519:gAH1c+XPO2yzGkF6D/Kkiq9q3KU++hjXPiTcEqG97T4xirMfaue7ctlL54lNSs2sel9kvJHbm9hItraD2tHPDg==\",\"ts\":\"2026-11-10T08:27:40.285Z\",\"v\":1}\n",
           "stderr": ""
         },
         {
@@ -2443,7 +2519,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "ID                    NAME          ROLE    KIND\nmem_44a09ff945986047  Cutover Room  owner   human\nmem_7b110fa128062981  Bob           member  human\n",
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_1d86cd7c7eb6919a  Bob           member  human\nmem_8f99a0c53aebbbca  Cutover Room  owner   human\n",
           "stderr": ""
         },
         {
@@ -2468,7 +2544,7 @@
             "owner"
           ],
           "exit_code": 0,
-          "stdout": "Name: owner\nMember ID: mem_44a09ff945986047\nPublic Key: 97ec96e6a9a7efdc1dc25f1e67d919d50d7568091a57e3c3871d38c54da2dbce\n",
+          "stdout": "Name: owner\nMember ID: mem_8f99a0c53aebbbca\nPublic Key: 4024d3c9eb64a7b3527cd76a236d80e5629ed704aa71bcea8d76a24adb3bb4ed\n",
           "stderr": ""
         }
       ],

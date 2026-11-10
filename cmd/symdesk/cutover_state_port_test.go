@@ -626,6 +626,11 @@ func cutoverRecordStates(t *testing.T) cutoverManifest {
 	write("vault/notes/nested/gamma.md", "# Gamma\n\nNo frontmatter, only a [[notes/alpha]] link.\n")
 	write("inbox/second.md", "# Second document\n\nAxolotls regenerate limbs.\n")
 	write("inbox/report.md", "# Quarterly report\n\nInvoice 4711 from Acme GmbH, total EUR 120.50, due 2026-12-01.\nSecond paragraph about wombats.\n")
+	// Pin the retrieval embedding endpoint to a closed loopback port. The
+	// default (localhost:11434) reaches whatever Ollama the host happens to
+	// run, which made the recorded index and search outputs depend on the
+	// recording host and broke the replay on any host without that model.
+	write("home/.config/symseek/config.toml", "ollama_url = \"http://127.0.0.1:9/api/embeddings\"\n")
 
 	runner.mustRun("symdesk", "cwd", "--vault", "$ROOT/vault", "index")
 	runner.mustRun("symdesk", "cwd", "--vault", "$ROOT/vault", "views", "base", "new", "Tasks", "My tasks")

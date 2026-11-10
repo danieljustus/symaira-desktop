@@ -17,18 +17,18 @@
     "XDG_DATA_HOME": "$ROOT/home/data"
   },
   "vars": {
-    "ACME": "03d1511a-11ac-4e55-894d-0f3f742ad683",
-    "ADA": "a049442d-1993-4895-a1a1-63eaf6c68ae2",
-    "BOB": "mem_29c76128f9ab8b27",
-    "BOBKEY": "597dda88e04ae71d96733ecfe54fd4a678691b5426d8aea1f7d1633dfb01482b",
-    "GRACE": "16d5ee1d-cf3f-462a-81ab-1fdbdcf48cdb"
+    "ACME": "bf5e6522-2d15-40bb-9c74-3bc9c0050b22",
+    "ADA": "ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc",
+    "BOB": "mem_e96ff85ef91df2c4",
+    "BOBKEY": "c75972b3df8cd08e4aec9a2d73f6141b3a9c01af46cd3a7f166f53cb5c69f70a",
+    "GRACE": "38890fba-197d-4372-a148-bf732e950ca4"
   },
   "states": [
     {
       "name": "unmigrated",
       "description": "tree as the Go commands left it, before the first read; the first Go read lazily copies the shared retrieval index into the per-vault location",
       "archive": "state-v1-darwin-unmigrated.cxa",
-      "archive_sha256": "cdab0eb2c84980b4c15109fed2687e4af0c01553a7e6716afb8b338a0df31d3d",
+      "archive_sha256": "2bb7358ac08722d4663664505dfd740837049aec4c26258dd8acf483cde4ae24",
       "files": [
         {
           "path": "cwd",
@@ -41,6 +41,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -82,22 +101,22 @@
           "path": "home/data/symdesk/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "d1f33a27ae96c5d39e59d84cb2f7c9455a95a776b6ce2e99b832035080898f8a"
+          "size": 172032,
+          "sha256": "2424da1f87456ac109d43f5c2f91d6adef42bd964638604f022c20a00851b600"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "6ec94bacfac43eacd0aa0214295403d0fcdfef5b7ba5635c7364801a27f5878d"
+          "sha256": "8b407b421df2e8bbb38049143caea8bee5daffbb662b3ed340314c5fb5c2e3b0"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "6e61fe81fda9aaa6661502c5c05f2225d290aa84b91f585c27041860ae6e400b"
+          "sha256": "c09262ea6167421f54e06ef1c966a0394f6d1935a0bad1bff179afb9f84c7a5d"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -124,7 +143,7 @@
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "e38e85c423d6a2be60726fb02d95d3d2fb926967fe45c7ad8ef65431774b3e6a"
+          "sha256": "1196888365f5499c970a0c8b502ada6e05ab6f984ab8a942e5aa8ea1eb555fe7"
         },
         {
           "path": "home/data/symroom",
@@ -143,14 +162,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "3eec9a2870122866fa51360a2650f43b143c8a17c3f0bb9553faf83a3760e64d"
+          "sha256": "7684202f48bea586008a5adeabf0a32912768061ced255e86ea5192a25e8c62d"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "fb66034e6e891e305acea6480c5ecf5528ae696086ada52d83147a0fefb48dda"
+          "sha256": "9b2885137de2b2fbfc53bbc116edcdd66cfb24781f4afd188d852594a2e2e478"
         },
         {
           "path": "inbox",
@@ -212,25 +231,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_29c76128f9ab8b27.jsonl",
-          "kind": "f",
-          "mode": "0600",
-          "size": 390,
-          "sha256": "3e3374f946efa6d480c184dce163f4e600d58267d38fe50a8d668e66bda5ca5f"
-        },
-        {
-          "path": "room/journal/mem_7c819d447de558fe.jsonl",
+          "path": "room/journal/mem_39de58043181d7f2.jsonl",
           "kind": "f",
           "mode": "0644",
           "size": 1784,
-          "sha256": "e135d76c0737214b1b0a1fbfc0b6e83a91ec987e5dd10ea0b4b2e5f7292e31d2"
+          "sha256": "2882b91f15bb6faed89bd1e86893684d70554ad5b9d90dd50d28c81e0ed3cab4"
+        },
+        {
+          "path": "room/journal/mem_e96ff85ef91df2c4.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "494d648068ed40aadfc17383ca6fbd947e79cc7dab9f653ac4ff8ed9a906dc2a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "fb622793c4619e01c75742d8b395cf39d26c203e090370667e4b3008e98ce32e"
+          "sha256": "315f2ffd8fe482b84a8442964a14919f6df3885f41af0aa104587f36491e5962"
         },
         {
           "path": "vault",
@@ -251,11 +270,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "24e7c8c1724497eb71910f4e7006fc2100953ef5d28f147ac1a719f30f0ea399"
+          "sha256": "4e3ed8f36dfa5b7152325f8f46f7039e37f908ea250fbf165505dbe82ed902b7"
         },
         {
           "path": "vault/archive",
@@ -287,14 +306,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8d38edf0fd5c3111917ca2c53b279445157acf1b2320a3e6ec4822e04db16c7c"
+          "sha256": "8a279a584d1e9fad4e1bcf9a1fe01166d6e64271c9bfd7526076fafdc63faf11"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "42d0295f5cbc14363cc687b4329b20ce5337490d1cf6cf78a9df4cea58c35fda"
+          "sha256": "a3f95f23af3e1cbf0eb488059d6015d3445aba8ecb7a726590b003f4c7df2503"
         },
         {
           "path": "vault/notes",
@@ -334,7 +353,7 @@
           "kind": "f",
           "mode": "0600",
           "size": 571,
-          "sha256": "39a2b92dbf7dfa44bb12945b216bb9e85ead12ef84f2ed22de35a014f2065c5a"
+          "sha256": "3a63edfe784fe8486592985748e6e9ef7a7fa28a7a476f01133d4b37f3bd5310"
         }
       ],
       "after_reads": [
@@ -349,6 +368,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -390,22 +428,22 @@
           "path": "home/data/symdesk/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "d1f33a27ae96c5d39e59d84cb2f7c9455a95a776b6ce2e99b832035080898f8a"
+          "size": 172032,
+          "sha256": "2424da1f87456ac109d43f5c2f91d6adef42bd964638604f022c20a00851b600"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "6ec94bacfac43eacd0aa0214295403d0fcdfef5b7ba5635c7364801a27f5878d"
+          "sha256": "8b407b421df2e8bbb38049143caea8bee5daffbb662b3ed340314c5fb5c2e3b0"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "6e61fe81fda9aaa6661502c5c05f2225d290aa84b91f585c27041860ae6e400b"
+          "sha256": "c09262ea6167421f54e06ef1c966a0394f6d1935a0bad1bff179afb9f84c7a5d"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -439,7 +477,7 @@
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "e38e85c423d6a2be60726fb02d95d3d2fb926967fe45c7ad8ef65431774b3e6a"
+          "sha256": "1196888365f5499c970a0c8b502ada6e05ab6f984ab8a942e5aa8ea1eb555fe7"
         },
         {
           "path": "home/data/symroom",
@@ -458,14 +496,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "3eec9a2870122866fa51360a2650f43b143c8a17c3f0bb9553faf83a3760e64d"
+          "sha256": "7684202f48bea586008a5adeabf0a32912768061ced255e86ea5192a25e8c62d"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "fb66034e6e891e305acea6480c5ecf5528ae696086ada52d83147a0fefb48dda"
+          "sha256": "9b2885137de2b2fbfc53bbc116edcdd66cfb24781f4afd188d852594a2e2e478"
         },
         {
           "path": "inbox",
@@ -527,25 +565,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_29c76128f9ab8b27.jsonl",
-          "kind": "f",
-          "mode": "0600",
-          "size": 390,
-          "sha256": "3e3374f946efa6d480c184dce163f4e600d58267d38fe50a8d668e66bda5ca5f"
-        },
-        {
-          "path": "room/journal/mem_7c819d447de558fe.jsonl",
+          "path": "room/journal/mem_39de58043181d7f2.jsonl",
           "kind": "f",
           "mode": "0644",
           "size": 1784,
-          "sha256": "e135d76c0737214b1b0a1fbfc0b6e83a91ec987e5dd10ea0b4b2e5f7292e31d2"
+          "sha256": "2882b91f15bb6faed89bd1e86893684d70554ad5b9d90dd50d28c81e0ed3cab4"
+        },
+        {
+          "path": "room/journal/mem_e96ff85ef91df2c4.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "494d648068ed40aadfc17383ca6fbd947e79cc7dab9f653ac4ff8ed9a906dc2a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "fb622793c4619e01c75742d8b395cf39d26c203e090370667e4b3008e98ce32e"
+          "sha256": "315f2ffd8fe482b84a8442964a14919f6df3885f41af0aa104587f36491e5962"
         },
         {
           "path": "vault",
@@ -566,11 +604,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "24e7c8c1724497eb71910f4e7006fc2100953ef5d28f147ac1a719f30f0ea399"
+          "sha256": "4e3ed8f36dfa5b7152325f8f46f7039e37f908ea250fbf165505dbe82ed902b7"
         },
         {
           "path": "vault/archive",
@@ -602,14 +640,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8d38edf0fd5c3111917ca2c53b279445157acf1b2320a3e6ec4822e04db16c7c"
+          "sha256": "8a279a584d1e9fad4e1bcf9a1fe01166d6e64271c9bfd7526076fafdc63faf11"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "42d0295f5cbc14363cc687b4329b20ce5337490d1cf6cf78a9df4cea58c35fda"
+          "sha256": "a3f95f23af3e1cbf0eb488059d6015d3445aba8ecb7a726590b003f4c7df2503"
         },
         {
           "path": "vault/notes",
@@ -649,7 +687,7 @@
           "kind": "f",
           "mode": "0600",
           "size": 571,
-          "sha256": "39a2b92dbf7dfa44bb12945b216bb9e85ead12ef84f2ed22de35a014f2065c5a"
+          "sha256": "3a63edfe784fe8486592985748e6e9ef7a7fa28a7a476f01133d4b37f3bd5310"
         }
       ],
       "queries": [
@@ -693,7 +731,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T10:35:23.445241807Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T10:35:23.412976373Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.757302041Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.7573915Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.757500834Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T10:35:23.488364637Z\"}]\n",
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-10T08:25:58.359964911Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-10T08:25:58.333942473Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.341871917Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.342081626Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.342319084Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-10T08:25:58.401603696Z\"}]\n",
           "stderr": ""
         },
         {
@@ -706,7 +744,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T10:35:23.445241807Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T10:35:23.412976373Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T10:35:22.757302041Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T10:35:22.7573915Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T10:35:22.757500834Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T10:35:23.488364637Z}]\n",
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-10T08:25:58.359964911Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-10T08:25:58.333942473Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-10T08:25:44.341871917Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-10T08:25:44.342081626Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-10T08:25:44.342319084Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-10T08:25:58.401603696Z}]\n",
           "stderr": ""
         },
         {
@@ -721,7 +759,7 @@
             "kangaroos"
           ],
           "exit_code": 0,
-          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032786883413791656},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"# Gamma\\n\\nNo frontmatter, only a [[notes/alpha]] link.\",\"score\":0.015384615398943424}]}\n",
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032522473484277725},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
           "stderr": "time=\u003cT\u003e level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path=/private/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db new_path=/private/tmp/symdesk-cutover-v1/home/data/symdesk/vaults/bb5fd9d9186d1ee8/retrieval.db\n"
         },
         {
@@ -735,7 +773,7 @@
             "kangaroos"
           ],
           "exit_code": 0,
-          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032786883413791656 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.016129031777381897 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet:# Gamma\n\nNo frontmatter, only a [[notes/alpha]] link. Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet:# Beta\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü. Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
           "stderr": ""
         },
         {
@@ -750,7 +788,7 @@
             "wombats"
           ],
           "exit_code": 0,
-          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.016129031777381897},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"# Gamma\\n\\nNo frontmatter, only a [[notes/alpha]] link.\",\"score\":0.015384615398943424}]}\n",
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
           "stderr": ""
         },
         {
@@ -887,7 +925,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
           "stderr": ""
         },
         {
@@ -904,7 +942,7 @@
             "tasks"
           ],
           "exit_code": 0,
-          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[]}\n",
           "stderr": ""
         },
         {
@@ -919,7 +957,7 @@
             "jobs"
           ],
           "exit_code": 0,
-          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/private/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T10:35:23Z\",\n      \"updated_at\": \"2026-11-05T10:35:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/private/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-10T08:25:58Z\",\n      \"updated_at\": \"2026-11-10T08:25:58Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": ""
         },
         {
@@ -950,7 +988,7 @@
             "$ADA"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -966,7 +1004,7 @@
             "Ada Lovelace"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -982,7 +1020,7 @@
             "Acme GmbH"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"03d1511a-11ac-4e55-894d-0f3f742ad683\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"bf5e6522-2d15-40bb-9c74-3bc9c0050b22\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -1044,7 +1082,7 @@
             "status"
           ],
           "exit_code": 0,
-          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":196608,\"last_indexed_at\":\"2026-11-05T10:35:23Z\",\"embedding_model\":\"qwen3-embedding:0.6b\",\"backend_available\":true,\"pending_chunk_count\":0,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/private/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-10T08:25:58Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/private/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
           "stderr": ""
         },
         {
@@ -1086,7 +1124,7 @@
             "log"
           ],
           "exit_code": 0,
-          "stdout": "[2026-11-05T10:35:23.961Z] mem_7c819d447de558fe (room.created): Cutover Room\n[2026-11-05T10:35:23.999Z] mem_7c819d447de558fe (note.posted): First note\n[2026-11-05T10:35:24.028Z] mem_7c819d447de558fe (decision.recorded): Adopt Rust\n[2026-11-05T10:35:24.087Z] mem_7c819d447de558fe (member.added): Bob\n[2026-11-05T10:35:24.112Z] mem_29c76128f9ab8b27 (note.posted): Bob was here\n",
+          "stdout": "[2026-11-10T08:25:58.889Z] mem_39de58043181d7f2 (room.created): Cutover Room\n[2026-11-10T08:25:58.927Z] mem_39de58043181d7f2 (note.posted): First note\n[2026-11-10T08:25:58.947Z] mem_39de58043181d7f2 (decision.recorded): Adopt Rust\n[2026-11-10T08:25:58.984Z] mem_39de58043181d7f2 (member.added): Bob\n[2026-11-10T08:25:59.005Z] mem_e96ff85ef91df2c4 (note.posted): Bob was here\n",
           "stderr": ""
         },
         {
@@ -1098,7 +1136,7 @@
             "-json"
           ],
           "exit_code": 0,
-          "stdout": "{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"971c891a2ae3007b4c67a994582fb8a69572497edaf62def4280708447490a44\"},\"id\":\"ev_c4eb8a647f022e2f8541\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_593fe2916425f08b\",\"seq\":1,\"sig\":\"ed25519:6X6z3w4C8TV4vZM5/6nWRLDzLk6u6knRCYYo3kS1RSUzzMCaUViK2Lyd0cnhBHUg1gamc0lvXfevuTYJ6sJdBQ==\",\"ts\":\"2026-11-05T10:35:23.961Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_038cb8e2f1c2e1fd1000\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:ba7668bf7d3a2efbed7bf0e16a3753bb7aff73d0602304d230c6e03f4865b28b\",\"room\":\"rm_593fe2916425f08b\",\"seq\":2,\"sig\":\"ed25519:oSbg17+fTaTe9UkPiWW7aUacXc41qwK/gcRxUfu2qOhFTMwfw9Xaxdx+C+a2NrElqhiYeDOfIyRNwpPxrcn1CQ==\",\"ts\":\"2026-11-05T10:35:23.999Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_08e90f274a7d2904c308\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:888b8a57f3b3adb29a04ef070c676567edb3854661b4119f94323687427c06b6\",\"room\":\"rm_593fe2916425f08b\",\"seq\":3,\"sig\":\"ed25519:6iFDkVqxsyCiMXFPkUo8MGSYiwr+r4xt7rLd/9xsmh+zbbiPQ+zUfO9Xq79PfBectcZB5pq48h/3FFTb+hyHAA==\",\"ts\":\"2026-11-05T10:35:24.028Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"id\":\"mem_29c76128f9ab8b27\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"597dda88e04ae71d96733ecfe54fd4a678691b5426d8aea1f7d1633dfb01482b\",\"role\":\"member\"},\"id\":\"ev_ef369831f69b4513c0c9\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:9d39615dc64995c4c5fafc51537b885de47307de23a625ab7eec9ff894ca687b\",\"room\":\"rm_593fe2916425f08b\",\"seq\":4,\"sig\":\"ed25519:VgK8xw5lAdetLbA8yyoAmEsCfxSIGnSInOeiM8FZHr7Hqr/JFCRyzhKH8J9GZdk2tfC01yipOMYeRVOMZTtIDA==\",\"ts\":\"2026-11-05T10:35:24.087Z\",\"v\":1}\n{\"author\":\"mem_29c76128f9ab8b27\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_a7d4501f4a8fdf85c396\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_593fe2916425f08b\",\"seq\":1,\"sig\":\"ed25519:ZNZWc1yJIa/4K+ZpB8+3DESt2cEd3JQDM5dxpimBgSBtQ4Uolwi9cngJtY7QOsTd0BWZaW21ejBK7twDPT/8AQ==\",\"ts\":\"2026-11-05T10:35:24.112Z\",\"v\":1}\n",
+          "stdout": "{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"3ba36d886142793cd64d0de529d3a1e2f24cc34f4f006782d4d0b2f9ee21647d\"},\"id\":\"ev_01fc57d8231590144620\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":1,\"sig\":\"ed25519:qam2D8j1KDPHZoasJNXa3dec9zGYpfzB4tDsIc2Avk9sGBS7+EnqHU7VsXMTYcjU1eTVsCDJsvT4+WARJLFPCQ==\",\"ts\":\"2026-11-10T08:25:58.889Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_37d5d53fed551395a136\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:d7a789aecba8c78a3f463c42a84341c0f48bfc9b0487bdb2e787b8eb40a96cb2\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":2,\"sig\":\"ed25519:cfm83FCcGOAvfV5br4fM5dhOF2J1YJ5BgFqe0TL12ndSnOfrzh6KSEZGLyAUR+v7Zuhf8W28O+mEU9OZnjFqAg==\",\"ts\":\"2026-11-10T08:25:58.927Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_e0883c48198f495b3a5a\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:7c5802718ef2836c9cc34017521d286d2ca9e215a6ccda4f84d425b41b4ab995\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":3,\"sig\":\"ed25519:enqci+0vqGn9Dufk4KV4mdLmRnKS9aaLGnL5w7JN9GWAW1HK2uqIt1Q78+sAB/IV/Qao9LGyiX6DwMrSpSF8CQ==\",\"ts\":\"2026-11-10T08:25:58.947Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"id\":\"mem_e96ff85ef91df2c4\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"c75972b3df8cd08e4aec9a2d73f6141b3a9c01af46cd3a7f166f53cb5c69f70a\",\"role\":\"member\"},\"id\":\"ev_29de46ce323becba35e2\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:8f049454f3340e53913df6c3eb81090286761804845d440ebf6ba97999b2e0b0\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":4,\"sig\":\"ed25519:tCJcqEbl89847Kz1X94nelhfe1Fykq0Qe8/AO7SMLNJri4GPAxMbnfFC5mkjzTU4gJwjlAPJbTWmxbY578jGDQ==\",\"ts\":\"2026-11-10T08:25:58.984Z\",\"v\":1}\n{\"author\":\"mem_e96ff85ef91df2c4\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_912df8b7272a26e3723a\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":1,\"sig\":\"ed25519:htlCqLttSd/E+o1n9CqpUbCiLNzxDdjrEBkL4ABqfMa0PtT4/feLsFrcJ2MiypYpybWKmf7n/f+sWJzaZ9tiCA==\",\"ts\":\"2026-11-10T08:25:59.005Z\",\"v\":1}\n",
           "stderr": ""
         },
         {
@@ -1121,7 +1159,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "ID                    NAME          ROLE    KIND\nmem_29c76128f9ab8b27  Bob           member  human\nmem_7c819d447de558fe  Cutover Room  owner   human\n",
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_39de58043181d7f2  Cutover Room  owner   human\nmem_e96ff85ef91df2c4  Bob           member  human\n",
           "stderr": ""
         },
         {
@@ -1146,7 +1184,7 @@
             "owner"
           ],
           "exit_code": 0,
-          "stdout": "Name: owner\nMember ID: mem_7c819d447de558fe\nPublic Key: 971c891a2ae3007b4c67a994582fb8a69572497edaf62def4280708447490a44\n",
+          "stdout": "Name: owner\nMember ID: mem_39de58043181d7f2\nPublic Key: 3ba36d886142793cd64d0de529d3a1e2f24cc34f4f006782d4d0b2f9ee21647d\n",
           "stderr": ""
         }
       ],
@@ -1343,7 +1381,7 @@
       "name": "settled",
       "description": "steady state after one Go read pass; further Go reads must leave the tree unchanged",
       "archive": "state-v1-darwin-settled.cxa",
-      "archive_sha256": "1ae80888e2784e5d8090aaeea87c87bf8794d0aced7b31c5392f7f359253c22c",
+      "archive_sha256": "8fa9dc46216c36407fbe5f0f07fb037522c2a78b9a13d8f992c8f5e1fb2c2b56",
       "files": [
         {
           "path": "cwd",
@@ -1356,6 +1394,25 @@
           "kind": "d",
           "mode": "0755",
           "size": 0
+        },
+        {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
         },
         {
           "path": "home/cache",
@@ -1397,22 +1454,22 @@
           "path": "home/data/symdesk/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "d1f33a27ae96c5d39e59d84cb2f7c9455a95a776b6ce2e99b832035080898f8a"
+          "size": 172032,
+          "sha256": "2424da1f87456ac109d43f5c2f91d6adef42bd964638604f022c20a00851b600"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "6ec94bacfac43eacd0aa0214295403d0fcdfef5b7ba5635c7364801a27f5878d"
+          "sha256": "8b407b421df2e8bbb38049143caea8bee5daffbb662b3ed340314c5fb5c2e3b0"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "6e61fe81fda9aaa6661502c5c05f2225d290aa84b91f585c27041860ae6e400b"
+          "sha256": "c09262ea6167421f54e06ef1c966a0394f6d1935a0bad1bff179afb9f84c7a5d"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -1438,15 +1495,15 @@
           "path": "home/data/symdesk/vaults/bb5fd9d9186d1ee8/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "6de3ae2e913c74de918fce321fed3fb6583142b12ad10c4ff4aa53c3b32f8067"
+          "size": 172032,
+          "sha256": "bc55f9d1e8931996ce5e25966813a7f356d12c9231053fbfbf5fb5dcdbb2af0e"
         },
         {
           "path": "home/data/symdesk/vaults/bb5fd9d9186d1ee8/sidecar.db",
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "e38e85c423d6a2be60726fb02d95d3d2fb926967fe45c7ad8ef65431774b3e6a"
+          "sha256": "1196888365f5499c970a0c8b502ada6e05ab6f984ab8a942e5aa8ea1eb555fe7"
         },
         {
           "path": "home/data/symroom",
@@ -1465,14 +1522,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "3eec9a2870122866fa51360a2650f43b143c8a17c3f0bb9553faf83a3760e64d"
+          "sha256": "7684202f48bea586008a5adeabf0a32912768061ced255e86ea5192a25e8c62d"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "fb66034e6e891e305acea6480c5ecf5528ae696086ada52d83147a0fefb48dda"
+          "sha256": "9b2885137de2b2fbfc53bbc116edcdd66cfb24781f4afd188d852594a2e2e478"
         },
         {
           "path": "inbox",
@@ -1534,25 +1591,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_29c76128f9ab8b27.jsonl",
-          "kind": "f",
-          "mode": "0600",
-          "size": 390,
-          "sha256": "3e3374f946efa6d480c184dce163f4e600d58267d38fe50a8d668e66bda5ca5f"
-        },
-        {
-          "path": "room/journal/mem_7c819d447de558fe.jsonl",
+          "path": "room/journal/mem_39de58043181d7f2.jsonl",
           "kind": "f",
           "mode": "0644",
           "size": 1784,
-          "sha256": "e135d76c0737214b1b0a1fbfc0b6e83a91ec987e5dd10ea0b4b2e5f7292e31d2"
+          "sha256": "2882b91f15bb6faed89bd1e86893684d70554ad5b9d90dd50d28c81e0ed3cab4"
+        },
+        {
+          "path": "room/journal/mem_e96ff85ef91df2c4.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "494d648068ed40aadfc17383ca6fbd947e79cc7dab9f653ac4ff8ed9a906dc2a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "fb622793c4619e01c75742d8b395cf39d26c203e090370667e4b3008e98ce32e"
+          "sha256": "315f2ffd8fe482b84a8442964a14919f6df3885f41af0aa104587f36491e5962"
         },
         {
           "path": "vault",
@@ -1573,11 +1630,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "24e7c8c1724497eb71910f4e7006fc2100953ef5d28f147ac1a719f30f0ea399"
+          "sha256": "4e3ed8f36dfa5b7152325f8f46f7039e37f908ea250fbf165505dbe82ed902b7"
         },
         {
           "path": "vault/archive",
@@ -1609,14 +1666,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8d38edf0fd5c3111917ca2c53b279445157acf1b2320a3e6ec4822e04db16c7c"
+          "sha256": "8a279a584d1e9fad4e1bcf9a1fe01166d6e64271c9bfd7526076fafdc63faf11"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "42d0295f5cbc14363cc687b4329b20ce5337490d1cf6cf78a9df4cea58c35fda"
+          "sha256": "a3f95f23af3e1cbf0eb488059d6015d3445aba8ecb7a726590b003f4c7df2503"
         },
         {
           "path": "vault/notes",
@@ -1656,7 +1713,7 @@
           "kind": "f",
           "mode": "0600",
           "size": 571,
-          "sha256": "39a2b92dbf7dfa44bb12945b216bb9e85ead12ef84f2ed22de35a014f2065c5a"
+          "sha256": "3a63edfe784fe8486592985748e6e9ef7a7fa28a7a476f01133d4b37f3bd5310"
         }
       ],
       "after_reads": [
@@ -1673,6 +1730,25 @@
           "size": 0
         },
         {
+          "path": "home/.config",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek",
+          "kind": "d",
+          "mode": "0755",
+          "size": 0
+        },
+        {
+          "path": "home/.config/symseek/config.toml",
+          "kind": "f",
+          "mode": "0644",
+          "size": 49,
+          "sha256": "a9fff8261a7df5e907930b4436ce232e8bebd5dfb59de7a7bbc342222a6704bb"
+        },
+        {
           "path": "home/cache",
           "kind": "d",
           "mode": "0700",
@@ -1712,22 +1788,22 @@
           "path": "home/data/symdesk/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "d1f33a27ae96c5d39e59d84cb2f7c9455a95a776b6ce2e99b832035080898f8a"
+          "size": 172032,
+          "sha256": "2424da1f87456ac109d43f5c2f91d6adef42bd964638604f022c20a00851b600"
         },
         {
           "path": "home/data/symdesk/symingest.db",
           "kind": "f",
           "mode": "0644",
           "size": 126976,
-          "sha256": "6ec94bacfac43eacd0aa0214295403d0fcdfef5b7ba5635c7364801a27f5878d"
+          "sha256": "8b407b421df2e8bbb38049143caea8bee5daffbb662b3ed340314c5fb5c2e3b0"
         },
         {
           "path": "home/data/symdesk/symrelate.db",
           "kind": "f",
           "mode": "0644",
           "size": 294912,
-          "sha256": "6e61fe81fda9aaa6661502c5c05f2225d290aa84b91f585c27041860ae6e400b"
+          "sha256": "c09262ea6167421f54e06ef1c966a0394f6d1935a0bad1bff179afb9f84c7a5d"
         },
         {
           "path": "home/data/symdesk/vaults",
@@ -1753,15 +1829,15 @@
           "path": "home/data/symdesk/vaults/bb5fd9d9186d1ee8/retrieval.db",
           "kind": "f",
           "mode": "0600",
-          "size": 196608,
-          "sha256": "6de3ae2e913c74de918fce321fed3fb6583142b12ad10c4ff4aa53c3b32f8067"
+          "size": 172032,
+          "sha256": "bc55f9d1e8931996ce5e25966813a7f356d12c9231053fbfbf5fb5dcdbb2af0e"
         },
         {
           "path": "home/data/symdesk/vaults/bb5fd9d9186d1ee8/sidecar.db",
           "kind": "f",
           "mode": "0644",
           "size": 188416,
-          "sha256": "e38e85c423d6a2be60726fb02d95d3d2fb926967fe45c7ad8ef65431774b3e6a"
+          "sha256": "1196888365f5499c970a0c8b502ada6e05ab6f984ab8a942e5aa8ea1eb555fe7"
         },
         {
           "path": "home/data/symroom",
@@ -1780,14 +1856,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 291,
-          "sha256": "3eec9a2870122866fa51360a2650f43b143c8a17c3f0bb9553faf83a3760e64d"
+          "sha256": "7684202f48bea586008a5adeabf0a32912768061ced255e86ea5192a25e8c62d"
         },
         {
           "path": "home/data/symroom/identities/owner.json",
           "kind": "f",
           "mode": "0600",
           "size": 293,
-          "sha256": "fb66034e6e891e305acea6480c5ecf5528ae696086ada52d83147a0fefb48dda"
+          "sha256": "9b2885137de2b2fbfc53bbc116edcdd66cfb24781f4afd188d852594a2e2e478"
         },
         {
           "path": "inbox",
@@ -1849,25 +1925,25 @@
           "size": 0
         },
         {
-          "path": "room/journal/mem_29c76128f9ab8b27.jsonl",
-          "kind": "f",
-          "mode": "0600",
-          "size": 390,
-          "sha256": "3e3374f946efa6d480c184dce163f4e600d58267d38fe50a8d668e66bda5ca5f"
-        },
-        {
-          "path": "room/journal/mem_7c819d447de558fe.jsonl",
+          "path": "room/journal/mem_39de58043181d7f2.jsonl",
           "kind": "f",
           "mode": "0644",
           "size": 1784,
-          "sha256": "e135d76c0737214b1b0a1fbfc0b6e83a91ec987e5dd10ea0b4b2e5f7292e31d2"
+          "sha256": "2882b91f15bb6faed89bd1e86893684d70554ad5b9d90dd50d28c81e0ed3cab4"
+        },
+        {
+          "path": "room/journal/mem_e96ff85ef91df2c4.jsonl",
+          "kind": "f",
+          "mode": "0600",
+          "size": 390,
+          "sha256": "494d648068ed40aadfc17383ca6fbd947e79cc7dab9f653ac4ff8ed9a906dc2a"
         },
         {
           "path": "room/room.toml",
           "kind": "f",
           "mode": "0644",
           "size": 211,
-          "sha256": "fb622793c4619e01c75742d8b395cf39d26c203e090370667e4b3008e98ce32e"
+          "sha256": "315f2ffd8fe482b84a8442964a14919f6df3885f41af0aa104587f36491e5962"
         },
         {
           "path": "vault",
@@ -1888,11 +1964,11 @@
           "size": 0
         },
         {
-          "path": "vault/.symdesk/journal/2026-11-05.ndjson",
+          "path": "vault/.symdesk/journal/2026-11-10.ndjson",
           "kind": "f",
           "mode": "0644",
           "size": 103,
-          "sha256": "24e7c8c1724497eb71910f4e7006fc2100953ef5d28f147ac1a719f30f0ea399"
+          "sha256": "4e3ed8f36dfa5b7152325f8f46f7039e37f908ea250fbf165505dbe82ed902b7"
         },
         {
           "path": "vault/archive",
@@ -1924,14 +2000,14 @@
           "kind": "f",
           "mode": "0600",
           "size": 300,
-          "sha256": "8d38edf0fd5c3111917ca2c53b279445157acf1b2320a3e6ec4822e04db16c7c"
+          "sha256": "8a279a584d1e9fad4e1bcf9a1fe01166d6e64271c9bfd7526076fafdc63faf11"
         },
         {
           "path": "vault/bases/tasks.md",
           "kind": "f",
           "mode": "0600",
           "size": 174,
-          "sha256": "42d0295f5cbc14363cc687b4329b20ce5337490d1cf6cf78a9df4cea58c35fda"
+          "sha256": "a3f95f23af3e1cbf0eb488059d6015d3445aba8ecb7a726590b003f4c7df2503"
         },
         {
           "path": "vault/notes",
@@ -1971,7 +2047,7 @@
           "kind": "f",
           "mode": "0600",
           "size": 571,
-          "sha256": "39a2b92dbf7dfa44bb12945b216bb9e85ead12ef84f2ed22de35a014f2065c5a"
+          "sha256": "3a63edfe784fe8486592985748e6e9ef7a7fa28a7a476f01133d4b37f3bd5310"
         }
       ],
       "queries": [
@@ -2015,7 +2091,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-05T10:35:23.445241807Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-05T10:35:23.412976373Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.757302041Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.7573915Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-05T10:35:22.757500834Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-05T10:35:23.488364637Z\"}]\n",
+          "stdout": "[{\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"type\":\"base\",\"modified\":\"2026-11-10T08:25:58.359964911Z\"},{\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"type\":\"base\",\"modified\":\"2026-11-10T08:25:58.333942473Z\"},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.341871917Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.342081626Z\"},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"type\":\"note\",\"modified\":\"2026-11-10T08:25:44.342319084Z\"},{\"path\":\"report.md.md\",\"title\":\"report.md\",\"type\":\"document\",\"modified\":\"2026-11-10T08:25:58.401603696Z\"}]\n",
           "stderr": ""
         },
         {
@@ -2028,7 +2104,7 @@
             "ls"
           ],
           "exit_code": 0,
-          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-05T10:35:23.445241807Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-05T10:35:23.412976373Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-05T10:35:22.757302041Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-05T10:35:22.7573915Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-05T10:35:22.757500834Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-05T10:35:23.488364637Z}]\n",
+          "stdout": "[{Path:bases/open-notes.md Title:Open notes Type:base Modified:2026-11-10T08:25:58.359964911Z} {Path:bases/tasks.md Title:Tasks Type:base Modified:2026-11-10T08:25:58.333942473Z} {Path:notes/alpha.md Title:Alpha Type:note Modified:2026-11-10T08:25:44.341871917Z} {Path:notes/beta.md Title:Beta Type:note Modified:2026-11-10T08:25:44.342081626Z} {Path:notes/nested/gamma.md Title:gamma Type:note Modified:2026-11-10T08:25:44.342319084Z} {Path:report.md.md Title:report.md Type:document Modified:2026-11-10T08:25:58.401603696Z}]\n",
           "stderr": ""
         },
         {
@@ -2043,7 +2119,7 @@
             "kangaroos"
           ],
           "exit_code": 0,
-          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032786883413791656},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"# Gamma\\n\\nNo frontmatter, only a [[notes/alpha]] link.\",\"score\":0.015384615398943424}]}\n",
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.032522473484277725},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
           "stderr": ""
         },
         {
@@ -2057,7 +2133,7 @@
             "kangaroos"
           ],
           "exit_code": 0,
-          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032786883413791656 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.016129031777381897 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet:# Gamma\n\nNo frontmatter, only a [[notes/alpha]] link. Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stdout": "{Results:[{Path:notes/alpha.md Title:Alpha Snippet:# Alpha\nHello [[Beta]] world about kangaroos. Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/alpha.md Title:Alpha Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/beta.md Title:Beta Snippet:# Beta\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü. Score:0.015625 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:notes/nested/gamma.md Title:gamma Snippet: Score:0.015384615398943424 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
           "stderr": ""
         },
         {
@@ -2072,7 +2148,7 @@
             "wombats"
           ],
           "exit_code": 0,
-          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016393441706895828},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.016129031777381897},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"# Gamma\\n\\nNo frontmatter, only a [[notes/alpha]] link.\",\"score\":0.015384615398943424}]}\n",
+          "stdout": "{\"results\":[{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"notes/alpha.md\",\"title\":\"Alpha\",\"snippet\":\"# Alpha\\nHello [[Beta]] world about kangaroos.\",\"score\":0.016129031777381897},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"\",\"score\":0.01587301678955555},{\"path\":\"notes/beta.md\",\"title\":\"Beta\",\"snippet\":\"# Beta\\nLinks back to [[Alpha]]. Cheese pasta recipe with Müller äöü.\",\"score\":0.015625},{\"path\":\"notes/nested/gamma.md\",\"title\":\"gamma\",\"snippet\":\"\",\"score\":0.015384615398943424}]}\n",
           "stderr": ""
         },
         {
@@ -2209,7 +2285,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
+          "stdout": "[{\"id\":\"open-notes\",\"path\":\"bases/open-notes.md\",\"title\":\"Open notes\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[{\"id\":\"open-notes\",\"name\":\"Open notes\",\"filters\":[],\"sorts\":[],\"columns\":[\"title\",\"status\"],\"source\":\"tag:work\"}]},{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[]}]\n",
           "stderr": ""
         },
         {
@@ -2226,7 +2302,7 @@
             "tasks"
           ],
           "exit_code": 0,
-          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-05T10:35:23Z\",\"tags\":[\"base\"],\"views\":[]}\n",
+          "stdout": "{\"id\":\"tasks\",\"path\":\"bases/tasks.md\",\"title\":\"Tasks\",\"description\":\"My tasks\",\"created\":\"2026-11-10T08:25:58Z\",\"tags\":[\"base\"],\"views\":[]}\n",
           "stderr": ""
         },
         {
@@ -2241,7 +2317,7 @@
             "jobs"
           ],
           "exit_code": 0,
-          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/private/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-05T10:35:23Z\",\n      \"updated_at\": \"2026-11-05T10:35:23Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
+          "stdout": "{\n  \"jobs\": [\n    {\n      \"id\": 1,\n      \"document_id\": 1,\n      \"status\": \"completed\",\n      \"attempts\": 1,\n      \"kind\": \"text/markdown\",\n      \"source_path\": \"/private/tmp/symdesk-cutover-v1/inbox/report.md\",\n      \"created_at\": \"2026-11-10T08:25:58Z\",\n      \"updated_at\": \"2026-11-10T08:25:58Z\"\n    }\n  ],\n  \"total\": 1,\n  \"limit\": 100,\n  \"offset\": 0\n}\n",
           "stderr": ""
         },
         {
@@ -2272,7 +2348,7 @@
             "$ADA"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"contact_id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2288,7 +2364,7 @@
             "Ada Lovelace"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"a049442d-1993-4895-a1a1-63eaf6c68ae2\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Ada Lovelace\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"ec1d38d9-8000-47ef-b12f-8e07c5fbdfdc\",\"kind\":\"person\",\"display_name\":\"Ada Lovelace\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2304,7 +2380,7 @@
             "Acme GmbH"
           ],
           "exit_code": 0,
-          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"03d1511a-11ac-4e55-894d-0f3f742ad683\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
+          "stdout": "{\"name\":\"Acme GmbH\",\"refs\":[{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"bf5e6522-2d15-40bb-9c74-3bc9c0050b22\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}],\"documents\":[],\"meetings\":[],\"store_available\":true}\n",
           "stderr": ""
         },
         {
@@ -2366,7 +2442,7 @@
             "status"
           ],
           "exit_code": 0,
-          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":196608,\"last_indexed_at\":\"2026-11-05T10:35:23Z\",\"embedding_model\":\"qwen3-embedding:0.6b\",\"backend_available\":true,\"pending_chunk_count\":0,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/private/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
+          "stdout": "{\"document_count\":3,\"chunk_count\":6,\"database_bytes\":172032,\"last_indexed_at\":\"2026-11-10T08:25:58Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":6,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":7,\"index_location\":\"/private/tmp/symdesk-cutover-v1/home/data/symdesk/retrieval.db\"}\n",
           "stderr": ""
         },
         {
@@ -2408,7 +2484,7 @@
             "log"
           ],
           "exit_code": 0,
-          "stdout": "[2026-11-05T10:35:23.961Z] mem_7c819d447de558fe (room.created): Cutover Room\n[2026-11-05T10:35:23.999Z] mem_7c819d447de558fe (note.posted): First note\n[2026-11-05T10:35:24.028Z] mem_7c819d447de558fe (decision.recorded): Adopt Rust\n[2026-11-05T10:35:24.087Z] mem_7c819d447de558fe (member.added): Bob\n[2026-11-05T10:35:24.112Z] mem_29c76128f9ab8b27 (note.posted): Bob was here\n",
+          "stdout": "[2026-11-10T08:25:58.889Z] mem_39de58043181d7f2 (room.created): Cutover Room\n[2026-11-10T08:25:58.927Z] mem_39de58043181d7f2 (note.posted): First note\n[2026-11-10T08:25:58.947Z] mem_39de58043181d7f2 (decision.recorded): Adopt Rust\n[2026-11-10T08:25:58.984Z] mem_39de58043181d7f2 (member.added): Bob\n[2026-11-10T08:25:59.005Z] mem_e96ff85ef91df2c4 (note.posted): Bob was here\n",
           "stderr": ""
         },
         {
@@ -2420,7 +2496,7 @@
             "-json"
           ],
           "exit_code": 0,
-          "stdout": "{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"971c891a2ae3007b4c67a994582fb8a69572497edaf62def4280708447490a44\"},\"id\":\"ev_c4eb8a647f022e2f8541\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_593fe2916425f08b\",\"seq\":1,\"sig\":\"ed25519:6X6z3w4C8TV4vZM5/6nWRLDzLk6u6knRCYYo3kS1RSUzzMCaUViK2Lyd0cnhBHUg1gamc0lvXfevuTYJ6sJdBQ==\",\"ts\":\"2026-11-05T10:35:23.961Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_038cb8e2f1c2e1fd1000\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:ba7668bf7d3a2efbed7bf0e16a3753bb7aff73d0602304d230c6e03f4865b28b\",\"room\":\"rm_593fe2916425f08b\",\"seq\":2,\"sig\":\"ed25519:oSbg17+fTaTe9UkPiWW7aUacXc41qwK/gcRxUfu2qOhFTMwfw9Xaxdx+C+a2NrElqhiYeDOfIyRNwpPxrcn1CQ==\",\"ts\":\"2026-11-05T10:35:23.999Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_08e90f274a7d2904c308\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:888b8a57f3b3adb29a04ef070c676567edb3854661b4119f94323687427c06b6\",\"room\":\"rm_593fe2916425f08b\",\"seq\":3,\"sig\":\"ed25519:6iFDkVqxsyCiMXFPkUo8MGSYiwr+r4xt7rLd/9xsmh+zbbiPQ+zUfO9Xq79PfBectcZB5pq48h/3FFTb+hyHAA==\",\"ts\":\"2026-11-05T10:35:24.028Z\",\"v\":1}\n{\"author\":\"mem_7c819d447de558fe\",\"body\":{\"id\":\"mem_29c76128f9ab8b27\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"597dda88e04ae71d96733ecfe54fd4a678691b5426d8aea1f7d1633dfb01482b\",\"role\":\"member\"},\"id\":\"ev_ef369831f69b4513c0c9\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:9d39615dc64995c4c5fafc51537b885de47307de23a625ab7eec9ff894ca687b\",\"room\":\"rm_593fe2916425f08b\",\"seq\":4,\"sig\":\"ed25519:VgK8xw5lAdetLbA8yyoAmEsCfxSIGnSInOeiM8FZHr7Hqr/JFCRyzhKH8J9GZdk2tfC01yipOMYeRVOMZTtIDA==\",\"ts\":\"2026-11-05T10:35:24.087Z\",\"v\":1}\n{\"author\":\"mem_29c76128f9ab8b27\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_a7d4501f4a8fdf85c396\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_593fe2916425f08b\",\"seq\":1,\"sig\":\"ed25519:ZNZWc1yJIa/4K+ZpB8+3DESt2cEd3JQDM5dxpimBgSBtQ4Uolwi9cngJtY7QOsTd0BWZaW21ejBK7twDPT/8AQ==\",\"ts\":\"2026-11-05T10:35:24.112Z\",\"v\":1}\n",
+          "stdout": "{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"name\":\"Cutover Room\",\"public_key\":\"3ba36d886142793cd64d0de529d3a1e2f24cc34f4f006782d4d0b2f9ee21647d\"},\"id\":\"ev_01fc57d8231590144620\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":1,\"sig\":\"ed25519:qam2D8j1KDPHZoasJNXa3dec9zGYpfzB4tDsIc2Avk9sGBS7+EnqHU7VsXMTYcjU1eTVsCDJsvT4+WARJLFPCQ==\",\"ts\":\"2026-11-10T08:25:58.889Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"text\":\"First note\"},\"id\":\"ev_37d5d53fed551395a136\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:d7a789aecba8c78a3f463c42a84341c0f48bfc9b0487bdb2e787b8eb40a96cb2\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":2,\"sig\":\"ed25519:cfm83FCcGOAvfV5br4fM5dhOF2J1YJ5BgFqe0TL12ndSnOfrzh6KSEZGLyAUR+v7Zuhf8W28O+mEU9OZnjFqAg==\",\"ts\":\"2026-11-10T08:25:58.927Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"refs\":[],\"text\":\"Adopt Rust\"},\"id\":\"ev_e0883c48198f495b3a5a\",\"kind\":\"decision.recorded\",\"lamport\":3,\"prev\":\"sha256:7c5802718ef2836c9cc34017521d286d2ca9e215a6ccda4f84d425b41b4ab995\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":3,\"sig\":\"ed25519:enqci+0vqGn9Dufk4KV4mdLmRnKS9aaLGnL5w7JN9GWAW1HK2uqIt1Q78+sAB/IV/Qao9LGyiX6DwMrSpSF8CQ==\",\"ts\":\"2026-11-10T08:25:58.947Z\",\"v\":1}\n{\"author\":\"mem_39de58043181d7f2\",\"body\":{\"id\":\"mem_e96ff85ef91df2c4\",\"kind\":\"human\",\"name\":\"Bob\",\"public_key\":\"c75972b3df8cd08e4aec9a2d73f6141b3a9c01af46cd3a7f166f53cb5c69f70a\",\"role\":\"member\"},\"id\":\"ev_29de46ce323becba35e2\",\"kind\":\"member.added\",\"lamport\":4,\"prev\":\"sha256:8f049454f3340e53913df6c3eb81090286761804845d440ebf6ba97999b2e0b0\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":4,\"sig\":\"ed25519:tCJcqEbl89847Kz1X94nelhfe1Fykq0Qe8/AO7SMLNJri4GPAxMbnfFC5mkjzTU4gJwjlAPJbTWmxbY578jGDQ==\",\"ts\":\"2026-11-10T08:25:58.984Z\",\"v\":1}\n{\"author\":\"mem_e96ff85ef91df2c4\",\"body\":{\"text\":\"Bob was here\"},\"id\":\"ev_912df8b7272a26e3723a\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_ac721b63727d5f56\",\"seq\":1,\"sig\":\"ed25519:htlCqLttSd/E+o1n9CqpUbCiLNzxDdjrEBkL4ABqfMa0PtT4/feLsFrcJ2MiypYpybWKmf7n/f+sWJzaZ9tiCA==\",\"ts\":\"2026-11-10T08:25:59.005Z\",\"v\":1}\n",
           "stderr": ""
         },
         {
@@ -2443,7 +2519,7 @@
             "list"
           ],
           "exit_code": 0,
-          "stdout": "ID                    NAME          ROLE    KIND\nmem_29c76128f9ab8b27  Bob           member  human\nmem_7c819d447de558fe  Cutover Room  owner   human\n",
+          "stdout": "ID                    NAME          ROLE    KIND\nmem_39de58043181d7f2  Cutover Room  owner   human\nmem_e96ff85ef91df2c4  Bob           member  human\n",
           "stderr": ""
         },
         {
@@ -2468,7 +2544,7 @@
             "owner"
           ],
           "exit_code": 0,
-          "stdout": "Name: owner\nMember ID: mem_7c819d447de558fe\nPublic Key: 971c891a2ae3007b4c67a994582fb8a69572497edaf62def4280708447490a44\n",
+          "stdout": "Name: owner\nMember ID: mem_39de58043181d7f2\nPublic Key: 3ba36d886142793cd64d0de529d3a1e2f24cc34f4f006782d4d0b2f9ee21647d\n",
           "stderr": ""
         }
       ],

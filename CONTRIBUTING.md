@@ -11,7 +11,7 @@ Thanks for helping improve SymDesk. Contributions should preserve the project’
 
 ## Local checks
 
-The core is Rust (toolchain pinned in `rust-toolchain.toml`); no Go toolchain is needed. The Go implementation was retired in RUST-019: its last commit is `075fdf94` (tag `v0.12.2`), where the Go sources stay readable in git history.
+The core is Rust (toolchain pinned in `rust-toolchain.toml`); no Go toolchain is needed. The Go implementation was retired in RUST-019: its last commit is `36aad3d4` (tag `v0.12.2`), where the Go sources stay readable in git history.
 
 ```sh
 make build

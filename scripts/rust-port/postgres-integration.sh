@@ -4,7 +4,7 @@
 # `make postgres-integration`.
 #
 # The Rust store replays testdata/port/storage/postgres.json, the scenarios the
-# Go PostgresBackend recorded against a real server (last Go commit 075fdf94,
+# Go PostgresBackend recorded against a real server (last Go commit 36aad3d4,
 # tag v0.12.2). The Go recorder and the Go store's own integration tests left
 # the tree in RUST-019, so this script only replays.
 #

@@ -38,7 +38,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (`symroom`). `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
 
-**Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `075fdf94` (tag `v0.12.2`); the sources stay readable there (`git show 075fdf94:cmd/symdesk/main.go`). The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
+**Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `36aad3d4` (tag `v0.12.2`); the sources stay readable there (`git show 36aad3d4:cmd/symdesk/main.go`). The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
 
 ## Structure
 

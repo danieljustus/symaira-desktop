@@ -217,7 +217,7 @@ FUZZ_RUNS ?= 10000
 
 
 
-# RUST-019: the Go core is retired (last Go commit 075fdf94, tag v0.12.2); build,
+# RUST-019: the Go core is retired (last Go commit 36aad3d4, tag v0.12.2); build,
 # test and lint map to the Rust workspace. `build` stamps both binaries with
 # VERSION and copies them to bin/.
 build:
@@ -991,7 +991,7 @@ port-provenance:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/provenance_check.py
 
 # Optional, needs the full git history: also binds every fixture `source_hashes`
-# entry to the Go blobs at the last Go commit (075fdf94).
+# entry to the Go blobs at the last Go commit (36aad3d4).
 port-provenance-history:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/provenance_check.py --history
 

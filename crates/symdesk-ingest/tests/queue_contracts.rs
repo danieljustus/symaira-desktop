@@ -302,7 +302,7 @@ fn go_queue_state_machine() {
     );
     drop(store);
 }
-/// SHA-256 of the Go ingest-store migrations at the last Go commit (075fdf94,
+/// SHA-256 of the Go ingest-store migrations at the last Go commit (36aad3d4,
 /// tag v0.12.2); the Go tree is retired (RUST-019).
 const GO_MIGRATION_SHA256: &[(&str, &str)] = &[
     (

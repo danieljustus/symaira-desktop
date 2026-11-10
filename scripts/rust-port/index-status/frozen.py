@@ -3,7 +3,7 @@
 
 The Go side was recorded once (canonical oracle commit pinned in
 `testdata/port/provenance.json`; the recorder left the tree with the Go code in
-RUST-019, last Go commit 075fdf94 / v0.12.2) into
+RUST-019, last Go commit 36aad3d4 / v0.12.2) into
 `testdata/port/cli/index-status-recording.json`: each case's exit code and
 stdout/stderr with the disposable world root replaced by a token.
 

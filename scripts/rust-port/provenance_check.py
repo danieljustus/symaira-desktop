@@ -5,7 +5,7 @@
 SHA-256 and records the oracle commit, the embedded oracle git bundle and the
 source digests of the Go generators. The Go portgen that computed the
 production/generator digests left the tree with the Go code (last Go commit
-`075fdf94`, tag `v0.12.2`), so those two digests cannot be recomputed from the
+`36aad3d4`, tag `v0.12.2`), so those two digests cannot be recomputed from the
 working tree any more. They stay as recorded history; this check verifies what
 can still be verified without Go:
 
@@ -27,7 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PROVENANCE = ROOT / "testdata/port/provenance.json"
-LAST_GO_COMMIT = "075fdf94ef29c99f690793791176f3cf7a21dec4"
+LAST_GO_COMMIT = "36aad3d4dabfd2c3b00ad16dbf5a506282e624ca"
 HEX64 = re.compile(r"[0-9a-f]{64}")
 HEX40 = re.compile(r"[0-9a-f]{40}")
 # Fixtures whose `source_hash` is the digest of several concatenated files.

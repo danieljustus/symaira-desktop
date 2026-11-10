@@ -105,7 +105,7 @@ fn go_room_index_schema_replay_rebuild_queries_and_corruption() {
     .expect("fixture JSON");
     assert_eq!(fixture.schema_version, 1);
     // Concatenation of internal/room/index/index.go and
-    // internal/room/members/members.go at the last Go commit (075fdf94).
+    // internal/room/members/members.go at the last Go commit (36aad3d4).
     oracle_sources::assert_recorded_source_hash("internal/room/index", &fixture.source_hash);
 
     let room = scratch("valid");

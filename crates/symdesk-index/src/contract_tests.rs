@@ -17,7 +17,7 @@ use super::{
     open_vault_dir, sidecar_storage_root, storage_path, strip_verbatim_prefix,
 };
 
-/// SHA-256 of the Go sidecar migrations at the last Go commit (075fdf94, tag
+/// SHA-256 of the Go sidecar migrations at the last Go commit (36aad3d4, tag
 /// v0.12.2). The Go tree is retired (RUST-019); these digests pin the bytes the
 /// Rust migrations must keep so Go-created sidecars open unchanged.
 const GO_MIGRATION_SHA256: &[(&str, &str)] = &[

@@ -2,7 +2,7 @@
 
 > **Status:** implementation active; `RUST-001` through `RUST-006` passed; `RUST-007` and `RUST-016` are in progress. VALUE-001 passed for the exact candidate `5c5e98c5`; later commits need their own integrated verification.
 > **Go behavior oracle:** the canonical live source P and release are recorded in [provenance.json](../../testdata/port/provenance.json). Every live fixture uses this same identity, backed by the complete production-source digest and immutable ancestry checks. Explicit historical input/probe roles are documented in [fixture-identity.md](fixture-identity.md). VALUE baselines remain pinned to `ae863319` / `v0.12.2`.
-> **Scope:** the Go `symdesk` and `symroom` backends (removed in RUST-019, last Go commit `075fdf94` / `v0.12.2`); SwiftUI clients and Swift packages stay Swift
+> **Scope:** the Go `symdesk` and `symroom` backends (removed in RUST-019, last Go commit `36aad3d4` / `v0.12.2`); SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
 > **Current entry point (2026-11-02):** [handover-20261102.md](handover-20261102.md) — finish RUST-014/015 and the residual rows locally, remove Go (RUST-019), then push once.
@@ -11,7 +11,7 @@
 
 The Go backend is gone from the tree. `git ls-files '*.go'` is empty and there
 is no `go.mod`, `go.sum`, `.golangci.yml` or `.goreleaser.yml`. The last commit
-that contains Go is **`075fdf94`** (tag **`v0.12.2`** is the last Go release);
+that contains Go is **`36aad3d4`** (tag **`v0.12.2`** is the last Go release);
 the Go oracle sources stay readable there and at the oracle commits recorded in
 `testdata/port/provenance.json`.
 
@@ -27,7 +27,7 @@ the Go oracle sources stay readable there and at the oracle commits recorded in
   `make port-provenance`, part of `make port-contract`) verifies the identity,
   the oracle bundle bytes and the SHA-256 of all 234 fixtures in
   `provenance.json`. `--history` (`make port-provenance-history`) additionally
-  binds 404 recorded fixture `source_hashes` to the Go blobs at `075fdf94`. The
+  binds 404 recorded fixture `source_hashes` to the Go blobs at `36aad3d4`. The
   production/generator source digests in `provenance.json` were computed by the
   Go `portgen` and can no longer be recomputed from the tree; they stay as
   recorded history. Rust tests no longer read Go sources

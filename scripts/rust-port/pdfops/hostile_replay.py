@@ -5,7 +5,7 @@ The Go PDF adapters were run once over the deterministic hostile corpus
 (hostile_inputs.py, 455 cases) with the installed pdfinfo/pdfseparate/pdfunite/
 qpdf and recorded per OS in
 `testdata/port/render/pdfops-hostile-recording-<os>.json` (last Go commit
-075fdf94, tag v0.12.2; the Go recorder left the tree in RUST-019).
+36aad3d4, tag v0.12.2; the Go recorder left the tree in RUST-019).
 
 `--replay FILE --rust-binary PROBE` rebuilds each world, runs the Rust probe
 with the same real tools and compares every observation with the recorded Go

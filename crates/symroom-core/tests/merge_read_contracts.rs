@@ -64,7 +64,7 @@ fn go_merge_all_disk_order_corruption_and_scanner_prefix() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 3);
     // Concatenation of internal/room/journal/merge.go and
-    // internal/room/journal/journal.go at the last Go commit (075fdf94).
+    // internal/room/journal/journal.go at the last Go commit (36aad3d4).
     oracle_sources::assert_recorded_source_hash("internal/room/journal", &fixture.source_hash);
 
     for case in fixture.cases {

@@ -73,7 +73,7 @@ jobs:
         with:
           clean: ${{ runner.environment != 'self-hosted' }}
           # The oracle bundle's prerequisite commit and the last Go commit
-          # (075fdf94) must be present for --history checks and bundle replays.
+          # (36aad3d4) must be present for --history checks and bundle replays.
           fetch-depth: 0
       - name: Prune stale gate worktrees on the persistent self-hosted checkout
         if: runner.environment == 'self-hosted'

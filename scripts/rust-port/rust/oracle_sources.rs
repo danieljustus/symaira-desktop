@@ -1,5 +1,5 @@
 //! Recorded Go oracle source hashes. The Go sources were retired from the tree
-//! in RUST-019 (last Go commit `075fdf94`, tag `v0.12.2`), so a fixture's
+//! in RUST-019 (last Go commit `36aad3d4`, tag `v0.12.2`), so a fixture's
 //! `source_hashes` can no longer be recomputed from files next to the tests.
 //! The tests keep asserting the hash is a well-formed SHA-256; binding it to
 //! the blobs at the recorded oracle commit is done Go-free in

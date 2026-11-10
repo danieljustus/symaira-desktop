@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
     .package(url: "https://github.com/argmaxinc/argmax-oss-swift", exact: "1.1.0"),
-    .package(url: "https://github.com/danieljustus/symaira-appkit.git", exact: "0.14.0"),
+    .package(url: "https://github.com/danieljustus/symaira-corekit.git", exact: "0.20.0"),
   ],
   targets: [
     .target(name: "SymMeetCore"),
@@ -32,7 +32,7 @@ let package = Package(
       name: "SymMeetMCP",
       dependencies: [
         "SymMeetCore",
-        .product(name: "SymairaMCP", package: "symaira-appkit"),
+        .product(name: "SymairaMCP", package: "symaira-corekit"),
       ]
     ),
     .target(
@@ -60,7 +60,7 @@ let package = Package(
         "SymMeetWhisperKit",
         "SymMeetSpeakerKit",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        .product(name: "SymairaUpdateCheck", package: "symaira-appkit"),
+        .product(name: "SymairaUpdateCheck", package: "symaira-corekit"),
       ],
       exclude: ["Info.plist"],
       linkerSettings: [
@@ -87,7 +87,7 @@ let package = Package(
       name: "SymMeetMCPTests",
       dependencies: [
         "SymMeetMCP",
-        .product(name: "SymairaMCP", package: "symaira-appkit"),
+        .product(name: "SymairaMCP", package: "symaira-corekit"),
       ]
     ),
     .testTarget(name: "SymMeetCLITests", dependencies: ["SymMeetCore"]),

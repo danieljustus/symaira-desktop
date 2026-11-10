@@ -6,9 +6,9 @@ options:
 packages:
   symaira-meet:
     path: "."
-  symaira-appkit:
-    url: https://github.com/danieljustus/symaira-appkit.git
-    exactVersion: 0.7.0
+  symaira-corekit:
+    url: https://github.com/danieljustus/symaira-corekit.git
+    exactVersion: 0.20.0
 targets:
   SymMeetAgent:
     type: application
@@ -21,11 +21,11 @@ targets:
         product: SymMeetCore
       - package: symaira-meet
         product: SymMeetCapture
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaDaemonKit
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaUpdateCheck
     settings:
       base:

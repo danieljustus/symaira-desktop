@@ -22,6 +22,8 @@ struct AgentUpdateCheckerTests {
     let initial = AgentUpdateChecker(
       store: skipped,
       autoPrefs: preferences,
+      defaults: defaults,
+      preferencesKey: keyPrefix,
       currentVersion: { "0.0.0" }
     )
     #expect(initial.autoCheckEnabled == false)
@@ -37,6 +39,8 @@ struct AgentUpdateCheckerTests {
     let recreated = AgentUpdateChecker(
       store: skipped,
       autoPrefs: recreatedPreferences,
+      defaults: defaults,
+      preferencesKey: keyPrefix,
       currentVersion: { "0.0.0" }
     )
 

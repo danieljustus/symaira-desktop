@@ -176,7 +176,7 @@ private struct MarkdownBlocksView: View {
 
     /// Heading font per markdown level, expressed through the shared type
     /// scale (issue #352) so headings scale with Dynamic Type.
-    private func headingFont(_ level: Int) -> Font {
+    private func headingFont(_ level: Int) -> SymairaFontRole {
         switch level {
         case 1: return SymairaTextRole.heading.font
         case 2: return SymairaTextRole.title.font
@@ -342,7 +342,7 @@ private struct MermaidGraphView: View {
             ZStack(alignment: .topLeading) {
                 // Edges
                 Canvas { ctx, _ in
-                    for edge in graph.edges {
+                    for (index, edge) in graph.edges.enumerated() {
                         guard let from = positions[edge.from], let to = positions[edge.to] else { continue }
                         var path = Path()
                         path.move(to: from)
@@ -362,14 +362,21 @@ private struct MermaidGraphView: View {
                         ctx.fill(arrow, with: .color(SymairaTheme.textMuted))
                         if let label = edge.label {
                             let mid = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 8)
-                            // GraphicsContext.draw needs a real Text, so the
-                            // role font is applied directly here (issue #352).
-                            ctx.draw(
-                                Text(label)
-                                    .font(SymairaTextRole.caption.font)
-                                    .foregroundColor(SymairaTheme.textMuted),
-                                at: mid
-                            )
+                            // Edge labels are canvas symbols: a font role is
+                            // resolved by a view, not by GraphicsContext
+                            // (issue #352).
+                            if let symbol = ctx.resolveSymbol(id: index) {
+                                ctx.draw(symbol, at: mid)
+                            }
+                        }
+                    }
+                } symbols: {
+                    ForEach(Array(graph.edges.enumerated()), id: \.offset) { index, edge in
+                        if let label = edge.label {
+                            Text(label)
+                                .symairaText(.caption)
+                                .foregroundColor(SymairaTheme.textMuted)
+                                .tag(index)
                         }
                     }
                 }

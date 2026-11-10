@@ -976,7 +976,7 @@ public final class DeskCore: ObservableObject {
     private lazy var locator: BinaryLocator = {
         var loc = BinaryLocator(bundle: Bundle.main)
         // Prepend managed runtime so it is checked before Homebrew/PATH.
-        // The full priority reorder (before PATH) requires a symaira-appkit
+        // The full priority reorder (before PATH) requires a symaira-corekit
         // change; this is the best approximation within this repo.
         loc.extraDirectories = [Self.managedRuntimeDir] + loc.extraDirectories
         return loc

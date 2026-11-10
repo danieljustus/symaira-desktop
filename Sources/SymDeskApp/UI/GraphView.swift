@@ -135,14 +135,20 @@ struct GraphView: View {
                 let rect = CGRect(x: point.x - 5, y: point.y - 5, width: 10, height: 10)
                 context.fill(Path(ellipseIn: rect), with: .color(SymairaTheme.goldPrimary))
 
-                // GraphicsContext.draw needs a real Text, so the role font is
-                // applied directly here (issue #352). Truncate before drawing
-                // so even long labels stay within the canvas.
-                let label = GraphLayout.displayLabel(node.label, in: canvasSize)
-                let text = Text(label)
-                    .font(SymairaTextRole.caption.font)
+                // Labels are canvas symbols: SymairaFontRole is resolved by a
+                // view (live Dynamic Type), so it cannot be applied to a Text
+                // drawn directly by GraphicsContext (issue #352).
+                if let label = context.resolveSymbol(id: node.id) {
+                    context.draw(label, at: CGPoint(x: point.x, y: point.y + 12))
+                }
+            }
+        } symbols: {
+            // Truncate before drawing so even long labels stay within the canvas.
+            ForEach(data.nodes) { node in
+                Text(GraphLayout.displayLabel(node.label, in: size))
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
-                context.draw(text, at: CGPoint(x: point.x, y: point.y + 12))
+                    .tag(node.id)
             }
         }
         .background(SymairaTheme.bgDark)

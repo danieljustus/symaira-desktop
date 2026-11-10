@@ -116,7 +116,7 @@ struct BlockRow: View {
     
     /// Heading font per markdown level, expressed through the shared type
     /// scale (issue #352) so headings scale with Dynamic Type.
-    private func headingFont(for level: Int) -> Font {
+    private func headingFont(for level: Int) -> SymairaFontRole {
         switch level {
         case 1: return SymairaTextRole.title.font
         case 2: return SymairaTextRole.heading.font

@@ -271,7 +271,7 @@ tool schemas.
 ## 10. Theming
 
 Diagram colours are document colours, not UI chrome, so Go is the SSOT for
-them. The palette mirrors `SymairaTheme` in `symaira-appkit`, which today
+them. The palette mirrors `SymairaTheme` in `symaira-corekit` (`swift/`), which today
 exists only as Swift hex constants. A test pins the hex values so drift becomes
 visible; generating twelve colours through a codegen pipeline would cost more
 than it saves.

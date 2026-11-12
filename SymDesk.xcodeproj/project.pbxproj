@@ -2044,7 +2044,7 @@
 			repositoryURL = "https://github.com/danieljustus/symaira-corekit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.20.0;
+				version = 0.21.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

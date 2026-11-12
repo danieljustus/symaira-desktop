@@ -599,7 +599,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 136,
+      "passed": 138,
       "retries": 4
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
@@ -700,7 +700,7 @@
     },
     "cargo test -p symdesk-ingest --locked": {
       "ignored": 0,
-      "passed": 73,
+      "passed": 74,
       "retries": 4
     },
     "cargo test -p symdesk-ingest --test barcode_contracts --locked": {
@@ -765,7 +765,7 @@
     },
     "cargo test -p symdesk-ingest --test store_contracts --locked": {
       "ignored": 0,
-      "passed": 2
+      "passed": 3
     },
     "cargo test -p symdesk-ingest --test structured_contracts --locked": {
       "ignored": 0,

@@ -12,7 +12,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rusqlite::{Connection, OptionalExtension};
+use rusqlite::OptionalExtension;
 use symdesk_vault::permissions::{Manager, hash_token};
 
 /// Key the legacy-token admin migration records once it ran.
@@ -46,8 +46,15 @@ fn set_state_if_absent(vault_root: &Path, key: &str, value: &[u8]) -> Result<boo
     let directory = vault_root.join(".symdesk/server");
     make_private_dirs(&directory).map_err(|error| format!("server state directory: {error}"))?;
     let path = directory.join("state.db");
-    let connection = Connection::open(&path)
-        .map_err(|error| format!("server state (sqlite): open {}: {error}", path.display()))?;
+    // Go `sqlitekit.Open` (storage.OpenSQLite): WAL, foreign keys and the
+    // five-second busy timeout through CoreKit; the directory exists already.
+    let connection =
+        symaira_core_sqlite::open_with_existing_parent(&path).map_err(|error| match error {
+            symaira_core_sqlite::Error::Open(error) => {
+                format!("server state (sqlite): open {}: {error}", path.display())
+            }
+            other => format!("server state (sqlite): open {}: {other}", path.display()),
+        })?;
     connection
         .execute_batch(
             "CREATE TABLE IF NOT EXISTS storage_entries (

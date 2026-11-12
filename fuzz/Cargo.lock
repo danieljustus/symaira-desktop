@@ -2795,6 +2795,7 @@ dependencies = [
  "same-file",
  "serde",
  "serde_json",
+ "symaira-core-sqlite",
  "symdesk-core",
  "symdesk-index",
  "symdesk-ingest",

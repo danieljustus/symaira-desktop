@@ -73,3 +73,7 @@ FSEvents backend latency (2.5 s settle in both harnesses). Go's fail-open `CanRe
 (Rust fail-closed). Go never sets `StateDSN`, so no HTTP route uses PostgreSQL.
 
 Cleanup owed: target dir `/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r015-http`; scratch `/private/tmp/r015http-tmp`.
+
+## Closed at `e1b4b0b6` (2026-11-12)
+
+The open macOS receipt is re-taken: two-host local gate at `e1b4b0b6` exit 0 on macOS arm64 (`macos-e1b4b0b6-164949.log`) and Linux arm64 (`linux-e1b4b0b6-164949.log`), targets `rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract`. RUST-015 is `passed` in work-items.json and its matrix rows are `PASS (local)`.

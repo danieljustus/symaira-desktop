@@ -77,3 +77,7 @@ port-contract mcp-conformance`, clean tree, SHA 81525fb0674d89f020a6c07d8ac8aa6d
 Next: rerun `scripts/rust-port/local-gate.sh macos rust-check rust-lint rust-test port-contract mcp-conformance` on a
 quiet host (or after main's nextest retry config lands). On exit 0 promote MCP-001/002/003 and the SEC-002 MCP part to
 `PASS (local)` naming the SHA, `linux-81525fb0-063913.log` and the new macOS log, then mark RUST-014 passed.
+
+## Closed at `e1b4b0b6` (2026-11-12)
+
+The open macOS receipt is re-taken: two-host local gate at `e1b4b0b6` exit 0 on macOS arm64 (`macos-e1b4b0b6-164949.log`) and Linux arm64 (`linux-e1b4b0b6-164949.log`), targets `rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract`. RUST-014 is `passed` in work-items.json and its matrix rows are `PASS (local)`.

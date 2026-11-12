@@ -1,11 +1,11 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-006` passed; `RUST-007` and `RUST-016` are in progress. VALUE-001 passed for the exact candidate `5c5e98c5`; later commits need their own integrated verification.
+> **Status:** Rust-only. `RUST-001` through `RUST-016` and `RUST-019` passed; the Go backend is removed. `RUST-017` and `RUST-018` stay in progress for one row only: DIST-003, the public readback of a signed prerelease, which needs a publication. Closing gate: two-host local gate at `e1b4b0b6` exit 0 on macOS arm64 (`macos-e1b4b0b6-164949.log`) and Linux arm64 (`linux-e1b4b0b6-164949.log`), targets `rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract`. The candidate is `c49e15af`, one test-harness commit later (the HTTP replay harness stops its server through `kill(1)` instead of an `unsafe` `libc::kill` that was missing from the SEC-004 allowlist, so `make rust-unsafe-inventory` failed at `e1b4b0b6`; no product source changed). At `c49e15af` the full Linux arm64 gate (`linux-c49e15af-182341.log`), the macOS arm64 delta `rust-check rust-lint port-contract http-surface-differential rust-unsafe-inventory` (`macos-c49e15af-182341.log`) and `make rust-security rust-version-contract value-001-evidence-tests rust-features rust-fuzz-smoke rust-miri` on macOS arm64 exit 0. Hosted CI of the closing pull request confirms or corrects the `PASS (local)` rows (Linux amd64 runs there for the first time).
 > **Go behavior oracle:** the canonical live source P and release are recorded in [provenance.json](../../testdata/port/provenance.json). Every live fixture uses this same identity, backed by the complete production-source digest and immutable ancestry checks. Explicit historical input/probe roles are documented in [fixture-identity.md](fixture-identity.md). VALUE baselines remain pinned to `ae863319` / `v0.12.2`.
 > **Scope:** the Go `symdesk` and `symroom` backends (removed in RUST-019, last Go commit `36aad3d4` / `v0.12.2`); SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
-> **Current entry point (2026-11-02):** [handover-20261102.md](handover-20261102.md) — finish RUST-014/015 and the residual rows locally, remove Go (RUST-019), then push once.
+> **Current entry point (2026-11-12):** [handover-20261112.md](handover-20261112.md): closing state, evidence and what stays open. Earlier handovers and checkpoints below are history.
 
 ## RUST-019 — Go removed (local/r019-nogo)
 

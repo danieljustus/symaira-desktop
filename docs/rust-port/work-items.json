@@ -342,7 +342,7 @@
     {
       "id": "RUST-014",
       "title": "Complete all SymDesk MCP tools aliases and framing",
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": [
         "RUST-013"
       ],
@@ -359,12 +359,13 @@
         "make mcp-conformance",
         "cargo nextest run -p symdesk-protocol",
         "cargo +nightly fuzz run mcp_frame"
-      ]
+      ],
+      "notes": "Closing gate 2026-11-12: two-host local gate at e1b4b0b6 exit 0 (macOS arm64 macos-e1b4b0b6-164949.log, Linux arm64 linux-e1b4b0b6-164949.log; rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract). MCP-001/002/003 and the SEC-002 MCP part are PASS (local). The acceptance command `make mcp-differential` is covered by the frozen `mcp_representative` replay in `make port-contract`; the 1800 s `mcp_frame` fuzz run is recorded in rust-014-progress.md."
     },
     {
       "id": "RUST-015",
       "title": "Complete authenticated HTTP PostgreSQL workers and shares",
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": [
         "RUST-010",
         "RUST-012",
@@ -388,7 +389,7 @@
         "make postgres-integration",
         "cargo nextest run -p symdesk-protocol"
       ],
-      "note": "RUST-015 groundwork (HTTP-002/HTTP-005): the Go permissions manager (users, groups, document rules, token hashing, users/groups/permissions.json persistence) is ported as symdesk_vault::permissions::Manager and replays the Go-generated testdata/port/vault/permissions.json (101 scenarios, 632 operations) via make permissions-differential. The HTTP server still reads the ACL files through its own fail-closed reader; routing it through the manager, the CLI user/group/permission commands and the remaining HTTP routes stay open. RUST-015 part PG (PG-001, PASS local at ef6968ee): the Go PostgreSQL self-host store is ported as crates/symdesk-storage (tokio-postgres, own pool) and replays the Go-generated testdata/port/storage/postgres.json (27 scenarios / 1167 steps recorded by scripts/rust-port/cmd/pggen against a real PostgreSQL 17) via make postgres-integration (own disposable container; Linux gate container gets a docker-network sidecar from local-gate.sh); see rust-015-pg-progress.md. Wiring the Rust HTTP server onto the store and TLS remain open. RUST-015 part HTTP (`local/r015-http` candidate bc1bbfaf): HTTP-001/002/003/005/006/007 and the HTTP part of SEC-002 are PASS (local) on Linux arm64 (`linux-bc1bbfaf-063657.log`, exit 0); the macOS native gate is open because FSEvents-dependent watcher replays fail on this host (`macos-bc1bbfaf-062051.log`, `macos-bc1bbfaf-074806.log`, `macos-bc1bbfaf-085148.log`; see rust-015-http-progress.md). Status stays in_progress until the macOS receipt is retaken; hosted CI is not claimed."
+      "note": "RUST-015 groundwork (HTTP-002/HTTP-005): the Go permissions manager (users, groups, document rules, token hashing, users/groups/permissions.json persistence) is ported as symdesk_vault::permissions::Manager and replays the Go-generated testdata/port/vault/permissions.json (101 scenarios, 632 operations) via make permissions-differential. The HTTP server still reads the ACL files through its own fail-closed reader; routing it through the manager, the CLI user/group/permission commands and the remaining HTTP routes stay open. RUST-015 part PG (PG-001, PASS local at ef6968ee): the Go PostgreSQL self-host store is ported as crates/symdesk-storage (tokio-postgres, own pool) and replays the Go-generated testdata/port/storage/postgres.json (27 scenarios / 1167 steps recorded by scripts/rust-port/cmd/pggen against a real PostgreSQL 17) via make postgres-integration (own disposable container; Linux gate container gets a docker-network sidecar from local-gate.sh); see rust-015-pg-progress.md. Wiring the Rust HTTP server onto the store and TLS remain open. RUST-015 part HTTP (`local/r015-http` candidate bc1bbfaf): HTTP-001/002/003/005/006/007 and the HTTP part of SEC-002 are PASS (local) on Linux arm64 (`linux-bc1bbfaf-063657.log`, exit 0); the macOS native gate is open because FSEvents-dependent watcher replays fail on this host (`macos-bc1bbfaf-062051.log`, `macos-bc1bbfaf-074806.log`, `macos-bc1bbfaf-085148.log`; see rust-015-http-progress.md). Status stays in_progress until the macOS receipt is retaken; hosted CI is not claimed. Closing gate 2026-11-12: two-host local gate at e1b4b0b6 exit 0 (macOS arm64 macos-e1b4b0b6-164949.log, Linux arm64 linux-e1b4b0b6-164949.log; rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract). HTTP-001..007, PG-001 and the SEC-002 HTTP part are PASS (local); the macOS receipt that kept this item open is re-taken."
     },
     {
       "id": "RUST-016",
@@ -433,7 +434,7 @@
     {
       "id": "RUST-017",
       "title": "Run full value gate and ship Rust-only prerelease",
-      "status": "blocked",
+      "status": "in_progress",
       "depends_on": [
         "RUST-014",
         "RUST-015",
@@ -457,7 +458,8 @@
         "make release-contract",
         "cargo run -p rust-port-valuegate -- --phase full --check",
         "published prerelease artifact readback passes"
-      ]
+      ],
+      "notes": "Closing gate 2026-11-12: two-host local gate at e1b4b0b6 exit 0 (macOS arm64 macos-e1b4b0b6-164949.log, Linux arm64 linux-e1b4b0b6-164949.log; rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract). VALUE-002 is owner-accepted for 8ba6eb5b (value002.md) and `make release-contract` passes. Open: DIST-003, the public readback of a signed prerelease, which needs a publication the owner has not authorized yet. The acceptance entries `make rust-full-gate` and `cargo run -p rust-port-valuegate` name targets that were never created; the local gate and `make value-002` replaced them."
     },
     {
       "id": "RUST-018",
@@ -487,12 +489,12 @@
         "automatic pre-migration backup created and restore exercise green"
       ],
       "decision": "Rust-only cutover per maintainer decision 2026-10-30: no Go fallback binary, no Go rollback, no observation window; data safety via automatic backup before first Rust migration plus verified restore.",
-      "notes": "Data-safety half implemented and verified on local/r018-backup (not merged; gate receipts in docs/rust-port/README.md 'RUST-018 cutover data safety'): (1) CUTOVER-001: Go-recorded cutover state (testdata/port/cutover/state-v1-<os>.json + .cxa archives; recorder cmd/symdesk/cutover_state_port_test.go; make cutover-state-fixtures-generate / cutover-state-differential) replayed WITHOUT Go by crates/symdesk-cli/tests/cutover_state.rs (4 tests) and crates/symroom-cli/tests/cutover_state.rs (3 tests); 34 recorded queries x 2 states = 68 cases per platform (macOS arm64, Linux arm64); Rust reads the Go sidecar, retrieval indexes, ingest store, contacts store, saved views and signed room journal with the recorded Go bytes and leaves the files byte-identical; Rust writes keep the stores openable. Incompatibility found and fixed: Go's slog lines for the lazy retrieval-index migration. (2) CUTOVER-002 = DIST-006 (re-dedicated): automatic one-time pre-Rust backup (crates/symdesk-core/src/pre_rust_backup.rs) with manifest, opt-out SYMDESK_PRE_RUST_BACKUP=off, abort-on-failure with state untouched, one stderr notice and no stdout; hidden `backup restore-pre-rust [--dry-run]` intercepted before Cobra (help/completion/tree fixtures byte-identical; Cobra-answered invocations and `version` never trigger the backup); restore exercise Go-created state -> Rust run (backup) -> Rust writes -> restore -> byte-identical to the Go bytes (crates/symdesk-cli/tests/pre_rust_backup.rs 11 tests, both cutover_state tests). DIST-007 RETIRED (no Go fallback binaries ship, decision 2026-10-30). Still open for RUST-018 (not part of this slice): all-rows PASS (DIST-003 post-push readback, VALUE-002), native installed release smoke on the integrated tree, Swift consumer gates re-run on the integrated tree; branch merge and a final integrated two-host gate."
+      "notes": "Data-safety half implemented and verified on local/r018-backup (not merged; gate receipts in docs/rust-port/README.md 'RUST-018 cutover data safety'): (1) CUTOVER-001: Go-recorded cutover state (testdata/port/cutover/state-v1-<os>.json + .cxa archives; recorder cmd/symdesk/cutover_state_port_test.go; make cutover-state-fixtures-generate / cutover-state-differential) replayed WITHOUT Go by crates/symdesk-cli/tests/cutover_state.rs (4 tests) and crates/symroom-cli/tests/cutover_state.rs (3 tests); 34 recorded queries x 2 states = 68 cases per platform (macOS arm64, Linux arm64); Rust reads the Go sidecar, retrieval indexes, ingest store, contacts store, saved views and signed room journal with the recorded Go bytes and leaves the files byte-identical; Rust writes keep the stores openable. Incompatibility found and fixed: Go's slog lines for the lazy retrieval-index migration. (2) CUTOVER-002 = DIST-006 (re-dedicated): automatic one-time pre-Rust backup (crates/symdesk-core/src/pre_rust_backup.rs) with manifest, opt-out SYMDESK_PRE_RUST_BACKUP=off, abort-on-failure with state untouched, one stderr notice and no stdout; hidden `backup restore-pre-rust [--dry-run]` intercepted before Cobra (help/completion/tree fixtures byte-identical; Cobra-answered invocations and `version` never trigger the backup); restore exercise Go-created state -> Rust run (backup) -> Rust writes -> restore -> byte-identical to the Go bytes (crates/symdesk-cli/tests/pre_rust_backup.rs 11 tests, both cutover_state tests). DIST-007 RETIRED (no Go fallback binaries ship, decision 2026-10-30). Still open for RUST-018 (not part of this slice): all-rows PASS (DIST-003 post-push readback, VALUE-002), native installed release smoke on the integrated tree, Swift consumer gates re-run on the integrated tree; branch merge and a final integrated two-host gate. Closing gate 2026-11-12: two-host local gate at e1b4b0b6 exit 0 (macOS arm64 macos-e1b4b0b6-164949.log, Linux arm64 linux-e1b4b0b6-164949.log; rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract). Cutover data safety (CUTOVER-001/002) and the Swift consumer gates (SWIFT-001..003) are re-run on that revision. Open: DIST-003 only (\"native installed release smoke\" needs the published release)."
     },
     {
       "id": "RUST-019",
       "title": "Remove Go backend at the Rust-only cutover",
-      "status": "blocked",
+      "status": "passed",
       "depends_on": [
         "RUST-018"
       ],
@@ -502,7 +504,7 @@
         "Rust full gate green",
         "Swift consumer gates green"
       ],
-      "notes": "Implemented on local/r019-nogo: zero tracked .go files, no go.mod/go.sum/.golangci.yml/.goreleaser.yml, Go-free Makefile (port-contract = port-provenance + port-contract-frozen), Go-free CI/CodeQL/Dependabot, AGENTS/README/CONTRIBUTING updated. Go history: last commit 36aad3d4, tag v0.12.2. Gate receipts: see the \"RUST-019\" section of docs/rust-port/README.md."
+      "notes": "Implemented on local/r019-nogo: zero tracked .go files, no go.mod/go.sum/.golangci.yml/.goreleaser.yml, Go-free Makefile (port-contract = port-provenance + port-contract-frozen), Go-free CI/CodeQL/Dependabot, AGENTS/README/CONTRIBUTING updated. Go history: last commit 36aad3d4, tag v0.12.2. Gate receipts: see the \"RUST-019\" section of docs/rust-port/README.md. Closing gate 2026-11-12: two-host local gate at e1b4b0b6 exit 0 (macOS arm64 macos-e1b4b0b6-164949.log, Linux arm64 linux-e1b4b0b6-164949.log; rust-check rust-lint rust-test port-contract mcp-conformance http-surface-differential postgres-integration release-contract). Candidate c49e15af adds one test-harness commit (HTTP replay harness stops its server through kill(1), no unsafe); at c49e15af the full Linux arm64 gate (linux-c49e15af-182341.log), the macOS arm64 delta rust-check rust-lint port-contract http-surface-differential rust-unsafe-inventory (macos-c49e15af-182341.log) and make rust-security rust-version-contract value-001-evidence-tests rust-features rust-fuzz-smoke rust-miri on macOS arm64 exit 0. Status order: the cutover decision of 2026-10-30 removes Go at the cutover, before the stable release that RUST-017/018 still wait for, so this item passes ahead of its listed dependency. The last Go commit stays reachable on GitHub through the branch oracle-pins/last-go-36aad3d4."
     }
   ]
 }

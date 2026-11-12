@@ -28,5 +28,6 @@ getrandom = "=0.4.3"
 libc = "=0.2.189"
 
 [dev-dependencies]
+symaira-core-mcp.workspace = true
 flate2.workspace = true
 regex.workspace = true

@@ -66,6 +66,15 @@ tokio-rustls = { version = "=0.26.6", default-features = false, features = ["rin
 [profile.dev.package.symdesk-render]
 opt-level = 2
 
+# Unoptimized Ed25519 verification costs milliseconds per journal read. The
+# SymRoom MCP process replay (600 concurrent waits inside Go's wall-clock
+# window) missed its bound on a two-core host because of it.
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+
+[profile.dev.package.ed25519-dalek]
+opt-level = 3
+
 [profile.release]
 codegen-units = 1
 lto = "thin"

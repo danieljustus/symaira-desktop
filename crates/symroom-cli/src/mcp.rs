@@ -1752,10 +1752,11 @@ fn journal_tail(room_dir: &Path, args: &mut GoObject) -> Result<String, Failure>
     }
 }
 
-/// Go `run.Wait` inside a per-call timeout context, polling in short slices so
-/// a cancelled stream stops waiting like Go's `ctx.Done()`. `started` is the
-/// instant the call was read: the deadline does not restart for a call that
-/// waited in the scheduler queue.
+/// Go `run.Wait` inside a per-call timeout context: the journal is read at
+/// once and then every 500 ms like Go, and between two reads only the
+/// cancellation flag is watched in short slices, so a cancelled stream stops
+/// waiting like Go's `ctx.Done()`. `started` is the instant the call was read:
+/// the deadline does not restart for a call that waited in the scheduler queue.
 fn run_wait(
     room_dir: &Path,
     args: &mut GoObject,
@@ -1773,9 +1774,8 @@ fn run_wait(
     let timeout =
         Duration::try_from_secs_f64(seconds).unwrap_or(Duration::from_secs(u32::MAX.into()));
     loop {
-        let remaining = timeout.saturating_sub(started.elapsed());
-        let slice = remaining.min(Duration::from_millis(100));
-        match symroom_core::runs::wait(room_dir, &run_id, slice) {
+        // One journal read: a zero timeout makes `runs::wait` answer at once.
+        match symroom_core::runs::wait(room_dir, &run_id, Duration::ZERO) {
             Ok(run) => {
                 return Ok(go_html_escape(
                     &serde_json::to_string(&run).expect("run serializes"),
@@ -1794,8 +1794,20 @@ fn run_wait(
                 if cancelled.load(Ordering::SeqCst) {
                     return Err("context canceled".into());
                 }
-                if started.elapsed() >= timeout {
+                let remaining = timeout.saturating_sub(started.elapsed());
+                if remaining.is_zero() {
                     return Err("wait timed out before approval decision".into());
+                }
+                // Go polls every 500 ms; a journal read per 100 ms slice made
+                // hundreds of concurrent waits miss their deadline on a small
+                // host.
+                let next_read = Instant::now() + remaining.min(Duration::from_millis(500));
+                while !cancelled.load(Ordering::SeqCst) {
+                    let pause = next_read.saturating_duration_since(Instant::now());
+                    if pause.is_zero() {
+                        break;
+                    }
+                    thread::sleep(pause.min(Duration::from_millis(100)));
                 }
             }
         }

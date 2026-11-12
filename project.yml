@@ -10,13 +10,11 @@ options:
   generateEmptyDirectories: false
 
 packages:
-  symaira-appkit:
-    url: https://github.com/danieljustus/symaira-appkit
-    # 0.14.0 — shared exact-pinned appkit graph. 0.13.0 added
-    # SymairaProviderKit (provider settings layer, #119); 0.14.0 added
-    # verified keychain saves and bounded reads. Additive, no breaking
-    # changes per CHANGELOG.
-    exactVersion: 0.14.0
+  symaira-corekit:
+    url: https://github.com/danieljustus/symaira-corekit.git
+    # 0.20.0 — AppKit merged into symaira-corekit (ADR 0006); product and
+    # module names unchanged, no Swift source change vs appkit 0.18.1.
+    exactVersion: 0.20.0
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
@@ -34,17 +32,17 @@ targets:
     sources:
       - Sources/SymDeskCore
     dependencies:
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaCLIRunner
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaToolKit
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaUpdateCheck
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaIngestContract
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaKeychain
     settings:
       base:
@@ -63,19 +61,19 @@ targets:
       - target: SymDeskCore
       - package: symaira-room-client
         product: SymroomFeature
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaCLIRunner
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaToolKit
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaUpdateCheck
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaIngestContract
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaKeychain
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaProviderKit
     settings:
       base:
@@ -103,17 +101,17 @@ targets:
       - Tests/SymDeskCoreTests
     dependencies:
       - target: SymDeskCore
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaCLIRunner
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaToolKit
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaUpdateCheck
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaIngestContract
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaKeychain
     settings:
       base:
@@ -129,19 +127,19 @@ targets:
     dependencies:
       - target: SymDesk
       - target: SymDeskCore
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaCLIRunner
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaToolKit
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaUpdateCheck
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaIngestContract
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaKeychain
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaProviderKit
     settings:
       base:
@@ -159,7 +157,7 @@ targets:
         buildPhase: resources
       - Sources/SymDeskMobile/PrivacyInfo.xcprivacy
     dependencies:
-      - package: symaira-appkit
+      - package: symaira-corekit
         product: SymairaKeychain
       - target: SymDeskMobileShare
       - target: SymDeskWidget

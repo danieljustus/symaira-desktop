@@ -62,7 +62,7 @@ scripts/release/        # Rust release packaging
 room/client/            # Swift Project Journal UI module, embedded in the SymDesk app target
 meet/                   # nested Swift package, embedded in the SymDesk app target
 Sources/
-  SymDeskCore/   # Swift shared library bridging the core (consumes symaira-appkit, exact-pinned)
+  SymDeskCore/   # Swift shared library bridging the core (consumes symaira-corekit, exact-pinned)
   SymDeskApp/    # macOS SwiftUI app
   SymDeskMobile/ # iOS SwiftUI app
 Tests/           # 3 Swift test targets (XCTest — needs Xcode toolchain)
@@ -83,8 +83,8 @@ The absorbed tools (`print`, `seek`, `relate`, `ingest`, `room`) are Rust crates
 - **Markdown is the SSOT.** The SQLite sidecar (`crates/symdesk-index`) is a derived FTS5 index — never treat it as authoritative; it must stay rebuildable from the vault.
 - **Pure-Rust core** with locked dependencies (`--locked`), static musl Linux release binaries; `deny(unsafe_code)` is the default (inventory in `scripts/rust-port/unsafe-allowlist.json`).
 - **Zero stdio pollution** in `symdesk mcp` — stdout carries JSON-RPC frames only; logs to stderr.
-- **Swift apps consume `symaira-appkit` exact-pinned** — do not reintroduce app-local Theme/Process-runner code; extend appkit (workspace rule, applies here too).
-- **GUI work follows the Symaira Interface Guidelines** in that AppKit checkout: read `GUIDELINES.md`, then `DESIGN.md` and `docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-appkit>/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
+- **Swift apps consume `symaira-corekit` exact-pinned** — do not reintroduce app-local Theme/Process-runner code; extend the AppKit modules in `symaira-corekit/appkit` (workspace rule, applies here too).
+- **GUI work follows the Symaira Interface Guidelines** in `symaira-corekit/appkit`: read `GUIDELINES.md`, then `DESIGN.md` and `docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-corekit>/appkit/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
 - **XcodeGen**: `SymDesk.xcodeproj` is generated from `project.yml` — edit `project.yml`, never the `.xcodeproj`.
 - **Frozen fixtures:** `testdata/port/**` is Go-recorded and byte-identical; do not normalize, hand-edit or regenerate it. `make port-contract` fails on any drift.
 - **Self-host API is authenticated** — see `docs/SELF_HOSTING.md`; do not add unauthenticated endpoints.

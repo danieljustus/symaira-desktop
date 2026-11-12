@@ -48,9 +48,9 @@ fi
 IFS='|' read -r AP_NAME AP_LOC AP_VER AP_REV <<< "$ARG_PARSER_ENTRY"
 IFS='|' read -r AM_NAME AM_LOC AM_VER AM_REV <<< "$ARG_MAX_ENTRY"
 
-APPKIT_VER=$(grep -A2 'symaira-appkit:' project.yml | grep 'exactVersion' | awk '{print $2}' | tr -d '"')
-if [ -z "$APPKIT_VER" ]; then
-  echo "Error: could not determine symaira-appkit version from project.yml" >&2
+COREKIT_VER=$(grep -A2 'symaira-corekit:' project.yml | grep 'exactVersion' | awk '{print $2}' | tr -d '"')
+if [ -z "$COREKIT_VER" ]; then
+  echo "Error: could not determine symaira-corekit version from project.yml" >&2
   exit 1
 fi
 
@@ -121,11 +121,11 @@ cat > "$OUTPUT" <<SPDX
       "comment": "Includes WhisperKit and SpeakerKit products; SHA1 is the pinned git revision from Package.resolved"
     },
     {
-      "SPDXID": "SPDXRef-Package-symaira-appkit",
-      "name": "symaira-appkit",
-      "versionInfo": "${APPKIT_VER}",
+      "SPDXID": "SPDXRef-Package-symaira-corekit",
+      "name": "symaira-corekit",
+      "versionInfo": "${COREKIT_VER}",
       "supplier": "NOASSERTION",
-      "downloadLocation": "https://github.com/danieljustus/symaira-appkit.git",
+      "downloadLocation": "https://github.com/danieljustus/symaira-corekit.git",
       "filesAnalyzed": false,
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "Copyright 2024 Daniel Justus",
@@ -161,7 +161,7 @@ cat > "$OUTPUT" <<SPDX
     },
     {
       "spdxElementId": "SPDXRef-Package-symmeet",
-      "relatedSpdxElement": "SPDXRef-Package-symaira-appkit",
+      "relatedSpdxElement": "SPDXRef-Package-symaira-corekit",
       "relationshipType": "DEPENDS_ON"
     },
     {

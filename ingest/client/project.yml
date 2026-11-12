@@ -14,9 +14,9 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 packages:
-  SymairaAppKit:
-    url: https://github.com/danieljustus/symaira-appkit
-    exactVersion: 0.2.0
+  symaira-corekit:
+    url: https://github.com/danieljustus/symaira-corekit.git
+    exactVersion: 0.20.0
 
 targets:
   Symingest:
@@ -25,13 +25,13 @@ targets:
     deploymentTarget:
       macOS: "14.0"
     dependencies:
-      - package: SymairaAppKit
+      - package: symaira-corekit
         product: SymairaTheme
-      - package: SymairaAppKit
+      - package: symaira-corekit
         product: SymairaCLIRunner
-      - package: SymairaAppKit
+      - package: symaira-corekit
         product: SymairaToolKit
-      - package: SymairaAppKit
+      - package: symaira-corekit
         product: SymairaDaemonKit
     sources:
       - path: Sources/SymingestApp

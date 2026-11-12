@@ -38,19 +38,26 @@ public final class AgentUpdateChecker: ObservableObject {
   }
 
   public var autoInstallEnabled: Bool {
-    get { autoPrefs.autoInstallEnabled }
+    get { defaults.bool(forKey: autoInstallKey) }
     set {
-      autoPrefs.autoInstallEnabled = newValue
+      defaults.set(newValue, forKey: autoInstallKey)
       objectWillChange.send()
     }
   }
 
   private var autoPrefs: UserDefaultsAutoUpdatePreferenceStore
+  // The shared store no longer carries an install preference (appkit
+  // "Remove inert automatic installation preference"); this app keeps its own
+  // opt-in under the same key the store used, so the saved choice survives.
+  private let defaults: UserDefaults
+  private let autoInstallKey: String
 
   public init(
     checker: UpdateChecker = UpdateChecker(owner: "danieljustus", repo: "symaira-meet"),
     store: UserDefaultsSkippedVersionStore? = nil,
     autoPrefs: UserDefaultsAutoUpdatePreferenceStore? = nil,
+    defaults: UserDefaults = .standard,
+    preferencesKey: String? = nil,
     currentVersion: @escaping () -> String = {
       Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     },
@@ -59,10 +66,14 @@ public final class AgentUpdateChecker: ObservableObject {
       binaryName: "SymMeetAgent"
     )
   ) {
+    let preferencesKey = preferencesKey ?? Self.preferencesKey
     let selectedStore = store ?? UserDefaultsSkippedVersionStore(key: Self.skippedVersionKey)
     let selectedPrefs =
       autoPrefs
-      ?? UserDefaultsAutoUpdatePreferenceStore(keyPrefix: Self.preferencesKey)
+      ?? UserDefaultsAutoUpdatePreferenceStore(keyPrefix: preferencesKey, defaults: defaults)
+
+    self.defaults = defaults
+    self.autoInstallKey = "\(preferencesKey).autoInstallEnabled"
 
     self.autoPrefs = selectedPrefs
     self.applier = applier

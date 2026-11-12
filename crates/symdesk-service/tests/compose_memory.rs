@@ -43,6 +43,10 @@ struct Call {
 }
 
 static COUNTER: AtomicU32 = AtomicU32::new(0);
+/// Serializes the write-then-exec of the fake tool. Two test threads doing it
+/// at once race on Linux: a fork in one thread briefly inherits the other
+/// thread's still-open script descriptor and the exec fails with ETXTBSY.
+static REPLAY: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 fn fixture() -> Fixture {
     serde_json::from_str(include_str!(
@@ -76,6 +80,9 @@ fn comparable(error: &str) -> String {
 }
 
 fn replay(call: &Call, script: &str) -> Observed {
+    let _serial = REPLAY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let root = std::env::temp_dir().join(format!(
         "symdesk-compose-memory-{}-{}",
         std::process::id(),
@@ -188,6 +195,6 @@ fn replay_detects_a_tampered_oracle_expectation() {
         .cloned()
         .unwrap();
     let observed = replay(&call, &fixture.symmemory_script);
-    assert_eq!(observed.value, call.value);
+    assert_eq!(observed.value, call.value, "error: {}", observed.error);
     assert_ne!(observed.value, call.value.replace("m1", "m2"));
 }

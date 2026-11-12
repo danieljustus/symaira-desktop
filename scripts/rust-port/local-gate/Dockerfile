@@ -1,7 +1,8 @@
 # Native Linux (arm64 on Apple Silicon) image for scripts/rust-port/local-gate.sh.
 # Mirrors the ubuntu Rust jobs in .github/workflows/ci.yml; keep pins in sync.
 # No Go toolchain (RUST-019): the Go tree is retired.
-# ponytail: same Ubuntu 24.04 as ubuntu-latest, but arm64 instead of x86_64;
+# ponytail: same Ubuntu 24.04 as the ubuntu-24.04 CI jobs, but arm64 instead of
+# x86_64;
 # the single CI run of the closing push remains the x86_64 evidence.
 FROM ubuntu:24.04
 

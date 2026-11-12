@@ -76,13 +76,12 @@ bookkeeping timestamps are pinned explicitly and compared exactly.
 ## Reproduce
 
 ```sh
-GOTOOLCHAIN=go1.26.10 go test ./internal/contacts/internal/storage/sqlite -run '^TestPortContactsSchemaContract$' -count=1
-GOTOOLCHAIN=go1.26.10 go test ./internal/contacts/internal/domain/importer ./internal/contacts/internal/service/importer -run '^TestPortContacts(CSV|VCard|Import)Contract$' -count=1
 cargo test -p symdesk-contacts --locked
 ```
 
-Set `PORT_GENERATE=1` only for deliberate fixture generation; ordinary tests
-recompute the real Go result and compare without writing. Make targets are
+The fixtures under `testdata/port/contacts/` are frozen recordings of the Go
+implementation at `36aad3d4`; the Go generators are retired and the tests replay
+them without a Go toolchain. Make targets are
 `contacts-schema-differential`, `contacts-import-differential`,
 `contacts-vcard-differential`, `contacts-crud-differential`,
 `contacts-relationship-differential`, `contacts-erase-differential`,
@@ -90,7 +89,7 @@ recompute the real Go result and compare without writing. Make targets are
 `contacts-timeline-differential`, `contacts-memorylink-differential` and
 `contacts-security-differential`; `make contacts-dataset-differential` runs
 all of them plus the dataset sync/purge/query/aggregate differentials. Build-volume
-runners can override `CONTACTS_GO` and `CARGO` with their approved launchers.
+runners can override `CARGO` with their approved launcher.
 Fixtures are registered in portgen; its shared provenance manifest must be
 refreshed by the integration owner when adding these fixtures.
 

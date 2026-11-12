@@ -191,7 +191,7 @@ $ symdesk version --json
 
 ## Development
 
-The core is a Rust workspace pinned by `rust-toolchain.toml`. The Go implementation was retired in RUST-019: its last commit is `36aad3d4` (tag `v0.12.2`), where the Go sources stay readable in git history.
+The core is a Rust workspace pinned by `rust-toolchain.toml`. The Go implementation was retired in RUST-019: its last commit is `36aad3d4`, kept on GitHub as branch `oracle-pins/last-go-36aad3d4`, where the Go sources stay readable. The last Go release tag is `v0.12.2` (`29520267`), an ancestor of `36aad3d4`.
 
 ```sh
 make build          # → bin/symdesk, bin/symroom (release, stamped with VERSION)

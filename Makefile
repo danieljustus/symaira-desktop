@@ -217,7 +217,8 @@ FUZZ_RUNS ?= 10000
 
 
 
-# RUST-019: the Go core is retired (last Go commit 36aad3d4, tag v0.12.2); build,
+# RUST-019: the Go core is retired (last Go commit 36aad3d4, branch
+# oracle-pins/last-go-36aad3d4; last Go release tag v0.12.2 = 29520267); build,
 # test and lint map to the Rust workspace. `build` stamps both binaries with
 # VERSION and copies them to bin/.
 build:
@@ -365,8 +366,6 @@ config-precedence-differential:
 
 config-vault-selection-differential:
 	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
-
-.PHONY: config-paths-native config-paths-native-test
 
 
 
@@ -803,14 +802,13 @@ dataset-aggregate-differential:
 	$(CARGO) test -p symdesk-index --locked --test dataset_aggregate_contract
 
 # DATA-002 full dataset query: every operator, ordering, grouping, aggregate,
-# paging and dataset-sourced view projection from the real Go sidecar/service,
-# plus live Go-vs-Rust CLI processes for the new --group-by/--aggregates flags.
+# paging and dataset-sourced view projection, replayed from Go recordings
+# (query-full.json), plus the frozen CLI cases (cli-query-full.json) for the
+# --group-by/--aggregates flags. No live Go process runs.
 .PHONY: dataset-query-full-differential
 
 dataset-query-full-differential:
 	$(CARGO) test -p symdesk-index --locked --test dataset_query_full
-	@mkdir -p bin/port
-	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 
 
 index-backup-differential:
@@ -991,7 +989,8 @@ port-provenance:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/provenance_check.py
 
 # Optional, needs the full git history: also binds every fixture `source_hashes`
-# entry to the Go blobs at the last Go commit (36aad3d4).
+# entry to the Go blobs at the last Go commit (36aad3d4, reachable via the
+# branch oracle-pins/last-go-36aad3d4).
 port-provenance-history:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/provenance_check.py --history
 
@@ -1010,7 +1009,7 @@ retention-cli-differential:
 # The HTTP half of this target (`http-differential`, a live Go/Rust comparison of
 # the 291-case testdata/port/http/representative.json corpus) is retired; see the
 # "retired" entry of scripts/rust-port/frozen-contract.json and the README section
-# "Go recordings of the formerly live gates". `httpdiff` stays for VALUE-001/002.
+# "Go recordings of the formerly live gates". The `httpdiff` tool is gone with the Go sources.
 representative-differential:
 	$(CARGO) test -p symdesk-cli --locked --test frozen_diffharness representative
 

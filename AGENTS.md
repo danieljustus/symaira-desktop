@@ -38,7 +38,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (`symroom`). `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
 
-**Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `36aad3d4` (tag `v0.12.2`); the sources stay readable there (`git show 36aad3d4:cmd/symdesk/main.go`). The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
+**Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `36aad3d4`, kept on GitHub as branch `oracle-pins/last-go-36aad3d4` (`git show 36aad3d4:cmd/symdesk/main.go`). The last Go release tag is `v0.12.2` (`29520267b84a2293ba20501002cf4deb7f1c93b0`), an ancestor of `36aad3d4`. The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
 
 ## Structure
 
@@ -88,7 +88,7 @@ The absorbed tools (`print`, `seek`, `relate`, `ingest`, `room`) are Rust crates
 - **XcodeGen**: `SymDesk.xcodeproj` is generated from `project.yml` — edit `project.yml`, never the `.xcodeproj`.
 - **Frozen fixtures:** `testdata/port/**` is Go-recorded and byte-identical; do not normalize, hand-edit or regenerate it. `make port-contract` fails on any drift.
 - **Self-host API is authenticated** — see `docs/SELF_HOSTING.md`; do not add unauthenticated endpoints.
-- CI: `.github/workflows/{ci,codeql,container,release}.yml` (Rust + Swift only; no `setup-go`).
+- CI: `.github/workflows/{ci,codeql,container,macos-routing-check,macos-runner,release}.yml` (Rust + Swift only; no `setup-go`).
 
 ## Anti-Patterns (this repo)
 

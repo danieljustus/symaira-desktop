@@ -4,7 +4,7 @@ SymDesk exposes classification and mail-ingest configuration through `symdesk ru
 
 ## Classification rules
 
-The Cobra CLI accepts the shared flags after the subcommand. Put `--` before positional values so patterns or text starting with a dash are not parsed as flags:
+The CLI (Cobra-compatible grammar, `crates/symdesk-cli/src/cobra/`) accepts the shared flags after the subcommand. Put `--` before positional values so patterns or text starting with a dash are not parsed as flags:
 
 ```text
 symdesk rules list --json [--vault <path>]

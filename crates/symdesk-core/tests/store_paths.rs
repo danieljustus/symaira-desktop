@@ -265,14 +265,10 @@ fn contacts_and_ingest_paths_match_native_go() {
             std::env::consts::OS
         }
     );
-    assert_eq!(
-        fixture.goarch,
-        match std::env::consts::ARCH {
-            "aarch64" => "arm64",
-            "x86_64" => "amd64",
-            arch => arch,
-        }
-    );
+    // Both captures were recorded on arm64 (macOS directly, Linux in the gate
+    // container). The store paths do not depend on the architecture, so an
+    // amd64 host replays the arm64 recording of its OS.
+    assert_eq!(fixture.goarch, "arm64");
     // ConfigDir and Go CoreKit's DefaultPath share the native-home/absolute-XDG
     // base rules for these captured cases. Derive the filename from the live Go
     // output instead of adding another hand-authored path fixture.

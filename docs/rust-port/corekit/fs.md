@@ -101,8 +101,8 @@ The earlier cap-std deferrals (`symdesk-index`, `symdesk-protocol`,
 1. Temp-file naming is not configurable: `temp_name` (`lib.rs:800-807`) vs Go
    `os.CreateTemp(dir, base+".tmp-*")`. Needs an option or a `_with_temp_pattern`
    variant to keep `{base}.tmp-{digits}` and the Go error text.
-2. Errors lose the Go `op path: errno` form (`FsError::Atomic` at `lib.rs:405-423)
-   438-440`, `FsError::Io` for mkdir/missing parent). A Go-compatible error
+2. Errors lose the Go `op path: errno` form (`FsError::Atomic` at `lib.rs:405-423`,
+   and `FsError::Io` for mkdir/missing parent). A Go-compatible error
    rendering is needed to keep CLI/HTTP/MCP strings.
 3. `secure_parent` / `is_secure_handle` (`lib.rs:519-522, 771-798`) reject
    group/world-writable and symlinked ancestors; Go accepted both. A non-strict

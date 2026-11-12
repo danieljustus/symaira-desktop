@@ -500,26 +500,13 @@ fn results_size(root: &Path) -> Result<(i64, i64), String> {
     }
 }
 
-/// Go `configkit.DefaultPath("symingest")`.
+/// Go `configkit.DefaultPath("symingest")`, selected by CoreKit.
 fn mail_config_path() -> String {
-    if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME")
-        && Path::new(&xdg).is_absolute()
-    {
-        return Path::new(&xdg)
-            .join("symingest")
-            .join("config.toml")
-            .to_string_lossy()
-            .into_owned();
-    }
-    match std::env::var("HOME") {
-        Ok(home) if !home.is_empty() => Path::new(&home)
-            .join(".config")
-            .join("symingest")
-            .join("config.toml")
-            .to_string_lossy()
-            .into_owned(),
-        _ => ".config/symingest/config.toml".to_owned(),
-    }
+    let environment = ["XDG_CONFIG_HOME", "HOME"]
+        .into_iter()
+        .filter_map(|key| std::env::var(key).ok().map(|value| (key.to_owned(), value)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    symdesk_core::config::default_config_file("symingest", &environment)
 }
 
 fn status_error(message: impl Into<String>) -> Node {

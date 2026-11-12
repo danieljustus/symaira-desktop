@@ -177,21 +177,10 @@ fn config_path(explicit: &str) -> Result<String, String> {
         }
     }
     let environment = symdesk_core::config::environment_snapshot()?;
-    let xdg = environment
-        .get("XDG_CONFIG_HOME")
-        .map(String::as_str)
-        .unwrap_or_default();
-    if xdg.starts_with('/') {
-        return Ok(go_join(&[xdg, "symingest", "config.toml"]));
-    }
-    let home = environment
-        .get("HOME")
-        .map(String::as_str)
-        .filter(|home| !home.is_empty());
-    Ok(match home {
-        Some(home) => go_join(&[home, ".config", "symingest", "config.toml"]),
-        None => go_join(&[".config", "symingest", "config.toml"]),
-    })
+    Ok(symdesk_core::config::default_config_file(
+        "symingest",
+        &environment,
+    ))
 }
 
 enum ReadError {
@@ -726,21 +715,10 @@ impl From<&ImapAccount> for symdesk_ingest::mail::ImapAccount {
 /// Go `config.MailConfigPath("")`: the global symingest configuration file.
 pub(crate) fn global_config_path() -> Result<String, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
-    let xdg = environment
-        .get("XDG_CONFIG_HOME")
-        .map(String::as_str)
-        .unwrap_or_default();
-    if xdg.starts_with('/') {
-        return Ok(go_join(&[xdg, "symingest", "config.toml"]));
-    }
-    let home = environment
-        .get("HOME")
-        .map(String::as_str)
-        .filter(|home| !home.is_empty());
-    Ok(match home {
-        Some(home) => go_join(&[home, ".config", "symingest", "config.toml"]),
-        None => go_join(&[".config", "symingest", "config.toml"]),
-    })
+    Ok(symdesk_core::config::default_config_file(
+        "symingest",
+        &environment,
+    ))
 }
 
 /// Go `ingest.MailAccounts` / the account list of `config.ReadMailConfig`:

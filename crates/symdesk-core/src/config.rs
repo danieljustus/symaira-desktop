@@ -825,14 +825,23 @@ pub(crate) fn quote_artifact(value: &str) -> String {
 /// OS-native home selection and Go filepath.Clean normalization.
 #[must_use]
 pub fn global_path(environment: &BTreeMap<String, String>) -> String {
+    default_config_file("symdesk", environment)
+}
+
+/// Go `configkit.DefaultPath(app_name)`: `$XDG_CONFIG_HOME/<app>/config.toml`
+/// for an absolute XDG root, else `<home>/.config/<app>/config.toml`.
+///
+/// CoreKit selects the path. The product keeps its OS-native home choice
+/// (HOME on Unix, USERPROFILE on Windows, `.` when unset) and Go's lexical
+/// `filepath.Clean` / Windows verbatim handling.
+#[must_use]
+pub fn default_config_file(app_name: &str, environment: &BTreeMap<String, String>) -> String {
     let xdg = nonempty(environment, "XDG_CONFIG_HOME").map(PathBuf::from);
     // The product selects only HOME on Unix and only USERPROFILE on Windows.
     // Do not forward both roots: CoreKit's Windows fallback accepts HOME when
     // USERPROFILE is missing, unlike the Go caller.
     let home = PathBuf::from(user_home(environment).unwrap_or("."));
-    let path = symaira_core_config::default_path_for_roots("symdesk", xdg, Some(home), None);
-    // CoreKit selects the path; retain Go's lexical cleanup and Windows
-    // verbatim-volume handling from the existing product adapter.
+    let path = symaira_core_config::default_path_for_roots(app_name, xdg, Some(home), None);
     store_join(&path.to_string_lossy(), "")
 }
 

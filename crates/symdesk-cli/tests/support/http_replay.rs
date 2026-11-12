@@ -467,10 +467,10 @@ impl Server {
         let Some(mut child) = self.child.take() else {
             return "not running".to_owned();
         };
-        // SAFETY: the pid belongs to the child this server owns.
-        unsafe {
-            libc::kill(child.id() as libc::pid_t, libc::SIGTERM);
-        }
+        // SIGTERM through kill(1), as the other process tests do: no `unsafe`.
+        let _ = std::process::Command::new("kill")
+            .args(["-TERM", &child.id().to_string()])
+            .status();
         let deadline = Instant::now() + Duration::from_secs(30);
         loop {
             match child.try_wait() {

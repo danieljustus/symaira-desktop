@@ -51,3 +51,10 @@ RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-ut
  && sudo tar -C /usr/bin --strip-components=1 -xJf /tmp/typst.tar.xz "typst-${target}-unknown-linux-musl/typst" \
  && rm /tmp/typst.tar.xz \
  && typst --version | grep -q "typst ${TYPST_VERSION}"
+
+# musl C toolchain for `make release-contract`: Linux release binaries are
+# static musl builds and ring/libsqlite3-sys compile C for that target
+# (release.yml installs the same package). Separate last layer on purpose.
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends musl-tools \
+ && sudo rm -rf /var/lib/apt/lists/* \
+ && command -v "$(uname -m)-linux-musl-gcc"

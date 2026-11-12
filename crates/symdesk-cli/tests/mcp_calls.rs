@@ -131,7 +131,7 @@ fn dump_db(path: &Path, root: &str) -> Dump {
         let mut stmt = db
             .prepare(&format!("SELECT * FROM \"{name}\" ORDER BY 1,2"))
             .unwrap();
-        let columns: Vec<String> = stmt.column_names().into_iter().map(str::to_owned).collect();
+        let columns: Vec<String> = stmt.column_names().map(str::to_owned).collect();
         let mut rows = stmt.query([]).unwrap();
         let mut entries = Rows::new();
         while let Some(row) = rows.next().unwrap() {

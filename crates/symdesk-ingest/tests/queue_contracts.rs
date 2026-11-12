@@ -47,11 +47,7 @@ fn open(path: &Path, clock: Arc<Mutex<String>>) -> Store {
 }
 fn snapshot(c: &Connection, query: &str) -> Value {
     let mut stmt = c.prepare(query).unwrap();
-    let names = stmt
-        .column_names()
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
+    let names = stmt.column_names().map(str::to_owned).collect::<Vec<_>>();
     let rows = stmt
         .query_map([], |r| {
             let mut out = BTreeMap::new();

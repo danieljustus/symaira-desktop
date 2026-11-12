@@ -137,11 +137,7 @@ fn dump_table(
     let mut stmt = db
         .prepare(&format!("SELECT * FROM {table} ORDER BY rowid"))
         .unwrap();
-    let cols: Vec<String> = stmt
-        .column_names()
-        .iter()
-        .map(|c| (*c).to_owned())
-        .collect();
+    let cols: Vec<String> = stmt.column_names().map(str::to_owned).collect();
     let mut rows = stmt.query([]).unwrap();
     let mut out = Vec::new();
     while let Some(row) = rows.next().unwrap() {

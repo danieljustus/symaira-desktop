@@ -139,11 +139,7 @@ fn dump_tables(db: &Path, norm: &Norm, unordered: bool) -> Value {
         let mut stmt = conn
             .prepare(&format!("SELECT * FROM {table} ORDER BY 1"))
             .unwrap();
-        let cols: Vec<String> = stmt
-            .column_names()
-            .iter()
-            .map(|c| (*c).to_owned())
-            .collect();
+        let cols: Vec<String> = stmt.column_names().map(str::to_owned).collect();
         let rows = stmt
             .query_map([], |row| {
                 let mut map = serde_json::Map::new();

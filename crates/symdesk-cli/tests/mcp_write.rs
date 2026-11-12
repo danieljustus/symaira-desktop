@@ -237,11 +237,7 @@ fn replay(case: &Case) {
             let mut stmt = db
                 .prepare(&format!("SELECT * FROM {table} ORDER BY 1,2"))
                 .unwrap();
-            let columns = stmt
-                .column_names()
-                .into_iter()
-                .map(str::to_owned)
-                .collect::<Vec<_>>();
+            let columns = stmt.column_names().map(str::to_owned).collect::<Vec<_>>();
             let mut rows = stmt.query([]).unwrap();
             let mut entries = Vec::new();
             while let Some(row) = rows.next().unwrap() {

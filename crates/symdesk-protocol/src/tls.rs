@@ -82,6 +82,46 @@ pub(crate) async fn peek_record_header(stream: &tokio::net::TcpStream) -> Option
 }
 
 pub(crate) async fn reply_plaintext_on_tls(stream: &mut tokio::net::TcpStream) -> io::Result<()> {
+    // Go's TLS record reader has already consumed the buffered request when
+    // the server answers. This side only peeked, and closing a socket with
+    // unread input sends RST instead of FIN, which a slow client sees as a
+    // reset before it has read the reply.
+    let mut sink = [0_u8; 4096];
+    while matches!(stream.try_read(&mut sink), Ok(read) if read > 0) {}
     stream.write_all(PLAINTEXT_ON_TLS_REPLY).await?;
     stream.shutdown().await
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Read, Write};
+
+    use super::*;
+
+    /// A plaintext client that reads late must still see a clean close. Go's
+    /// TLS record reader has consumed the request before the server answers,
+    /// so its close sends FIN; closing with unread input sends RST instead.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn plaintext_reply_closes_without_reset_for_a_slow_reader() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let client = std::thread::spawn(move || {
+            let mut socket = std::net::TcpStream::connect(address).unwrap();
+            socket
+                .write_all(b"GET /healthz HTTP/1.1\r\nHost: localhost\r\n\r\n")
+                .unwrap();
+            std::thread::sleep(Duration::from_millis(300));
+            let mut reply = Vec::new();
+            let outcome = socket.read_to_end(&mut reply);
+            (reply, outcome.map(|_| ()).map_err(|error| error.kind()))
+        });
+        let (mut stream, _) = listener.accept().await.unwrap();
+        let header = peek_record_header(&stream).await.unwrap();
+        assert!(looks_like_http(&header));
+        reply_plaintext_on_tls(&mut stream).await.unwrap();
+        drop(stream);
+        let (reply, outcome) = client.join().unwrap();
+        assert_eq!(outcome, Ok(()));
+        assert_eq!(reply, PLAINTEXT_ON_TLS_REPLY);
+    }
 }

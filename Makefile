@@ -199,7 +199,7 @@ command-tree-cli-differential:
 
 .PHONY: dataset-aggregate-differential
 
-VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+VERSION ?= $(shell git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null | sed 's/^v//')
 CARGO ?= cargo
 # Keep differential artifacts in the candidate's isolated Cargo target tree.
 RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)

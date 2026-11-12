@@ -288,3 +288,17 @@ fn mutated_fixture_is_rejected() {
         "2000-01-01 01:00:01 +0000 UTC"
     );
 }
+
+#[test]
+fn embedded_migrations_are_in_corekit_application_order() {
+    // CoreKit applies `<version>.sql` entries sorted by name, as Go's embed.FS
+    // listing does; the declaration order must therefore already be sorted.
+    let names = symdesk_ingest::MIGRATIONS
+        .iter()
+        .map(|(version, _)| format!("{version}.sql"))
+        .collect::<Vec<_>>();
+    let mut sorted = names.clone();
+    sorted.sort();
+    assert!(!names.is_empty());
+    assert_eq!(names, sorted);
+}

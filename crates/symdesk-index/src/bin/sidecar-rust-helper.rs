@@ -355,11 +355,10 @@ fn wait_file(path: &str, timeout: Duration) -> Result<(), Box<dyn std::error::Er
 }
 
 fn open_raw_connection(db: &Path) -> Result<Connection, rusqlite::Error> {
-    let connection = Connection::open(db)?;
-    connection.busy_timeout(Duration::from_millis(5000))?;
-    connection.pragma_update(None, "foreign_keys", true)?;
-    connection.pragma_update(None, "journal_mode", "WAL")?;
-    Ok(connection)
+    symaira_core_sqlite::open_with_existing_parent(db).map_err(|error| match error {
+        symaira_core_sqlite::Error::Open(err) => err,
+        other => unreachable!("open_with_existing_parent only fails to open: {other}"),
+    })
 }
 
 fn snapshot(connection: &Connection) -> Result<Value, Box<dyn std::error::Error>> {

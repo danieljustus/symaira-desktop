@@ -89,6 +89,27 @@ pub struct Job {
 pub struct Store {
     connection: Connection,
 }
+/// Embedded equivalent of Go's `embed.FS` migration directory (`<version>.sql`).
+struct EmbeddedMigrations(&'static [(&'static str, &'static str)]);
+impl symaira_core_sqlite::MigrationSource for EmbeddedMigrations {
+    fn entries(&self) -> std::io::Result<Vec<symaira_core_sqlite::Entry>> {
+        Ok(self
+            .0
+            .iter()
+            .map(|(version, _)| symaira_core_sqlite::Entry {
+                name: format!("{version}.sql"),
+                is_dir: false,
+            })
+            .collect())
+    }
+    fn read(&self, name: &str) -> std::io::Result<Vec<u8>> {
+        self.0
+            .iter()
+            .find(|(version, _)| format!("{version}.sql") == name)
+            .map(|(_, sql)| sql.as_bytes().to_vec())
+            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, name.to_owned()))
+    }
+}
 fn error(context: &str, e: rusqlite::Error) -> String {
     let text = match e {
         rusqlite::Error::QueryReturnedNoRows => "sql: no rows in result set".to_owned(),
@@ -157,29 +178,9 @@ impl Store {
                 "PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;",
             )
             .map_err(|e| error("configure store", e))?;
-        connection.execute_batch("CREATE TABLE IF NOT EXISTS schema_migrations (\n\t\tversion TEXT PRIMARY KEY,\n\t\tapplied_at DATETIME DEFAULT CURRENT_TIMESTAMP\n\t)").map_err(|e|error("migrate store",e))?;
-        for (version, sql) in MIGRATIONS {
-            let applied: bool = connection
-                .query_row(
-                    "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = ?)",
-                    [version],
-                    |r| r.get(0),
-                )
-                .map_err(|e| error("migrate store", e))?;
-            if !applied {
-                let tx = connection
-                    .transaction()
-                    .map_err(|e| error("migrate store", e))?;
-                tx.execute_batch(sql)
-                    .map_err(|e| error("migrate store", e))?;
-                tx.execute(
-                    "INSERT INTO schema_migrations(version) VALUES (?)",
-                    [version],
-                )
-                .map_err(|e| error("migrate store", e))?;
-                tx.commit().map_err(|e| error("migrate store", e))?;
-            }
-        }
+        // Go `sqlitekit.Migrate(db, migrationsFS)`, delegated to CoreKit.
+        symaira_core_sqlite::migrate(&mut connection, &EmbeddedMigrations(MIGRATIONS))
+            .map_err(|e| format!("migrate store: {e}"))?;
         Ok(Self { connection })
     }
     /// Read-only access for schema inspection and existing store integration.

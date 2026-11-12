@@ -5,7 +5,6 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
-use rusqlite::Connection;
 use serde::{
     Deserialize, Deserializer, Serialize,
     de::{self, IgnoredAny, MapAccess, Visitor},
@@ -232,10 +231,7 @@ fn migrate_legacy_retrieval_index(
         )));
     }
 
-    let connection = Connection::open(&source)?;
-    connection.execute_batch(
-        "PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
-    )?;
+    let connection = super::open_existing_parent(&source)?;
     backup_database(&connection, destination)?;
     drop(connection);
 
@@ -312,7 +308,7 @@ pub fn relocate_index_for_vault(
             source.display()
         )));
     }
-    let connection = Connection::open(&source)?;
+    let connection = super::open_existing_parent(&source)?;
     let relocated = relocate_database(&connection, &destination)?;
 
     let config_path = symseek_config_path(environment, cwd)?;

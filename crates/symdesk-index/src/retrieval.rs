@@ -647,7 +647,7 @@ pub struct RetrievalStatusSnapshot {
     pub mixed_embedding_spaces: bool,
 }
 
-const RETRIEVAL_MIGRATIONS: &[(&str, &str)] = &[
+pub(crate) const RETRIEVAL_MIGRATIONS: &[(&str, &str)] = &[
     (
         "0001_baseline",
         include_str!("../migrations/retrieval/0001_baseline.sql"),
@@ -720,10 +720,7 @@ impl RetrievalDb {
             super::create_parent_dir(parent)?;
         }
         create_database_file(&path)?;
-        let mut connection = Connection::open(path)?;
-        connection.execute_batch(
-            "PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
-        )?;
+        let mut connection = super::open_existing_parent(&path)?;
         migrate_retrieval(&mut connection)?;
         backfill_content_norm(&connection)?;
         let database = Self {
@@ -1667,30 +1664,7 @@ fn create_database_file(path: &Path) -> Result<(), SidecarError> {
 }
 
 fn migrate_retrieval(connection: &mut Connection) -> Result<(), SidecarError> {
-    connection.execute_batch(
-        "CREATE TABLE IF NOT EXISTS schema_migrations (
-             version TEXT PRIMARY KEY,
-             applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
-         )",
-    )?;
-    for (version, sql) in RETRIEVAL_MIGRATIONS {
-        let applied: bool = connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = ?1)",
-            [version],
-            |row| row.get(0),
-        )?;
-        if applied {
-            continue;
-        }
-        let transaction = connection.transaction()?;
-        transaction.execute_batch(sql)?;
-        transaction.execute(
-            "INSERT INTO schema_migrations(version) VALUES (?1)",
-            [version],
-        )?;
-        transaction.commit()?;
-    }
-    Ok(())
+    super::migrate_embedded(connection, RETRIEVAL_MIGRATIONS)
 }
 
 fn backfill_content_norm(connection: &Connection) -> Result<(), SidecarError> {

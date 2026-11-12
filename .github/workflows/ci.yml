@@ -84,15 +84,10 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
 
-      # The Rust archive stamp contract measures its own output with Poppler.
-      - name: Install Poppler for the archive stamp contract
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sudo apt-get update && sudo apt-get install -y poppler-utils
-          else
-            brew install poppler
-          fi
+      # The render contracts measure their output with Poppler, qpdf and the
+      # pinned Typst.
+      - name: Install the render contract tools
+        run: scripts/rust-port/install-render-tools.sh
 
       - name: Verify fixture provenance and replay the frozen Go oracle fixtures
         run: make port-contract
@@ -115,9 +110,10 @@ jobs:
           rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
           rustup toolchain install nightly-2026-09-03 --profile minimal
 
-      # The Rust archive stamp contract measures its own output with Poppler.
-      - name: Install Poppler for the archive stamp contract
-        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      # The render contracts measure their output with Poppler, qpdf and the
+      # pinned Typst.
+      - name: Install the render contract tools
+        run: scripts/rust-port/install-render-tools.sh
 
       - name: Install Rust verification tools
         uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
@@ -165,9 +161,10 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
 
-      # The Rust archive stamp contract measures its own output with Poppler.
-      - name: Install Poppler for the archive stamp contract
-        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      # The render contracts measure their output with Poppler, qpdf and the
+      # pinned Typst.
+      - name: Install the render contract tools
+        run: scripts/rust-port/install-render-tools.sh
 
       - name: Replay frozen Go oracle fixtures without Go
         run: make port-contract-frozen
@@ -217,16 +214,10 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
 
-      # The Rust archive stamp contract measures its own output with Poppler
-      # (pdftotext/pdftoppm).
-      - name: Install Poppler for the archive stamp contract
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            sudo apt-get update && sudo apt-get install -y poppler-utils
-          else
-            brew install poppler
-          fi
+      # The render contracts measure their output with Poppler, qpdf and the
+      # pinned Typst.
+      - name: Install the render contract tools
+        run: scripts/rust-port/install-render-tools.sh
 
       - name: Replay native contacts and ingest path contracts
         shell: bash

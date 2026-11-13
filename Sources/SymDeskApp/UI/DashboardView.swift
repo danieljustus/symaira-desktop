@@ -144,7 +144,7 @@ struct DashboardView: View {
                                 .foregroundColor(SymairaTheme.textSecondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color.white.opacity(0.06))
+                                .background(SymairaTokens.ink.opacity(0.06))
                                 .cornerRadius(4)
                         }
                         .padding(.horizontal, 12)

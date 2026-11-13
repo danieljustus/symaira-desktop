@@ -32,7 +32,7 @@ struct TrashView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .tint(.red)
+                    .tint(SymairaTokens.critical)
                 }
                 Button(action: { Task { await loadTrash() } }) {
                     Label("Refresh", systemImage: "arrow.clockwise")
@@ -54,7 +54,7 @@ struct TrashView: View {
             if let error = errorMessage {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(SymairaTokens.critical)
                     Text(error)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
@@ -66,7 +66,7 @@ struct TrashView: View {
                     .controlSize(.small)
                 }
                 .padding(10)
-                .background(Color.red.opacity(0.12))
+                .background(SymairaTokens.critical.opacity(0.12))
                 .cornerRadius(6)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
@@ -167,10 +167,11 @@ struct TrashView: View {
                 } label: {
                     Label("Delete", systemImage: "xmark")
                         .labelStyle(.iconOnly)
+                        .accessibilityLabel("Delete")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .tint(.red)
+                .tint(SymairaTokens.critical)
                 .disabled(isBusy)
             }
         }
@@ -185,6 +186,7 @@ struct TrashView: View {
         .overlay {
             if isBusy {
                 ProgressView()
+                    .accessibilityLabel("Loading trash…")
                     .controlSize(.small)
             }
         }

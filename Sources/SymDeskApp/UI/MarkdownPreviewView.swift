@@ -105,9 +105,10 @@ private struct MarkdownBlocksView: View {
             MermaidView(code: code)
         case .mathBlock(let tex):
             // Serif italic is the conventional math-typesetting face; not
-            // covered by the Symaira text roles (issue #352 deviation).
+            // covered by the Symaira text roles (issue #352 deviation). It
+            // follows the body text style instead of a fixed point size.
             Text(MathTypesetter.render(tex))
-                .font(.system(size: 16, design: .serif).italic())
+                .font(.system(.body, design: .serif).italic())
                 .foregroundColor(SymairaTheme.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, 6)
@@ -123,7 +124,7 @@ private struct MarkdownBlocksView: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(8)
-                    .background(Color.white.opacity(0.05))
+                    .background(SymairaTokens.ink.opacity(0.05))
                     .cornerRadius(6)
             }
         case .listItem(let indent, let ordered, let text):
@@ -279,11 +280,11 @@ private struct EmbedView: View {
             case .cycle:
                 Label("Circular embed skipped", systemImage: "arrow.triangle.2.circlepath")
                     .symairaText(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(SymairaTokens.warning)
             case .tooDeep:
                 Label("Embed nesting too deep", systemImage: "square.stack.3d.up.slash")
                     .symairaText(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(SymairaTokens.warning)
             case .notFound:
                 Label("Note \u{201C}\(target)\u{201D} not found", systemImage: "questionmark.square.dashed")
                     .symairaText(.caption)
@@ -292,7 +293,7 @@ private struct EmbedView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.03))
+        .background(SymairaTokens.ink.opacity(0.03))
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(SymairaTheme.borderGlass, lineWidth: 1)
@@ -319,7 +320,7 @@ private struct MermaidView: View {
                     .foregroundColor(SymairaTheme.textSecondary)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(SymairaTokens.ink.opacity(0.04))
                     .cornerRadius(6)
             }
         }
@@ -391,7 +392,7 @@ private struct MermaidGraphView: View {
                             .multilineTextAlignment(.center)
                             .foregroundColor(SymairaTheme.textPrimary)
                             .frame(width: nodeSize.width, height: nodeSize.height)
-                            .background(Color.white.opacity(0.06))
+                            .background(SymairaTokens.ink.opacity(0.06))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(SymairaTheme.goldShadow, lineWidth: 1)
@@ -453,7 +454,7 @@ private struct PreviewTableView: View {
             }
         }
         .padding(8)
-        .background(Color.white.opacity(0.03))
+        .background(SymairaTokens.ink.opacity(0.03))
         .cornerRadius(6)
     }
 }
@@ -473,15 +474,16 @@ private struct BaseEmbedView: View {
         VStack(alignment: .leading, spacing: 6) {
             if isLoading {
                 ProgressView()
+                    .accessibilityLabel("Rendering preview…")
                     .tint(SymairaTheme.goldPrimary)
                     .padding(8)
             } else if let err = errorMessage {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(SymairaTokens.warning)
                     Text(err)
                         .symairaText(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundColor(SymairaTokens.warning)
                 }
                 .padding(8)
             } else if let res = result {
@@ -507,7 +509,7 @@ private struct BaseEmbedView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.03))
+        .background(SymairaTokens.ink.opacity(0.03))
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(SymairaTheme.borderGlass, lineWidth: 1)

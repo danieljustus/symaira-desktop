@@ -226,7 +226,7 @@ struct TagBrowserView: View {
                     .foregroundColor(SymairaTheme.textSecondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(Color.white.opacity(0.06))
+                    .background(SymairaTokens.ink.opacity(0.06))
                     .cornerRadius(3)
             }
             .padding(.horizontal, indent ? 16 : 8)
@@ -284,7 +284,7 @@ private struct RenameTagSheet: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
                 Image(systemName: "pencil")
-                    .font(.system(size: 28))
+                    .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Rename Tag").symairaText(.title).bold()
@@ -348,7 +348,7 @@ private struct MergeTagSheet: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
                 Image(systemName: "arrow.triangle.merge")
-                    .font(.system(size: 28))
+                    .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Merge Tag").symairaText(.title).bold()

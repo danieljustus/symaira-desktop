@@ -161,10 +161,10 @@ private struct DemoBanner: View {
     var body: some View {
         HStack {
             Image(systemName: "wand.and.stars")
-                .foregroundColor(.black)
+                .foregroundColor(SymairaTokens.onPrimary)
             Text("Demo Mode")
                 .symairaText(.caption).bold()
-                .foregroundColor(.black)
+                .foregroundColor(SymairaTokens.onPrimary)
             Spacer()
             Button("Leave Demo Mode") {
                 VaultConfig.reset()
@@ -173,16 +173,10 @@ private struct DemoBanner: View {
             }
             .buttonStyle(.plain)
             .symairaText(.caption).fontWeight(.semibold)
-            .foregroundColor(.black.opacity(0.75))
+            .foregroundColor(SymairaTokens.onPrimary.opacity(0.75))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(
-            LinearGradient(
-                colors: [SymairaTheme.goldPrimary, SymairaTheme.goldSecondary],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
+        .background(SymairaTokens.primary)
     }
 }

@@ -66,6 +66,7 @@ struct HistoryView: View {
                 Spacer()
                 if isLoadingNotes {
                     ProgressView()
+                        .accessibilityLabel("Loading history…")
                         .controlSize(.small)
                 }
             }
@@ -153,14 +154,14 @@ struct HistoryView: View {
                 if let error = errorMessage {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(SymairaTokens.warning)
                         Text(error)
                             .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                         Spacer()
                     }
                     .padding(10)
-                    .background(Color.orange.opacity(0.12))
+                    .background(SymairaTokens.warning.opacity(0.12))
                     .cornerRadius(6)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 8)
@@ -219,7 +220,7 @@ struct HistoryView: View {
                     if isLatest {
                         Text("Current")
                             .symairaText(.caption).fontWeight(.bold)
-                            .foregroundColor(.black)
+                            .foregroundColor(SymairaTokens.onPrimary)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
                             .background(SymairaTheme.goldPrimary)
@@ -285,6 +286,7 @@ struct HistoryView: View {
                 Spacer()
                 if isLoadingDiff {
                     ProgressView()
+                        .accessibilityLabel("Loading history…")
                         .controlSize(.small)
                 }
             }

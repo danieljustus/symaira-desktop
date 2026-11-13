@@ -304,6 +304,7 @@ struct DocumentViewerView: View {
                 Button(action: { runReOCR() }) {
                     if isReOCRRunning {
                         ProgressView().controlSize(.small)
+                            .accessibilityLabel("Loading document…")
                     } else {
                         Label("Re-run OCR", systemImage: "doc.badge.gearshape")
                     }
@@ -431,6 +432,7 @@ struct DocumentViewerView: View {
                 Spacer()
                 if isSaving {
                     ProgressView()
+                        .accessibilityLabel("Loading document…")
                         .controlSize(.small)
                 }
                 Button("Save Changes") { saveChanges() }
@@ -602,7 +604,7 @@ struct DocumentViewerView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.08))
+                    .fill(SymairaTokens.ink.opacity(0.08))
                     .frame(height: 6)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(confidenceColor)

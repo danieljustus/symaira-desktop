@@ -156,7 +156,7 @@ struct LoadErrorBanner: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(SymairaTokens.critical)
             Text(message)
                 .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
@@ -176,7 +176,7 @@ struct LoadErrorBanner: View {
             .foregroundStyle(SymairaTheme.textSecondary)
         }
         .padding(8)
-        .background(Color.red.opacity(0.12))
+        .background(SymairaTokens.critical.opacity(0.12))
         .cornerRadius(6)
         .padding(.horizontal)
         .padding(.top, 8)

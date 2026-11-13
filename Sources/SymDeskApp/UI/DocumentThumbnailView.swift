@@ -29,6 +29,7 @@ struct DocumentThumbnailView: View {
             if showThumbnails {
                 if isLoading {
                     ProgressView()
+                        .accessibilityLabel("Loading thumbnail…")
                         .controlSize(.small)
                         .tint(SymairaTheme.goldSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -48,7 +48,7 @@ struct MeetingKnowledgeReviewView: View {
             if let error = model.publishError {
                 Text(error)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             }
             if let result = model.lastPublish {
                 resultSummary(result)
@@ -62,6 +62,7 @@ struct MeetingKnowledgeReviewView: View {
                 Spacer()
                 if model.isPublishing {
                     ProgressView().controlSize(.small)
+                        .accessibilityLabel("Loading meeting knowledge…")
                 } else {
                     Button("Apply to Memory") {
                         Task { await model.publish(facts: facts) }
@@ -168,7 +169,7 @@ struct MeetingKnowledgeReviewView: View {
             systemImage: "checkmark.circle"
         )
         .symairaText(.caption)
-        .foregroundColor(.green)
+        .foregroundColor(SymairaTokens.positive)
         .accessibilityLabel("Publish applied. \(result.relationsCreated) relations, \(published) new facts, \(result.factsSkipped) skipped as already published.")
     }
 

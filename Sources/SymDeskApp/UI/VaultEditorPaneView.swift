@@ -53,7 +53,7 @@ struct VaultEditorPaneView: View {
                 if let saveError = model.mutationTracker.failureMessage(for: model.saveActionID(note)) {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(SymairaTokens.critical)
                         Text("Save failed: \(saveError)")
                             .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
@@ -70,7 +70,7 @@ struct VaultEditorPaneView: View {
                         .foregroundStyle(SymairaTheme.textSecondary)
                     }
                     .padding(8)
-                    .background(Color.red.opacity(0.12))
+                    .background(SymairaTokens.critical.opacity(0.12))
                     .cornerRadius(6)
                     .padding(.horizontal)
                     .padding(.top, 8)

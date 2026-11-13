@@ -200,6 +200,7 @@ struct RetrievalStatusView: View {
 
                 if isReindexing || isRetrying {
                     ProgressView().controlSize(.small)
+                        .accessibilityLabel("Loading retrieval status…")
                 }
             }
             if let reindexSummary {

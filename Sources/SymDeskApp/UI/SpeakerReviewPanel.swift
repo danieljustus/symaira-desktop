@@ -26,6 +26,7 @@ struct SpeakerReviewPanel: View {
                 Spacer()
                 if model.isCorrectingSpeaker {
                     ProgressView().controlSize(.mini)
+                        .accessibilityLabel("Loading speakers…")
                 } else if !model.speakers.isEmpty {
                     Button("Reset Edits") { confirmingReset = true }
                         .buttonStyle(.plain)
@@ -52,7 +53,7 @@ struct SpeakerReviewPanel: View {
             if let actionError = model.speakerActionError {
                 Text(actionError)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             }
 
             participantsSection

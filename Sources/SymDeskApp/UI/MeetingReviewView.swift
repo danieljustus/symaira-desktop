@@ -27,6 +27,7 @@ struct MeetingReviewView: View {
                     // is published on the same run loop tick; treat as loading
                     // rather than showing an empty pane.
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityLabel("Loading meeting…")
                 }
             }
         }
@@ -36,7 +37,7 @@ struct MeetingReviewView: View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .symairaText(.title)
-                .foregroundColor(.red)
+                .foregroundColor(SymairaTokens.critical)
             if let path = model.selectedPath {
                 Text("Couldn't load \(fileName(for: path))")
                     .symairaText(.heading)
@@ -72,10 +73,10 @@ struct MeetingReviewView: View {
             }
         }
         .padding(20)
-        .background(Color.red.opacity(0.08))
+        .background(SymairaTokens.critical.opacity(0.08))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+                .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
         }
         .frame(maxWidth: 520)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -127,7 +128,7 @@ struct MeetingReviewView: View {
             ForEach([model.refreshError, model.reviewSaveError].compactMap { $0 }, id: \.self) { error in
                 Text(error)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
                     .padding(8)
             }
         }
@@ -200,6 +201,7 @@ struct MeetingReviewView: View {
             reviewStateBadge
             if model.isRefreshing || model.isSavingReview {
                 ProgressView().controlSize(.small)
+                    .accessibilityLabel("Loading meeting…")
             } else {
                 Button("Refresh Transcript") {
                     Task { await model.refreshSelected(apply: true) }

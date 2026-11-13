@@ -67,7 +67,7 @@ struct GraphView: View {
                 .accessibilityLabel("Zoom out")
 
                 Text("\(Int(zoomScale * 100))%")
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(SymairaTypography.mono)
                     .foregroundStyle(SymairaTheme.textSecondary)
                     .frame(minWidth: 42, alignment: .trailing)
                     .accessibilityLabel("Zoom level")
@@ -94,6 +94,7 @@ struct GraphView: View {
                         }
                 } else {
                     ProgressView()
+                        .accessibilityLabel("Loading graph…")
                         .tint(SymairaTheme.goldPrimary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

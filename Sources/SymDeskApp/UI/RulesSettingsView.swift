@@ -314,7 +314,7 @@ struct RulesSettingsView: View {
             if let error = viewModel.lastError, viewModel.lastErrorKind == .validation {
                 Text(error)
                     .symairaText(.callout)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(SymairaTokens.critical)
             }
         }
     }
@@ -682,7 +682,7 @@ struct RulesSettingsView: View {
                         if result.ok {
                             VStack(alignment: .leading, spacing: 4) {
                                 Label("Connected to \(providerName) using \(modelName).", systemImage: "checkmark.circle")
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(SymairaTokens.positive)
                                     .symairaText(.caption)
                                 if let models = result.models, !models.isEmpty {
                                     Text("Available models: \(models.joined(separator: ", "))")
@@ -692,7 +692,7 @@ struct RulesSettingsView: View {
                             }
                         } else {
                             Label("Connection failed for \(providerName) using \(modelName): \(result.error ?? "Connection failed.")", systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(SymairaTokens.warning)
                                 .symairaText(.caption)
                         }
                     }

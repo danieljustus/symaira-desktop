@@ -48,7 +48,7 @@ struct ParticipantConfirmationView: View {
             if let error = model.participantActionError {
                 Text(error)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             }
 
             Spacer()

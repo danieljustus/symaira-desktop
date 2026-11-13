@@ -170,9 +170,9 @@ struct VaultSwitcherView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .symairaText(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(SymairaTokens.critical)
                     .padding(6)
-                    .background(Color.red.opacity(0.12))
+                    .background(SymairaTokens.critical.opacity(0.12))
                     .cornerRadius(6)
             }
         }
@@ -283,7 +283,7 @@ private struct CreateVaultSheet: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
                 Image(systemName: "folder.badge.plus")
-                    .font(.system(size: 28))
+                    .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Create New Vault").symairaText(.title).bold()

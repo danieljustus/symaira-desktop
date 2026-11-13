@@ -48,7 +48,7 @@ struct DuplicatesView: View {
             if let error = errorMessage {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(SymairaTokens.critical)
                     Text(error)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
@@ -58,7 +58,7 @@ struct DuplicatesView: View {
                         .controlSize(.small)
                 }
                 .padding(10)
-                .background(Color.red.opacity(0.12))
+                .background(SymairaTokens.critical.opacity(0.12))
                 .cornerRadius(6)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)

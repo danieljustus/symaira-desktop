@@ -143,7 +143,7 @@ struct DocumentGridView: View {
             get: { batchSummary != nil },
             set: { if !$0 { batchSummary = nil } }
         )) {
-            Button("OK", role: .cancel) { batchSummary = nil }
+            Button("Close", role: .cancel) { batchSummary = nil }
         } message: {
             Text(batchSummary ?? "")
         }
@@ -238,6 +238,7 @@ struct DocumentGridView: View {
             Button(action: { sortByASN.toggle() }) {
                 Label(sortByASN ? "Default order" : "Sort by ASN", systemImage: "number")
                     .labelStyle(.iconOnly)
+                    .accessibilityLabel(sortByASN ? "Default order" : "Sort by ASN")
                     .foregroundColor(sortByASN ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
             }
             .buttonStyle(.plain)
@@ -830,6 +831,7 @@ struct DocumentGridView: View {
                 Spacer()
                 if isAgentRunning {
                     ProgressView()
+                        .accessibilityLabel("Loading documents…")
                         .controlSize(.small)
                         .tint(SymairaTheme.goldPrimary)
                 }
@@ -1014,7 +1016,7 @@ struct DocumentCard: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.08))
+                    .fill(SymairaTokens.ink.opacity(0.08))
                     .frame(height: 4)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(confidenceColor)

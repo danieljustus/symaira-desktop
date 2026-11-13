@@ -35,11 +35,12 @@ struct ContactReferencesView: View {
             if let loadError {
                 Label(loadError, systemImage: "exclamationmark.triangle")
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             } else if let references {
                 content(references)
             } else {
                 ProgressView()
+                    .accessibilityLabel("Loading contacts…")
                     .tint(SymairaTheme.goldPrimary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -64,7 +65,7 @@ struct ContactReferencesView: View {
                     systemImage: "person.crop.circle.badge.checkmark"
                 )
                 .symairaText(.caption)
-                .foregroundColor(.green)
+                .foregroundColor(SymairaTokens.positive)
             } else {
                 Label("No contact carries this name", systemImage: "person.crop.circle")
                     .symairaText(.caption)

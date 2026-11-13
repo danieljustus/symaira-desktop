@@ -62,6 +62,7 @@ struct PaperlessImportView: View {
                 } label: {
                     if isRunning {
                         ProgressView()
+                            .accessibilityLabel("Importing documents…")
                             .controlSize(.small)
                     } else {
                         Label("Start Import", systemImage: "arrow.down.doc")
@@ -81,14 +82,14 @@ struct PaperlessImportView: View {
             if let errorMessage {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(SymairaTokens.critical)
                     Text(errorMessage)
                         .symairaText(.caption)
                         .foregroundStyle(SymairaTheme.textSecondary)
                     Spacer()
                 }
                 .padding(10)
-                .background(Color.red.opacity(0.12))
+                .background(SymairaTokens.critical.opacity(0.12))
                 .cornerRadius(6)
             }
 
@@ -112,7 +113,7 @@ struct PaperlessImportView: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: "doc.badge.arrow.up")
-                .font(.system(size: 28))
+                .font(SymairaTypography.display)
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Import from Paperless-ngx").symairaText(.title).bold()
@@ -189,7 +190,7 @@ struct PaperlessImportView: View {
             if let error = result.error {
                 Text(error)
                     .symairaText(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(SymairaTokens.critical)
                     .lineLimit(1)
             } else if let path = result.notePath {
                 Text(path)

@@ -48,13 +48,14 @@ struct NewNoteSheet: View {
             HStack {
                 if isCreating {
                     ProgressView()
+                        .accessibilityLabel("Creating note…")
                         .controlSize(.small)
                         .padding(.horizontal, 8)
                 }
                 if let err = errorMessage {
                     Text(err)
                         .symairaText(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(SymairaTokens.critical)
                 }
                 Spacer()
                 Button("Cancel") { isPresented = false }

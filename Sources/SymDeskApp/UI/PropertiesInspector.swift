@@ -103,7 +103,7 @@ struct PropertiesInspector: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .symairaText(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(SymairaTokens.critical)
                 }
             }
             .padding()
@@ -220,7 +220,7 @@ struct PropertiesInspector: View {
                                         .symairaText(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(Color.white.opacity(0.08))
+                                        .background(SymairaTokens.ink.opacity(0.08))
                                         .cornerRadius(4)
                                 }
                                 .buttonStyle(.plain)

@@ -11,12 +11,8 @@ struct SymairaScreen<Content: View>: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [SymairaTheme.bgDarker, SymairaTheme.bgDark],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            SymairaTokens.canvas
+                .ignoresSafeArea()
             BlueprintGrid()
                 .opacity(0.35)
                 .ignoresSafeArea()

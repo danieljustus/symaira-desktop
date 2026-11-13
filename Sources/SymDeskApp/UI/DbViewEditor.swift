@@ -88,7 +88,7 @@ struct DbViewEditor: View {
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .foregroundColor(.red)
+                        .foregroundColor(SymairaTokens.critical)
                 }
             }
             .formStyle(.grouped)

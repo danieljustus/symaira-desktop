@@ -66,7 +66,7 @@ struct NotebookWorkspaceView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
                     .padding(8)
             }
 
@@ -112,7 +112,7 @@ struct NotebookWorkspaceView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "books.vertical")
-                .font(.system(size: 32))
+                .font(SymairaTypography.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select or create a notebook")
                 .symairaText(.body)
@@ -232,7 +232,7 @@ private struct NotebookDetailView: View {
                 Label("Delete", systemImage: "trash")
             }
             .buttonStyle(.plain)
-            .foregroundColor(.red)
+            .foregroundColor(SymairaTokens.critical)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -251,7 +251,7 @@ private struct NotebookDetailView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
                     .padding(.horizontal, 12)
             }
 
@@ -295,7 +295,7 @@ private struct NotebookDetailView: View {
                 if source.missing == true {
                     Text("Missing")
                         .symairaText(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundColor(SymairaTokens.warning)
                 } else {
                     Text(source.path)
                         .symairaText(.caption)
@@ -439,7 +439,7 @@ private struct NotebookDetailView: View {
                     if let generateError {
                         Text(generateError)
                             .symairaText(.caption)
-                            .foregroundColor(.red)
+                            .foregroundColor(SymairaTokens.critical)
                     }
 
                     if let artifact {
@@ -457,7 +457,7 @@ private struct NotebookDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Unverified citations")
                                     .symairaText(.caption).bold()
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(SymairaTokens.warning)
                                 ForEach(warnings, id: \.path) { warning in
                                     Text(warning.path)
                                         .symairaText(.caption)
@@ -550,7 +550,7 @@ private struct NotebookDetailView: View {
             if let audioError {
                 Text(audioError)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             }
         }
         .padding(.top, 4)

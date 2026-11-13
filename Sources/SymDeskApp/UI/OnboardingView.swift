@@ -159,11 +159,11 @@ struct OnboardingView: View {
     private func errorBox(_ message: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.red)
+                .foregroundColor(SymairaTokens.critical)
                 .padding(.top, 2)
             ScrollView {
                 Text(message)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
                     .symairaText(.callout)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -173,10 +173,10 @@ struct OnboardingView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.red.opacity(0.08))
+                .fill(SymairaTokens.critical.opacity(0.08))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.red.opacity(0.35), lineWidth: 1)
+                        .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
                 )
         )
     }

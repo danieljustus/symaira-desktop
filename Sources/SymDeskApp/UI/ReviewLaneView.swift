@@ -212,6 +212,7 @@ struct ReviewLaneView: View {
                 HStack {
                     if isSaving {
                         ProgressView()
+                            .accessibilityLabel("Loading review items…")
                             .controlSize(.small)
                             .tint(SymairaTheme.goldPrimary)
                     }

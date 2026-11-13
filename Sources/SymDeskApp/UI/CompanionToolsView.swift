@@ -71,7 +71,7 @@ struct CompanionToolsView: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .symairaText(.heading)
-                .foregroundColor(.orange)
+                .foregroundColor(SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Homebrew not found")
                     .symairaText(.body).fontWeight(.semibold)
@@ -141,9 +141,10 @@ struct CompanionToolsView: View {
                 if isInstalled {
                     Label("Installed", systemImage: "checkmark")
                         .symairaText(.caption)
-                        .foregroundColor(.green)
+                        .foregroundColor(SymairaTokens.positive)
                 } else if isInstalling {
                     ProgressView()
+                        .accessibilityLabel("Checking tools…")
                         .controlSize(.small)
                 } else {
                     Button("Install") {
@@ -166,7 +167,7 @@ struct CompanionToolsView: View {
             if let error {
                 Text(error)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
             }
         }
         .padding(14)

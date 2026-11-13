@@ -53,7 +53,7 @@ struct BlockRow: View {
                     TextField("Frontmatter", text: $block.content, axis: .vertical)
                         .symairaText(.mono)
                         .padding(8)
-                        .background(Color.white.opacity(0.04))
+                        .background(SymairaTokens.ink.opacity(0.04))
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }
@@ -97,7 +97,7 @@ struct BlockRow: View {
                     TextField("Code", text: $block.content, axis: .vertical)
                         .symairaText(.mono)
                         .padding(8)
-                        .background(Color.white.opacity(0.04))
+                        .background(SymairaTokens.ink.opacity(0.04))
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }

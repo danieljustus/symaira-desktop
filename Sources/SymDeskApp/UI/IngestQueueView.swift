@@ -67,7 +67,7 @@ struct IngestQueueView: View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
                 .symairaText(.display)
-                .foregroundColor(.red)
+                .foregroundColor(SymairaTokens.critical)
             Text("Connection Failed")
                 .symairaText(.heading)
                 .fontWeight(.semibold)
@@ -216,9 +216,9 @@ struct JobRow: View {
                 if let err = job.lastError {
                     Text(err)
                         .symairaText(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(SymairaTokens.critical)
                         .padding(8)
-                        .background(Color.red.opacity(0.1))
+                        .background(SymairaTokens.critical.opacity(0.1))
                         .cornerRadius(6)
                         .padding(.top, 4)
                 }
@@ -245,10 +245,10 @@ struct JobRow: View {
         switch job.status.lowercased() {
         case "completed", "success":
             return Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundColor(SymairaTokens.positive)
         case "failed":
             return Image(systemName: "xmark.circle.fill")
-                .foregroundColor(.red)
+                .foregroundColor(SymairaTokens.critical)
         case "running":
             return Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
                 .foregroundColor(SymairaTheme.goldPrimary)

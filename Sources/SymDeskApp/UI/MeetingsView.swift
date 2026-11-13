@@ -81,7 +81,7 @@ struct MeetingsView: View {
             if let importError = model.importError {
                 Text(importError)
                     .symairaText(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(SymairaTokens.critical)
                     .padding(8)
             }
         }
@@ -103,7 +103,7 @@ struct MeetingsView: View {
                 if case .failed(let message) = model.libraryState {
                     Text(message)
                         .symairaText(.caption)
-                        .foregroundColor(.red)
+                        .foregroundColor(SymairaTokens.critical)
                 }
             }
             Spacer()
@@ -141,7 +141,7 @@ struct MeetingsView: View {
             if let installURL = recordingInstallURL {
                 Button("Install SymMeet") { openURL(installURL) }
             }
-            Button("OK", role: .cancel) {}
+            Button("Close", role: .cancel) {}
         } message: {
             Text(recordingInfoMessage)
         }
@@ -186,7 +186,7 @@ struct MeetingsView: View {
             Label("Could not read \(fileName(for: failure.path))", systemImage: "exclamationmark.triangle.fill")
                 .symairaText(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.red)
+                .foregroundColor(SymairaTokens.critical)
             Text(failure.path)
                 .symairaText(.caption)
                 .monospaced()
@@ -208,10 +208,10 @@ struct MeetingsView: View {
             }
         }
         .padding(8)
-        .background(Color.red.opacity(0.08))
+        .background(SymairaTokens.critical.opacity(0.08))
         .overlay {
             RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+                .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Meeting file could not be read: \(failure.path)")
@@ -266,6 +266,7 @@ struct MeetingsView: View {
             Spacer()
             if model.isImporting {
                 ProgressView().controlSize(.small)
+                    .accessibilityLabel("Loading meetings…")
             } else {
                 Button("Import") {
                     Task { await model.importMeeting(meetingID: meeting.meetingID) }

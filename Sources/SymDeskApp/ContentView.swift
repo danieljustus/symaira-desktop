@@ -161,7 +161,7 @@ struct ContentView: View {
                             if let blErr = model.backlinksError {
                                 HStack(spacing: 6) {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
+                                        .foregroundStyle(SymairaTokens.warning)
                                         .symairaText(.caption)
                                     Text(blErr)
                                         .symairaText(.caption)

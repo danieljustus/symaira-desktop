@@ -59,7 +59,7 @@ struct ModelsView: View {
             get: { pendingError != nil },
             set: { if !$0 { pendingError = nil } }
         )) {
-            Button("OK", role: .cancel) {}
+            Button("Close", role: .cancel) {}
         } message: {
             Text(pendingError ?? "")
         }
@@ -131,7 +131,7 @@ struct ModelsView: View {
             if case .failed(let message) = state {
                 Text(message)
                     .symairaText(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(SymairaTokens.critical)
             }
         }
         .padding(14)

@@ -80,18 +80,19 @@ struct CommandPalette: View {
 
             if isSearching {
                 ProgressView()
+                    .accessibilityLabel("Searching…")
                     .tint(SymairaTheme.goldPrimary)
                     .padding()
             }
             
             if let err = errorMessage {
-                Text(err).foregroundColor(.red).padding()
+                Text(err).foregroundColor(SymairaTokens.critical).padding()
             }
 
             if let retrievalWarning {
                 Label(retrievalWarning, systemImage: "exclamationmark.triangle")
                     .symairaText(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(SymairaTokens.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
                     .padding(.bottom, 8)

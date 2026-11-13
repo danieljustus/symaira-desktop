@@ -121,6 +121,7 @@ struct ChatTranscriptView: View {
                     if isThinking {
                         HStack {
                             ProgressView()
+                                .accessibilityLabel("Waiting for the response…")
                                 .tint(SymairaTheme.goldPrimary)
                                 .padding()
                             Spacer()
@@ -237,7 +238,7 @@ struct ChatTranscriptView: View {
                             .foregroundColor(SymairaTheme.textSecondary)
                         if let inputs, !inputs.isEmpty, inputs != "{}" {
                             Text(inputs)
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(SymairaTypography.monoSmall)
                                 .foregroundColor(SymairaTheme.textMuted)
                                 .lineLimit(2)
                                 .truncationMode(.middle)
@@ -258,14 +259,14 @@ struct ChatTranscriptView: View {
                             .foregroundColor(SymairaTheme.textSecondary)
                         if let output {
                             Text(output)
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(SymairaTypography.monoSmall)
                                 .foregroundColor(SymairaTheme.textMuted)
                                 .lineLimit(3)
                                 .truncationMode(.tail)
                             if truncated == true {
                                 Text("(output truncated for the model)")
                                     .symairaText(.caption)
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(SymairaTokens.warning)
                             }
                         }
                     }
@@ -288,6 +289,7 @@ struct ChatTranscriptView: View {
                 HStack(spacing: 6) {
                     if status == "running" {
                         ProgressView()
+                            .accessibilityLabel("Waiting for the response…")
                             .controlSize(.small)
                             .tint(SymairaTheme.goldPrimary)
                     } else if status == "done" {
@@ -297,7 +299,7 @@ struct ChatTranscriptView: View {
                     } else if status == "error" {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .symairaText(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundColor(SymairaTokens.warning)
                     }
                     Text("\(toolName): \(status)")
                         .symairaText(.caption)

@@ -4,23 +4,28 @@
 
 [PB-2026-09-09](docs/product-boundaries.md) keeps Desktop the document/knowledge-work product, usable without Brain. Brain owns optional Browse/Operate and the future credential-management UI; Desktop does not absorb them or become a generic launcher. Preserve direct optional web-worker/credential-service access without requiring Brain memory or a gateway profile. Documents remain authoritative here; only explicit provenance-bearing context is promoted to Brain. Existing runtime contracts remain until verified migrations.
 
-Local-first, self-hostable, agent-native workspace over a single plain-Markdown vault. `symdesk` (Go core) runs as CLI, stdio MCP server, authenticated self-hosted HTTP document API, or distributed OCR worker. Native SwiftUI apps for macOS (`SymDeskApp`) and iOS (`SymDeskMobile`) open a local/iCloud vault directly or connect to the self-hosted server.
+Local-first, self-hostable, agent-native workspace over a single plain-Markdown vault. `symdesk` (Rust core) runs as CLI, stdio MCP server, authenticated self-hosted HTTP document API, or distributed OCR worker. Native SwiftUI apps for macOS (`SymDeskApp`) and iOS (`SymDeskMobile`) open a local/iCloud vault directly or connect to the self-hosted server.
 
-Identity: **Markdown-vault workspace product, and the human shell of the ecosystem.** The separate hub app thesis was abandoned and `symaira-hub` archived on 2026-08-22 (`docs/repo-konsolidierung.md` §7 in the workspace); this is where a person works, while agents talk to the MCP servers directly. A **server-rendered browser UI** (Go templates + vanilla JS, embedded in the `symdesk` binary) is accepted in principle; see `docs/BROWSER-ACCESS.md`. The HTTP API also serves JSON for native and machine clients.
+Identity: **Markdown-vault workspace product, and the human shell of the ecosystem.** The separate hub app thesis was abandoned and `symaira-hub` archived on 2026-08-22 (`docs/repo-konsolidierung.md` §7 in the workspace); this is where a person works, while agents talk to the MCP servers directly. A **server-rendered browser UI** (server-side templates + vanilla JS, embedded in the `symdesk` binary) is accepted in principle; see `docs/BROWSER-ACCESS.md`. The HTTP API also serves JSON for native and machine clients.
 
 ## Commands
 
 ```bash
-# Go core (CLI/MCP/API/worker)
-make build              # → bin/symdesk (go build ./cmd/symdesk)
-make test               # CGO_ENABLED=0 go test -race ./...
-make lint               # gofmt + go vet + corekit-guard + boundary-guard + nested-version-guard
+# Rust core (CLI/MCP/API/worker) — no Go toolchain anywhere (RUST-019)
+make build              # → bin/symdesk, bin/symroom (cargo build --release --locked)
+make test               # cargo nextest + doc tests for the whole workspace
+make lint               # cargo fmt --check, clippy -D warnings, release-signing contract
+make rust-gates         # check, lint, test, features, coverage, audit/deny, unsafe inventory, version contract
+make port-contract      # Go-free: fixture checksums + frozen replay of every Go-recorded fixture
+make port-contract-frozen  # the frozen replay alone, with `go` removed from PATH
+make release-contract   # Rust release archive + container smoke contract inputs
 make docker-build       # self-host container
 
-# The nested Go modules were dissolved into the root module (issues #537–
-#540 and #541): root `go test ./...` now covers everything. Only the Swift
-# Project Journal UI remains as `room/client/` (embedded in the app, not
-# part of the Go module).
+# Frozen Go-recorded fixtures: never edit or regenerate by hand (the Go generators are gone).
+python3 scripts/rust-port/provenance_check.py [--history]   # --history needs full git history
+
+# Local gate (macOS native / Linux arm64 container)
+scripts/rust-port/local-gate.sh macos|linux|all [make-target ...]
 
 # macOS app (XcodeGen required: brew install xcodegen)
 xcodegen generate
@@ -28,79 +33,66 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 # iOS app: open SymDesk.xcodeproj in Xcode, target SymDeskMobile (iOS 18+)
 
-# Release: GoReleaser → Linux amd64/arm64 + macOS arm64 + Homebrew formula. Windows and macOS Intel are no longer required (platform scope decision 2026-10-29, #1364).
+# Release: scripts/release/build.sh → Linux amd64/arm64 (musl) + macOS arm64 archives (.github/workflows/release.yml). Windows and macOS Intel are no longer required (platform scope decision 2026-10-29, #1364).
 ```
 
-Entry point: `cmd/symdesk/main.go`. `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
+Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (`symroom`). `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
+
+**Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `36aad3d4`, kept on GitHub as branch `oracle-pins/last-go-36aad3d4` (`git show 36aad3d4:cmd/symdesk/main.go`). The last Go release tag is `v0.12.2` (`29520267b84a2293ba20501002cf4deb7f1c93b0`), an ancestor of `36aad3d4`. The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
 
 ## Structure
 
 ```
-cmd/symdesk/     # Go CLI entry + all commands (main.go, commands.go, selfhost.go, ...)
-internal/        # Go packages (see also the nested modules below):
-  mcp/           #   stdio MCP server (server.go, handlers, tools)
-  selfhost/      #   HTTP API server + OCR worker logic (incl. share.go expiring links)
-  service/       #   core service layer (vault svc, meetings, views, relations, templates)
-  vault/         #   vault contract — Markdown files are the SSOT
-  sidecar/       #   SQLite/FTS5 sidecar index (//go:embed migrations) — derived, rebuildable
-  ingest/        #   OCR ingest pipeline (Tesseract / Ollama)
-  pdf/           #   in-process wrapper around print/api
-  retrieval/     #   in-process wrapper around seek/api
-  contacts/      #   in-process wrapper around relate/api
-  testsupport/   #   TestMain isolation for the $HOME-backed stores
-  mail/          #   IMAP mail ingestion
-  permissions/   #   users, groups and document-level permissions (self-hosted server)
-  retention/     #   automatic retention rules
-  paperless/     #   Paperless-ngx export importer
-  templatepath/  #   storage-path templating
-  archive/       #   PDF/A archive generation
-  ai/ compose/ config/ dbviews/ demo/ export/ history/ recipes/ searchquery/ secrets/ simhash/ watcher/
-room/client/       # Swift Project Journal UI module, embedded in the SymDesk app target
-meet/            # nested Swift package, embedded in the SymDesk app target
+crates/                 # Rust workspace (see Cargo.toml)
+  symdesk-cli/          #   `symdesk` binary: CLI, stdio MCP server, HTTP API, OCR worker
+  symroom-cli/          #   `symroom` binary (signed project journal)
+  symdesk-core/         #   config, paths, shared contracts
+  symdesk-vault/        #   vault contract — Markdown files are the SSOT; history, retention, permissions
+  symdesk-index/        #   SQLite/FTS5 sidecar + hybrid retrieval (migrations/) — derived, rebuildable
+  symdesk-ingest/       #   OCR/ingest pipeline, mail, Paperless/Notion import (migrations/)
+  symdesk-render/       #   Markdown → PDF, SymDraw, archive, PDF ops (assets/ fonts, Typst templates)
+  symdesk-contacts/     #   contact references (migrations/)
+  symdesk-service/ symdesk-protocol/ symdesk-storage/   # service layer, protocol types, self-host storage (incl. PostgreSQL)
+  symroom-core/         #   room journal, identity, events
+  test-support/         #   shared test helpers
+fuzz/                   # cargo-fuzz targets
+testdata/port/          # Go-recorded, byte-frozen fixtures (+ provenance.json)
+scripts/rust-port/      # frozen-contract runner, provenance check, replay harnesses, local gate
+scripts/release/        # Rust release packaging
+room/client/            # Swift Project Journal UI module, embedded in the SymDesk app target
+meet/                   # nested Swift package, embedded in the SymDesk app target
 Sources/
-  SymDeskCore/   # Swift shared library bridging the Go core (consumes symaira-corekit, exact-pinned)
+  SymDeskCore/   # Swift shared library bridging the core (consumes symaira-corekit, exact-pinned)
   SymDeskApp/    # macOS SwiftUI app
   SymDeskMobile/ # iOS SwiftUI app
 Tests/           # 3 Swift test targets (XCTest — needs Xcode toolchain)
-docs/            # ARCHITECTURE.md, PLAN.md, SELF_HOSTING.md
+docs/            # ARCHITECTURE.md, PLAN.md, SELF_HOSTING.md, rust-port/
 ```
 
-## Module Boundaries and Permitted Facades (issue #536)
+## Crate Boundaries (replaces the Go facade rules, issue #536)
 
-The absorbed tools live in this repository in the root module (the nested `go.mod` layout was dissolved in issues #537–541). `make lint` enforces the boundary and pin rules below via `scripts/check-module-boundaries.sh` and `scripts/check-corekit-pins.sh`.
+The absorbed tools (`print`, `seek`, `relate`, `ingest`, `room`) are Rust crates in this workspace and are linked in-process; the former Go facades (`internal/pdf`, `internal/retrieval`, `internal/contacts`, `internal/ingest`) map to `symdesk-render`, `symdesk-index`, `symdesk-contacts`, `symdesk-ingest`.
 
-1. **Permitted in-process facades in `symaira-desktop` (`internal/`):**
-   - `internal/pdf` wraps the former `print/api` (and `internal/testsupport`)
-   - `internal/retrieval` wraps the former `seek/api` (and `internal/testsupport`)
-   - `internal/contacts` wraps the former `relate/api` (and `internal/testsupport`)
-   - `internal/ingest` wraps the former `ingest/api`, used by `internal/mail`, `internal/selfhost`, `internal/testsupport`, plus `cmd/symdesk` migration/doctor commands
-   - `internal/room` + `cmd/symroom` → the former `room/` module, kept as a standalone `symroom` binary (decision recorded in issue #541); its `run/` and `version/` packages are root-module packages now
-   - `meet/` → standalone Swift menu-bar agent (not linked in Go core)
-
-2. **Boundary and replacement rules:**
-   - Packages in `symaira-desktop` must NEVER import absorbed tool internals (`.../internal/...`).
-   - Packages outside the permitted facades must NEVER import the former module internals directly; they must access functionality through the designated facade (e.g. use `internal/pdf` rather than its underlying packages).
-   - `symdesk` is the single unified binary and human shell of the ecosystem; `cmd/symroom` exists only because the Project Journal surface bridges a separate binary (see issue #541).
-   - Enforced automatically in `make lint` and CI via `scripts/check-module-boundaries.sh`.
-
-3. **Version alignment (issue #535):**
-   - All Go directives across the repository are aligned with root Go version (`1.26.6`), enforced by `scripts/check-corekit-pins.sh`.
-   - Enforced automatically in `make lint` and CI via `scripts/check-nested-versions.sh`.
+- Depend on a crate only through its public API; never reach into another crate's private modules or copy its assets. Assets belong to the owning crate (`crates/symdesk-render/assets`, `crates/*/migrations`).
+- `symdesk` is the single unified binary and human shell of the ecosystem; `symroom` exists only because the Project Journal surface bridges a separate binary (issue #541). `meet/` stays a standalone Swift menu-bar agent (not linked into the core).
+- Do not add compile-time dependencies on **separately released** Symaira tools — those are found at runtime with graceful fallback.
+- Enforced by the Cargo workspace layout, `cargo clippy -D warnings`, `cargo deny` and the unsafe inventory (`make rust-gates`).
 
 ## Conventions (repo-specific)
 
-- **Markdown is the SSOT.** The SQLite sidecar (`internal/sidecar`) is a derived FTS5 index — never treat it as authoritative; it must stay rebuildable from the vault.
-- **CGO-free Go core** (`CGO_ENABLED=0` in test/release paths) — cross-compilation + GoReleaser depend on it.
+- **Markdown is the SSOT.** The SQLite sidecar (`crates/symdesk-index`) is a derived FTS5 index — never treat it as authoritative; it must stay rebuildable from the vault.
+- **Pure-Rust core** with locked dependencies (`--locked`), static musl Linux release binaries; `deny(unsafe_code)` is the default (inventory in `scripts/rust-port/unsafe-allowlist.json`).
 - **Zero stdio pollution** in `symdesk mcp` — stdout carries JSON-RPC frames only; logs to stderr.
-- **Swift apps consume `symaira-corekit` exact-pinned** — do not reintroduce app-local Theme/Process-runner code; extend the AppKit modules in `symaira-corekit/appkit` (workspace rule, applies here too).
-- **GUI work follows the Symaira Interface Guidelines** in `symaira-corekit/appkit`: read `GUIDELINES.md`, then `DESIGN.md` and `docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-corekit>/appkit/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
+- **Swift apps consume `symaira-corekit` exact-pinned**: do not reintroduce app-local Theme/Process-runner code; extend the AppKit modules in `symaira-corekit/swift` (workspace rule, applies here too).
+- **GUI work follows the Symaira Interface Guidelines** in `symaira-corekit/swift`: read `swift/GUIDELINES.md`, then `swift/DESIGN.md` and `swift/docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-corekit>/swift/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
 - **XcodeGen**: `SymDesk.xcodeproj` is generated from `project.yml` — edit `project.yml`, never the `.xcodeproj`.
+- **Frozen fixtures:** `testdata/port/**` is Go-recorded and byte-identical; do not normalize, hand-edit or regenerate it. `make port-contract` fails on any drift.
 - **Self-host API is authenticated** — see `docs/SELF_HOSTING.md`; do not add unauthenticated endpoints.
-- CI: `.github/workflows/{ci,codeql,container,release}.yml`.
+- CI: `.github/workflows/{ci,codeql,container,macos-routing-check,macos-runner,release}.yml` (Rust + Swift only; no `setup-go`).
 
 ## Anti-Patterns (this repo)
 
-- Do NOT add a separate SPA / TS / React frontend with its own build toolchain — the decided browser path is server-rendered HTML embedded in the Go binary (`docs/BROWSER-ACCESS.md`).
+- Do NOT add a separate SPA / TS / React frontend with its own build toolchain — the decided browser path is server-rendered HTML embedded in the Rust binary (`docs/BROWSER-ACCESS.md`).
 - Do NOT rebuild a generic tool launcher here. Being the human shell means owning the vault workspace, not proxying every CLI: a tool that is not part of this product stays bound to the harness by the user.
-- Do NOT add compile-time imports of **separately released** Symaira tools — those are found at runtime with graceful fallback (`internal/compose`). The absorbed nested modules are the opposite case: `seek/`, `print/`, `relate/` and `ingest/` are linked directly through their `api/` packages via their permitted facades (`internal/retrieval`, `internal/pdf`, `internal/contacts`, `internal/ingest`), never probed on `PATH`. Do NOT bypass the facades or import absorbed module internals.
+- Do NOT add compile-time dependencies on **separately released** Symaira tools — those are found at runtime with graceful fallback. The absorbed tools are the opposite case: retrieval, PDF, contacts and ingest are linked directly as the crates `symdesk-index`, `symdesk-render`, `symdesk-contacts` and `symdesk-ingest`, never probed on `PATH`. Do NOT bypass their public APIs.
 - Do NOT write vault state only to SQLite — Markdown files first, sidecar follows.

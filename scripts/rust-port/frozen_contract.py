@@ -6,7 +6,9 @@ through `$(CARGO) test` or compares two live binaries. This runner executes each
 distinct Rust replay with every `go` executable removed from PATH, inside a
 disposable HOME/XDG/TMP root, and requires the exact recorded test counts from
 `frozen-contract.json`. Targets without a Rust replay must be declared
-`live_only`; a new differential target that is neither fails closed.
+`live_only`, or `retired` with a reason when the live Go comparison was removed
+for good (the Makefile must then no longer define the target); a new
+differential target that is none of these fails closed.
 """
 import argparse
 import json
@@ -28,8 +30,13 @@ GO_NAMES = ("go", "go.exe")
 
 
 def differential_targets(makefile):
-    """Map each `*-differential` target to its `$(CARGO) test` commands."""
-    targets, current = {}, None
+    """Map each `*-differential` target to its `$(CARGO) test` commands.
+
+    A pure aggregate (prerequisites, no recipe line at all) maps to `None`: it
+    runs nothing itself, and every prerequisite is a target of its own that is
+    classified on its own.
+    """
+    targets, current, aggregate = {}, None, set()
     for line in makefile.splitlines():
         match = TARGET.match(line)
         if match:
@@ -37,7 +44,10 @@ def differential_targets(makefile):
             if current in targets:
                 raise ValueError(f"duplicate Make target {current}")
             targets[current] = []
+            if line[match.end():].split("#")[0].strip():
+                aggregate.add(current)
         elif line.startswith("\t") and current:
+            aggregate.discard(current)
             command = line.strip()
             if command.startswith("$(CARGO) test"):
                 command = command.replace("$(CARGO)", "cargo", 1)
@@ -46,15 +56,56 @@ def differential_targets(makefile):
                 targets[current].append(command)
         elif line and not line.startswith("\t"):
             current = None
+    for name in aggregate:
+        if not targets[name]:
+            targets[name] = None
     return targets
+
+
+def differential_prebuilds(makefile):
+    """Ordered unique `$(CARGO) build` lines of the `*-differential` targets.
+
+    Some replays need artefacts that only a preceding build line of their
+    target produces (the pdfops probes in target/<profile>/examples). Replaying
+    only the test lines passed on a warm target directory and failed on a fresh
+    one, so the runner builds these first.
+    """
+    builds, current = [], None
+    for line in makefile.splitlines():
+        match = TARGET.match(line)
+        if match:
+            current = match.group(1)
+        elif line.startswith("\t") and current:
+            command = line.strip()
+            if command.startswith("$(CARGO) build"):
+                command = command.replace("$(CARGO)", "cargo", 1)
+                if "$" in command:
+                    raise ValueError(f"{current}: unexpanded variable in {command!r}")
+                if command not in builds:
+                    builds.append(command)
+        elif line and not line.startswith("\t"):
+            current = None
+    return builds
 
 
 def plan(targets, manifest):
     """Return ordered unique replay commands; reject unclassified targets."""
     live_only = manifest["live_only"]
     replays = manifest["replays"]
+    retired = manifest.get("retired", {})
     errors, commands = [], []
+    for name, reason in retired.items():
+        if not str(reason).strip():
+            errors.append(f"{name}: retired without a reason")
+        if name in targets:
+            errors.append(f"{name}: is retired but still defined in the Makefile")
+        if name in live_only:
+            errors.append(f"{name}: is both retired and live_only")
     for name, cargo in targets.items():
+        if cargo is None:
+            if name in live_only:
+                errors.append(f"{name}: is a pure aggregate but is declared live_only")
+            continue
         if cargo and name in live_only:
             errors.append(f"{name}: has a Rust replay but is declared live_only")
         elif not cargo and name not in live_only:
@@ -112,8 +163,29 @@ def go_free_env(root):
     home = Path.home()
     env.setdefault("CARGO_HOME", str(home / ".cargo"))
     env.setdefault("RUSTUP_HOME", str(home / ".rustup"))
-    keep = [entry for entry in env.get("PATH", "").split(os.pathsep)
-            if entry and not any(Path(entry, name).is_file() for name in GO_NAMES)]
+    keep = []
+    for number, entry in enumerate(env.get("PATH", "").split(os.pathsep)):
+        if not entry:
+            continue
+        if not any(Path(entry, name).is_file() for name in GO_NAMES):
+            keep.append(entry)
+            continue
+        # A shared bin directory (Homebrew, /usr/local/bin) also holds python3, qpdf, pdftoppm
+        # that the render replays need: shadow it without the Go executables instead of
+        # dropping every tool next to them.
+        shadow = Path(root, "path", str(number))
+        shadow.mkdir(parents=True, exist_ok=True)
+        try:
+            names = sorted(os.listdir(entry))
+        except OSError:
+            continue
+        for name in names:
+            if name in GO_NAMES or name in ("gofmt", "gofmt.exe"):
+                continue
+            link = shadow / name
+            if not link.exists() and not link.is_symlink():
+                link.symlink_to(Path(entry, name))
+        keep.append(str(shadow))
     env["PATH"] = os.pathsep.join(keep)
     for name in ("GOROOT", "GOPATH", "GOTOOLCHAIN", "GOFLAGS", "GOWORK", "GOENV"):
         env.pop(name, None)
@@ -161,6 +233,17 @@ def expected_counts(entry):
     return counts["passed"], counts["ignored"]
 
 
+PROGRESS_ENV = "SYMDESK_FROZEN_PROGRESS"
+
+
+def recorded_counts(entry):
+    """(passed, ignored) recorded for this platform, or None."""
+    if "by_platform" in entry:
+        counts = entry["by_platform"].get(sys.platform)
+        return None if counts is None else (counts["passed"], counts["ignored"])
+    return (entry["passed"], entry["ignored"]) if "passed" in entry and "ignored" in entry else None
+
+
 def record_counts(entry, got):
     if "by_platform" in entry:
         entry["by_platform"][sys.platform] = {"passed": got["passed"], "ignored": got["ignored"]}
@@ -188,7 +271,13 @@ def replay(command, entry, env, *, verify_counts=True):
     argv = shlex.split(command)
     if skips:
         argv += ["--"] + [arg for skip in skips for arg in ("--skip", skip)]
-    run = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True)
+    # `retries` is declared only for replays that depend on live OS file-event delivery
+    # (FSEvents/inotify), which a saturated host drops; every other replay runs exactly once.
+    for attempt in range(entry.get("retries", 0) + 1):
+        run = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True)
+        if run.returncode == 0:
+            break
+        print(f"retry {attempt + 1}: {command}: exit {run.returncode}", file=sys.stderr, flush=True)
     if run.returncode:
         raise RuntimeError(f"{command}: exit {run.returncode}\n{cargo_diagnostics(run)}")
     try:
@@ -209,16 +298,25 @@ def mutate(raw, control):
     if "append" in control:
         return raw + control["append"].encode()
     document = json.loads(raw)
-    *parents, leaf = control["increment"]
+    path = control.get("increment") or control["append_string"]
+    *parents, leaf = path
     node = document
     for key in parents:
         node = node[key]
-    node[leaf] += 1
+    if "increment" in control:
+        node[leaf] += 1
+    else:
+        if not isinstance(node[leaf], str):
+            raise ValueError(f"append_string needs a string leaf: {path}")
+        node[leaf] += "~"
     return json.dumps(document, indent=2).encode() + b"\n"
 
 
 def mutation_control(control, env):
     """A frozen replay must fail once its Go-recorded fixture is mutated."""
+    if "platforms" in control and sys.platform not in control["platforms"]:
+        print(f"skip mutation (recorded for {control['platforms']}, host {sys.platform})  {control['fixture']}", flush=True)
+        return 1
     fixture = ROOT / control["fixture"]
     dirty = subprocess.run(["git", "status", "--porcelain", "--", control["fixture"]], cwd=ROOT,
                            capture_output=True, text=True, check=True).stdout
@@ -235,11 +333,16 @@ def mutation_control(control, env):
     if "test result: FAILED" not in run.stdout:
         raise RuntimeError(f"mutation control failed before any test ran: {control['command']}\n{run.stderr[-4000:]}")
     print(f"ok mutation rejected  {control['fixture']} -> {control['command']}", flush=True)
+    return 0
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--record", action="store_true", help="rewrite recorded counts from this Go-free run")
+    parser.add_argument("--record", action="store_true",
+                        help="make the recorded counts equal to what this Go-free run observes on this platform; "
+                             "every changed or new count is printed (old -> new) for review, unchanged ones are kept; "
+                             "the manifest is saved after every replay, and with $SYMDESK_FROZEN_PROGRESS=FILE a "
+                             "rerun after a failure skips the replays already finished in this campaign")
     parser.add_argument("--plan", action="store_true", help="validate classification only; run nothing")
     args = parser.parse_args(argv)
 
@@ -259,24 +362,42 @@ def main(argv=None):
     total = live_total = 0
     with tempfile.TemporaryDirectory(prefix="symdesk-frozen-contract-", dir=replay_parent()) as root:
         env = go_free_env(root)
+        progress = Path(os.environ[PROGRESS_ENV]) if os.environ.get(PROGRESS_ENV) else None
+        finished = set(progress.read_text().splitlines()) if progress and progress.exists() else set()
+        for build in differential_prebuilds((ROOT / "Makefile").read_text()):
+            run = subprocess.run(shlex.split(build), cwd=ROOT, env=env, capture_output=True, text=True)
+            if run.returncode != 0:
+                print(f"FAIL prebuild {build}: exit {run.returncode}\n{run.stderr[-4000:]}", file=sys.stderr)
+                return 1
+            print(f"ok prebuild  {build}", flush=True)
         for command in commands:
             entry = manifest["replays"][command]
+            if args.record and command in finished:
+                print(f"skip (finished earlier in this record campaign)  {command}", flush=True)
+                continue
             try:
                 got, skipped = replay(command, entry, env, verify_counts=not args.record)
             except RuntimeError as error:
                 print(f"FAIL {error}", file=sys.stderr)
                 return 1
             if args.record:
+                before = recorded_counts(entry)
                 record_counts(entry, got)
+                if before != (got["passed"], got["ignored"]):
+                    print(f"recorded {before} -> {(got['passed'], got['ignored'])}  {command}", flush=True)
+                MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+                if progress:
+                    with progress.open("a") as stream:
+                        stream.write(command + "\n")
             total += got["passed"]
             live_total += got["passed"] + skipped
             print(f"ok {got['passed']:>5} (+{skipped} live-only)  {command}", flush=True)
-        for control in manifest["mutation_controls"]:
-            mutation_control(control, env)
+        skipped = sum(mutation_control(control, env) for control in manifest["mutation_controls"])
     if args.record:
         MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"PASS frozen contract: {len(commands)} replays, {total} cases without Go "
-          f"({live_total} in live mode), {len(manifest['live_only'])} live-only targets, {len(manifest['mutation_controls'])} mutation controls rejected")
+          f"({live_total} in live mode), {len(manifest['live_only'])} live-only targets, "
+          f"{len(manifest['mutation_controls']) - skipped} mutation controls rejected ({skipped} other-platform skipped)")
     return 0
 
 

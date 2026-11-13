@@ -80,6 +80,17 @@ public struct LocalDeskTransport: DeskTransport {
             let process = Process()
             process.executableURL = tool.location.url
             process.arguments = arguments
+            // `Process.waitUntilExit()` spins the calling thread's run loop and
+            // can stall forever on a Swift-concurrency pool thread after the
+            // child has already exited and closed stdout (observed as a hung
+            // `ask`/`transform` stream under load). A termination handler
+            // registered before `run()` is buffered, so awaiting it cannot
+            // miss an exit that happens first.
+            let terminated = AsyncStream<Void>.makeStream()
+            process.terminationHandler = { _ in
+                terminated.continuation.yield()
+                terminated.continuation.finish()
+            }
 
             let task = Task {
                 do {
@@ -102,7 +113,7 @@ public struct LocalDeskTransport: DeskTransport {
                         try Task.checkCancellation()
                         continuation.yield(line)
                     }
-                    process.waitUntilExit()
+                    for await _ in terminated.stream { break }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

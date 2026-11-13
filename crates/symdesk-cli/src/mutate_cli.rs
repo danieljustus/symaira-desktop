@@ -236,12 +236,12 @@ fn execute(
     }
     result
 }
-fn parse(path: &Path) -> Result<symdesk_vault::Document, String> {
+pub(crate) fn parse(path: &Path) -> Result<symdesk_vault::Document, String> {
     let bytes = symdesk_vault::go_read(path)
         .map_err(|(op, e)| symdesk_vault::go_path_error(op, path, &e))?;
     parse_bytes(&path.to_string_lossy(), &bytes).map_err(|e| e.to_string())
 }
-fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, String> {
+pub(crate) fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, String> {
     let mut doc = parse(path)?;
     doc.path = symdesk_index::document_storage_key(path)
         .map_err(|e| e.to_string())?
@@ -258,7 +258,7 @@ fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, Str
     db.index_document(&indexed).map_err(|e| e.to_string())?;
     Ok(doc)
 }
-fn snapshot(root: &Path, path: &Path) {
+pub(crate) fn snapshot(root: &Path, path: &Path) {
     if let Ok(root) = fs::canonicalize(root)
         && let Ok(rel) = path.strip_prefix(&root)
     {
@@ -333,6 +333,32 @@ fn mutate(
     }
     Ok(())
 }
+/// Go `Service.NoteDelete`: move the note to the vault trash, drop it from the
+/// sidecar and record the activity.
+pub(crate) fn delete_note(
+    root: &Path,
+    db: &mut Sidecar,
+    file: &str,
+) -> Result<symdesk_vault::TrashEntry, String> {
+    let path = secure_path(root, file).map_err(|e| e.to_string())?;
+    let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
+    let rel = path
+        .strip_prefix(&canonical_root)
+        .map_err(|e| e.to_string())?
+        .to_string_lossy();
+    let entry = HistoryStore::new(root).trash(&rel).map_err(|e| match e {
+        // Go returns the os.Root `statat <path>: <reason>` error as is.
+        symdesk_vault::HistoryError::Io(io) if io.to_string().starts_with("statat ") => {
+            io.to_string()
+        }
+        other => other.to_string(),
+    })?;
+    let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
+    db.delete_document(&key.to_string_lossy())
+        .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
+    let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
+    Ok(entry)
+}
 fn note_execute(
     root: &Path,
     db: &mut Sidecar,
@@ -351,19 +377,7 @@ fn note_execute(
             Ok(json!({"from":a[0],"status":"moved","to":a[1]}))
         }
         "delete" => {
-            let path = secure_path(root, &a[0]).map_err(|e| e.to_string())?;
-            let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
-            let rel = path
-                .strip_prefix(&canonical_root)
-                .map_err(|e| e.to_string())?
-                .to_string_lossy();
-            let entry = HistoryStore::new(root)
-                .trash(&rel)
-                .map_err(|e| e.to_string())?;
-            let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
-            db.delete_document(&key.to_string_lossy())
-                .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
-            let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
+            let entry = delete_note(root, db, &a[0])?;
             Ok(json!({"file":entry.original_path,"status":"trashed","trash_name":entry.name}))
         }
         "daily" => {
@@ -402,7 +416,7 @@ fn note_execute(
         _ => Ok(json!(null)),
     }
 }
-fn new_note(
+pub(crate) fn new_note(
     root: &Path,
     db: &mut Sidecar,
     title: &str,
@@ -444,7 +458,12 @@ fn new_note(
         body.push_str(content);
     }
     snapshot(root, &path);
-    fs::write(&path, &body).map_err(|e| format!("failed to write file: {e}"))?;
+    fs::write(&path, &body).map_err(|e| {
+        format!(
+            "failed to write file: {}",
+            symdesk_vault::go_path_error("open", &path, &e)
+        )
+    })?;
     if front {
         let _ = set_frontmatter_key(&path, "title", title);
         let _ = set_frontmatter_key(&path, "created", &created);

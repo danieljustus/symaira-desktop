@@ -6,7 +6,7 @@ vector graphic that lands in the vault as an asset and can be embedded in any
 document. Like SymPrint it is a library inside `symdesk`, reachable from the
 CLI, the MCP server, the self-hosted API and both native apps.
 
-Status: in implementation. Core deterministic diagram renderer pipeline (Stage A) implemented in internal/draw.
+Status: in implementation. Core deterministic diagram renderer pipeline (Stage A) implemented in `crates/symdesk-render/src/draw` (ported from the retired Go `internal/draw`).
 
 ## 1. Why SymDraw
 
@@ -25,8 +25,8 @@ has to the Markdown files.
 
 These come from the repository and are not negotiable for this component:
 
-- **CGO-free.** `CGO_ENABLED=0` holds in test and release paths; GoReleaser
-  cross-compilation depends on it.
+- **No C toolchain.** Release archives are static musl builds on Linux
+  (`scripts/release/build.sh`); cross-compilation depends on it.
 - **Fully offline.** No headless browser, no Node runtime, no network at
   render time.
 - **Markdown is the SSOT.** The rendered graphic must never be the only place
@@ -53,7 +53,7 @@ and rejected as the primary path:
 
 D2 fails three of the constraints in combination: **PNG and PDF export require
 Playwright**, i.e. a downloaded headless browser, so raster output would not be
-offline; its `go.mod` requires a newer Go directive than the root module; and
+offline; its `go.mod` required a newer Go directive than the then-current Go root module; and
 its styling model cannot be reconciled with SymairaTheme and the SymPrint
 profiles without fighting it. The mermaid ports are too immature to carry a
 production feature.
@@ -67,11 +67,11 @@ browser-free diagram rendering is text measurement — node sizes and therefore
 the entire layout depend on knowing the exact width of a label. Two facts make
 this cheap here:
 
-- `golang.org/x/image` is already a direct dependency and provides
-  `font/sfnt` (glyph advances *and* outlines) and `vector` (a pure-Go
-  antialiasing rasterizer).
+- The Rust renderer carries its own TrueType reader (`sfnt.rs`, `sfnt_outline.rs`:
+  glyph advances *and* outlines) and antialiasing rasterizer (`png.rs`), ported
+  from `golang.org/x/image` `font/sfnt` and `vector`.
 - SymPrint already embeds `Inter-Regular.ttf` and `Inter-Bold.ttf` in
-  `print/internal/assets/fonts/` and passes typst `--font-path` plus
+  `crates/symdesk-render/assets/fonts/` and passes typst `--font-path` plus
   `--ignore-system-fonts` specifically to make output machine-independent.
 
 A spike against those exact font files confirms the approach:
@@ -247,8 +247,8 @@ fact:
 | Chart | nice-number ticks, scales, marks | ~400 LOC | bar, line, pie, scatter |
 | Force-directed | Fruchterman-Reingold, seeded | ~200 LOC | vault graph |
 
-Total realistic size including tests is 6000-8000 lines of production Go —
-comparable to `internal/service`. This is a project, not a weekend build, and
+Total realistic size including tests is 6000-8000 lines of production code,
+comparable to `crates/symdesk-service`. This is a project, not a weekend build, and
 the staging in §13 reflects that.
 
 ## 9. Surfaces
@@ -271,7 +271,7 @@ tool schemas.
 ## 10. Theming
 
 Diagram colours are document colours, not UI chrome, so Go is the SSOT for
-them. The palette mirrors `SymairaTheme` in `symaira-appkit`, which today
+them. The palette mirrors `SymairaTheme` in `symaira-corekit` (`swift/`), which today
 exists only as Swift hex constants. A test pins the hex values so drift becomes
 visible; generating twelve colours through a codegen pipeline would cost more
 than it saves.
@@ -313,17 +313,17 @@ path. All three are independent defects worth fixing regardless of SymDraw:
    every `![alt](path.png)` a hard error — *"image reference cannot be
    resolved: the input has no source directory"*. Any note with a local image
    currently fails PDF export.
-2. **The Go core cannot write vault assets.** Collision-safe naming,
+2. **The core cannot write vault assets.** Collision-safe naming,
    sanitising and atomic writes exist only in Swift
    (`Sources/SymDeskCore/VaultAssets.swift`). No MCP agent can place a binary
-   file in the vault today. The Swift side should consume the Go
+   file in the vault today. The Swift side should consume the core
    implementation afterwards rather than keep a second one.
 3. **Sidecar and health checks have no notion of derived artifacts** — no
    index exclusion, no stale/orphan reporting.
 
-SymDraw lives in `internal/draw/` in the root module, not as a nested module.
+SymDraw lives in `crates/symdesk-render/src/draw/` in the root workspace, not as a separate crate or module.
 The nested modules (`print/`, `seek/`, `relate/`, `room/`, `ingest/`) exist
-because those repositories were absorbed; their `go.mod` files state the intent
+because those repositories were absorbed; their former `go.mod` files stated the intent
 "so each stays independently buildable and testable". That intent is being
 re-examined separately. A new component should not add a sixth module graph to
 a repository that is consolidating.
@@ -376,7 +376,7 @@ prove itself on something cheap before the expensive layout work begins.
      output PDF. Text remains fully searchable, selectable, and accessible
      (with valid ToUnicode CMaps and screen-reader compatibility), yielding
      significantly smaller SVG asset sizes and crisp PDF vector text.
-   - *Path outlines* (`--text-as-paths` via `golang.org/x/image/font/sfnt`) remain
+   - *Path outlines* (`--text-as-paths` via the sfnt outline reader in `sfnt_outline.rs`) remain
      available as an optional export mode for external consumers (e.g. standalone
      web viewers or third-party tools that lack local Inter font installations),
      but are not required or recommended for the SymPrint Typst PDF pipeline.

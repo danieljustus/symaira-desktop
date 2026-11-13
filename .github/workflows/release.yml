@@ -19,21 +19,28 @@ permissions:
   contents: write
 
 jobs:
-  release-cli:
-    name: Signed CLI release
+  # Rust release binaries (DIST-001/002), replacing GoReleaser. Each target
+  # builds natively; Linux binaries are static musl like the CGO-free Go ones.
+  build-cli:
+    name: CLI ${{ matrix.os }}/${{ matrix.arch }}
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: macos-15
+    runs-on: ${{ matrix.runner }}
     environment: release
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { os: darwin, arch: arm64, runner: macos-15 }
+          - { os: linux, arch: amd64, runner: ubuntu-24.04 }
+          - { os: linux, arch: arm64, runner: ubuntu-24.04-arm }
     permissions:
-      contents: write
-      id-token: write # required for keyless Cosign signing via GitHub OIDC
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
 
       - name: Import Developer ID certificate
+        if: matrix.os == 'darwin'
         env:
           CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
@@ -64,10 +71,49 @@ jobs:
           echo "CODESIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
+
+      - name: Install musl toolchain
+        if: matrix.os == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends musl-tools
+
+      - name: Build, sign, package and verify
+        run: scripts/release/build.sh "${{ matrix.os }}" "${{ matrix.arch }}" "${GITHUB_REF_NAME#v}" dist
+
+      - name: Upload archive
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          go-version: '1.26.10'
+          name: cli-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+      - name: Clean up signing material
+        if: always() && matrix.os == 'darwin'
+        run: |
+          if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+
+  release-cli:
+    name: Signed CLI release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-cli
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+      id-token: write # required for keyless Cosign signing via GitHub OIDC
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Download archives
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: cli-*
+          path: dist
+          merge-multiple: true
 
       - name: Install Cosign
         # v2.4.3 supports the separate .sig/.pem outputs required by the
@@ -76,35 +122,48 @@ jobs:
         with:
           cosign-release: v2.4.3
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7
-        with:
-          distribution: goreleaser
-          version: '~> v2'
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
-
-      - name: Verify CLI reports the release version
+      - name: Verify archives, write checksums and sign
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          BINARY=$(find dist -type f -name symdesk -path "*darwin_arm64*" | head -1)
-          test -n "$BINARY"
-          OUTPUT=$("$BINARY" version)
-          echo "$OUTPUT"
-          if [ "$OUTPUT" != "symdesk ${VERSION}" ]; then
-            echo "::error::CLI version mismatch: expected 'symdesk ${VERSION}', got '$OUTPUT'."
-            exit 1
-          fi
+          test "$(find dist -maxdepth 1 -name "*.tar.gz" | wc -l)" -eq 3
+          python3 scripts/release/package.py verify --version "$VERSION" dist/*.tar.gz
+          python3 scripts/release/package.py checksums dist
+          for artifact in dist/*.tar.gz dist/checksums.txt; do
+            COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes \
+              --output-signature "$artifact.sig" --output-certificate "$artifact.pem" "$artifact"
+          done
 
-      - name: Clean up signing material
-        if: always()
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
-            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+          PRERELEASE=""
+          case "$TAG" in *-*) PRERELEASE="--prerelease" ;; esac
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag $PRERELEASE
           fi
+          gh release upload "$TAG" --clobber dist/*.tar.gz dist/*.tar.gz.sig dist/*.tar.gz.pem \
+            dist/checksums.txt dist/checksums.txt.sig dist/checksums.txt.pem
+
+      - name: Update Homebrew formula
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$HOMEBREW_TAP_GITHUB_TOKEN"
+          VERSION="${GITHUB_REF_NAME#v}"
+          git clone --depth 1 "https://x-access-token:${HOMEBREW_TAP_GITHUB_TOKEN}@github.com/danieljustus/homebrew-tap.git" tap
+          python3 scripts/release/package.py formula --version "$VERSION" --checksums dist/checksums.txt --out tap/Formula/symdesk.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/symdesk.rb
+          git diff --cached --quiet || git commit -m "symdesk ${VERSION}"
+          git push origin HEAD
 
   release-macos-app:
     name: Signed and notarized SymDesk app

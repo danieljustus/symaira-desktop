@@ -1,0 +1,46 @@
+# The SymRoom MCP process replay asserts Go's wall-clock windows (e.g. 600
+# concurrent waits must finish within [2900, 5000] ms). Under a fully parallel
+# workspace run the host is saturated and the window is missed, so this test
+# takes every test thread and runs alone.
+[[profile.default.overrides]]
+filter = 'binary(mcp_process) & test(=mcp_process_matches_go_for_cancellation_shutdown_and_concurrency)'
+threads-required = "num-test-threads"
+
+# Wall-clock bound on hostile Mermaid layouts; run alone for the same reason.
+[[profile.default.overrides]]
+filter = 'binary(draw_hostile_layout) & test(=wide_flowcharts_lay_out_quickly)'
+threads-required = "num-test-threads"
+
+# The cancellation replay signals live child processes and waits on stalled
+# loopback providers within wall-clock bounds; run it alone so a saturated host
+# cannot starve the provider threads.
+[[profile.default.overrides]]
+filter = 'binary(ask_cancel)'
+threads-required = "num-test-threads"
+
+# The version probe replay runs fake sibling tools under a one-second probe
+# timeout and asserts a [1 s, 3 s) window for the timed-out case; a saturated
+# workspace run starves the probe and reports "unknown". Run it alone.
+[[profile.default.overrides]]
+filter = 'binary(compose_probe)'
+threads-required = "num-test-threads"
+
+# The signal replay starts real processes, waits on wall-clock ceilings (slow
+# serve drains, polling workers, filesystem watchers) and measures "still
+# running after N ms"; a saturated host can starve it, so it runs alone.
+[[profile.default.overrides]]
+filter = 'binary(signals)'
+threads-required = "num-test-threads"
+
+# Filesystem-event and wall-clock replays whose outcome depends on how quickly
+# the host delivers FSEvents/inotify events and schedules child processes. On a
+# host shared with other builds (load average 50+ while several agents gate
+# worktrees in parallel) each of them was observed to miss its window in one run
+# and pass in the next, with no code change. A real defect fails every attempt (up to five),
+# so a bounded retry keeps them honest; nextest marks a pass-after-retry as
+# FLAKY in the log, which stays in the gate receipt. index_reembed_http joins
+# them because its loopback embedding provider runs under a 2 s client timeout.
+# Nothing else retries.
+[[profile.default.overrides]]
+filter = 'binary(signals) | binary(sources) | binary(watcher_contracts) | binary(compose_probe) | (binary(mcp) & test(=go_mcp_mutation_scenarios_match_journal_side_effects)) | (package(symdesk-index) & test(~external_source_watch)) | test(~native_snapshot_cache) | test(~native_watcher) | binary(index_reembed_http)'
+retries = 4

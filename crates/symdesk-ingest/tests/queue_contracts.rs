@@ -47,11 +47,7 @@ fn open(path: &Path, clock: Arc<Mutex<String>>) -> Store {
 }
 fn snapshot(c: &Connection, query: &str) -> Value {
     let mut stmt = c.prepare(query).unwrap();
-    let names = stmt
-        .column_names()
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
+    let names = stmt.column_names().map(str::to_owned).collect::<Vec<_>>();
     let rows = stmt
         .query_map([], |r| {
             let mut out = BTreeMap::new();
@@ -302,15 +298,79 @@ fn go_queue_state_machine() {
     );
     drop(store);
 }
+/// SHA-256 of the Go ingest-store migrations at the last Go commit (36aad3d4,
+/// tag v0.12.2); the Go tree is retired (RUST-019).
+const GO_MIGRATION_SHA256: &[(&str, &str)] = &[
+    (
+        "001_documents",
+        "0b3a941383ccb88eb64a4f2aa55a813ccfdb1436ad0d260c2601862fa4b5537b",
+    ),
+    (
+        "002_jobs",
+        "93e23cb5396efd99fb5f04e104233e3fd825e966a93e2d9f5d21c993182654ee",
+    ),
+    (
+        "003_archive_path",
+        "6fdde2cd32e146e5d5deab819ad96d245040b522c27241ee79fe24d0537b6b43",
+    ),
+    (
+        "004_classification_rules",
+        "6a6e5465aa434a806b88181d78d06b0d6a407efae774439a366322b7f83074d7",
+    ),
+    (
+        "005_paperless_import_state",
+        "80e762e11513af64eecc4c1432885df17350a99ed1e13000043b2a5174d17462",
+    ),
+    (
+        "006_paperless_import_state_targets",
+        "e0ebf8029183ad6caa86eb777bd621ab4067bec7d134cadfd127e63b7bc23335",
+    ),
+    (
+        "007_paperless_import_state_paths",
+        "602ca9b89b7b19afb736331071206fa0fece798e68bb0e39fcd17e2aa4b09aec",
+    ),
+    (
+        "008_paperless_import_state_target_key",
+        "450bb109cc2fb2baba36bf68f92df568e301f3959898b177660a89875895565d",
+    ),
+    (
+        "009_document_extractions",
+        "05454985273dd459ac7a1bd3fd0cc76bdeb376b8ad4a7bf0b7eb4a23cd35afa7",
+    ),
+    (
+        "010_mail_messages",
+        "fff7ee186920b719adf02039c8ff40eb1e118095ae0c097a384807eb265847e2",
+    ),
+    (
+        "011_document_provenance",
+        "b68ec36c8c36a45b3c664e85fb6f4755b42dfc490cc8c6b5a26c9e2fd2972115",
+    ),
+    (
+        "012_mail_poll_status",
+        "6b9d3bd9684465414489abfd68a65689bd2a51e9ebf7b2118b15dd04f7161aff",
+    ),
+    (
+        "013_mail_poll_cursor",
+        "69e7d0119c2a8b0344f055275c3ba2df32108f4b894145d1712a01efefc050d5",
+    ),
+    (
+        "014_document_vault_scope",
+        "842895a53d1f57ac491ad3597f16d25753e1f6c7469fa64b6f9e86b4941eebce",
+    ),
+];
+
 #[test]
 fn migration_bytes_match_go() {
-    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../internal/ingest/internal/store/migrations");
-    assert_eq!(symdesk_ingest::MIGRATIONS.len(), 14);
-    for (name, sql) in symdesk_ingest::MIGRATIONS {
+    use sha2::{Digest, Sha256};
+    assert_eq!(symdesk_ingest::MIGRATIONS.len(), GO_MIGRATION_SHA256.len());
+    for ((name, sql), (go_name, go_digest)) in
+        symdesk_ingest::MIGRATIONS.iter().zip(GO_MIGRATION_SHA256)
+    {
+        assert_eq!(name, go_name);
         assert_eq!(
-            sql.as_bytes(),
-            std::fs::read(source.join(format!("{name}.sql"))).unwrap()
+            format!("{:x}", Sha256::digest(sql.as_bytes())),
+            *go_digest,
+            "{name}"
         );
     }
 }

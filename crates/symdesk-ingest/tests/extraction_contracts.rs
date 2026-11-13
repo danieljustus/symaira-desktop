@@ -93,14 +93,8 @@ fn caller_bound_is_explicit_safety_divergence() {
 }
 #[test]
 fn optional_engines_remain_explicit_residuals() {
-    for kind in [
-        "application/pdf",
-        "image/png",
-        "image/jpeg",
-        "message/rfc822",
-        symdesk_core::document_format::kind_for_extension("docx").unwrap(),
-        symdesk_core::document_format::kind_for_extension("xlsx").unwrap(),
-    ] {
+    // PDF/image extraction needs the OCR engines (INGEST-003), never this API.
+    for kind in ["application/pdf", "image/png", "image/jpeg"] {
         assert_eq!(
             extract::extract_bytes(b"source", kind, 100).unwrap_err(),
             format!("ingest Rust extraction not yet ported for kind {kind:?}")

@@ -70,7 +70,7 @@ heute — der Port wurde also nie gegen die offiziellen Gewichte getestet.
 ## Ausfall-Verhalten / Degradation
 
 Es existiert kein on-device-Pfad in der App; der bestehende OCR-Pfad
-(Tesseract via `internal/selfhost/worker.go` / symingest) bleibt unverändert
+(Tesseract via `crates/symdesk-cli/src/worker_cli.rs` / symingest) bleibt unverändert
 der produktive Weg. Ein zukünftiger on-device-Pfad MUSS bei Ausfall auf
 diesen Weg degradieren statt zu brechen — Architektur-Anforderung, im
 Modell-Download-Design (#348) bereits verankert (Download-Fehler → Status

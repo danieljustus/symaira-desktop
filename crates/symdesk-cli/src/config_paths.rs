@@ -28,19 +28,19 @@ pub struct Paths {
 }
 
 #[derive(Clone, Debug)]
-struct IngestConfig {
-    vault: String,
-    ocr_lang: String,
-    db_path: String,
-    archive_path: String,
+pub(crate) struct IngestConfig {
+    pub(crate) vault: String,
+    pub(crate) ocr_lang: String,
+    pub(crate) db_path: String,
+    pub(crate) archive_path: String,
     inbox: String,
     paperless_base_url: String,
     symseek_enabled: bool,
     symseek_binary: String,
     imap_accounts: Vec<()>,
     imap_poll_interval: String,
-    ollama_base_url: String,
-    ollama_model: String,
+    pub(crate) ollama_base_url: String,
+    pub(crate) ollama_model: String,
 }
 
 impl IngestConfig {
@@ -133,6 +133,21 @@ pub fn run(
     Ok(render(&paths, json))
 }
 
+/// Go `ingest.ArchivePath()`: the archive the absorbed ingest pipeline
+/// resolves with no explicit options.
+pub fn ingest_archive_path(environment: &BTreeMap<String, String>) -> Result<String, String> {
+    let cwd = std::env::current_dir()
+        .map_err(|error| format!("failed to get working directory: {error}"))?;
+    let ingest_config = load_ingest_config(environment, &cwd)?;
+    if !ingest_config.archive_path.is_empty() {
+        return Ok(ingest_config.archive_path);
+    }
+    if !ingest_config.vault.is_empty() {
+        return Ok(clean_join(&[&ingest_config.vault, "archive", "ingest"]));
+    }
+    config::ingest_data_path(environment, "archive")
+}
+
 fn preflight(
     vault_root: &str,
     environment: &BTreeMap<String, String>,
@@ -157,7 +172,46 @@ fn load_ingest_config(
         .map_err(|error| format!("reload symingest configuration: {error}"))
 }
 
-fn load_ingest_config_inner(
+/// Go `ingest.Options.resolve` for the in-process ingest commands: the
+/// symingest configuration plus the documented defaults.
+pub(crate) struct ResolvedIngest {
+    pub vault: String,
+    pub archive: String,
+    pub db_path: String,
+    pub ocr_lang: String,
+    pub ollama_base_url: String,
+    pub ollama_model: String,
+}
+
+pub(crate) fn resolve_ingest() -> Result<ResolvedIngest, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let cwd = std::env::current_dir()
+        .map_err(|error| format!("failed to get working directory: {error}"))?;
+    let loaded = load_ingest_config_inner(&environment, &cwd)
+        .map_err(|error| format!("load symingest configuration: {error}"))?;
+    let archive = if !loaded.archive_path.is_empty() {
+        loaded.archive_path.clone()
+    } else if !loaded.vault.is_empty() {
+        clean_join(&[&loaded.vault, "archive", "ingest"])
+    } else {
+        config::ingest_data_path(&environment, "archive")?
+    };
+    let db_path = if loaded.db_path.is_empty() {
+        config::ingest_data_path(&environment, "symingest.db")?
+    } else {
+        loaded.db_path.clone()
+    };
+    Ok(ResolvedIngest {
+        vault: loaded.vault,
+        archive,
+        db_path,
+        ocr_lang: first_nonempty(&loaded.ocr_lang, "eng").to_owned(),
+        ollama_base_url: loaded.ollama_base_url,
+        ollama_model: loaded.ollama_model,
+    })
+}
+
+pub(crate) fn load_ingest_config_inner(
     environment: &BTreeMap<String, String>,
     cwd: &Path,
 ) -> Result<IngestConfig, String> {

@@ -1,0 +1,16 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: text/plain
+
+a
+--BOUND
+Content-Type: image/gif
+
+GIF
+--BOUND
+Content-Type: text/html
+
+<i>h</i>
+--BOUND--

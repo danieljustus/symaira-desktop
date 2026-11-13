@@ -71,6 +71,19 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(ev.ts, 123456789)
     }
 
+    /// `symdesk events --json` (Go and the Rust core alike) writes `ts` as an
+    /// RFC 3339 string, not epoch seconds.
+    func testEventDecodingRFC3339Timestamp() throws {
+        let json = Data(#"{"event":"index_updated","path":"/tmp/note.md","ts":"2026-11-05T08:15:59Z"}"#.utf8)
+        let ev = try JSONDecoder().decode(VaultEvent.self, from: json)
+        XCTAssertEqual(ev.event, "index_updated")
+        XCTAssertEqual(ev.path, "/tmp/note.md")
+        XCTAssertEqual(ev.ts, 1_793_866_559)
+        XCTAssertThrowsError(try JSONDecoder().decode(
+            VaultEvent.self, from: Data(#"{"event":"e","path":"p","ts":"not a date"}"#.utf8)
+        ))
+    }
+
     func testDocumentItemDecoding() throws {
         let json = """
         {

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render", "crates/symdesk-contacts", "crates/symdesk-ingest"]
+members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render", "crates/symdesk-contacts", "crates/symdesk-ingest", "crates/symdesk-service", "crates/symdesk-storage"]
 resolver = "3"
 
 [workspace.package]
@@ -10,11 +10,12 @@ repository = "https://github.com/danieljustus/symaira-desktop"
 
 [workspace.dependencies]
 base64 = "=0.22.1"
-symaira-core-version = { git = "https://github.com/danieljustus/symaira-corekit", rev = "d382b8615ce879bac6f23c7250e13667934e8f93", version = "=0.0.0" }
-symaira-core-exit = { git = "https://github.com/danieljustus/symaira-corekit", rev = "d382b8615ce879bac6f23c7250e13667934e8f93", version = "=0.0.0" }
-symaira-core-sqlite = { git = "https://github.com/danieljustus/symaira-corekit", rev = "0f441fb27872da7edd65244e4fcbd0890f0b7174", version = "=0.0.0" }
-symaira-core-config = { git = "https://github.com/danieljustus/symaira-corekit", rev = "04d1411adb57aa602b992509121011aa7666ff1a", version = "=0.0.0" }
-symaira-core-llm = { git = "https://github.com/danieljustus/symaira-corekit", rev = "7515add9acd865fa56f908643d0b3b689a70946b", version = "=0.0.0" }
+symaira-core-version = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
+symaira-core-exit = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
+symaira-core-sqlite = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
+symaira-core-config = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
+symaira-core-llm = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
+symaira-core-mcp = { git = "https://github.com/danieljustus/symaira-corekit", rev = "592bebb54080d6b37372e47c461cfa3aeca7d2af", version = "=0.0.0" }
 clap = { version = "=4.6.6" }
 regex = "=1.13.1"
 serde = { version = "=1.0.229", features = ["derive"] }
@@ -25,16 +26,23 @@ thiserror = "=2.0.20"
 time = { version = "=0.3.55", features = ["formatting", "large-dates", "local-offset", "macros", "parsing"] }
 toml = "=1.1.5"
 noyalib = "=0.0.53"
-rusqlite = { version = "=0.40.2", default-features = false, features = ["bundled"] }
+rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled"] }
 unicode-general-category = "=1.1.0"
 symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
+symdesk-contacts = { path = "crates/symdesk-contacts", version = "=0.0.0" }
 symdesk-vault = { path = "crates/symdesk-vault", version = "=0.0.0" }
+symdesk-ingest = { path = "crates/symdesk-ingest", version = "=0.0.0" }
 symdesk-index = { path = "crates/symdesk-index", version = "=0.0.0" }
 symdesk-protocol = { path = "crates/symdesk-protocol", version = "=0.0.0" }
 symdesk-render = { path = "crates/symdesk-render", version = "=0.0.0" }
+symdesk-service = { path = "crates/symdesk-service", version = "=0.0.0" }
+symdesk-storage = { path = "crates/symdesk-storage", version = "=0.0.0" }
 symroom-core = { path = "crates/symroom-core", version = "=0.0.0" }
 ed25519-dalek = { version = "=2.2.0" }
+curve25519-dalek = { version = "=4.1.3" }
 sha2 = { version = "=0.10.9" }
+argon2 = { version = "=0.6.0", default-features = false, features = ["alloc"] }
+aes-gcm = { version = "=0.11.1", default-features = false, features = ["aes", "alloc"] }
 hex = { version = "=0.4.3" }
 cap-std = { version = "=4.0.3", default-features = false }
 axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "multipart", "query", "tokio"] }
@@ -42,10 +50,30 @@ flate2 = "=1.1.2"
 httpdate = "=1.0.3"
 http-body-util = "=0.1.5"
 notify = "=8.2.0"
+tokio-postgres = { version = "=0.7.18" }
 tokio = { version = "=1.53.3", default-features = false, features = ["io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
 tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }
 hyper = { version = "=1.11.1", default-features = false, features = ["client", "http1", "server"] }
+rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pki-types = { version = "=1.15.1", features = ["std"] }
+tokio-rustls = { version = "=0.26.6", default-features = false, features = ["ring", "tls12"] }
+
+# The layered Mermaid layout is quadratic-heavy; unoptimized it is ~100x
+# slower than release, which makes the debug test gate (draw_hostile_layout,
+# the Go draw contracts) slow and flaky. Debug assertions and overflow checks
+# stay on.
+[profile.dev.package.symdesk-render]
+opt-level = 2
+
+# Unoptimized Ed25519 verification costs milliseconds per journal read. The
+# SymRoom MCP process replay (600 concurrent waits inside Go's wall-clock
+# window) missed its bound on a two-core host because of it.
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+
+[profile.dev.package.ed25519-dalek]
+opt-level = 3
 
 [profile.release]
 codegen-units = 1

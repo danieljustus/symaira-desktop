@@ -1612,6 +1612,559 @@
       "populate_named_user": true
     },
     {
+      "id": "ingest-filename-traversal",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"../../etc/passwd.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-backslash-traversal",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"..\\\\..\\\\evil.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-windows-path",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"C:\\\\Users\\\\x\\\\scan.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-dot",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\".\"\r\nContent-Type: text/plain\r\n\r\ndot\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-dotdot",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"..\"\r\nContent-Type: text/plain\r\n\r\ndotdot\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-spaces",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"   \"\r\nContent-Type: text/plain\r\n\r\nspaces\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-trimmed",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"  padded name.txt  \"\r\nContent-Type: text/plain\r\n\r\npadded\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-unicode",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"Rechnung ÄÖÜ 日本語.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-quote",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a\\\"b.txt\"\r\nContent-Type: text/plain\r\n\r\nquote\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-control",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"tab\\tname.txt\"\r\nContent-Type: text/plain\r\n\r\ncontrol\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-long",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-trailing-slash",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dir/\"\r\nContent-Type: text/plain\r\n\r\nslash\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-nested",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a/b/c.txt\"\r\nContent-Type: text/plain\r\n\r\nnested\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-star-encoded",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename*=UTF-8''r%C3%A4.pdf\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-filename-empty-is-not-a-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\"\r\nContent-Type: text/plain\r\n\r\nno filename\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-field-without-filename",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"\r\n\r\nplain value\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-wrong-field-name",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"report.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-two-files-first-wins",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"first.txt\"\r\nContent-Type: text/plain\r\n\r\nfirst\r\n--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"second.txt\"\r\nContent-Type: text/plain\r\n\r\nsecond\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-fields-before-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"note\"\r\n\r\nhello\r\n--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"after.txt\"\r\nContent-Type: text/plain\r\n\r\nafter\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-other-file-then-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"other\"; filename=\"other.txt\"\r\nContent-Type: text/plain\r\n\r\nother\r\n--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"wanted.txt\"\r\nContent-Type: text/plain\r\n\r\nwanted\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-part-content-type-charset",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"charset.txt\"\r\nContent-Type: text/plain; charset=iso-8859-1\r\n\r\ncaf\ufffd\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-part-content-type-odd-case",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"odd.txt\"\r\nContent-Type: TEXT/Plain\r\n\r\nodd\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-part-no-content-type",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"untyped.bin\"\r\n\r\nuntyped\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-empty-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"empty.txt\"\r\nContent-Type: text/plain\r\n\r\n\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-binary-content",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"binary.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n\u0000\r\n--port-bound\r\n\ufffd\ufffd--\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-content-looks-like-boundary",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"boundary.txt\"\r\nContent-Type: text/plain\r\n\r\n--port-boundary-not-really\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-lf-only-framing",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\nContent-Disposition: form-data; name=\"file\"; filename=\"lf.txt\"\nContent-Type: text/plain\n\nlf body\n--port-boundary--\n"
+    },
+    {
+      "id": "ingest-quoted-boundary",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=\"quoted\""
+      },
+      "body": "--quoted\r\nContent-Disposition: form-data; name=\"file\"; filename=\"q.txt\"\r\nContent-Type: text/plain\r\n\r\nquoted\r\n--quoted--\r\n"
+    },
+    {
+      "id": "ingest-boundary-with-spaces",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=\"a b\""
+      },
+      "body": "--a b\r\nContent-Disposition: form-data; name=\"file\"; filename=\"s.txt\"\r\nContent-Type: text/plain\r\n\r\nspaced\r\n--a b--\r\n"
+    },
+    {
+      "id": "ingest-preamble-and-epilogue",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "preamble line\r\n--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"pre.txt\"\r\nContent-Type: text/plain\r\n\r\npre\r\n--port-boundary--\r\nepilogue"
+    },
+    {
+      "id": "ingest-missing-closing-boundary",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"open.txt\"\r\nContent-Type: text/plain\r\n\r\nnever closed"
+    },
+    {
+      "id": "ingest-missing-boundary-parameter",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"nb.txt\"\r\nContent-Type: text/plain\r\n\r\nx\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-multipart-mixed",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/mixed; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"mixed.txt\"\r\nContent-Type: text/plain\r\n\r\nmixed\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-content-type-json",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"file\":\"x\"}"
+    },
+    {
+      "id": "ingest-content-type-missing",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"nt.txt\"\r\nContent-Type: text/plain\r\n\r\nx\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-content-type-urlencoded",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "file=x"
+    },
+    {
+      "id": "ingest-part-header-folded",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data;\r\n name=\"file\"; filename=\"folded.txt\"\r\nContent-Type: text/plain\r\n\r\nfolded\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-part-header-lowercase",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\ncontent-disposition: form-data; name=file; filename=lower.txt\r\ncontent-type: text/plain\r\n\r\nlower\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-part-transfer-encoding-ignored",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"b64.txt\"\r\nContent-Transfer-Encoding: base64\r\n\r\naGVsbG8=\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-query-string-ignored",
+      "method": "POST",
+      "path": "/api/v1/ingest?x=1\u0026y=%20z+w",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"query.txt\"\r\nContent-Type: text/plain\r\n\r\nquery\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-query-bad-escape",
+      "method": "POST",
+      "path": "/api/v1/ingest?a=%zz",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"query.txt\"\r\nContent-Type: text/plain\r\n\r\nquery\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-query-semicolon",
+      "method": "POST",
+      "path": "/api/v1/ingest?a=1;b=2",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"query.txt\"\r\nContent-Type: text/plain\r\n\r\nquery\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-query-truncated-escape",
+      "method": "POST",
+      "path": "/api/v1/ingest?a=%2",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"query.txt\"\r\nContent-Type: text/plain\r\n\r\nquery\r\n--port-boundary--\r\n"
+    },
+    {
+      "id": "ingest-over-body-limit",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=port-boundary"
+      },
+      "body": "--port-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"huge.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n",
+      "body_repeat": 105906176
+    },
+    {
+      "id": "ingest-file-over-upload-limit",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "body_repeat": 104857601,
+      "multipart_file": "limit.bin"
+    },
+    {
+      "id": "ingest-file-at-upload-limit",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "body_repeat": 104857600,
+      "multipart_file": "limit.bin"
+    },
+    {
+      "id": "ingest-named-user-forbidden",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "named",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf",
+      "populate_named_user": true
+    },
+    {
+      "id": "ingest-named-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "named-worker",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf",
+      "populate_named_user": true
+    },
+    {
+      "id": "ingest-wrong-auth",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "wrong",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "ingest-head-method",
+      "method": "HEAD",
+      "path": "/api/v1/ingest",
+      "auth": "valid"
+    },
+    {
+      "id": "ingest-put-method",
+      "method": "PUT",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "body": "x",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "ingest-trailing-slash-path",
+      "method": "POST",
+      "path": "/api/v1/ingest/",
+      "auth": "valid",
+      "body": "x",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "jobs-retry-named-user-forbidden",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "named",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "jobs-retry-named-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "named-worker",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-lease-named-user-allowed",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "named",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-input-named-user-allowed",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "named",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-complete-named-user-allowed",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "named",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"yes\",\"model\":\"123\"}",
+      "populate_worker_job": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-fail-named-user-allowed",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "named",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
+      "populate_worker_job": true,
+      "populate_named_user": true
+    },
+    {
       "id": "command-admin-exec-ls",
       "method": "POST",
       "path": "/api/v1/command",

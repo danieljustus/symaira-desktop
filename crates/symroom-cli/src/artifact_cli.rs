@@ -20,7 +20,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
         return stdout(USAGE, CoreExitCode::Ok);
     };
-    match action.to_string_lossy().as_ref() {
+    match symroom_core::goio::os_text(action).as_str() {
         "link" => link(&args[1..]),
         "unlink" => unlink(&args[1..]),
         "list" => list(&args[1..]),
@@ -36,17 +36,21 @@ fn link(args: &[OsString]) -> ExitCode {
         Ok(parsed) => parsed,
         Err(code) => return code,
     };
-    let Some(path) = parsed.positionals.first() else {
+    let Some(path) = parsed
+        .raw_positionals
+        .first()
+        .map(|path| symroom_core::goio::text_path(path))
+    else {
         return stderr(
             "Usage: symroom artifact link <path> [--title ...] [--identity <name>]\n",
             CoreExitCode::NoInput,
         );
     };
-    let signer = match load_identity(parsed.values.get("identity")) {
+    let signer = match load_identity(parsed.raw_values.get("identity")) {
         Ok(signer) => signer,
         Err(code) => return code,
     };
-    let inspect_path = match artifact::link_inspect_path(&room_dir(), &PathBuf::from(path)) {
+    let inspect_path = match artifact::link_inspect_path(&room_dir(), &path) {
         Ok(path) => path,
         Err(artifact::ArtifactError::OutsideRoot) => {
             return stderr(
@@ -64,7 +68,7 @@ fn link(args: &[OsString]) -> ExitCode {
     let symdesk_id = crate::symdesk_inspect::inspect_symdesk(&inspect_path);
     match artifact::link(
         &room_dir(),
-        &PathBuf::from(path),
+        &path,
         parsed.values.get("title").map_or("", String::as_str),
         &symdesk_id,
         &signer,
@@ -92,7 +96,7 @@ fn unlink(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let signer = match load_identity(parsed.values.get("identity")) {
+    let signer = match load_identity(parsed.raw_values.get("identity")) {
         Ok(signer) => signer,
         Err(code) => return code,
     };
@@ -147,6 +151,8 @@ fn list(args: &[OsString]) -> ExitCode {
 struct Parsed {
     values: std::collections::BTreeMap<String, String>,
     positionals: Vec<String>,
+    raw_values: std::collections::BTreeMap<String, String>,
+    raw_positionals: Vec<String>,
 }
 
 fn parse_flags(
@@ -165,6 +171,8 @@ fn parse_flags(
     Ok(Parsed {
         values: parsed.values,
         positionals: parsed.positionals,
+        raw_values: parsed.raw_values,
+        raw_positionals: parsed.raw_positionals,
     })
 }
 
@@ -288,7 +296,10 @@ fn go_json(value: &impl serde::Serialize) -> String {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -296,7 +307,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

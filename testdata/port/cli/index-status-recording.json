@@ -1,0 +1,1270 @@
+{
+ "schema_version": 1,
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "case_inventory_sha256": "b67aef53a6094a5efa6fa0cc845141b5461971b7346591fca97893727fcf5520",
+ "cases": [
+  {
+   "id": "aggregate_empty_default_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":0,\"chunk_count\":0,\"database_bytes\":163840,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":0,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"index_location\":\"<WORLD_EMPTY>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_empty_default_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:0 ChunkCount:0 DatabaseBytes:163840 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:0 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<nil> IndexLocation:<WORLD_EMPTY>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_empty_with_vault_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":0,\"chunk_count\":0,\"database_bytes\":163840,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":0,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":0,\"index_location\":\"<WORLD_EMPTY>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_empty_with_vault_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:0 ChunkCount:0 DatabaseBytes:163840 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:0 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_EMPTY>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_empty_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "null\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_empty_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_empty_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "null\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_empty_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_populated_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_populated_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_populated_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_populated_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_queued_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_indexing_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_indexed_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_failed_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_encrypted_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_state_unsupported_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_provider_available_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"qwen3-embedding:0.6b\",\"backend_available\":true,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_provider_available_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:qwen3-embedding:0.6b BackendAvailable:true PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "provider_retry_one_probe_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_html_unicode_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_lifecycle_invalid_utf8_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_lifecycle_valid_replacement_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_invalid_state_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid index state \\\"bogus\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "documents_missing_vault_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_missing_vault_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"vault path does not exist: stat <WORLD_POPULATED>/absent-vault: no such file or directory\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_negative_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"--timeout must be non-negative\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_zero_delayed_local_provider_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_blocked_local_provider_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"index status timed out during retrieval status after 150ms: context deadline exceeded\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_blocked_ready_provider_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"index status timed out during retrieval status after 2s: context deadline exceeded\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_invalid_retrieval_db_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"failed to open sqlite database: failed to open sqlite database: file is not a database (26)\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_blocked_sidecar_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"index status timed out during open sidecar database after 500ms: context deadline exceeded\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_invalid_text_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"bad\\\" for \\\"--timeout\\\" flag: time: invalid duration \\\"bad\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_invalid_text_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"bad\" for \"--timeout\" flag: time: invalid duration \"bad\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_unitless_number_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\" for \\\"--timeout\\\" flag: time: missing unit in duration \\\"1\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_unitless_number_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\" for \"--timeout\" flag: time: missing unit in duration \"1\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_unknown_unit_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1foo\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"foo\\\" in duration \\\"1foo\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_unknown_unit_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1foo\" for \"--timeout\" flag: time: unknown unit \"foo\" in duration \"1foo\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_whole_unit_match_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1.sx\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"sx\\\" in duration \\\"1.sx\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_whole_unit_match_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1.sx\" for \"--timeout\" flag: time: unknown unit \"sx\" in duration \"1.sx\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_duplicate_decimal_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1..s\\\" for \\\"--timeout\\\" flag: time: missing unit in duration \\\"1..s\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_duplicate_decimal_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1..s\" for \"--timeout\" flag: time: missing unit in duration \"1..s\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_empty_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"\\\" for \\\"--timeout\\\" flag: time: invalid duration \\\"\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_empty_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"\" for \"--timeout\" flag: time: invalid duration \"\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_sign_without_value_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"+\\\" for \\\"--timeout\\\" flag: time: invalid duration \\\"+\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_sign_without_value_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"+\" for \"--timeout\" flag: time: invalid duration \"+\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_negative_duration_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"--timeout must be non-negative\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_negative_duration_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "--timeout must be non-negative\n"
+   }
+  },
+  {
+   "id": "timeout_parse_positive_overflow_ns_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"9223372036854775808ns\\\" for \\\"--timeout\\\" flag: time: invalid duration \\\"9223372036854775808ns\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_positive_overflow_ns_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"9223372036854775808ns\" for \"--timeout\" flag: time: invalid duration \"9223372036854775808ns\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_unicode_suffix_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1é\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\\xc3\\\\xa9\\\" in duration \\\"1\\\\xc3\\\\xa9\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_unicode_suffix_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1é\" for \"--timeout\" flag: time: unknown unit \"\\xc3\\xa9\" in duration \"1\\xc3\\xa9\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_newline_control_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\\n\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\\x0a\\\" in duration \\\"1\\\\x0a\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_newline_control_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\\n\" for \"--timeout\" flag: time: unknown unit \"\\x0a\" in duration \"1\\x0a\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_delete_control_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\\x7f\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\" in duration \\\"1\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_delete_control_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\\x7f\" for \"--timeout\" flag: time: unknown unit \"\" in duration \"1\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_long_numeric_then_bad_unit_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"999999999999999999999bad\\\" for \\\"--timeout\\\" flag: time: invalid duration \\\"999999999999999999999bad\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_long_numeric_then_bad_unit_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"999999999999999999999bad\" for \"--timeout\" flag: time: invalid duration \"999999999999999999999bad\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_overflow_then_unknown_unit_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"9223372036854775808ns1x\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"x\\\" in duration \\\"9223372036854775808ns1x\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_overflow_then_unknown_unit_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"9223372036854775808ns1x\" for \"--timeout\" flag: time: unknown unit \"x\" in duration \"9223372036854775808ns1x\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_trailing_punctuation_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1ms!\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"ms!\\\" in duration \\\"1ms!\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_trailing_punctuation_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1ms!\" for \"--timeout\" flag: time: unknown unit \"ms!\" in duration \"1ms!\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_signed_compound_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1h+2m\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"h+\\\" in duration \\\"1h+2m\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_signed_compound_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1h+2m\" for \"--timeout\" flag: time: unknown unit \"h+\" in duration \"1h+2m\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_exponent_notation_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1e3s\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"e\\\" in duration \\\"1e3s\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_exponent_notation_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1e3s\" for \"--timeout\" flag: time: unknown unit \"e\" in duration \"1e3s\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_minimum_signed_ns_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"--timeout must be non-negative\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_minimum_signed_ns_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "--timeout must be non-negative\n"
+   }
+  },
+  {
+   "id": "timeout_parse_backslash_escape_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\\\\\\s\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\\\\\\s\\\" in duration \\\"1\\\\\\\\s\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_backslash_escape_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\\\\s\" for \"--timeout\" flag: time: unknown unit \"\\\\s\" in duration \"1\\\\s\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_quote_byte_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\\\\\"s\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\\\\\"s\\\" in duration \\\"1\\\\\\\"s\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_quote_byte_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\\\"s\" for \"--timeout\" flag: time: unknown unit \"\\\"s\" in duration \"1\\\"s\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_html_sensitive_bytes_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\u003c\\u0026\\u003e\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\u003c\\u0026\\u003e\\\" in duration \\\"1\\u003c\\u0026\\u003e\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_html_sensitive_bytes_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1<&>\" for \"--timeout\" flag: time: unknown unit \"<&>\" in duration \"1<&>\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_unicode_line_separator_json",
+   "exit_code": 1,
+   "stdout": {
+    "text": "{\"error\":\"invalid argument \\\"1\\\\u2028\\\" for \\\"--timeout\\\" flag: time: unknown unit \\\"\\\\xe2\\\\x80\\\\xa8\\\" in duration \\\"1\\\\xe2\\\\x80\\\\xa8\\\"\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_unicode_line_separator_text",
+   "exit_code": 1,
+   "stdout": {
+    "text": ""
+   },
+   "stderr": {
+    "text": "invalid argument \"1\\u2028\" for \"--timeout\" flag: time: unknown unit \"\\xe2\\x80\\xa8\" in duration \"1\\xe2\\x80\\xa8\"\n"
+   }
+  },
+  {
+   "id": "timeout_parse_positive_zero_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_positive_zero_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_negative_zero_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_negative_zero_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_one_dot_seconds_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_one_dot_seconds_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_maximum_signed_ns_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_maximum_signed_ns_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_subnanosecond_fraction_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "timeout_parse_subnanosecond_fraction_text",
+   "exit_code": 0,
+   "stdout": {
+    "hex": "5b7b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f616c7068612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f626574612e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f656e637279707465642e6d642053746174653a656e6372797074656420526561736f6e3a64657465726d696e697374696320656e6372797074656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f6661696c65642e6d642053746174653a6661696c656420526561736f6e3a64657465726d696e6973746963206661696c656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f68746d6c2d756e69636f64652e6d642053746174653a696e646578656420526561736f6e3a48544d4c203c3e2620706c757320e280a820616e6420e280a9205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e64657865642e6d642053746174653a696e646578656420526561736f6e3a205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e646578696e672e6d642053746174653a696e646578696e6720526561736f6e3a64657465726d696e697374696320696e646578696e6720737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f696e76616c69642d757466382e6d642053746174653a6661696c656420526561736f6e3a7472756e63617465642d757466382df09f205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f7175657565642e6d642053746174653a71756575656420526561736f6e3a64657465726d696e69737469632071756575656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f756e737570706f727465642e6d642053746174653a756e737570706f7274656420526561736f6e3a64657465726d696e697374696320756e737570706f7274656420737461746520696e707574205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d207b506174683a3c574f524c445f504f50554c415445443e2f7661756c742f7374617465732f76616c69642d7265706c6163656d656e742e6d642053746174653a71756575656420526561736f6e3a76616c69642d757466382defbfbd205570646174656441743a323032362d30312d30322030333a30343a3035202b30303030205554437d5d0a"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_rfc_nanos_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_rfc_nanos_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_seconds_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_seconds_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_micros_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_micros_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_nanos_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_nanos_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_monotonic_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_monotonic_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_offset_east_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T01:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_offset_east_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T01:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_offset_west_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T08:34:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_offset_west_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T08:34:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_utc_offset_conflict_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_utc_offset_conflict_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_zone_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_zone_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_empty_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_empty_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_zero_rfc_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_zero_rfc_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_zero_go_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_zero_go_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_upper_utc_boundary_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"10000-01-01T00:59:59Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_upper_utc_boundary_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:10000-01-01T00:59:59Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_lower_utc_boundary_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"-0001-12-31T23:00:00Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_lower_utc_boundary_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:-0001-12-31T23:00:00Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_comma_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T01:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_go_comma_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T01:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_utf8_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_invalid_utf8_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt: EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_blob_rfc_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "aggregate_timestamp_blob_rfc_text",
+   "exit_code": 0,
+   "stdout": {
+    "text": "&{DocumentCount:8 ChunkCount:16 DatabaseBytes:192512 LastIndexedAt:2026-01-02T03:04:05Z EmbeddingModel:local-hash BackendAvailable:false PendingChunkCount:16 MixedEmbeddingSpaces:false IndexScope:shared VaultDocumentCount:<GO_POINTER> IndexLocation:<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db}\n"
+   },
+   "stderr": {
+    "text": ""
+   }
+  },
+  {
+   "id": "worker_aggregate_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"vault_document_count\":11,\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": "SYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE retrieval status\nSYMDESK_INDEX_STATUS_PHASE resolve vault root\nSYMDESK_INDEX_STATUS_PHASE vault counting\n"
+   }
+  },
+  {
+   "id": "worker_aggregate_default_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "{\"document_count\":8,\"chunk_count\":16,\"database_bytes\":192512,\"last_indexed_at\":\"2026-01-02T03:04:05Z\",\"embedding_model\":\"local-hash\",\"backend_available\":false,\"pending_chunk_count\":16,\"mixed_embedding_spaces\":false,\"index_scope\":\"shared\",\"index_location\":\"<WORLD_POPULATED>/xdg-data/symdesk/retrieval.db\"}\n"
+   },
+   "stderr": {
+    "text": "SYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE retrieval status\n"
+   }
+  },
+  {
+   "id": "worker_documents_json",
+   "exit_code": 0,
+   "stdout": {
+    "text": "[{\"path\":\"<WORLD_POPULATED>/vault/alpha.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/beta.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/encrypted.md\",\"index_state\":\"encrypted\",\"index_failure_reason\":\"deterministic encrypted state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/failed.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"deterministic failed state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/html-unicode.md\",\"index_state\":\"indexed\",\"index_failure_reason\":\"HTML \\u003c\\u003e\\u0026 plus \\u2028 and \\u2029\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexed.md\",\"index_state\":\"indexed\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/indexing.md\",\"index_state\":\"indexing\",\"index_failure_reason\":\"deterministic indexing state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/invalid-utf8.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"truncated-utf8-\\ufffd\\ufffd\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/queued.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"deterministic queued state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/unsupported.md\",\"index_state\":\"unsupported\",\"index_failure_reason\":\"deterministic unsupported state input\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"},{\"path\":\"<WORLD_POPULATED>/vault/states/valid-replacement.md\",\"index_state\":\"queued\",\"index_failure_reason\":\"valid-utf8-�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}]\n"
+   },
+   "stderr": {
+    "text": "SYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE resolve vault root\nSYMDESK_INDEX_STATUS_PHASE open sidecar database\nSYMDESK_INDEX_STATUS_PHASE document status listing\n"
+   }
+  }
+ ]
+}

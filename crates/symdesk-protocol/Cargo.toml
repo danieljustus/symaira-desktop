@@ -18,13 +18,19 @@ http-body-util.workspace = true
 httpdate.workspace = true
 getrandom = "=0.4.3"
 notify.workspace = true
+rusqlite.workspace = true
+symaira-core-sqlite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 symdesk-core.workspace = true
 symdesk-index.workspace = true
+symdesk-ingest.workspace = true
 symdesk-vault.workspace = true
 time.workspace = true
 tokio.workspace = true
+tokio-rustls.workspace = true
+rustls.workspace = true
+rustls-pki-types.workspace = true
 tower.workspace = true
 
 [target.'cfg(windows)'.dependencies]

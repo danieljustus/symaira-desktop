@@ -60,7 +60,9 @@ pub fn set_frontmatter_key(
     value: &str,
 ) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let mut lines = split_on_lf(&data);
     let rendered = format!("{key}: {}", quote_yaml(value)).into_bytes();
 
@@ -99,7 +101,9 @@ pub fn set_frontmatter_value(
     value: &Value,
 ) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let separator = if data.windows(2).any(|window| window == b"\r\n") {
         b"\r\n".as_slice()
     } else {
@@ -138,7 +142,9 @@ pub fn set_frontmatter_value(
 /// Returns [`MutationError`] when the selected file cannot be read or rewritten.
 pub fn delete_frontmatter_value(path: impl AsRef<Path>, key: &str) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let separator = if data.windows(2).any(|window| window == b"\r\n") {
         b"\r\n".as_slice()
     } else {
@@ -154,7 +160,7 @@ pub fn delete_frontmatter_value(path: impl AsRef<Path>, key: &str) -> Result<(),
     write_atomic(path, &join_with(&lines, separator))
 }
 
-fn quote_yaml(value: &str) -> String {
+pub(crate) fn quote_yaml(value: &str) -> String {
     if value.is_empty() {
         return "\"\"".to_owned();
     }
@@ -205,11 +211,27 @@ pub fn render_go_yaml_map(
     Ok(rendered)
 }
 
+/// yaml.v3 `Marshal` of a SymMeet meeting note's frontmatter, which Go encodes
+/// from typed structs: declaration order for the known fields, then the
+/// inline extras in natural key order.
+pub fn render_go_yaml_meeting_map(
+    entries: &std::collections::BTreeMap<String, Value>,
+) -> Result<String, MutationError> {
+    let mut mapping = Mapping::new();
+    for (key, value) in entries {
+        mapping.insert(key.clone(), value.clone());
+    }
+    let mut rendered = go_yaml::render_meeting_mapping(&mapping)
+        .map_err(|detail| MutationError::Marshal { detail })?;
+    rendered.push('\n');
+    Ok(rendered)
+}
+
 pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, MutationError> {
     go_yaml::render_mapping(mapping).map_err(|detail| MutationError::Marshal { detail })
 }
 
-fn yaml_value_string(value: &Value) -> Result<String, MutationError> {
+pub(crate) fn yaml_value_string(value: &Value) -> Result<String, MutationError> {
     match value {
         Value::String(value) => Ok(quote_yaml(value)),
         Value::Number(value) => go_yaml::format_scalar_number(value, false)
@@ -264,6 +286,21 @@ fn join_with(lines: &[Vec<u8>], separator: &[u8]) -> Vec<u8> {
         result.extend_from_slice(line);
     }
     result
+}
+
+/// Go `findFrontmatterBounds` over string lines: the first two `---` lines.
+pub(crate) fn frontmatter_bounds_str(lines: &[String]) -> (Option<usize>, Option<usize>) {
+    let mut start = None;
+    for (index, line) in lines.iter().enumerate() {
+        if line.trim_end_matches('\r') == "---" {
+            if start.is_none() {
+                start = Some(index);
+            } else {
+                return (start, Some(index));
+            }
+        }
+    }
+    (start, None)
 }
 
 fn frontmatter_bounds(lines: &[Vec<u8>]) -> Option<(usize, usize)> {

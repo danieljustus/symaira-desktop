@@ -14,6 +14,8 @@ libfuzzer-sys = "=0.4.10"
 symdesk-vault = { path = "../crates/symdesk-vault" }
 symroom-core = { path = "../crates/symroom-core" }
 symdesk-render = { path = "../crates/symdesk-render" }
+symdesk-ingest = { path = "../crates/symdesk-ingest" }
+symdesk-protocol = { path = "../crates/symdesk-protocol" }
 
 [[bin]]
 name = "draw_parser"
@@ -25,6 +27,20 @@ bench = false
 [[bin]]
 name = "frontmatter"
 path = "fuzz_targets/frontmatter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mcp_frame"
+path = "fuzz_targets/mcp_frame.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mime_input"
+path = "fuzz_targets/mime_input.rs"
 test = false
 doc = false
 bench = false

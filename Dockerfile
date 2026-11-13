@@ -1,13 +1,20 @@
 # syntax=docker/dockerfile:1.7
-ARG GO_VERSION=1.26.10
+# Rust server image (DIST-004). The build stage runs natively per platform
+# (.github/workflows/container.yml builds each architecture on its own runner).
+ARG RUST_VERSION=1.98.0
+FROM rust:${RUST_VERSION}-bookworm AS build
+ARG RUST_VERSION
 ARG VERSION=dev
-FROM golang:${GO_VERSION}-bookworm AS build
 WORKDIR /src
-COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/symdesk ./cmd/symdesk
+# RUSTUP_TOOLCHAIN overrides rust-toolchain.toml so the image's toolchain is
+# used as is instead of downloading the lint components the file lists.
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/src/target \
+    RUSTUP_TOOLCHAIN=${RUST_VERSION} SYMDESK_VERSION=${VERSION} \
+      cargo build --release --locked -p symdesk-cli --bin symdesk \
+    && mkdir -p /out && cp target/release/symdesk /out/symdesk \
+    && /out/symdesk version
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \

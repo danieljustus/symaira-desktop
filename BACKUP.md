@@ -27,6 +27,65 @@ vault backup or this repository.
 - Native-app build products, caches, and generated project files are not user
   data and do not belong in a vault backup.
 
+## Automatic backup before the first Rust run
+
+Starting with the Rust-only release there is no Go binary to fall back to, so
+the first Rust run protects what the Go builds left behind. When `symdesk` (or
+`symroom`) starts, finds existing state and has not done so before, it copies
+that state **once** into
+
+```text
+$XDG_DATA_HOME/symdesk/backups/pre-rust/     (default ~/.local/share/symdesk/backups/pre-rust)
+$XDG_DATA_HOME/symroom/backups/pre-rust/     (the identity store, see below)
+```
+
+and prints a single notice on stderr (never on stdout, so `symdesk mcp` frames
+stay clean). The backup is built in a temporary directory and renamed into
+place; `manifest.json` is written last and is the completion marker. Later runs
+do nothing.
+
+What is backed up:
+
+- the `symdesk` data directory (`config paths` `data_dir`: per-vault sidecar and
+  retrieval databases, `symingest.db`, `symrelate.db`, `vaults/<hash>/metadata.json`),
+  the config directory (`config.toml`) and the legacy fallback directories of the
+  absorbed tools (`symingest`, `symrelate`, `symaira-seek`, `SYMRELATE_DATA_HOME`),
+- for `symroom`: the identity store `$XDG_DATA_HOME/symroom/identities` (the
+  Ed25519 private keys that sign room journals).
+
+What is not: the Markdown vault (it is yours and is never rewritten by the
+backup), room directories, the ingest `archive/` and earlier `backups/`.
+
+SQLite files are copied byte for byte when quiescent; a database with a live WAL
+or one that changes while it is copied is snapshotted with SQLite's own
+`VACUUM INTO` (WAL-consistent) instead. `manifest.json` records
+`{schema_version, created_at, symdesk_version, sources, dirs, files:[{source,
+backup, sha256, size, mode, mtime_ns, method}], skipped}`.
+
+If state exists and the backup cannot be completed (read-only disk, no space),
+the command is **aborted with a clear error and nothing is changed**. Set
+`SYMDESK_PRE_RUST_BACKUP=off` to continue without a backup (the same variable
+disables the backup on purpose, for example in hermetic tests). A fresh install
+has nothing to back up; a marker records that so state created by Rust itself is
+never mistaken for Go-era state.
+
+### Restoring
+
+```sh
+symdesk backup restore-pre-rust --dry-run   # verify the backup, show what would change
+symdesk backup restore-pre-rust             # restore it
+symroom backup restore-pre-rust             # the same for the identity store
+```
+
+The command is intentionally absent from `--help` and shell completion. It first
+verifies every file against `manifest.json` (nothing is touched if any digest
+differs), then moves the current state of each backed-up directory aside to
+`backups/pre-restore-<UTC time>-<pid>/` (it never deletes it), places the saved
+files back one by one through temporary files and renames, restores modes and
+modification times, and re-verifies every restored file. If a step fails the
+previous state is moved back. The vault is not part of the restore; run
+`symdesk index` afterwards if you also changed notes.
+
 ## Absorbed store paths
 
 SymDesk consolidates all absorbed store state under a single XDG application

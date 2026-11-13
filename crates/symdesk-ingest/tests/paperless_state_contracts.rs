@@ -28,11 +28,7 @@ fn snapshot(c: &Connection) -> Value {
     let mut s = c
         .prepare("SELECT * FROM paperless_import_state ORDER BY id")
         .unwrap();
-    let columns = s
-        .column_names()
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
+    let columns = s.column_names().map(str::to_owned).collect::<Vec<_>>();
     let rows = s
         .query_map([], |r| {
             let mut out = BTreeMap::new();

@@ -47,7 +47,7 @@ impl ToolCache {
     }
 }
 
-fn probe(resolver: &Resolver, path: &str) -> io::Result<String> {
+pub(crate) fn probe(resolver: &Resolver, path: &str) -> io::Result<String> {
     let mut output = ProbeOutput::new()?;
     let start = Instant::now();
     let child = Command::new(resolver.cwd.join(path))

@@ -12,25 +12,27 @@ use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
-    StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_byte_chunks,
-    materialize_chunks, parse_csv_retrieval_sections, parse_document_retrieval_sections,
+    StoredRetrievalChunk, backup_database, detect_sidecar_path, import_extraction_sidecar,
+    index_location_for_vault, materialize_byte_chunks, materialize_chunks,
+    parse_csv_retrieval_sections, parse_document_retrieval_sections,
     parse_markdown_body_retrieval_sections, parse_markdown_retrieval_sections,
     parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
     retrieval_embedding_config,
 };
-use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
+use symdesk_protocol::embed_local_ollama;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::time::Duration;
 
 #[path = "index_status.rs"]
 mod status;
-pub(crate) use status::go_time_text;
+pub(crate) use status::{go_time_text, parse_go_duration_nanos, retrieval_health};
 #[path = "index_status_process.rs"]
 mod status_process;
 
 pub fn cli() -> Command {
     Command::new("index")
-        .arg(Arg::new("path").value_name("PATH").num_args(0..=1))
+        // Go reads `args[0]` and ignores the rest (no `Args` validator).
+        .arg(Arg::new("path").value_name("PATH").num_args(0..))
         .arg(
             Arg::new("prune")
                 .long("prune")
@@ -44,6 +46,7 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("status")
                 .about("Show retrieval and document indexing status")
+                .arg(Arg::new("extra").num_args(0..).hide(true))
                 .arg(
                     Arg::new("documents")
                         .long("documents")
@@ -532,13 +535,13 @@ fn index_retrieval_documents(
     }
 }
 
-type RetrievalContext = (
+pub(crate) type RetrievalContext = (
     RetrievalEmbeddingConfig,
     RetrievalDb,
     tokio::runtime::Runtime,
 );
 
-fn open_retrieval_context() -> Result<RetrievalContext, String> {
+pub(crate) fn open_retrieval_context() -> Result<RetrievalContext, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
     let config =
@@ -618,6 +621,18 @@ fn index_markdown_retrieval(
             .save_chunks(&stored)
             .map_err(|error| format!("failed to save chunks: {error}"))?;
     }
+    // Go's commitIndex imports a detected extraction sidecar once the chunks
+    // are saved, so the new chunk spans are available for linking. A failed
+    // import only warns: the document stays indexed.
+    if let Some(sidecar) = detect_sidecar_path(&source, &document.body) {
+        let shown = sidecar.to_string_lossy();
+        match import_extraction_sidecar(database, &source, &sidecar) {
+            Ok(()) => eprintln!("Imported extraction sidecar: {shown}"),
+            Err(error) => eprintln!(
+                "Warning: failed to import extraction sidecar {shown} for {source}: {error}"
+            ),
+        }
+    }
     let pending = stored
         .iter()
         .filter(|chunk| chunk.embedding_pending)
@@ -654,7 +669,7 @@ pub(crate) fn canonical_local_source(path: &str) -> String {
     )
 }
 
-fn stored_chunks(
+pub(crate) fn stored_chunks(
     document_path: &str,
     chunks: Vec<symdesk_index::RetrievalChunk>,
     embeddings: Vec<Option<Vec<f32>>>,
@@ -878,7 +893,7 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
 /// element, including a leading dot (`.csv` has the extension `.csv`), or an
 /// empty string. Rust's `Path::extension` returns `None` for such dotfile
 /// names, which would route them differently from Go.
-fn go_path_extension(path: &str) -> &str {
+pub(crate) fn go_path_extension(path: &str) -> &str {
     let element_start = path
         .rfind(std::path::is_separator)
         .map_or(0, |index| index + 1);
@@ -906,7 +921,7 @@ fn read_limited_plain_text(path: &str) -> Result<Vec<u8>, String> {
 /// are not valid UTF-8.
 type EmbedCacheKey<'a> = (&'a String, Option<&'a Vec<u8>>);
 
-async fn embed_chunks(
+pub(crate) async fn embed_chunks(
     config: &RetrievalEmbeddingConfig,
     texts: &[String],
     raw_contents: &[Option<Vec<u8>>],
@@ -958,10 +973,7 @@ async fn embed_chunks(
                         (vector.len() == (*expected_dimension).unwrap_or(768)).then_some(vector)
                     }
                     Ok(_) => None,
-                    Err(error) => {
-                        eprintln!("engine: embedding request failed: {error}");
-                        None
-                    }
+                    Err(_) => None,
                 };
                 cache.insert(key, vector.clone());
                 vectors.push(vector);
@@ -971,14 +983,35 @@ async fn embed_chunks(
     }
 }
 
+/// Go `time.Duration.String` for the retry backoff (at most eight seconds).
+fn go_duration(milliseconds: u64) -> String {
+    match milliseconds {
+        0 => "0s".to_owned(),
+        value if value < 1000 => format!("{value}ms"),
+        value if value % 1000 == 0 => format!("{}s", value / 1000),
+        value => {
+            let fraction = format!("{:03}", value % 1000);
+            format!("{}.{}s", value / 1000, fraction.trim_end_matches('0'))
+        }
+    }
+}
+
+/// Go `embedWithRetries`: retries transient failures with exponential backoff,
+/// logging each retry like the engine does, and wraps an exhausted run in
+/// `ollama: exhausted N retries: ...`. Non-transient failures return as is.
 async fn embed_with_retries(
     config: &RetrievalEmbeddingConfig,
     inputs: &[String],
-) -> Result<Vec<Vec<f32>>, LocalEmbeddingError> {
+) -> Result<Vec<Vec<f32>>, String> {
     let mut backoff = config.retry_backoff_ms;
-    let mut last_error = None;
-    for attempt in 0..=config.retry_count {
+    let retries = config.retry_count;
+    let mut last_error = String::new();
+    for attempt in 0..=retries {
         if attempt > 0 {
+            eprintln!(
+                "engine: ollama retry {attempt}/{retries} after {} (last error: {last_error})",
+                go_duration(backoff)
+            );
             tokio::time::sleep(Duration::from_millis(backoff)).await;
             backoff = backoff.saturating_mul(2).min(8_000);
         }
@@ -992,13 +1025,11 @@ async fn embed_with_retries(
         .await
         {
             Ok(vectors) => return Ok(vectors),
-            Err(error) if error.is_transient() && attempt < config.retry_count => {
-                last_error = Some(error);
-            }
-            Err(error) => return Err(error),
+            Err(error) if error.is_transient() => last_error = error.to_string(),
+            Err(error) => return Err(error.to_string()),
         }
     }
-    Err(last_error.unwrap_or(LocalEmbeddingError::EmptyInputs))
+    Err(format!("ollama: exhausted {retries} retries: {last_error}"))
 }
 
 pub(crate) fn index_vault_error(requested: Option<&str>, error: &str) -> String {

@@ -25,4 +25,4 @@ vaults, identity stores, or user-managed data. Build dependencies may be fetched
 into the temporary caches.
 This is a local, single-host room-journal regression check; it does not cover
 other stores, release packaging, installed consumers, or the all-platform
-`DIST-006` gate, and it does not authorize release or cutover.
+`DIST-006` gate, and it does not authorize release or cutover. Since the Rust-only cutover decision (2026-10-30) `DIST-006` is the pre-Rust backup and restore exercise (README 'RUST-018 cutover data safety'); this harness is an optional local regression check of Go/Rust journal compatibility.

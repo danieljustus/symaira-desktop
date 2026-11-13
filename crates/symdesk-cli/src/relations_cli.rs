@@ -11,9 +11,52 @@ pub fn cli() -> Command {
     Command::new("relations")
         .about("Inspect typed relations between notes")
         .subcommand(Command::new("inverse").arg(Arg::new("file").num_args(0..)))
+        .subcommand(related_command())
+        .subcommand(crate::contact_cli::command())
+}
+
+/// Shared by `relations related` and the hidden top-level `related`.
+pub fn related_command() -> Command {
+    Command::new("related").arg(Arg::new("file").num_args(0..))
+}
+
+pub fn run_related(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
+    let files: Vec<_> = command
+        .get_many::<String>("file")
+        .into_iter()
+        .flatten()
+        .collect();
+    if files.len() != 1 {
+        return emit_error(
+            format!("accepts 1 arg(s), received {}", files.len()),
+            output_json,
+        );
+    }
+    crate::related_cli::run(files[0], vault, output_json)
+}
+
+/// Go `initServiceDeps`: the resolved vault root and its open sidecar.
+pub(crate) fn service_deps(
+    vault: Option<&str>,
+) -> Result<(std::path::PathBuf, symdesk_index::Sidecar), String> {
+    let root = resolve_vault(vault).map_err(|e| {
+        if e.starts_with("vault path not configured") {
+            "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned()
+        } else {
+            crate::index_cli::index_vault_error(vault, &e)
+        }
+    })?;
+    let sidecar = open_for_vault(&root).map_err(|e| e.to_string())?;
+    Ok((root, sidecar))
 }
 
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
+    if let Some(("related", related)) = command.subcommand() {
+        return run_related(related, vault, output_json);
+    }
+    if let Some(("contact", contact)) = command.subcommand() {
+        return crate::contact_cli::run(contact, vault, output_json);
+    }
     let Some(("inverse", command)) = command.subcommand() else {
         return crate::process_exit(crate::CoreExitCode::Ok);
     };

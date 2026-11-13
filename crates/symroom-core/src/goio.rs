@@ -23,7 +23,142 @@ use std::{
 /// Windows volume rules apply on Windows.
 #[must_use]
 pub fn clean(path: &Path) -> String {
-    go_clean(&path.to_string_lossy(), cfg!(windows))
+    go_clean(&os_text(path.as_os_str()), cfg!(windows))
+}
+
+/// First code point of the block that carries bytes which are not UTF-8 (see
+/// [`os_text`]): `ESCAPE_BASE + byte` stands for one raw byte.
+const ESCAPE_BASE: u32 = 0x0010_F800;
+
+fn escaped(ch: char) -> bool {
+    (ESCAPE_BASE + 0x80..=ESCAPE_BASE + 0xFF).contains(&u32::from(ch))
+}
+
+/// The byte an escape character stands for.
+#[must_use]
+pub fn escaped_byte(ch: char) -> Option<u8> {
+    escaped(ch).then(|| (u32::from(ch) - ESCAPE_BASE) as u8)
+}
+
+fn push_escaped(out: &mut String, byte: u8) {
+    out.push(char::from_u32(ESCAPE_BASE + u32::from(byte)).expect("escape block is valid"));
+}
+
+/// Go strings are byte strings, Rust's are UTF-8: an argument, path or file
+/// name with bytes that are not UTF-8 would be rewritten by `to_string_lossy`.
+/// `os_text` keeps it lossless: every byte that is not part of valid UTF-8 (and
+/// every byte of the rare character that lives in the escape block itself)
+/// becomes one private-use character `U+10F880..=U+10F8FF`, so the mapping is
+/// a bijection on byte strings. [`text_os`] and [`out_bytes`] undo it at the
+/// operating-system boundary; [`json_text`] gives the Go JSON view (one
+/// `U+FFFD` per escaped byte).
+#[must_use]
+pub fn os_text(text: &std::ffi::OsStr) -> String {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        bytes_text(text.as_bytes())
+    }
+    #[cfg(not(unix))]
+    {
+        text.to_string_lossy().into_owned()
+    }
+}
+
+/// [`os_text`] for a byte string.
+#[must_use]
+pub fn bytes_text(mut bytes: &[u8]) -> String {
+    let mut out = String::with_capacity(bytes.len());
+    loop {
+        match std::str::from_utf8(bytes) {
+            Ok(valid) => {
+                push_valid(&mut out, valid);
+                return out;
+            }
+            Err(error) => {
+                let (valid, rest) = bytes.split_at(error.valid_up_to());
+                push_valid(
+                    &mut out,
+                    std::str::from_utf8(valid).expect("validated prefix"),
+                );
+                let bad = error.error_len().unwrap_or(rest.len());
+                for byte in &rest[..bad] {
+                    push_escaped(&mut out, *byte);
+                }
+                bytes = &rest[bad..];
+            }
+        }
+    }
+}
+
+fn push_valid(out: &mut String, valid: &str) {
+    for ch in valid.chars() {
+        if escaped(ch) {
+            let mut buffer = [0_u8; 4];
+            for byte in ch.encode_utf8(&mut buffer).bytes() {
+                push_escaped(out, byte);
+            }
+        } else {
+            out.push(ch);
+        }
+    }
+}
+
+/// The raw bytes behind a string made by [`os_text`].
+#[must_use]
+pub fn out_bytes(text: &str) -> std::borrow::Cow<'_, [u8]> {
+    if !text.chars().any(escaped) {
+        return std::borrow::Cow::Borrowed(text.as_bytes());
+    }
+    let mut bytes = Vec::with_capacity(text.len());
+    for ch in text.chars() {
+        if escaped(ch) {
+            bytes.push((u32::from(ch) - ESCAPE_BASE) as u8);
+        } else {
+            let mut buffer = [0_u8; 4];
+            bytes.extend_from_slice(ch.encode_utf8(&mut buffer).as_bytes());
+        }
+    }
+    std::borrow::Cow::Owned(bytes)
+}
+
+/// The operating-system string behind a string made by [`os_text`].
+#[must_use]
+pub fn text_os(text: &str) -> std::ffi::OsString {
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        std::ffi::OsString::from_vec(out_bytes(text).into_owned())
+    }
+    #[cfg(not(unix))]
+    {
+        std::ffi::OsString::from(text)
+    }
+}
+
+/// What Go's `encoding/json` makes of the bytes once a string has been
+/// serialized: each byte that is not UTF-8 is written as the escape `\ufffd`
+/// (a genuine `U+FFFD` stays a literal character).
+#[must_use]
+pub fn json_finish(serialized: &str) -> std::borrow::Cow<'_, str> {
+    if !serialized.chars().any(escaped) {
+        return std::borrow::Cow::Borrowed(serialized);
+    }
+    let mut out = String::with_capacity(serialized.len());
+    for ch in serialized.chars() {
+        if escaped(ch) {
+            out.push_str("\\ufffd");
+        } else {
+            out.push(ch);
+        }
+    }
+    std::borrow::Cow::Owned(out)
+}
+
+/// A path held as [`os_text`] text, as an operating-system path.
+#[must_use]
+pub fn text_path(text: &str) -> PathBuf {
+    PathBuf::from(text_os(text))
 }
 
 /// Go's `lazybuf`: the output is written lazily, and `diverged` records
@@ -312,6 +447,19 @@ pub fn path_error_text(operation: &str, path: &Path, error: &io::Error) -> Strin
     )
 }
 
+/// [`path_error`] for a path held as [`os_text`] text.
+#[must_use]
+pub fn path_error_str(operation: &str, path: &str, error: &io::Error) -> io::Error {
+    io::Error::new(
+        error.kind(),
+        format!(
+            "{operation} {}: {}",
+            go_clean(path, cfg!(windows)),
+            os_message(error, cfg!(windows))
+        ),
+    )
+}
+
 /// Wraps `error` so its `Display` is the Go path error, keeping the kind.
 #[must_use]
 pub fn path_error(operation: &str, path: &Path, error: &io::Error) -> io::Error {
@@ -370,6 +518,90 @@ pub fn read_dir(path: &Path) -> io::Result<fs::ReadDir> {
     fs::read_dir(path).map_err(|error| path_error("open", path, &error))
 }
 
+/// Go `os.MkdirAll(path, perm)`: creates every missing ancestor with `mode`
+/// (the umask still applies), never touches the mode of a directory that
+/// exists, and fails with `mkdir <path>: ...` naming the component that could
+/// not be created (a non-directory in the way is `not a directory`).
+///
+/// # Errors
+/// Returns the Go-formatted `mkdir` error.
+pub fn mkdir_all(path: &str, mode: u32) -> io::Result<()> {
+    if let Ok(meta) = fs::metadata(text_path(path)) {
+        if meta.is_dir() {
+            return Ok(());
+        }
+        #[cfg(unix)]
+        let not_a_directory = io::Error::from_raw_os_error(20);
+        #[cfg(not(unix))]
+        let not_a_directory = io::Error::from(io::ErrorKind::NotADirectory);
+        return Err(path_error_str("mkdir", path, &not_a_directory));
+    }
+    let bytes = path.as_bytes();
+    let mut end = bytes.len();
+    while end > 0 && is_path_separator(bytes[end - 1], cfg!(windows)) {
+        end -= 1;
+    }
+    let mut parent = end;
+    while parent > 0 && !is_path_separator(bytes[parent - 1], cfg!(windows)) {
+        parent -= 1;
+    }
+    if parent > 1 {
+        mkdir_all(&path[..parent - 1], mode)?;
+    }
+    match mkdir(&text_path(path), mode) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if fs::symlink_metadata(text_path(path)).is_ok_and(|meta| meta.is_dir()) {
+                return Ok(());
+            }
+            Err(path_error_str("mkdir", path, &error))
+        }
+    }
+}
+
+#[cfg(unix)]
+fn mkdir(path: &Path, mode: u32) -> io::Result<()> {
+    use std::os::unix::fs::DirBuilderExt;
+    fs::DirBuilder::new().mode(mode).create(path)
+}
+
+#[cfg(not(unix))]
+fn mkdir(path: &Path, _mode: u32) -> io::Result<()> {
+    fs::create_dir(path)
+}
+
+/// Go `filepath.Join` of two path strings: concatenated with a separator and
+/// lexically cleaned, so an absolute second element does not replace the first
+/// and `..` never reaches the file system.
+#[must_use]
+pub fn join(base: &str, element: &str) -> String {
+    go_clean(&format!("{base}/{element}"), cfg!(windows))
+}
+
+/// Go `os.OpenFile(path, O_WRONLY|O_CREATE|O_TRUNC, mode)` followed by a
+/// write: the mode applies (minus the umask) only when the file is created, and
+/// failures read `open <path>: ...` or `write <path>: ...`.
+///
+/// # Errors
+/// Returns the Go-formatted open or write error.
+pub fn write_file(path: &str, data: &[u8], mode: u32) -> io::Result<()> {
+    use io::Write;
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(mode);
+    }
+    #[cfg(not(unix))]
+    let _ = mode;
+    let mut file = options
+        .open(text_path(path))
+        .map_err(|error| path_error_str("open", path, &error))?;
+    file.write_all(data)
+        .map_err(|error| path_error_str("write", path, &error))
+}
+
 /// Go `os.Getwd` on Unix: `$PWD` wins when it is absolute and names the same
 /// directory as `.` (same device and inode), so a symlinked working directory
 /// keeps its symlink name. Otherwise the kernel's working directory is used.
@@ -407,16 +639,53 @@ fn getwd_with(pwd: Option<&std::ffi::OsStr>, dot: &Path) -> io::Result<PathBuf> 
 #[must_use]
 pub fn abs(path: &Path) -> PathBuf {
     if path.is_absolute() {
-        return PathBuf::from(clean(path));
+        return text_path(&clean(path));
     }
     match getwd() {
-        Ok(cwd) => PathBuf::from(clean(&cwd.join(path))),
+        Ok(cwd) => text_path(&clean(&cwd.join(path))),
         Err(_) => path.to_path_buf(),
     }
 }
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    #[cfg(unix)]
+    fn byte_escape_round_trips_every_byte_string_and_marks_only_invalid_bytes() {
+        use super::{escaped_byte, json_finish, os_text, out_bytes, text_os};
+        use std::os::unix::ffi::{OsStrExt, OsStringExt};
+        let samples: [&[u8]; 8] = [
+            b"plain",
+            b"\xff\xfe",
+            b"a\xe2\x82b",
+            "é界😀".as_bytes(),
+            // The reserved block itself is escaped byte for byte.
+            "\u{10f880}\u{10f8ff}".as_bytes(),
+            b"\xf4\x8f\xa2\x80",
+            b"",
+            b"\xc0\x80x\xed\xa0\x80",
+        ];
+        for sample in samples {
+            let text = os_text(std::ffi::OsStr::from_bytes(sample));
+            assert_eq!(out_bytes(&text).as_ref(), sample, "{sample:?}");
+            assert_eq!(text_os(&text).into_vec(), sample);
+        }
+        assert_eq!(os_text(std::ffi::OsStr::new("é界😀")), "é界😀");
+        assert_eq!(
+            escaped_byte(
+                os_text(std::ffi::OsStr::from_bytes(b"\xff"))
+                    .chars()
+                    .next()
+                    .unwrap()
+            ),
+            Some(0xff)
+        );
+        assert_eq!(
+            json_finish(&os_text(std::ffi::OsStr::from_bytes(b"a\xffb\xef\xbf\xbd"))),
+            "a\\ufffdb\u{fffd}"
+        );
+    }
     #[cfg(unix)]
     use super::getwd_with;
     use super::{clean, go_clean, os_message, path_error_text, read_dir, read_file};

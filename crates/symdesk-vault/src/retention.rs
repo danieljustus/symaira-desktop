@@ -677,6 +677,14 @@ pub fn append_history(vault_root: &Path, entry: &HistoryEntry) -> Result<(), Ret
     write_file_atomic(&path, &data, 0o644)
 }
 
+/// Go `time.Parse(time.RFC3339, value)`: the parsed instant or Go's diagnostic.
+///
+/// # Errors
+/// Returns the Go `time.ParseError` text when `value` is not RFC 3339.
+pub fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
+    json_decoder::parse_go_rfc3339(value)
+}
+
 /// Go: `retention.LoadHistory` — a missing file is an empty log, a `null` or
 /// non-array document is rejected rather than silently treated as empty.
 pub fn load_history(vault_root: &Path) -> Result<Vec<HistoryEntry>, RetentionError> {

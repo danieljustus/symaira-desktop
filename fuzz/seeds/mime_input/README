@@ -1,0 +1,3 @@
+Seeds derived from the Go-generated testdata/port/ingest/structured.json inputs
+(first byte selects the fuzz mode, see fuzz_targets/mime_input.rs). Pass the
+directory as an extra corpus: cargo fuzz run mime_input fuzz/corpus/mime_input fuzz/seeds/mime_input

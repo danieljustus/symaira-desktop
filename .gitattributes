@@ -2,20 +2,16 @@
 # identical across Windows, macOS, and Linux checkouts.
 *.sql text eol=lf
 
-# Go oracle and config-paths producer hash exact source and embedded-asset bytes.
+# Rust sources, manifests and embedded assets are hashed byte-exact.
 # Windows Git must not rewrite those bytes; binary assets and raw fixtures stay untouched.
-*.go text eol=lf
 *.rs text eol=lf
 Cargo.toml text eol=lf
 Cargo.lock text eol=lf
-/go.mod text eol=lf
-/go.sum text eol=lf
-/.goreleaser.yml text eol=lf
 /Dockerfile text eol=lf
 /VAULT.md text eol=lf
 /.github/workflows/release.yml text eol=lf
 /home-assistant-addon/symdesk/config.yaml text eol=lf
-/internal/pdf/internal/assets/** text=auto eol=lf
+/crates/symdesk-render/assets/pdf/** text=auto eol=lf
 /testdata/port/** -text
 
 # Generated JSON fixtures and retained evidence are byte-checked on every OS.
@@ -23,3 +19,5 @@ Cargo.lock text eol=lf
 /docs/rust-port/results/*.json text eol=lf
 /crates/symdesk-index/tests/data/dataset_sync_time/*.json text eol=lf
 /crates/symdesk-index/tests/data/dataset_sync_time/*.jsonl text eol=lf
+# Pure fixture input (the Go time probe, renamed from .go in RUST-019 so the tree has no Go source).
+/crates/symdesk-index/tests/data/dataset_sync_time/go_time_probe.go.txt text eol=lf

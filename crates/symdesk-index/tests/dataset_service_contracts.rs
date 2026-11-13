@@ -17,7 +17,7 @@ static COUNTER: AtomicU64 = AtomicU64::new(0);
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/service-sync.json");
 const TIME_OBSERVATIONS: &str = include_str!("data/dataset_sync_time/go_time_observations.json");
 const TIME_PROVENANCE: &str = include_str!("data/dataset_sync_time/provenance.json");
-const TIME_PROBE_SOURCE: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.go");
+const TIME_PROBE_SOURCE: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.go.txt");
 const TIME_PROBE_JSONL: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.jsonl");
 
 struct Sandbox {

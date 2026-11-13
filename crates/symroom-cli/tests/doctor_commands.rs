@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -20,7 +22,6 @@ use std::{
 
 use serde::Deserialize;
 use serde_json::value::RawValue;
-use sha2::{Digest, Sha256};
 use symroom_core::{event::Event, identity};
 
 #[derive(Deserialize)]
@@ -75,12 +76,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
     assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 5);
     for (path, expected) in &fixture.source_hashes {
-        let source = fs::read(root.join(path)).expect("read Go oracle source");
-        assert_eq!(
-            hex::encode(Sha256::digest(source)),
-            *expected,
-            "Go source: {path}"
-        );
+        oracle_sources::assert_recorded_source_hash(path, expected);
     }
 
     let seed = hex::decode(&fixture.identity_key).expect("identity seed");

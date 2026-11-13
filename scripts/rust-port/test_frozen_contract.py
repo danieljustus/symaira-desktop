@@ -22,6 +22,7 @@ b-differential:
 \tgo run ./scripts/rust-port/cmd/diffharness
 c-differential:
 \t$(CARGO) test -p a --locked
+all-differential: a-differential b-differential
 """
 OK = "test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out\n"
 
@@ -31,6 +32,14 @@ class FrozenContractControls(unittest.TestCase):
         return {"live_only": {"b-differential": "live"},
                 "replays": replays or {"cargo test -p a --locked": {"passed": 3, "ignored": 1}}}
 
+    def test_prebuilds_are_collected_only_from_differential_targets(self):
+        text = ("a-differential:\n\t$(CARGO) build -p x --examples --locked\n\t$(CARGO) test -p x\n"
+                "b-differential:\n\t$(CARGO) build -p x --examples --locked\n"
+                "build:\n\t$(CARGO) build --release\n")
+        self.assertEqual(runner.differential_prebuilds(text), ["cargo build -p x --examples --locked"])
+        real = (Path(__file__).resolve().parents[2] / "Makefile").read_text()
+        self.assertIn("cargo build -p symdesk-render --examples --locked", runner.differential_prebuilds(real))
+
     def test_parses_and_dedupes_cargo_replays(self):
         targets = runner.differential_targets(MAKEFILE)
         self.assertEqual(targets["a-differential"], ["cargo test -p a --locked"])
@@ -38,11 +47,48 @@ class FrozenContractControls(unittest.TestCase):
         commands, errors = runner.plan(targets, self.manifest())
         self.assertEqual((commands, errors), (["cargo test -p a --locked"], []))
 
+    def test_pure_aggregates_are_classified_through_their_prerequisites(self):
+        targets = runner.differential_targets(MAKEFILE)
+        self.assertIsNone(targets["all-differential"])
+        _, errors = runner.plan(targets, self.manifest())
+        self.assertEqual(errors, [])
+        manifest = self.manifest()
+        manifest["live_only"]["all-differential"] = "hidden"
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("all-differential: is a pure aggregate but is declared live_only", errors)
+        # A target with any recipe line is not an aggregate and needs a replay.
+        with_recipe = runner.differential_targets("x-differential: y-differential\n\t@echo hi\n")
+        self.assertEqual(with_recipe["x-differential"], [])
+
     def test_unclassified_live_target_fails(self):
         manifest = self.manifest()
         manifest["live_only"] = {}
         _, errors = runner.plan(runner.differential_targets(MAKEFILE), manifest)
         self.assertIn("b-differential: no Rust replay and not declared live_only", errors)
+
+    def test_recorded_counts_are_per_platform(self):
+        self.assertEqual(runner.recorded_counts({"passed": 3, "ignored": 0, "retries": 2}), (3, 0))
+        self.assertIsNone(runner.recorded_counts({}))
+        self.assertIsNone(runner.recorded_counts({"retries": 2}))
+        here = {"by_platform": {runner.sys.platform: {"passed": 1, "ignored": 2}}}
+        self.assertEqual(runner.recorded_counts(here), (1, 2))
+        self.assertIsNone(runner.recorded_counts({"by_platform": {"other-os": {"passed": 1, "ignored": 0}}}))
+
+    def test_retired_targets_need_a_reason_and_must_leave_the_makefile(self):
+        targets = runner.differential_targets(MAKEFILE)
+        manifest = self.manifest()
+        manifest["retired"] = {"gone-differential": "replaced by a-differential"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertEqual(errors, [])
+        manifest["retired"] = {"gone-differential": "  "}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("gone-differential: retired without a reason", errors)
+        manifest["retired"] = {"a-differential": "still there"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("a-differential: is retired but still defined in the Makefile", errors)
+        manifest["retired"] = {"b-differential": "dup"}
+        _, errors = runner.plan(targets, manifest)
+        self.assertIn("b-differential: is both retired and live_only", errors)
 
     def test_replayable_target_cannot_hide_as_live_only(self):
         manifest = self.manifest()
@@ -107,6 +153,8 @@ class FrozenContractControls(unittest.TestCase):
             go = bin_dir / "go"
             go.write_text("#!/bin/sh\nexit 0\n")
             go.chmod(go.stat().st_mode | stat.S_IXUSR)
+            (bin_dir / "qpdf").write_text("#!/bin/sh\nexit 0\n")
+            (bin_dir / "qpdf").chmod(0o755)
             root = Path(directory, "root")
             root.mkdir()
             saved = os.environ.get("PATH", "")
@@ -116,6 +164,9 @@ class FrozenContractControls(unittest.TestCase):
             finally:
                 os.environ["PATH"] = saved
             self.assertNotIn(str(bin_dir), env["PATH"].split(os.pathsep))
+            # The sibling tool stays reachable through a shadow directory; Go does not.
+            self.assertIsNotNone(shutil.which("qpdf", path=env["PATH"]))
+            self.assertIsNone(shutil.which("go", path=env["PATH"]))
             self.assertEqual(env["HOME"], str(root / "home"))
             self.assertTrue(env["XDG_CONFIG_HOME"].startswith(str(root)))
             self.assertNotIn("GOROOT", env)
@@ -125,6 +176,15 @@ class FrozenContractControls(unittest.TestCase):
         self.assertEqual(runner.mutate(raw, {"append": "\n"}), raw + b"\n")
         mutated = __import__("json").loads(runner.mutate(raw, {"increment": ["cases", -1, "n"]}))
         self.assertEqual(mutated["cases"], [{"n": 1}, {"n": 6}])
+
+    def test_string_mutation_and_platform_gate(self):
+        raw = b'{"a": [{"s": "x", "n": 1}]}'
+        mutated = __import__("json").loads(runner.mutate(raw, {"append_string": ["a", 0, "s"]}))
+        self.assertEqual(mutated["a"][0], {"s": "x~", "n": 1})
+        with self.assertRaises(ValueError):
+            runner.mutate(raw, {"append_string": ["a", 0, "n"]})
+        other = "linux" if runner.sys.platform != "linux" else "darwin"
+        self.assertEqual(runner.mutation_control({"fixture": "x", "command": "x", "platforms": [other]}, {}), 1)
 
     def test_recorded_manifest_covers_the_real_makefile(self):
         manifest = __import__("json").loads(runner.MANIFEST.read_text())

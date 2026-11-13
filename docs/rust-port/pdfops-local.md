@@ -136,3 +136,19 @@ not the failed safety gates or outstanding independent review.
 4. Draw DSL, layout, fonts/text metrics and SVG/PDF/PNG/GIF output contracts.
 5. Native target matrix, fuzz/resource gates and independent frozen-candidate
    review. Full RUST-011, RENDER-001/002/003 and Desktop migration remain open.
+
+## Hostile real-tool replay (RENDER-001, PASS (local) at d96e645d)
+
+`make render-pdfops-hostile-differential` (also part of `render-differential`)
+runs `scripts/rust-port/pdfops/hostile_replay.py`: 455 Go-oracle/Rust pairs
+through the production `ingest` facade with the installed pdfinfo, pdfseparate,
+pdfunite and qpdf, over the deterministic `hostile_inputs.py` corpus plus a
+96 MiB FlateDecode bomb and valid multi-page documents. It compares errors,
+whole-world side effects and the real qpdf/pdfinfo view of every output (bytes
+equal once the random `/ID` is neutralised), under wall-clock, file-size and
+output-size bounds, and rejects 5 comparator mutations and 3 injected qpdf
+faults. It found and fixed two Go-parity defects (errno text, `MkdirAll` error
+path). Evidence: macOS arm64 (poppler 26.10.0, qpdf 12.4.2) and Linux arm64
+container (poppler 24.02.0, qpdf 11.9.0) receipts in `target/local-gate/receipts.jsonl`.
+Raw outputs live under `<RENDER_EVIDENCE_ROOT>-pdfops-hostile`. Residual: x86_64
+Linux (closing CI) and fuzzing beyond the fixed corpus.

@@ -3,7 +3,7 @@ use crate::{emit_error, resolve_vault, write_go_json, write_stdout};
 use clap::{Arg, ArgMatches, Command};
 use serde_json::json;
 use std::{fs, io::Write, path::Path, process::ExitCode};
-use symdesk_index::{IndexedDocument, open_for_vault};
+use symdesk_index::{IndexedDocument, RetrievalMigration, open_for_vault};
 use symdesk_vault::{derive_original_path, go_path_error, parse_bytes};
 
 pub fn cli() -> Command {
@@ -18,56 +18,66 @@ pub fn cli() -> Command {
             ),
     )
 }
+/// Go's `slog` text line for a completed retrieval-index migration, printed on
+/// stderr by whichever command opened the vault's retrieval index first
+/// (`internal/retrieval`: "seeded per-vault retrieval index from standalone
+/// store" and "migrated pre-absorption retrieval index to per-vault location").
+pub fn log_retrieval_migration(event: &RetrievalMigration) {
+    let now = time::OffsetDateTime::now_utc();
+    let now = now.to_offset(crate::local_offset_at(now));
+    let format = time::format_description::parse_borrowed::<2>(
+        "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]",
+    )
+    .expect("static slog timestamp");
+    let stamp = now.format(&format).unwrap_or_default();
+    let zone = if now.offset() == time::UtcOffset::UTC {
+        "Z".to_owned()
+    } else {
+        now.format(
+            &time::format_description::parse_borrowed::<2>(
+                "[offset_hour sign:mandatory]:[offset_minute]",
+            )
+            .expect("static offset format"),
+        )
+        .unwrap_or_default()
+    };
+    let log_path = |p: &Path| {
+        let p = p.to_string_lossy();
+        if p.chars().any(char::is_whitespace) {
+            symdesk_vault::go_quote(&p)
+        } else {
+            p.into_owned()
+        }
+    };
+    let (message, first_key, first, second) = match event {
+        RetrievalMigration::SeededFromStandalone { standalone, new } => (
+            "seeded per-vault retrieval index from standalone store",
+            "standalone_path",
+            standalone,
+            new,
+        ),
+        RetrievalMigration::MigratedPreAbsorption { legacy, new } => (
+            "migrated pre-absorption retrieval index to per-vault location",
+            "legacy_path",
+            legacy,
+            new,
+        ),
+    };
+    let _ = writeln!(
+        std::io::stderr(),
+        "time={stamp}{zone} level=INFO msg=\"{message}\" {first_key}={} new_path={}",
+        log_path(first),
+        log_path(second)
+    );
+}
+
 fn delete_retrieval(root: &Path, path: &Path) -> Result<(), String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
     let temp = std::env::temp_dir();
-    let source = symdesk_index::store_retrieval_path_for_vault("", &environment, &cwd, &temp)
-        .map_err(|e| e.to_string())?;
-    let target = symdesk_index::store_retrieval_path_for_vault(
-        &root.to_string_lossy(),
-        &environment,
-        &cwd,
-        &temp,
-    )
-    .map_err(|e| e.to_string())?;
-    let migrated = source != target && source.is_file() && !target.exists();
     let retrieval =
         symdesk_index::open_retrieval_for_vault(&root.to_string_lossy(), &environment, &cwd, &temp)
             .map_err(|e| e.to_string())?;
-    if migrated {
-        let now = time::OffsetDateTime::now_utc();
-        let now = now.to_offset(crate::local_offset_at(now));
-        let format = time::format_description::parse_borrowed::<2>(
-            "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]",
-        )
-        .expect("static slog timestamp");
-        let stamp = now.format(&format).unwrap_or_default();
-        let zone = if now.offset() == time::UtcOffset::UTC {
-            "Z".to_owned()
-        } else {
-            now.format(
-                &time::format_description::parse_borrowed::<2>(
-                    "[offset_hour sign:mandatory]:[offset_minute]",
-                )
-                .expect("static offset format"),
-            )
-            .unwrap_or_default()
-        };
-        let log_path = |p: &Path| {
-            let p = p.to_string_lossy();
-            if p.chars().any(char::is_whitespace) {
-                symdesk_vault::go_quote(&p)
-            } else {
-                p.into_owned()
-            }
-        };
-        eprintln!(
-            "time={stamp}{zone} level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path={} new_path={}",
-            log_path(&source),
-            log_path(&target)
-        );
-    }
     // Retrieval indexes canonical local sources, unlike sidecar lexical keys.
     // Resolve the surviving parent after removal (e.g. macOS /var -> /private/var).
     retrieval

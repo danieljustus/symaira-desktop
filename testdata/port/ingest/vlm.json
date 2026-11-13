@@ -1,0 +1,1153 @@
+{
+ "cases": [
+  {
+   "scenario": {
+    "id": "success-png",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-jpeg",
+    "kind": "image/jpeg",
+    "file_name": "scan.jpg",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-tiff",
+    "kind": "image/tiff",
+    "file_name": "scan.tif",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-webp",
+    "kind": "image/webp",
+    "file_name": "scan.webp",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-custom-prompt-html-chars",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "Read \u003ceverything\u003e \u0026 \"quote\" it\u2028now",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Read \u003ceverything\u003e \u0026 \"quote\" it\u2028now",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-empty-model-uses-default",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Hello World\nZweite Zeile",
+    "MIME": "image/ocr",
+    "Engine": "vlm",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "llama3.1",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-blank-lines-and-missing-fields",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "",
+     "{\"response\":\"A\"}",
+     "",
+     "{\"model\":null,\"response\":null,\"done\":null}",
+     "{\"response\":\"B\",\"extra\":{\"x\":1}}",
+     "{\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "AB",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-empty-text",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"response\":\"   \\n \",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-no-chunks",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "success-unicode-and-escapes",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"response\":\"Gr\\u00f6\\u00dfe \\u20ac \",\"done\":false}",
+     "{\"response\":\"\\ud83d\\ude00 \\\"q\\\" \\\\ tab\\t\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Größe € 😀 \"q\" \\ tab",
+    "MIME": "image/ocr",
+    "Engine": "paddleocr-vl:0.9b",
+    "Language": ""
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "fallback-direct-pdf",
+    "kind": "application/pdf",
+    "file_name": "scan.pdf",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/scan.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-direct-heic",
+    "kind": "image/heic",
+    "file_name": "scan.heic",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/heic",
+    "Engine": "sips+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [],
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/scan.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001e",
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fconverted.png\u001fstdout\u001e$DIR/tmp/symingest-heic-N\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "unsupported-kind-docx",
+    "kind": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "file_name": "a.docx",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": null,
+   "error": "ocr: unsupported source kind \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\"",
+   "requests": [],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "unsupported-kind-text",
+    "kind": "text/plain",
+    "file_name": "a.txt",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": null,
+   "error": "ocr: unsupported source kind \"text/plain\"",
+   "requests": [],
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "fallback-404-model-not-found",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 404,
+    "body": "{\"error\":\"model 'paddleocr-vl:0.9b' not found, try pulling it first\"}",
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-404-model-not-found",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 404,
+    "body": "{\"error\":\"model 'paddleocr-vl:0.9b' not found, try pulling it first\"}",
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: model_not_found (status 404): {\"error\":\"model 'paddleocr-vl:0.9b' not found, try pulling it first\"}), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-500-plain",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 500,
+    "body": "boom",
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-500-plain",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 500,
+    "body": "boom",
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: provider_error (status 500): boom), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-503-empty",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 503,
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-503-empty",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 503,
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: provider_error (status 503)), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-401",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 401,
+    "body": "{\"error\":\"unauthorized\"}",
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-401",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 401,
+    "body": "{\"error\":\"unauthorized\"}",
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: auth_failure (status 401): {\"error\":\"unauthorized\"}), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-400-json-error",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 400,
+    "body": "{\"error\":\"bad request: unsupported image\"}",
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-400-json-error",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 400,
+    "body": "{\"error\":\"bad request: unsupported image\"}",
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: provider_error (status 400): {\"error\":\"bad request: unsupported image\"}), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-malformed-chunk",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"response\":\"partial\",\"done\":false}",
+     "not json at all"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-malformed-chunk",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"response\":\"partial\",\"done\":false}",
+     "not json at all"
+    ],
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: provider_error: decode generate chunk: invalid character 'o' in literal null (expecting 'u')), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-stream-aborted-midway",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "abort",
+    "status": 200,
+    "lines": [
+     "{\"response\":\"partial\",\"done\":false}"
+    ],
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [
+    {
+     "method": "POST",
+     "path": "/api/generate",
+     "content_type": "application/json",
+     "accept": "application/json",
+     "body": {
+      "images": [
+       "$FILE_B64"
+      ],
+      "model": "paddleocr-vl:0.9b",
+      "prompt": "Transcribe all text from this document image exactly as it appears.\nPreserve line breaks. Do not translate, summarize, or add commentary.\nOutput only the transcribed text — no preamble, no markdown formatting.",
+      "stream": true
+     },
+     "image_matches_file": true
+    }
+   ],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-connection-refused",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "refused",
+    "status": 200,
+    "fallback": "ok"
+   },
+   "result": {
+    "Text": "Fallback text",
+    "MIME": "image/ocr",
+    "Engine": "tesseract(vlm-fallback)",
+    "Language": "eng"
+   },
+   "error": "",
+   "requests": [],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "fallback-fails-connection-refused",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "refused",
+    "status": 200,
+    "fallback": "fail"
+   },
+   "result": null,
+   "error": "vlm ocr failed (ollama: llmkit: transport_error: Post \"http://$HOST/api/generate\": dial tcp $HOST: connect: connection refused), and tesseract fallback also failed: tesseract failed: tesseract: tesseract exploded",
+   "requests": [],
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "missing-image-file",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "file_b64": "iVBORw0KGgp2bG0taW1hZ2UtYnl0ZXMA/w==",
+    "missing_file": true,
+    "model": "paddleocr-vl:0.9b",
+    "prompt": "",
+    "mode": "stream",
+    "status": 200,
+    "lines": [
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"  Hello \",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"World\\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"Zweite Zeile  \\n\",\"done\":false}",
+     "{\"model\":\"paddleocr-vl:0.9b\",\"response\":\"\",\"done\":true}"
+    ],
+    "fallback": "ok"
+   },
+   "result": null,
+   "error": "vlm ocr: read image: open $DIR/in/scan.png: no such file or directory",
+   "requests": [],
+   "transcript": []
+  }
+ ],
+ "normalizations": [
+  "temp roots replaced by $DIR/$TMP; loopback host:port by $HOST; the request image by $FILE_B64 (image_matches_file proves equality)"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "scripts": {
+  "pdftoppm": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=P; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/pdftoppm.exit\" ]; then\n  [ -f \"$d/pdftoppm.err\" ] \u0026\u0026 cat \"$d/pdftoppm.err\" \u003e\u00262\n  exit \"$(cat \"$d/pdftoppm.exit\")\"\nfi\nprefix=$5\nwhile IFS= read -r name; do\n  [ -n \"$name\" ] \u0026\u0026 printf 'PNG-%s' \"$name\" \u003e \"$prefix-$name\"\ndone \u003c \"$d/pages\"\nexit 0\n",
+  "sips": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=S; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/sips.exit\" ]; then\n  [ -f \"$d/sips.err\" ] \u0026\u0026 cat \"$d/sips.err\" \u003e\u00262\n  exit \"$(cat \"$d/sips.exit\")\"\nfi\nout=$6\nprintf 'SIPS-PNG' \u003e \"$out\"\nexit 0\n",
+  "tesseract": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=T; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ \"$1\" = \"--list-langs\" ]; then\n  [ -f \"$d/langs.out\" ] \u0026\u0026 cat \"$d/langs.out\"\n  [ -f \"$d/langs.err\" ] \u0026\u0026 cat \"$d/langs.err\" \u003e\u00262\n  [ -f \"$d/langs.exit\" ] \u0026\u0026 exit \"$(cat \"$d/langs.exit\")\"\n  exit 0\nfi\nlang=$2\nimg=$3\nbase=$(basename \"$img\")\nif [ -f \"$d/sleep/$base\" ]; then exec sleep \"$(cat \"$d/sleep/$base\")\"; fi\nif [ -f \"$d/waitfor/$base\" ]; then\n  n=0\n  while [ $n -lt 200 ]; do\n    ok=1\n    while IFS= read -r want; do grep -q -F -- \"$want\" \"$d/log\" || ok=0; done \u003c \"$d/waitfor/$base\"\n    [ $ok = 1 ] \u0026\u0026 break\n    n=$((n+1)); sleep 0.05\n  done\nfi\nif [ -f \"$d/fail/$base\" ]; then\n  [ -s \"$d/fail/$base.err\" ] \u0026\u0026 cat \"$d/fail/$base.err\" \u003e\u00262\n  exit \"$(cat \"$d/fail/$base\")\"\nfi\nif [ -f \"$d/out/$lang/$base\" ]; then cat \"$d/out/$lang/$base\"; exit 0; fi\nif [ -f \"$d/out/$base\" ]; then cat \"$d/out/$base\"; exit 0; fi\nif [ -f \"$d/out/default\" ]; then cat \"$d/out/default\"; exit 0; fi\nexit 0\n"
+ },
+ "source_hashes": {
+  "vlm.go": "9e65bc6b6daee5913dada11ef0b40de608a9aafbf52a7c51cd06ab8856fb87a2",
+  "vlm_port_test.go": "c4631fb5c29b80316680c73a21bd858520f18fb27c03071621d42920c8f10e7d"
+ }
+}

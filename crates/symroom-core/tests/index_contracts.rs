@@ -1,10 +1,11 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::{fs, path::PathBuf};
 
 use rusqlite::Connection;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::{index, journal};
 
 #[derive(Deserialize)]
@@ -103,11 +104,9 @@ fn go_room_index_schema_replay_rebuild_queries_and_corruption() {
     )
     .expect("fixture JSON");
     assert_eq!(fixture.schema_version, 1);
-    let mut source = fs::read(root.join("internal/room/index/index.go")).expect("Go index source");
-    source.extend_from_slice(
-        &fs::read(root.join("internal/room/members/members.go")).expect("Go members source"),
-    );
-    assert_eq!(fixture.source_hash, hex::encode(Sha256::digest(source)));
+    // Concatenation of internal/room/index/index.go and
+    // internal/room/members/members.go at the last Go commit (36aad3d4).
+    oracle_sources::assert_recorded_source_hash("internal/room/index", &fixture.source_hash);
 
     let room = scratch("valid");
     let journal_dir = room.join("journal");

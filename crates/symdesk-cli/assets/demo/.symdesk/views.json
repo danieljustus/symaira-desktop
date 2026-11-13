@@ -1,0 +1,126 @@
+[
+  {
+    "id": "demo_open_invoices",
+    "name": "Open invoices",
+    "filters": [
+      {
+        "key": "document_type",
+        "operator": "equals",
+        "value": "invoice"
+      },
+      {
+        "key": "status",
+        "operator": "equals",
+        "value": "open"
+      }
+    ],
+    "sorts": [
+      {
+        "key": "document_date",
+        "ascending": false
+      }
+    ],
+    "columns": [
+      "_title",
+      "document_date",
+      "correspondent",
+      "due_date",
+      "confidence"
+    ]
+  },
+  {
+    "id": "demo_tax_2026",
+    "name": "Tax 2026",
+    "filters": [
+      {
+        "key": "document_type",
+        "operator": "equals",
+        "value": "tax_assessment"
+      }
+    ],
+    "sorts": [
+      {
+        "key": "document_date",
+        "ascending": false
+      }
+    ],
+    "columns": [
+      "_title",
+      "document_date",
+      "person",
+      "status",
+      "confidence"
+    ]
+  },
+  {
+    "id": "demo_needs_review",
+    "name": "Needs review",
+    "filters": [
+      {
+        "key": "status",
+        "operator": "equals",
+        "value": "needs_review"
+      }
+    ],
+    "sorts": [
+      {
+        "key": "confidence",
+        "ascending": true
+      }
+    ],
+    "columns": [
+      "_title",
+      "document_type",
+      "document_date",
+      "confidence"
+    ]
+  },
+  {
+    "id": "demo_invoice_gallery",
+    "name": "Invoice gallery",
+    "type": "gallery",
+    "group_by": "status",
+    "filters": [
+      {
+        "key": "document_type",
+        "operator": "equals",
+        "value": "invoice"
+      }
+    ],
+    "sorts": null,
+    "columns": [
+      "_title",
+      "correspondent",
+      "status",
+      "due_date"
+    ],
+    "source": "documents"
+  },
+  {
+    "id": "demo_document_timeline",
+    "name": "Document timeline",
+    "type": "timeline",
+    "date_property": "document_date",
+    "filters": null,
+    "sorts": null,
+    "columns": [
+      "_title",
+      "document_date",
+      "status"
+    ],
+    "source": "documents"
+  },
+  {
+    "id": "demo_document_list",
+    "name": "All documents",
+    "type": "list",
+    "filters": null,
+    "sorts": null,
+    "columns": [
+      "_title",
+      "document_type",
+      "status"
+    ],
+    "source": "documents"
+  }
+]

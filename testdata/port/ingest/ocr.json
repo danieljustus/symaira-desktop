@@ -1,0 +1,1707 @@
+{
+ "cases": [
+  {
+   "scenario": {
+    "id": "image-scan.png",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-scan.png"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-scan.png",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-scan.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-scan.jpg",
+    "kind": "image/jpeg",
+    "file_name": "scan.jpg",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-scan.jpg"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-scan.jpg",
+    "T\u001f-l\u001feng\u001fscan.jpg\u001fstdout\u001e$DIR/in\u001eprobe-image-scan.jpg"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-scan.tif",
+    "kind": "image/tiff",
+    "file_name": "scan.tif",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-scan.tif"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-scan.tif",
+    "T\u001f-l\u001feng\u001fscan.tif\u001fstdout\u001e$DIR/in\u001eprobe-image-scan.tif"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-scan.webp",
+    "kind": "image/webp",
+    "file_name": "scan.webp",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-scan.webp"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-scan.webp",
+    "T\u001f-l\u001feng\u001fscan.webp\u001fstdout\u001e$DIR/in\u001eprobe-image-scan.webp"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-name with spaces \u0026 ünï.png",
+    "kind": "image/png",
+    "file_name": "name with spaces \u0026 ünï.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-name with spaces \u0026 ünï.png"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-name with spaces \u0026 ünï.png",
+    "T\u001f-l\u001feng\u001fname with spaces \u0026 ünï.png\u001fstdout\u001e$DIR/in\u001eprobe-image-name with spaces \u0026 ünï.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image--dash.png",
+    "kind": "image/png",
+    "file_name": "-dash.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image--dash.png"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image--dash.png",
+    "T\u001f-l\u001feng\u001f-dash.png\u001fstdout\u001e$DIR/in\u001eprobe-image--dash.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-deu",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "deu",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-deu"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "deu"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-deu",
+    "T\u001f-l\u001fdeu\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-deu"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-deu-plus-eng",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "deu+eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-deu-plus-eng"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "deu+eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-deu-plus-eng",
+    "T\u001f-l\u001fdeu+eng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-deu-plus-eng"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-spaces",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": " eng + deu ",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-spaces"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": " eng + deu "
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-spaces",
+    "T\u001f-l\u001f eng + deu \u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-spaces"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-empty",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-empty"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-empty",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-empty"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-plus-only",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "+",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-plus-only"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "+"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-plus-only",
+    "T\u001f-l\u001f+\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-plus-only"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-missing-partial",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng+fra",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-missing-partial"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "Warning: tesseract language(s) [fra] not installed; falling back to \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-missing-partial",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-missing-partial"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-missing-all",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "fra+spa",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-missing-all"
+   },
+   "result": null,
+   "error": "none of the configured OCR languages \"fra+spa\" are installed (available: [deu eng osd])",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-missing-all"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-list-fails",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "fra",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.err": "boom",
+     "langs.exit": "3",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-list-fails"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "fra"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-list-fails",
+    "T\u001f-l\u001ffra\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-list-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-list-empty",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-list-empty"
+   },
+   "result": null,
+   "error": "none of the configured OCR languages \"eng\" are installed (available: [])",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-list-empty"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-lang-list-colon-filter",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages (2):\n eng \n\nscript/Latin\nfoo:bar\navailable-x\ndeu\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-lang-list-colon-filter"
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-lang-list-colon-filter",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-lang-list-colon-filter"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-german-retry",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "out/deu+eng/scan.png": "Neu erkannter Text mit Umlauten: Größe und Straße.\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-german-retry"
+   },
+   "result": {
+    "Text": "Neu erkannter Text mit Umlauten: Größe und Straße.",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "deu+eng"
+   },
+   "error": "",
+   "stderr": "OCR: document language looks German, re-running with \"deu+eng\" instead of \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-german-retry",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-german-retry"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-german-retry-unavailable",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages (2):\neng\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-german-retry-unavailable"
+   },
+   "result": {
+    "Text": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "Warning: tesseract language(s) [deu] not installed; falling back to \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-german-retry-unavailable",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-german-retry-unavailable"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-german-already-deu",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "deu",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-german-already-deu"
+   },
+   "result": {
+    "Text": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "deu"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-german-already-deu",
+    "T\u001f-l\u001fdeu\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-german-already-deu"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-german-retry-fails",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "fail/scan.png": "7",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-german-retry-fails"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: exit status 7",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-german-retry-fails",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-german-retry-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-fail-stderr",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "fail/scan.png": "2",
+     "fail/scan.png.err": "  Error in pixReadStream: bad format  \n\n",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-fail-stderr"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: Error in pixReadStream: bad format",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-fail-stderr",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-fail-stderr"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-fail-silent",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "fail/scan.png": "3",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-fail-silent"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: exit status 3",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-fail-silent",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-fail-silent"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-empty-output",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-empty-output"
+   },
+   "result": {
+    "Text": "",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-empty-output",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-empty-output"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-hyphen-output",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Dokumen-\nt mit Ab-\r\nsatz  und Tab\t\tende\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-hyphen-output"
+   },
+   "result": {
+    "Text": "Dokument mit Absatz und Tab ende",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-hyphen-output",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-hyphen-output"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-ctx-cancelled",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "cancelled",
+    "probe": "probe-image-ctx-cancelled"
+   },
+   "result": null,
+   "error": "context canceled",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-ctx-cancel-kills-tool",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n",
+     "sleep/scan.png": "20"
+    },
+    "ctx": "cancel-when:-l\u001feng\u001fscan.png",
+    "probe": "probe-image-ctx-cancel-kills-tool"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: signal: killed",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-ctx-cancel-kills-tool",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-ctx-cancel-kills-tool"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-missing",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "missing",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-missing"
+   },
+   "result": null,
+   "error": "tesseract not found on PATH: exec: \"$DIR/tools/no-such/tesseract\": stat $DIR/tools/no-such/tesseract: no such file or directory",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-empty-path",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "empty",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-empty-path"
+   },
+   "result": null,
+   "error": "tesseract command is not configured",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-dot-path",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "dot",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-dot-path"
+   },
+   "result": null,
+   "error": "tesseract command is not configured",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-dir",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "dir",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-dir"
+   },
+   "result": null,
+   "error": "tesseract not found on PATH: exec: \"$DIR/tools/tesseract\": is a directory",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-noexec",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "noexec",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-noexec"
+   },
+   "result": null,
+   "error": "tesseract not found on PATH: exec: \"$DIR/tools/tesseract\": permission denied",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-tesseract-badformat",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "badformat",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-tesseract-badformat"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: fork/exec $DIR/tools/tesseract: exec format error",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-env-probe-empty",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": ""
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001e",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001e"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-repeat-cache",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng+fra",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-repeat-cache",
+    "repeat": 2
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "Warning: tesseract language(s) [fra] not installed; falling back to \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-repeat-cache",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-cache",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-cache",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-cache"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-repeat-list-fails-cached",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.exit": "1",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-repeat-list-fails-cached",
+    "repeat": 1
+   },
+   "result": {
+    "Text": "Hello World\n\nSecond line",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-repeat-list-fails-cached",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-list-fails-cached",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-list-fails-cached"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-repeat-german-retry",
+    "kind": "image/png",
+    "file_name": "scan.png",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "out/deu+eng/scan.png": "Neu\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-repeat-german-retry",
+    "repeat": 1
+   },
+   "result": {
+    "Text": "Neu",
+    "MIME": "image/ocr",
+    "Engine": "tesseract",
+    "Language": "deu+eng"
+   },
+   "error": "",
+   "stderr": "OCR: document language looks German, re-running with \"deu+eng\" instead of \"eng\"\nOCR: document language looks German, re-running with \"deu+eng\" instead of \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-repeat-german-retry",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-german-retry",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-repeat-german-retry"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "image-unsupported-kind",
+    "kind": "text/plain",
+    "file_name": "scan.txt",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-unsupported-kind"
+   },
+   "result": null,
+   "error": "ocr: unsupported source kind \"text/plain\"",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "image-unsupported-kind-empty",
+    "kind": "",
+    "file_name": "scan.bin",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-image-unsupported-kind-empty"
+   },
+   "result": null,
+   "error": "ocr: unsupported source kind \"\"",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "pdf-three-pages",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "page text",
+     "out/page-1.png": "Seite eins\n",
+     "out/page-10.png": "Seite zehn\n",
+     "out/page-2.png": "Seite zwei\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-three-pages"
+   },
+   "result": {
+    "Text": "Seite eins\n\nSeite zehn\n\nSeite zwei",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-three-pages",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-three-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-three-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-10.png\u001fstdout\u001e$CWD\u001eprobe-pdf-three-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-three-pages"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-many-pages",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "out/page-01.png": "body of page 1\n",
+     "out/page-02.png": "body of page 2\n",
+     "out/page-03.png": "body of page 3\n",
+     "out/page-04.png": "body of page 4\n",
+     "out/page-05.png": "body of page 5\n",
+     "out/page-06.png": "body of page 6\n",
+     "out/page-07.png": "body of page 7\n",
+     "out/page-08.png": "body of page 8\n",
+     "out/page-09.png": "body of page 9\n",
+     "out/page-10.png": "body of page 10\n",
+     "out/page-11.png": "body of page 11\n",
+     "out/page-12.png": "body of page 12\n",
+     "pages": "01.png\n02.png\n03.png\n04.png\n05.png\n06.png\n07.png\n08.png\n09.png\n10.png\n11.png\n12.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-many-pages"
+   },
+   "result": {
+    "Text": "body of page 1\n\nbody of page 2\n\nbody of page 3\n\nbody of page 4\n\nbody of page 5\n\nbody of page 6\n\nbody of page 7\n\nbody of page 8\n\nbody of page 9\n\nbody of page 10\n\nbody of page 11\n\nbody of page 12",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-many-pages",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-01.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-02.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-03.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-04.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-05.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-06.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-07.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-08.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-09.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-10.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-11.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-12.png\u001fstdout\u001e$CWD\u001eprobe-pdf-many-pages"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-no-pages",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": ""
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-no-pages"
+   },
+   "result": {
+    "Text": "",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-no-pages",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-no-pages"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-non-png-artifacts",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "x",
+     "pages": "1.png\n2.PNG\n3.txt\n4.png.bak\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-non-png-artifacts"
+   },
+   "result": {
+    "Text": "x\nx",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-non-png-artifacts",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-non-png-artifacts",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-non-png-artifacts",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.PNG\u001fstdout\u001e$CWD\u001eprobe-pdf-non-png-artifacts"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-pdftoppm-fails",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n",
+     "pdftoppm.err": "Syntax Error: Couldn't read xref table\n",
+     "pdftoppm.exit": "1"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-pdftoppm-fails"
+   },
+   "result": null,
+   "error": "pdftoppm failed: pdftoppm: Syntax Error: Couldn't read xref table",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-pdftoppm-fails",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-pdftoppm-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-pdftoppm-fails-silent",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n",
+     "pdftoppm.exit": "9"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-pdftoppm-fails-silent"
+   },
+   "result": null,
+   "error": "pdftoppm failed: pdftoppm: exit status 9",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-pdftoppm-fails-silent",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-pdftoppm-fails-silent"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-pdftoppm-missing",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "missing",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-pdftoppm-missing"
+   },
+   "result": null,
+   "error": "pdftoppm not found on PATH: exec: \"$DIR/tools/no-such/pdftoppm\": stat $DIR/tools/no-such/pdftoppm: no such file or directory",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "pdf-pdftoppm-empty-path",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "empty",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-pdftoppm-empty-path"
+   },
+   "result": null,
+   "error": "pdftoppm command is not configured",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "pdf-tesseract-missing",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "missing",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-tesseract-missing"
+   },
+   "result": null,
+   "error": "tesseract not found on PATH: exec: \"$DIR/tools/no-such/tesseract\": stat $DIR/tools/no-such/tesseract: no such file or directory",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "pdf-page-fails",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "fail/page-2.png": "4",
+     "fail/page-2.png.err": "page two broke\n",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n2.png\n3.png\n",
+     "waitfor/page-2.png": "page-1.png\npage-3.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-page-fails"
+   },
+   "result": null,
+   "error": "tesseract failed for page page-2.png: tesseract: page two broke",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-page-fails",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-page-fails",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-page-fails",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-page-fails",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-3.png\u001fstdout\u001e$CWD\u001eprobe-pdf-page-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-german-retry",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "out/deu+eng/page-1.png": "Erste Seite mit Größe\n",
+     "out/deu+eng/page-2.png": "Zweite Seite\n",
+     "pages": "1.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-german-retry"
+   },
+   "result": {
+    "Text": "Erste Seite mit Größe\n\nZweite Seite",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "deu+eng"
+   },
+   "error": "",
+   "stderr": "OCR: document language looks German, re-running with \"deu+eng\" instead of \"eng\"\n",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-german-retry",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-german-retry",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-german-retry",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-german-retry"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-lang-missing-all",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "fra",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-lang-missing-all"
+   },
+   "result": null,
+   "error": "none of the configured OCR languages \"fra\" are installed (available: [deu eng osd])",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-lang-missing-all"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-ctx-cancelled",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "cancelled",
+    "probe": "probe-pdf-ctx-cancelled"
+   },
+   "result": null,
+   "error": "context canceled",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "pdf-ctx-cancel-kills-page",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n",
+     "sleep/page-1.png": "20"
+    },
+    "ctx": "cancel-when:page-1.png",
+    "probe": "probe-pdf-ctx-cancel-kills-page"
+   },
+   "result": null,
+   "error": "tesseract failed for page page-1.png: tesseract: signal: killed",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "pdf-empty-text-pages",
+    "kind": "application/pdf",
+    "file_name": "doc.pdf",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "",
+     "pages": "1.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-pdf-empty-text-pages"
+   },
+   "result": {
+    "Text": "",
+    "MIME": "application/pdf",
+    "Engine": "pdftoppm+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-empty-text-pages",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-empty-text-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-empty-text-pages",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-empty-text-pages"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "heic-ok",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "from heic\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-ok"
+   },
+   "result": {
+    "Text": "from heic",
+    "MIME": "image/heic",
+    "Engine": "sips+tesseract",
+    "Language": "eng"
+   },
+   "error": "",
+   "stderr": "",
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/photo.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001eprobe-heic-ok",
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-heic-ok",
+    "T\u001f-l\u001feng\u001fconverted.png\u001fstdout\u001e$DIR/tmp/symingest-heic-N\u001eprobe-heic-ok"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "heic-sips-fails",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n",
+     "sips.err": "Error: unsupported\n",
+     "sips.exit": "13"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-sips-fails"
+   },
+   "result": null,
+   "error": "sips HEIC conversion failed: sips: Error: unsupported",
+   "stderr": "",
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/photo.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001eprobe-heic-sips-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "heic-sips-missing",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "missing",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-sips-missing"
+   },
+   "result": null,
+   "error": "sips not found on PATH; HEIC/HEIF OCR requires macOS sips conversion before tesseract: exec: \"$DIR/tools/no-such/sips\": stat $DIR/tools/no-such/sips: no such file or directory",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "heic-sips-empty",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "empty",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-sips-empty"
+   },
+   "result": null,
+   "error": "sips command is not configured",
+   "stderr": "",
+   "transcript": null
+  },
+  {
+   "scenario": {
+    "id": "heic-tesseract-fails",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "fail/converted.png": "5",
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-tesseract-fails"
+   },
+   "result": null,
+   "error": "tesseract failed: tesseract: exit status 5",
+   "stderr": "",
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/photo.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001eprobe-heic-tesseract-fails",
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-heic-tesseract-fails",
+    "T\u001f-l\u001feng\u001fconverted.png\u001fstdout\u001e$DIR/tmp/symingest-heic-N\u001eprobe-heic-tesseract-fails"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "heic-tesseract-missing",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "missing",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-tesseract-missing"
+   },
+   "result": null,
+   "error": "tesseract not found on PATH: exec: \"$DIR/tools/no-such/tesseract\": stat $DIR/tools/no-such/tesseract: no such file or directory",
+   "stderr": "",
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/photo.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001eprobe-heic-tesseract-missing"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "heic-german-retry",
+    "kind": "image/heic",
+    "file_name": "photo.heic",
+    "lang": "eng",
+    "tesseract": "ok",
+    "pdftoppm": "ok",
+    "sips": "ok",
+    "files": {
+     "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
+     "out/default": "Der Vertrag und die Rechnung wurden nicht bezahlt, weil das Konto leer ist und der Kunde die Ware nicht erhalten hat. Es ist ein Problem mit der Lieferung und mit den Zahlungen der Firma.",
+     "out/deu+eng/converted.png": "Neu\n",
+     "pages": "1.png\n10.png\n2.png\n"
+    },
+    "ctx": "background",
+    "probe": "probe-heic-german-retry"
+   },
+   "result": {
+    "Text": "Neu",
+    "MIME": "image/heic",
+    "Engine": "sips+tesseract",
+    "Language": "deu+eng"
+   },
+   "error": "",
+   "stderr": "OCR: document language looks German, re-running with \"deu+eng\" instead of \"eng\"\n",
+   "transcript": [
+    "S\u001f-s\u001fformat\u001fpng\u001f$DIR/in/photo.heic\u001f--out\u001f$DIR/tmp/symingest-heic-N/converted.png\u001e$CWD\u001eprobe-heic-german-retry",
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-heic-german-retry",
+    "T\u001f-l\u001feng\u001fconverted.png\u001fstdout\u001e$DIR/tmp/symingest-heic-N\u001eprobe-heic-german-retry",
+    "T\u001f-l\u001fdeu+eng\u001fconverted.png\u001fstdout\u001e$DIR/tmp/symingest-heic-N\u001eprobe-heic-german-retry"
+   ]
+  }
+ ],
+ "normalizations": [
+  "temp roots replaced by $DIR (case) and $TMP (TMPDIR); symingest-pdf/heic-\u003crandom\u003e by symingest-pdf-N",
+  "consecutive per-page tesseract invocations sorted (4-way concurrent in Go)",
+  "invalid UTF-8 in Go result strings encoded using encoding/json replacement semantics"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "scripts": {
+  "pdftoppm": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=P; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/pdftoppm.exit\" ]; then\n  [ -f \"$d/pdftoppm.err\" ] \u0026\u0026 cat \"$d/pdftoppm.err\" \u003e\u00262\n  exit \"$(cat \"$d/pdftoppm.exit\")\"\nfi\nprefix=$5\nwhile IFS= read -r name; do\n  [ -n \"$name\" ] \u0026\u0026 printf 'PNG-%s' \"$name\" \u003e \"$prefix-$name\"\ndone \u003c \"$d/pages\"\nexit 0\n",
+  "sips": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=S; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/sips.exit\" ]; then\n  [ -f \"$d/sips.err\" ] \u0026\u0026 cat \"$d/sips.err\" \u003e\u00262\n  exit \"$(cat \"$d/sips.exit\")\"\nfi\nout=$6\nprintf 'SIPS-PNG' \u003e \"$out\"\nexit 0\n",
+  "tesseract": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=T; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ \"$1\" = \"--list-langs\" ]; then\n  [ -f \"$d/langs.out\" ] \u0026\u0026 cat \"$d/langs.out\"\n  [ -f \"$d/langs.err\" ] \u0026\u0026 cat \"$d/langs.err\" \u003e\u00262\n  [ -f \"$d/langs.exit\" ] \u0026\u0026 exit \"$(cat \"$d/langs.exit\")\"\n  exit 0\nfi\nlang=$2\nimg=$3\nbase=$(basename \"$img\")\nif [ -f \"$d/sleep/$base\" ]; then exec sleep \"$(cat \"$d/sleep/$base\")\"; fi\nif [ -f \"$d/waitfor/$base\" ]; then\n  n=0\n  while [ $n -lt 200 ]; do\n    ok=1\n    while IFS= read -r want; do grep -q -F -- \"$want\" \"$d/log\" || ok=0; done \u003c \"$d/waitfor/$base\"\n    [ $ok = 1 ] \u0026\u0026 break\n    n=$((n+1)); sleep 0.05\n  done\nfi\nif [ -f \"$d/fail/$base\" ]; then\n  [ -s \"$d/fail/$base.err\" ] \u0026\u0026 cat \"$d/fail/$base.err\" \u003e\u00262\n  exit \"$(cat \"$d/fail/$base\")\"\nfi\nif [ -f \"$d/out/$lang/$base\" ]; then cat \"$d/out/$lang/$base\"; exit 0; fi\nif [ -f \"$d/out/$base\" ]; then cat \"$d/out/$base\"; exit 0; fi\nif [ -f \"$d/out/default\" ]; then cat \"$d/out/default\"; exit 0; fi\nexit 0\n"
+ },
+ "source_hashes": {
+  "ocr.go": "be98588e06bda109fa59406b9e1296339028363cfbb31737bcb46e53eea553d2",
+  "ocr_port_test.go": "7919fae56dcb50de93ff59da5356c10e372358e0edf845cb4afc73e8bc910acd"
+ }
+}

@@ -1,0 +1,58 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj
+<< /Length 769 >>
+stream
+BT
+/F1 16 Tf
+72 740 Td
+(Kontoauszug Sparkasse Januar 2026) Tj
+/F1 11 Tf
+0 -30 Td
+(# Kontoauszug – Sparkasse Beispielstadt) Tj
+0 -16 Td
+(**Kontonummer:** DE89 3704 0044 0532 0130 00) Tj
+0 -16 Td
+(**Zeitraum:** 01.01.2026 – 31.01.2026) Tj
+0 -16 Td
+(| Datum | Buchungstext | Betrag |) Tj
+0 -16 Td
+(|-------|-------------|--------|) Tj
+0 -16 Td
+(| 02.01. | Gehalt Musterfirma GmbH | +3.200,00 € |) Tj
+0 -16 Td
+(| 05.0 | Miete Wohnung | -850,00 € |) Tj
+0 -16 Td
+(| 10.01. | Versicherung AG | -120,00 € |) Tj
+0 -16 Td
+(| 15.01. | Lebensmittel | -234,56 € |) Tj
+0 -16 Td
+(| 20.01. | Strom Stadtwerke | -95,00 € |) Tj
+0 -16 Td
+(**Kontostand:** 2.150,44 €) Tj
+0 -16 Td
+(**Hinweis:** Dies ist ein simulierter Kontoauszug zu Demonstrationszwecken.) Tj
+0 -16 Td
+ET
+
+endstream endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001061 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1131
+%%EOF

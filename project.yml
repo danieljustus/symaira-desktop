@@ -12,16 +12,16 @@ options:
 packages:
   symaira-corekit:
     url: https://github.com/danieljustus/symaira-corekit.git
-    # 0.20.0 — AppKit merged into symaira-corekit (ADR 0006); product and
-    # module names unchanged, no Swift source change vs appkit 0.18.1.
-    exactVersion: 0.20.0
+    # AppKit lives in symaira-corekit (ADR 0006); since 0.21.0 the Swift
+    # sources are under swift/. Product and module names are unchanged.
+    exactVersion: 0.21.0
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
   # room/client is the SwiftUI module for the signed project journal. symroom
   # ships as a binary in the symdesk release (it is the one absorbed tool with
   # no in-process call site), so this module bridges the CLI rather than
-  # linking Go code. Its appkit pin matches the shared exact-pinned graph.
+  # linking Rust code. Its corekit pin matches the shared exact-pinned graph.
   symaira-room-client:
     path: room/client
 

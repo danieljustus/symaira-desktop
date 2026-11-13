@@ -1,0 +1,9 @@
+Content-Length: 54
+
+{"jsonrpc":"2.0","method":"notifications/initialized"}Content-Length: 54
+
+{"jsonrpc":"2.0","method":"notifications/initialized"}Content-Length: 54
+
+{"jsonrpc":"2.0","method":"notifications/initialized"}Content-Length: 46
+
+{"jsonrpc":"2.0","id":1,"method":"initialize"}

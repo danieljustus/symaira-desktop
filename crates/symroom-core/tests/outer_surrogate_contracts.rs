@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::{
     collections::BTreeMap,
     fs,
@@ -8,7 +10,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::{
     event::{self, Event},
     journal::{VerifyChainError, verify_chain},
@@ -53,7 +54,7 @@ fn go_outer_surrogate_event_boundary() {
     .expect("Go-owned outer surrogate fixture parses");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 45, "nonempty, complete oracle corpus");
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let _root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     assert_eq!(fixture.source_hashes.len(), 5);
     for source in [
         "internal/room/event/event.go",
@@ -62,10 +63,12 @@ fn go_outer_surrogate_event_boundary() {
         "internal/room/room/port_identity_event_contract_test.go",
         "internal/room/room/port_outer_surrogate_contract_test.go",
     ] {
-        assert_eq!(
-            hex::encode(Sha256::digest(fs::read(root.join(source)).unwrap())),
-            fixture.source_hashes[source],
-            "{source}: Go oracle source drift"
+        oracle_sources::assert_recorded_source_hash(
+            source,
+            fixture
+                .source_hashes
+                .get(source)
+                .unwrap_or_else(|| panic!("missing source hash for {source}")),
         );
     }
     let public_key = hex::decode(fixture.public_key).unwrap();

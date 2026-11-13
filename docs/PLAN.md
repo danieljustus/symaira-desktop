@@ -38,7 +38,7 @@
 ## 0. Kontext in 10 Zeilen (für die abarbeitende KI)
 
 - `symdesk` ist die **Kompositions-Schale** des Symaira-Ökosystems: eine local-first Arbeitsoberfläche über **einem Plain-Markdown-Vault** (Obsidian-kompatibler Ordner, iCloud-syncbar).
-- **Zwei Artefakte, ein Repo:** Go-Binary `symdesk` (CLI + MCP-Server + Service-Schicht, CGO-frei) und native SwiftUI-macOS-App `SymDesk.app` (auf [`symaira-appkit`](https://github.com/danieljustus/symaira-appkit), exakt gepinnt).
+- **Zwei Artefakte, ein Repo:** Go-Binary `symdesk` (CLI + MCP-Server + Service-Schicht, CGO-frei) und native SwiftUI-macOS-App `SymDesk.app` (auf AppKit in [`symaira-corekit`](https://github.com/danieljustus/symaira-corekit) unter `swift/`, exakt gepinnt; das frühere `symaira-appkit` ist archiviert).
 - **Browser-Zugriff geplant.** Der frühere Entscheid "Keine Web-UI" ist revidiert. Eine server-gerenderte Lese-Oberfläche, eingebettet im `symdesk`-Binary, ist als nächster Schritt akzeptiert; Details stehen in [`BROWSER-ACCESS.md`](./BROWSER-ACCESS.md).
 - Die App spricht mit dem Core **nur** über Subprozesse: kurze `symdesk … --json`-Calls (appkit-`CLIRunner`) plus **einen** langlaufenden `symdesk events --json`-NDJSON-Stream. Kein HTTP, kein Socket.
 - Der Core **komponiert** Geschwister-Tools zur Laufzeit per PATH-Probe (nie Compile-Time-Import): `symseek` (Suche), `symmemory` (RAG/Graph), `symfetch` (Web→MD), `symvault` (Secrets, `op://`-Schema), `symingest` (OCR/Ingest, hat eigenes `mcp`).
@@ -144,7 +144,7 @@ CI grün auf main.
 
 **Aufgaben:**
 1. `project.yml` (XcodeGen) nach Vorbild `../symaira-tune` bzw. `../symaira-terminal`; App-Target `SymDesk` (macOS 14+, Swift 6 strict concurrency). Kein Mac App Store; Distribution später als notarisiertes DMG/Cask.
-2. `symaira-appkit` **exakt** pinnen (`.package(url:…, exact: "x.y.z")` — aktuellste Version nehmen; lokale Entwicklung darf `path:` nutzen, gemergter Stand muss auf einen Tag zeigen).
+2. `symaira-corekit` (Swift-Package AppKit) **exakt** pinnen (`.package(url:…, exact: "x.y.z")`: aktuellste Version nehmen; lokale Entwicklung darf `path:` nutzen, gemergter Stand muss auf einen Tag zeigen).
 3. Core-Anbindung: `SymairaToolRegistry`/`BinaryLocator` zum Auffinden von `symdesk` (dazu **appkit-PR: `symdesk`-Eintrag in die Registry**, `mcpArgs: ["mcp"]` — inkl. Test-Update `testRegistryContainsAllKnownTools`); Aufrufe via `SymairaCLIRunner` (`runDecoding`, snake_case). `requireSchemaVersion(1)` gegen `symdesk version --json`.
 4. Events: ein langlaufender `Process` für `symdesk events --json`, Zeilen als `AsyncSequence` in einen `@Observable`-Store.
 5. UI v0: Sidebar (Vault-Baum aus `ls --json`), Datei-Auswahl zeigt rohen Markdown-Inhalt (direktes File-Read), Statusleiste zeigt Core-Version + erkannte Geschwister (`doctor --json`). `SymairaTheme` anwenden.

@@ -1,0 +1,3915 @@
+{
+ "cases": [
+  {
+   "scenario": {
+    "id": "clean-with-store",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 3
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "clean-notes-only",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 3
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "clean-with-target-override",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "target_vault": "\u003cVAULT\u003e",
+      "target_archive": "\u003cARCHIVE\u003e"
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 3
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "missing-note",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "rm-note",
+      "doc": 2
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 2,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 2,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "missing-archive",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "rm-archive",
+      "doc": 1
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "hash_mismatch": [
+       1,
+       1
+      ],
+      "missing_archive": [
+       1,
+       1
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "hash_mismatch": [
+       1
+      ],
+      "missing_archive": [
+       1
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "corrupt-archive-hash-mismatch",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "corrupt-archive",
+      "doc": 2
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "hash_mismatch": [
+       2,
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "hash_mismatch": [
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "edited-note-metadata",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "edit-note",
+      "doc": 1,
+      "find": "- financial",
+      "replace": "- finance"
+     },
+     {
+      "op": "edit-note",
+      "doc": 1,
+      "find": "correspondent: Acme Corp",
+      "replace": "correspondent: Other"
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "Acme Corp",
+        "field": "correspondent",
+        "got": "Other"
+       },
+       {
+        "document_id": 1,
+        "expected": "financial,tax",
+        "field": "tags",
+        "got": "finance,tax"
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "Acme Corp",
+        "field": "correspondent",
+        "got": "Other"
+       },
+       {
+        "document_id": 1,
+        "expected": "financial,tax",
+        "field": "tags",
+        "got": "finance,tax"
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "edited-note-created-and-storage",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "edit-note",
+      "doc": 1,
+      "find": "storage_path: Finance/2026",
+      "replace": "storage_path: Elsewhere"
+     },
+     {
+      "op": "edit-note",
+      "doc": 1,
+      "find": "created: 2026-03-01T09:30:00Z",
+      "replace": "created: 2025-01-01T00:00:00Z"
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "2026-03-01T09:30:00Z",
+        "field": "created",
+        "got": "2025-01-01T00:00:00Z"
+       },
+       {
+        "document_id": 1,
+        "expected": "Finance/2026",
+        "field": "storage_path",
+        "got": "Elsewhere"
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "duplicate-note-copy",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "copy-note",
+      "doc": 3
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duplicate": [
+       3
+      ],
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 4,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duplicate": [
+       3
+      ],
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 4,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "foreign-files-ignored",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "write-file",
+      "path": "vault/plain.md",
+      "content": "# no frontmatter\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/broken.md",
+      "content": "---\n: : [unclosed\n---\nbody\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/ordinary.md",
+      "content": "---\nsource_path: /x\nsha256: ab\nmime: text/plain\ntags: []\ncategory: c\narchive_path: /a\ningested_at: 2026-01-01T00:00:00Z\n---\nbody\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/zero-id.md",
+      "content": "---\nsource_path: /x\npaperless:\n  document_id: 0\n---\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/not-markdown.txt",
+      "content": "---\npaperless:\n  document_id: 2\n---\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/UPPER.MD",
+      "content": "---\nsource_path: /u\npaperless:\n  document_id: 777\n---\n"
+     },
+     {
+      "op": "write-file",
+      "path": "vault/unterminated.md",
+      "content": "---\nsource_path: /x\n"
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 4,
+      "verified": 3
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 4,
+      "verified": 3
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "state-failed-counts-as-missing",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "state-status",
+      "doc": 2,
+      "status": "failed"
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "state-pending",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "state-status",
+      "doc": 1,
+      "status": "pending"
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       1
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "state-only-note-moved",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "rm-note",
+      "doc": 3
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       3
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 2,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "vault-override-missing-dir",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "vault_override": "missing"
+     },
+     {
+      "use_store": false,
+      "vault_override": "missing"
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "Acme Corp",
+        "field": "correspondent",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "2026-03-01T09:30:00Z",
+        "field": "created",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "Invoice",
+        "field": "document_type",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "Finance/2026",
+        "field": "storage_path",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "financial,tax",
+        "field": "tags",
+        "got": ""
+       },
+       {
+        "document_id": 2,
+        "expected": "2026-02-15T09:30:00Z",
+        "field": "created",
+        "got": ""
+       },
+       {
+        "document_id": 2,
+        "expected": "financial",
+        "field": "tags",
+        "got": ""
+       },
+       {
+        "document_id": 3,
+        "expected": "2026-01-20T09:30:00Z",
+        "field": "created",
+        "got": ""
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 0,
+      "verified": 0
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       1,
+       2,
+       3
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 0,
+      "verified": 0
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "vault-override-file",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": false,
+      "vault_override": "file"
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       1,
+       2,
+       3
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 0,
+      "verified": 0
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "vault-override-empty-string",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "vault_override": "none"
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "Acme Corp",
+        "field": "correspondent",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "2026-03-01T09:30:00Z",
+        "field": "created",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "Invoice",
+        "field": "document_type",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "Finance/2026",
+        "field": "storage_path",
+        "got": ""
+       },
+       {
+        "document_id": 1,
+        "expected": "financial,tax",
+        "field": "tags",
+        "got": ""
+       },
+       {
+        "document_id": 2,
+        "expected": "2026-02-15T09:30:00Z",
+        "field": "created",
+        "got": ""
+       },
+       {
+        "document_id": 2,
+        "expected": "financial",
+        "field": "tags",
+        "got": ""
+       },
+       {
+        "document_id": 3,
+        "expected": "2026-01-20T09:30:00Z",
+        "field": "created",
+        "got": ""
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 0,
+      "verified": 0
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "deep-verify-clean",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "deep": true
+     },
+     {
+      "use_store": false,
+      "deep": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "deep_verified": 3,
+      "deep_verify": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 3
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": true,
+      "deep_verified": 3,
+      "deep_verify": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 3
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "deep-verify-source-changed",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "deep": true,
+      "routes_after": [
+       {
+        "path": "/api/documents/2/download/",
+        "status": 200,
+        "headers": {
+         "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+         "Content-Type": "application/pdf"
+        },
+        "body": "",
+        "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBjaGFuZ2VkIHVwc3RyZWFtCg=="
+       }
+      ]
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "deep_verified": 2,
+      "deep_verify": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_hash_mismatch": [
+       2
+      ],
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "deep-verify-download-fails",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": false,
+      "deep": true,
+      "routes_after": [
+       {
+        "path": "/api/documents/1/download/",
+        "status": 500,
+        "headers": {
+         "Content-Type": "text/plain"
+        },
+        "body": "",
+        "body_b64": "Ym9vbQ=="
+       }
+      ]
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "deep_verified": 2,
+      "deep_verify": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mismatches": [
+       {
+        "document_id": 1,
+        "expected": "readable",
+        "field": "source_download",
+        "got": "API error 500 Internal Server Error: boom"
+       }
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "deep-verify-skips-missing-archive",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "rm-archive",
+      "doc": 2
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": true,
+      "deep": true
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "deep_verified": 2,
+      "deep_verify": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "hash_mismatch": [
+       2,
+       2
+      ],
+      "missing_archive": [
+       2,
+       2
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "selection-ids",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "ids": [
+       2,
+       1
+      ]
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 2,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "selection-limit",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "limit": 2
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 2,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 3,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "selection-unknown-id-fails",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "ids": [
+       1,
+       404
+      ]
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "error": "get document 404: API error 404 Not Found"
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "lookup-failure",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true,
+      "routes_after": [
+       {
+        "path": "/api/tags/",
+        "status": 500,
+        "headers": {
+         "Content-Type": "application/json"
+        },
+        "body": "{\"detail\":\"down\"}"
+       }
+      ]
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "error": "load lookup maps: list tags: API error 500 Internal Server Error: {\"detail\":\"down\"}"
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "duplicate-content-informational",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"4.pdf\",\"created\":\"2026-03-04T09:30:00Z\",\"created_date\":\"2026-03-04\",\"id\":4,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-4.pdf\",\"page_count\":2,\"title\":\"First\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"5.pdf\",\"created\":\"2026-03-05T09:30:00Z\",\"created_date\":\"2026-03-05\",\"id\":5,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-5.pdf\",\"page_count\":2,\"title\":\"Second\"}]}"
+     },
+     {
+      "path": "/api/documents/4/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"4.pdf\",\"created\":\"2026-03-04T09:30:00Z\",\"created_date\":\"2026-03-04\",\"id\":4,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-4.pdf\",\"page_count\":2,\"title\":\"First\"}"
+     },
+     {
+      "path": "/api/documents/5/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"5.pdf\",\"created\":\"2026-03-05T09:30:00Z\",\"created_date\":\"2026-03-05\",\"id\":5,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-5.pdf\",\"page_count\":2,\"title\":\"Second\"}"
+     },
+     {
+      "path": "/api/documents/4/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-4.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBzYW1lCg=="
+     },
+     {
+      "path": "/api/documents/5/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-5.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBzYW1lCg=="
+     }
+    ],
+    "engine": "ok",
+    "mutations": null,
+    "verifies": [
+     {
+      "use_store": true
+     },
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 2,
+   "verifies": [
+    {
+     "report": {
+      "complete": true,
+      "duplicate_content": [
+       5
+      ],
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 2,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 2,
+      "verified": 2
+     },
+     "error": ""
+    },
+    {
+     "report": {
+      "complete": true,
+      "duplicate_content": [
+       5
+      ],
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 2,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 2,
+      "verified": 2
+     },
+     "error": ""
+    }
+   ]
+  },
+  {
+   "scenario": {
+    "id": "unimported-documents-missing",
+    "routes": [
+     {
+      "path": "/api/tags/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":1,\"name\":\"financial\"},{\"id\":2,\"name\":\"tax\"}]}"
+     },
+     {
+      "path": "/api/correspondents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":3,\"name\":\"Acme Corp\"}]}"
+     },
+     {
+      "path": "/api/document_types/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":1,\"next\":null,\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}"
+     },
+     {
+      "path": "/api/storage_paths/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":2,\"next\":null,\"results\":[{\"id\":5,\"name\":\"Finance/2026\"},{\"id\":6,\"name\":\"../Escape/\\u003cx\\u003e\"}]}"
+     },
+     {
+      "path": "/api/documents/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"count\":3,\"next\":null,\"results\":[{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"},{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}]}"
+     },
+     {
+      "path": "/api/documents/1/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"1.pdf\",\"correspondent\":3,\"created\":\"2026-03-01T09:30:00Z\",\"created_date\":\"2026-03-01\",\"document_type\":4,\"id\":1,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-1.pdf\",\"page_count\":2,\"storage_path\":5,\"tags\":[1,2],\"title\":\"Invoice March\"}"
+     },
+     {
+      "path": "/api/documents/2/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":\"2.pdf\",\"created\":\"2026-02-15T09:30:00Z\",\"created_date\":\"2026-02-15\",\"id\":2,\"mime_type\":\"application/pdf\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"orig-2.pdf\",\"page_count\":2,\"tags\":[1],\"title\":\"Receipt\"}"
+     },
+     {
+      "path": "/api/documents/3/",
+      "status": 200,
+      "headers": {
+       "Content-Type": "application/json"
+      },
+      "body": "{\"added\":\"2026-02-01T10:00:00Z\",\"archived_file_name\":null,\"created\":\"2026-01-20T09:30:00Z\",\"created_date\":\"2026-01-20\",\"id\":3,\"mime_type\":\"text/plain\",\"modified\":\"2026-02-02T11:00:00Z\",\"original_file_name\":\"notes.txt\",\"page_count\":2,\"title\":\"Notes\"}"
+     },
+     {
+      "path": "/api/documents/1/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-1.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSBvbmUK"
+     },
+     {
+      "path": "/api/documents/2/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"orig-2.pdf\"",
+       "Content-Type": "application/pdf"
+      },
+      "body": "",
+      "body_b64": "JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YKJSB0d28K"
+     },
+     {
+      "path": "/api/documents/3/download/",
+      "status": 200,
+      "headers": {
+       "Content-Disposition": "attachment; filename=\"notes.txt\"",
+       "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "",
+      "body_b64": "UGxhaW4gbm90ZXMgZm9yIGRvY3VtZW50IHRocmVlLgo="
+     }
+    ],
+    "engine": "ok",
+    "mutations": [
+     {
+      "op": "rm-note",
+      "doc": 1
+     },
+     {
+      "op": "rm-note",
+      "doc": 2
+     },
+     {
+      "op": "rm-note",
+      "doc": 3
+     }
+    ],
+    "verifies": [
+     {
+      "use_store": false
+     }
+    ]
+   },
+   "imported": 3,
+   "verifies": [
+    {
+     "report": {
+      "complete": false,
+      "duration_seconds": "\u003cT\u003e",
+      "finished_at": "\u003cT\u003e",
+      "missing": [
+       1,
+       2,
+       3
+      ],
+      "mode": "verify",
+      "run_id": "paperless-\u003cRUN\u003e",
+      "schema_version": 1,
+      "source": "paperless",
+      "source_documents": 3,
+      "source_url": "http://\u003cHOST\u003e",
+      "started_at": "\u003cT\u003e",
+      "tool_version": "0.12.0",
+      "vault_notes": 0,
+      "verified": 0
+     },
+     "error": ""
+    }
+   ]
+  }
+ ],
+ "normalizations": [
+  "temp root \u003cROOT\u003e, loopback host \u003cHOST\u003e, run ids \u003cRUN\u003e, report timestamps \u003cT\u003e; complete is Complete()"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "source_hashes": {
+  "verify.go": "c3efa67125f305ecd3db2483cf4eca79c4218785f8d2ee4d1fe458683a734228",
+  "verify_port_test.go": "aa428fdad3885fdf1c435463a72ac7f438a9678f626135c94522e5756a929064"
+ }
+}

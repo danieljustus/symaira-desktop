@@ -119,6 +119,40 @@ impl Sidecar {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    /// Go `DB.TimelineDocs`: indexed documents whose document date or
+    /// modification time falls in `[from_date, to_date]`, in path order.
+    pub fn timeline_docs(
+        &self,
+        from_date: &str,
+        to_date: &str,
+    ) -> Result<Vec<DocsResult>, SidecarError> {
+        let mut stmt = self.connection.prepare(
+            "SELECT f.path, f.title, f.type, COALESCE(f.document_date,''), COALESCE(f.person,''), COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence, COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0), COALESCE((SELECT value FROM file_properties tag_prop WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '') FROM files f LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent' LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type' WHERE (f.document_date != '' AND f.document_date >= ? AND f.document_date <= ?) OR (f.modified_at != '' AND f.modified_at >= ? AND f.modified_at <= ?) ORDER BY f.path ASC",
+        )?;
+        let end_of_day = format!("{to_date}T23:59:59Z");
+        let rows = stmt.query_map(
+            rusqlite::params![from_date, to_date, from_date, end_of_day],
+            |r| {
+                let raw: String = r.get(11)?;
+                Ok(DocsResult {
+                    path: r.get(0)?,
+                    title: r.get(1)?,
+                    file_type: r.get(2)?,
+                    document_date: r.get(3)?,
+                    person: r.get(4)?,
+                    status: r.get(5)?,
+                    due_date: r.get(6)?,
+                    confidence: r.get::<_, Option<i64>>(7)?.unwrap_or_default(),
+                    correspondent: r.get(8)?,
+                    document_type: r.get(9)?,
+                    asn: r.get(10)?,
+                    tags: parse_tags(&raw),
+                })
+            },
+        )?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     /// Returns the review queue in stored absolute-path order.
     pub fn docs_review(&self, threshold: i64) -> Result<Vec<ReviewResult>, SidecarError> {
         let mut stmt = self.connection.prepare("SELECT f.path,f.title,COALESCE(f.status,''),COALESCE(t.value,''),COALESCE(f.document_date,''),COALESCE(f.confidence,0) FROM files f LEFT JOIN file_properties t ON t.file_id=f.id AND t.key='document_type' LEFT JOIN file_properties i ON i.file_id=f.id AND i.key='review_ignored' WHERE (f.confidence < ? OR t.value IS NULL OR t.value='' OR f.document_date IS NULL OR f.document_date='') AND (i.value IS NULL OR i.value != 'true') ORDER BY f.path ASC")?;

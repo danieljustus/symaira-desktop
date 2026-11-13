@@ -421,3 +421,50 @@ deserialization, while Go's JSON decoder can leave omitted fields at zero
 values; incomplete or null-field provider lines may therefore fail in Rust
 where Go would continue. This slice does not claim complete parser parity for
 malformed provider streams.
+
+## CoreKit alignment at the cutover (2026-11-12)
+
+This section supersedes the revision numbers and the "not applicable yet" or
+"deferred" conclusions of the slices above. Their behavior analysis stays valid
+where the per-family records below do not say otherwise.
+
+**One revision.** Every CoreKit Rust crate resolves from
+`592bebb54080d6b37372e47c461cfa3aeca7d2af` (root `Cargo.toml`
+`[workspace.dependencies]`, `Cargo.lock`, `fuzz/Cargo.lock`). Before, the five
+consumed crates came from four revisions (`d382b861`, `0f441fb2`, `04d1411a`,
+`7515add9`) and the lock file carried `symaira-core-exit`, `-fs` and
+`-secretref` twice. CoreKit's sqlite crate requires `rusqlite =0.41.1`
+(`libsqlite3-sys 0.39.1`, which also clears RUSTSEC-2026-0459) and
+`rustix ^1.1.6`; the workspace pins follow. `Statement::column_names` returns
+an iterator in rusqlite 0.41, eight test helpers were adjusted. The Swift
+clients consume the CoreKit Swift package (the former AppKit) at exact
+`0.21.0`.
+
+**Rule used.** The removed Go backend imported ten Go CoreKit packages (last Go
+commit `36aad3d4`, CoreKit `v0.18.3-0.20261012110002-27d2daf8ec1e`). Each Go use
+site was mapped to its Rust successor and moved to the CoreKit Rust crate when
+the Go-recorded fixtures stay byte-identical. Otherwise the private code stays
+and the measured difference is recorded.
+
+| Go package (non-test files at `36aad3d4`) | Rust crate | Result | Record |
+|---|---|---|---|
+| `versionkit` (3) | `symaira-core-version` | adopted (version handshake) | above |
+| `exitcodes` (21) | `symaira-core-exit` | adopted where the numeric code is identical | above |
+| `sqlitekit` (7) | `symaira-core-sqlite` | `open_with_existing_parent` and `migrate` for the sidecar, the retrieval database (incl. legacy migration and relocation), the ingest store, the room index and the self-host server state; parent-directory creation and the contacts store stay local | [corekit/sqlite-config.md](corekit/sqlite-config.md) |
+| `configkit` (5) | `symaira-core-config` | `default_path_for_roots` for the `symdesk` and `symingest` config paths; loaders, validation and the legacy `$HOME/.config` path stay local | [corekit/sqlite-config.md](corekit/sqlite-config.md) |
+| `llmkit` (5) | `symaira-core-llm` | providers, AI config, VLM OCR and both `transform` transports (Anthropic, Ollama); retrieval embeddings stay local | [corekit/llm.md](corekit/llm.md) |
+| `mcpserver` (2) | `symaira-core-mcp` | not adopted: 49 of 341 recorded symroom steps and 62 of 334 symdesk transcripts differ; pinned as tripwire tests (`corekit_mcp_compare`) | [corekit/mcp.md](corekit/mcp.md) |
+| `fsutil` (6) | `symaira-core-fs` | not adopted directly (temp-file names, error text and parent policy differ from Go); used transitively through the sqlite crate | [corekit/fs.md](corekit/fs.md) |
+| `secretref` (2) | `symaira-core-secretref` | not adopted (error text and keychain validation differ from the recorded Go output) | [corekit/secretref-log-env.md](corekit/secretref-log-env.md) |
+| `logkit` (1) | `symaira-core-log` | not adopted (UTC-only timestamps, quoting not `strconv.Quote` compatible) | [corekit/secretref-log-env.md](corekit/secretref-log-env.md) |
+| `vectorkit/turboquant` (2) | none | CoreKit has no Rust crate; the codec is local (`crates/symdesk-index/src/turboquant`, `make retrieval-turboquant-differential`) | contract-matrix.md |
+
+No use site exists for `symaira-core-env` (no primary/legacy environment
+chains), `symaira-core-mcpcfg` (no MCP client-config discovery) and
+`symaira-core-update` (no self-update); neither the Rust tree nor the Go tree at
+`36aad3d4` has those features.
+
+The differences that block the remaining adoptions are reported upstream as
+[symaira-corekit#480](https://github.com/danieljustus/symaira-corekit/issues/480).
+The `corekit_mcp_compare` tests assert the exact divergent case set, so a
+CoreKit revision that closes a gap fails them and prompts a new adoption check.

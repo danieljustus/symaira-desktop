@@ -250,12 +250,21 @@ fn reachable(path: &Path) -> bool {
 }
 
 /// Go `vault.ParseFileInRoot` for a canonical path below `root`.
-fn parse_file_in_root(root: &Path, path: &Path) -> Result<Document, String> {
+///
+/// # Errors
+/// Returns Go's wording for a path that escapes the root, cannot be opened,
+/// is not a regular file, is too large or does not parse.
+pub fn parse_file_in_root(root: &Path, path: &Path) -> Result<Document, String> {
     let data = read_in_root(root, path)?;
     parse_bytes(&path.to_string_lossy(), &data).map_err(|error| error.to_string())
 }
 
-fn read_in_root(root: &Path, path: &Path) -> Result<Vec<u8>, String> {
+/// Go `vault.ReadFileInRoot` for a canonical path below `root`.
+///
+/// # Errors
+/// Returns Go's wording for a path that escapes the root, cannot be opened,
+/// is not a regular file or is too large.
+pub fn read_in_root(root: &Path, path: &Path) -> Result<Vec<u8>, String> {
     let shown = path.display();
     let canonical_root = fs::canonicalize(root).map_err(|error| error.to_string())?;
     let relative = path

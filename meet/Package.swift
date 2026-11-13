@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
     .package(url: "https://github.com/argmaxinc/argmax-oss-swift", exact: "1.1.0"),
-    .package(url: "https://github.com/danieljustus/symaira-corekit.git", exact: "0.20.0"),
+    .package(url: "https://github.com/danieljustus/symaira-corekit.git", exact: "0.21.0"),
   ],
   targets: [
     .target(name: "SymMeetCore"),

@@ -48,6 +48,7 @@ fn recipe_validate_matches_go_process_contract() {
             fs::write(&recipe, case.recipe).expect("write recipe input");
         }
         let result = Command::new(env!("CARGO_BIN_EXE_symdesk"))
+            .env("SYMDESK_PRE_RUST_BACKUP", "off")
             .args(if case.json {
                 vec!["--json", "recipe", "validate"]
             } else {

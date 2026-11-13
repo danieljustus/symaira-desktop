@@ -380,7 +380,7 @@ pub fn request(
     let author = journal::author_stats(room_dir, &identity.member_id)?;
     let sequence = author.seq.saturating_add(1).max(1);
     let input = format!("{}:{title}:{sequence}", identity.member_id);
-    let digest = Sha256::digest(input.as_bytes());
+    let digest = Sha256::digest(crate::goio::out_bytes(&input));
     let run_id = format!("run_{}", hex::encode(digest)[..16].to_owned());
     let body = go_json(&serde_json::json!({
         "adapter": adapter,
@@ -463,7 +463,7 @@ pub fn cancel(
 }
 
 fn derived_event_id(run_id: &str, action: &str) -> String {
-    let digest = Sha256::digest(format!("{run_id}{action}").as_bytes());
+    let digest = Sha256::digest(crate::goio::out_bytes(&format!("{run_id}{action}")));
     format!("ev_{}", &hex::encode(digest)[..16])
 }
 

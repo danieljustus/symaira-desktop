@@ -2,7 +2,6 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-GORELEASER_CONFIG="$ROOT_DIR/.goreleaser.yml"
 WORKFLOW="$ROOT_DIR/.github/workflows/release.yml"
 README="$ROOT_DIR/README.md"
 
@@ -29,21 +28,15 @@ require_fixed_count() {
   fi
 }
 
-require_fixed "$GORELEASER_CONFIG" "signs:" "GoReleaser signs artifacts"
-require_fixed "$GORELEASER_CONFIG" "- cmd: cosign" "Cosign signer"
-require_fixed "$GORELEASER_CONFIG" "- --output-signature" "per-artifact .sig output"
-require_fixed "$GORELEASER_CONFIG" "- --output-certificate" "per-artifact .pem output"
-require_fixed "$GORELEASER_CONFIG" '${artifact}.sig' "signature artifact template"
-require_fixed "$GORELEASER_CONFIG" '${artifact}.pem' "certificate artifact template"
-require_fixed "$GORELEASER_CONFIG" "artifacts: all" "archive and checksum coverage"
-
-if grep -Eq -- "COSIGN_KEY|COSIGN_PASSWORD|--key(=|[[:space:]]|$)" "$GORELEASER_CONFIG"; then
-  printf "long-lived Cosign key material is forbidden in GoReleaser config\n" >&2
-  exit 1
-fi
-
 require_fixed "$WORKFLOW" "id-token: write" "GitHub Actions OIDC permission"
 require_fixed "$WORKFLOW" "sigstore/cosign-installer@" "Cosign installation"
+require_fixed "$WORKFLOW" "cosign sign-blob" "per-artifact keyless signing step"
+require_fixed "$WORKFLOW" "--output-signature" "per-artifact .sig output"
+require_fixed "$WORKFLOW" "--output-certificate" "per-artifact .pem output"
+if grep -Eq -- "COSIGN_KEY|COSIGN_PASSWORD|--key(=|[[:space:]]|$)" "$WORKFLOW"; then
+  printf "long-lived Cosign key material is forbidden in the release workflow\n" >&2
+  exit 1
+fi
 require_fixed "$WORKFLOW" "cosign-release: v2.4.3" "separate signature and certificate support"
 require_fixed_count "$WORKFLOW" "- name: Select Xcode 26" 2 "Xcode 26 selected for both macOS and iOS release jobs"
 require_fixed_count "$WORKFLOW" "xcode-version: '26.0'" 2 "Xcode 26 version pinned for both Apple release jobs"

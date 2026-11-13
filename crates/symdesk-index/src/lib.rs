@@ -25,19 +25,24 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 mod backup;
 mod dataset_purge;
+mod dataset_query;
 mod dataset_sync;
 pub mod docs;
 mod duplicates;
+mod go_sort;
 mod history_sync;
 pub mod index_status;
 mod links;
 mod metadata;
+mod pdf_go_tables;
 mod retrieval;
 mod retrieval_archive;
 mod retrieval_config;
 mod retrieval_csv;
 mod retrieval_extract;
+mod retrieval_extractions;
 mod retrieval_pdf;
+mod retrieval_vector;
 pub use retrieval_extract::{extract_retrieval_text, parse_document_retrieval_sections};
 mod retrieval_markdown;
 pub mod retrieval_quant_sidecar;
@@ -46,6 +51,11 @@ pub mod turboquant;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
+pub use dataset_query::{
+    DATASET_QUERY_MAX_ROWS, DatasetAggregate, DatasetQueryOptions, DatasetQueryOutcome,
+    DatasetQueryRow, DatasetServiceOptions, DatasetServiceResult, DatasetSort, DatasetViewSpec,
+    go_number, go_percent_v,
+};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
     DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
@@ -69,11 +79,12 @@ pub use retrieval::{
     materialize_byte_chunks, materialize_chunks,
 };
 pub use retrieval_config::{
-    RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,
-    relocate_index_for_vault, retrieval_embedding_config, store_retrieval_path_for_vault,
-    symseek_config_path,
+    RetrievalEmbeddingConfig, RetrievalMigration, index_location_for_vault,
+    open_retrieval_for_vault, relocate_index_for_vault, retrieval_embedding_config,
+    set_retrieval_migration_hook, store_retrieval_path_for_vault, symseek_config_path,
 };
 pub use retrieval_csv::parse_csv_retrieval_sections;
+pub use retrieval_extractions::{detect_sidecar_path, import_extraction_sidecar};
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_body_retrieval_sections,
     parse_markdown_retrieval_sections, parse_text_retrieval_sections,
@@ -679,11 +690,7 @@ impl Sidecar {
         if let Some(parent) = path.parent() {
             create_parent_dir(parent)?;
         }
-        let mut connection =
-            symaira_core_sqlite::open_with_existing_parent(path).map_err(|error| match error {
-                symaira_core_sqlite::Error::Open(err) => SidecarError::Sqlite(err),
-                other => SidecarError::Contract(other.to_string()),
-            })?;
+        let mut connection = open_existing_parent(path)?;
         migrate(&mut connection)?;
         backfill_norm_index(&mut connection)?;
         Ok(Self {
@@ -2230,28 +2237,57 @@ fn system_time_unix_nanos(value: std::time::SystemTime) -> Result<i64, SidecarEr
         .map_err(|_| SidecarError::Time("mtime is outside i64 nanoseconds".to_owned()))
 }
 
+/// Go `sqlitekit.Open` for a database whose parent the caller already created:
+/// WAL, foreign keys and a five-second busy timeout through CoreKit.
+pub(crate) fn open_existing_parent(path: &Path) -> Result<Connection, SidecarError> {
+    symaira_core_sqlite::open_with_existing_parent(path).map_err(|error| match error {
+        symaira_core_sqlite::Error::Open(err) => SidecarError::Sqlite(err),
+        other => SidecarError::Contract(other.to_string()),
+    })
+}
+
 fn migrate(connection: &mut Connection) -> Result<(), SidecarError> {
-    connection.execute_batch(
-        "CREATE TABLE IF NOT EXISTS schema_migrations (\n\t\tversion TEXT PRIMARY KEY,\n\t\tapplied_at DATETIME DEFAULT CURRENT_TIMESTAMP\n\t)",
-    )?;
-    for (version, sql) in MIGRATIONS {
-        let applied: bool = connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = ?)",
-            [version],
-            |row| row.get(0),
-        )?;
-        if applied {
-            continue;
+    migrate_embedded(connection, MIGRATIONS)
+}
+
+/// Go `sqlitekit.Migrate` over an embedded `(version, sql)` list, delegated to
+/// CoreKit's `migrate` (same `schema_migrations` DDL, one transaction per
+/// migration, recorded version = file name without `.sql`).
+pub(crate) fn migrate_embedded(
+    connection: &mut Connection,
+    migrations: &'static [(&'static str, &'static str)],
+) -> Result<(), SidecarError> {
+    symaira_core_sqlite::migrate(connection, &EmbeddedMigrations(migrations)).map_err(|error| {
+        match error {
+            symaira_core_sqlite::Error::Open(err) => SidecarError::Sqlite(err),
+            other => SidecarError::Contract(other.to_string()),
         }
-        let transaction = connection.transaction()?;
-        transaction.execute_batch(sql)?;
-        transaction.execute(
-            "INSERT INTO schema_migrations(version) VALUES (?)",
-            [version],
-        )?;
-        transaction.commit()?;
+    })
+}
+
+/// Embedded equivalent of Go's `embed.FS` migration directory: entry names are
+/// `<version>.sql`, listed in declaration order (CoreKit sorts by name).
+struct EmbeddedMigrations(&'static [(&'static str, &'static str)]);
+
+impl symaira_core_sqlite::MigrationSource for EmbeddedMigrations {
+    fn entries(&self) -> std::io::Result<Vec<symaira_core_sqlite::Entry>> {
+        Ok(self
+            .0
+            .iter()
+            .map(|(version, _)| symaira_core_sqlite::Entry {
+                name: format!("{version}.sql"),
+                is_dir: false,
+            })
+            .collect())
     }
-    Ok(())
+
+    fn read(&self, name: &str) -> std::io::Result<Vec<u8>> {
+        self.0
+            .iter()
+            .find(|(version, _)| format!("{version}.sql") == name)
+            .map(|(_, sql)| sql.as_bytes().to_vec())
+            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, name.to_owned()))
+    }
 }
 
 fn backfill_norm_index(connection: &mut Connection) -> Result<(), SidecarError> {
@@ -2398,8 +2434,11 @@ fn go_value(value: &Value) -> String {
             values.iter().map(go_value).collect::<Vec<_>>().join(" ")
         ),
         Value::Mapping(values) => {
-            let items = values
-                .iter()
+            // `fmt` prints map keys in sorted order, whatever the decode order.
+            let mut entries: Vec<_> = values.iter().collect();
+            entries.sort_by(|left, right| left.0.cmp(right.0));
+            let items = entries
+                .into_iter()
                 .map(|(key, value)| format!("{key}:{}", go_value(value)))
                 .collect::<Vec<_>>()
                 .join(" ");
@@ -3029,5 +3068,32 @@ mod source_tests {
             .expect("watch worker thread")
             .expect("watch stops cleanly");
         let _ = fs::remove_dir_all(vault);
+    }
+}
+
+#[cfg(test)]
+mod corekit_migration_order_tests {
+    /// CoreKit applies `<version>.sql` entries sorted by name, as Go's
+    /// `embed.FS` directory listing does; the embedded lists must already be
+    /// in that order so the applied order equals the declared order.
+    fn assert_sorted(migrations: &[(&str, &str)]) {
+        let names = migrations
+            .iter()
+            .map(|(version, _)| format!("{version}.sql"))
+            .collect::<Vec<_>>();
+        let mut sorted = names.clone();
+        sorted.sort();
+        assert_eq!(names, sorted);
+        assert!(!names.is_empty());
+    }
+
+    #[test]
+    fn sidecar_migrations_are_in_corekit_application_order() {
+        assert_sorted(super::MIGRATIONS);
+    }
+
+    #[test]
+    fn retrieval_migrations_are_in_corekit_application_order() {
+        assert_sorted(super::retrieval::RETRIEVAL_MIGRATIONS);
     }
 }

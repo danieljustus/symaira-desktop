@@ -17,56 +17,68 @@ use super::{
     open_vault_dir, sidecar_storage_root, storage_path, strip_verbatim_prefix,
 };
 
-const GO_MIGRATIONS: &[(&str, &str)] = &[
+/// SHA-256 of the Go sidecar migrations at the last Go commit (36aad3d4, tag
+/// v0.12.2). The Go tree is retired (RUST-019); these digests pin the bytes the
+/// Rust migrations must keep so Go-created sidecars open unchanged.
+const GO_MIGRATION_SHA256: &[(&str, &str)] = &[
     (
         "001_init",
-        include_str!("../../../internal/sidecar/migrations/001_init.sql"),
+        "1df8435fce59d85ccbcc8546d998772541bfe02b8cf6553d3b3a25763649809d",
     ),
     (
         "002_doc_metadata",
-        include_str!("../../../internal/sidecar/migrations/002_doc_metadata.sql"),
+        "6472a2c7a1686749247a8a5ecfa6bb71ea447b6326a5fd19a05e24cbd5a3c274",
     ),
     (
         "003_asn",
-        include_str!("../../../internal/sidecar/migrations/003_asn.sql"),
+        "d518b98e24d0a710d627a0cfe801d731e6da5ee89cfcad311441480af8a592e7",
     ),
     (
         "004_file_stat_cache",
-        include_str!("../../../internal/sidecar/migrations/004_file_stat_cache.sql"),
+        "f18ca3d2703203e562cb871612edfc020fffa11d3146cf5d4b6d19638c3a18d4",
     ),
     (
         "005_type",
-        include_str!("../../../internal/sidecar/migrations/005_type.sql"),
+        "413cc1c9f244b024326503326bd1926ab41aa3e74d9496740622c1a8b345dd4f",
     ),
     (
         "006_links_to_path_index",
-        include_str!("../../../internal/sidecar/migrations/006_links_to_path_index.sql"),
+        "ab62b2c336ef1b52cc5b20933f04d8c9d74d38bbf9c4917187dd2e9a0d6484d6",
     ),
     (
         "007_created_at",
-        include_str!("../../../internal/sidecar/migrations/007_created_at.sql"),
+        "3572d0328c507dea06f8c1579735edee33f0633fe47d4e11017c5da9ffc6f79d",
     ),
     (
         "008_index_lifecycle",
-        include_str!("../../../internal/sidecar/migrations/008_index_lifecycle.sql"),
+        "c45c8740ed49453984132857a247cc12a6d85d1a933fac25cad0165ceee482bf",
     ),
     (
         "009_german_norm",
-        include_str!("../../../internal/sidecar/migrations/009_german_norm.sql"),
+        "4b84fc733d05bfc154f96ce3906ca4e171f22ca896a840ecea2383cafdf5adad",
     ),
     (
         "010_german_trigram",
-        include_str!("../../../internal/sidecar/migrations/010_german_trigram.sql"),
+        "90e768c689955594324a0e520be1efe7e89f393ea3a4dce198f16e16e5deac5a",
     ),
     (
         "011_dataset_rows",
-        include_str!("../../../internal/sidecar/migrations/011_dataset_rows.sql"),
+        "059789b111577d442659314a631e5e15967ea25a62f06de8d412d5c32cb485cc",
     ),
 ];
 
 #[test]
 fn rust_migration_bytes_match_go_oracle() {
-    assert_eq!(MIGRATIONS, GO_MIGRATIONS);
+    use sha2::{Digest, Sha256};
+    let actual: Vec<(&str, String)> = MIGRATIONS
+        .iter()
+        .map(|(name, sql)| (*name, format!("{:x}", Sha256::digest(sql.as_bytes()))))
+        .collect();
+    let expected: Vec<(&str, String)> = GO_MIGRATION_SHA256
+        .iter()
+        .map(|(name, digest)| (*name, (*digest).to_owned()))
+        .collect();
+    assert_eq!(actual, expected);
 }
 
 #[derive(Deserialize)]

@@ -154,6 +154,75 @@ impl Tools {
         }
         Ok(outputs)
     }
+    /// Barcode splitting's qpdf-only `SplitLegacy`: `part-N.pdf` names, page
+    /// count from `qpdf --show-npages`, `--empty --pages` staging.
+    pub fn split_legacy(
+        &self,
+        ctx: &Context,
+        input: &str,
+        boundaries: &[i64],
+        output_dir: &str,
+    ) -> Result<Vec<String>, String> {
+        let ctx = &ctx.bounded();
+        require_file(input)?;
+        if boundaries.len() >= 10_000 {
+            return Err("PDF split exceeds 10000 parts".into());
+        }
+        let path = tool_path(&self.qpdf, "qpdf")?;
+        let stdout = execute(ctx, &path, &["--show-npages".into(), input.into()])?;
+        let pages = stdout
+            .trim()
+            .parse::<i64>()
+            .ok()
+            .filter(|n| *n > 0)
+            .ok_or_else(|| format!("qpdf did not report a positive page count for {input}"))?;
+        if pages > 10_000 {
+            return Err("PDF page count exceeds 10000 pages".into());
+        }
+        let mut previous = 0;
+        for boundary in boundaries {
+            if *boundary <= previous || *boundary >= pages {
+                return Err(format!(
+                    "split boundaries must increase within the document; got {boundary} after {previous} for {pages} pages"
+                ));
+            }
+            previous = *boundary;
+        }
+        let ends: Vec<_> = boundaries.iter().copied().chain([pages]).collect();
+        let outputs: Vec<_> = (1..=ends.len())
+            .map(|index| {
+                text(&clean(
+                    Path::new(output_dir).join(format!("part-{index}.pdf")),
+                ))
+            })
+            .collect();
+        new_outputs(&[input.into()], &outputs)?;
+        let temp = Workspace::new(Path::new(output_dir))
+            .map_err(|e| format!("create PDF split workspace: {e}"))?;
+        let mut start = 1;
+        for (index, end) in ends.into_iter().enumerate() {
+            let staged = text(&temp.0.join(base(&outputs[index])));
+            self.run(
+                ctx,
+                &self.qpdf,
+                &[
+                    "--empty".into(),
+                    "--pages".into(),
+                    input.into(),
+                    format!("{start}-{end}"),
+                    "--".into(),
+                    staged.clone(),
+                ],
+            )
+            .map_err(|e| format!("split part {}: {e}", index + 1))?;
+            self.validate(ctx, &staged)?;
+            start = end + 1;
+        }
+        for output in &outputs {
+            publish(ctx, &text(&temp.0.join(base(output))), output)?;
+        }
+        Ok(outputs)
+    }
     pub fn merge(&self, ctx: &Context, inputs: &[String], output: &str) -> Result<(), String> {
         let ctx = &ctx.bounded();
         if inputs.len() < 2 {
@@ -303,6 +372,26 @@ fn publish(ctx: &Context, staged: &str, output: &str) -> Result<(), String> {
     })
 }
 
+/// `pdfops.Copy`: no-split copy that never overwrites a destination.
+pub fn copy(input: &str, output: &str) -> Result<(), String> {
+    use std::io::Read;
+    require_file(input)?;
+    new_outputs(&[input.into()], &[output.into()])?;
+    let source = fs::File::open(input).map_err(|e| path_error("open", input, e))?;
+    let temp = Workspace::new(&parent(output))?;
+    let staged = text(&temp.0.join("copy.pdf"));
+    let mut data = Vec::new();
+    source
+        .take(512 * 1024 * 1024 + 1)
+        .read_to_end(&mut data)
+        .map_err(|e| e.to_string())?;
+    if data.len() > 512 * 1024 * 1024 {
+        return Err("PDF copy exceeds 512 MiB".into());
+    }
+    fs::write(&staged, &data).map_err(|e| path_error("open", &staged, e))?;
+    publish(&Context::default(), &staged, output)
+}
+
 /// Public facade mirrors ingest's lexical absolute-path conversion, without
 /// resolving symlinks or requiring outputs to exist.
 pub fn split_pdf_at_spec(
@@ -406,28 +495,55 @@ fn path_error(op: &str, path: &str, error: io::Error) -> String {
         io::ErrorKind::PermissionDenied => "permission denied".into(),
         io::ErrorKind::AlreadyExists => "file exists".into(),
         io::ErrorKind::NotADirectory => "not a directory".into(),
-        _ => error.to_string(),
+        _ => go_errno_text(&error),
     };
     format!("{op} {path}: {message}")
 }
+/// Go's errno text: the C `strerror` string without Rust's ` (os error N)`
+/// suffix and with a lower-case first letter (`file name too long`).
+fn go_errno_text(error: &io::Error) -> String {
+    let mut message = error.to_string();
+    if let Some(index) = message.rfind(" (os error ") {
+        message.truncate(index);
+    }
+    let mut chars = message.chars();
+    match chars.next() {
+        Some(first) => first.to_lowercase().collect::<String>() + chars.as_str(),
+        None => message,
+    }
+}
+/// Mirrors Go's `os.MkdirAll`: the error names the first path that is not a
+/// directory (or whose `mkdir` failed), not the requested leaf.
 fn mkdir_all(path: &Path) -> Result<(), String> {
+    let name = text(path);
     if let Ok(metadata) = fs::metadata(path) {
         return if metadata.is_dir() {
             Ok(())
         } else {
-            Err(format!("mkdir {}: not a directory", text(path)))
+            Err(format!("mkdir {name}: not a directory"))
         };
     }
+    let trimmed = name.trim_end_matches('/');
+    let leaf_start = trimmed.rfind('/').map_or(0, |index| index + 1);
+    if leaf_start > 1 {
+        mkdir_all(Path::new(&trimmed[..leaf_start - 1]))?;
+    }
     let mut builder = fs::DirBuilder::new();
-    builder.recursive(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;
         builder.mode(0o700);
     }
-    builder
-        .create(path)
-        .map_err(|e| path_error("mkdir", &text(path), e))
+    match builder.create(path) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if fs::symlink_metadata(path).is_ok_and(|m| m.is_dir()) {
+                Ok(())
+            } else {
+                Err(path_error("mkdir", &name, error))
+            }
+        }
+    }
 }
 fn executable(path: &Path) -> bool {
     fs::metadata(path).is_ok_and(|m| {
@@ -572,6 +688,23 @@ mod tests {
             "page selector exceeds 1000000 pages"
         );
         assert_eq!(clean(PathBuf::from("a/../b/./c")), Path::new("b/c"));
+    }
+
+    #[test]
+    fn go_filesystem_error_text() {
+        let long = io::Error::from_raw_os_error(36);
+        assert!(
+            !path_error("lstat", "/x", long).contains("os error"),
+            "Rust errno suffix must not leak into Go-shaped text"
+        );
+        let directory = std::env::temp_dir().join(format!("symdesk-mkdir-{}", std::process::id()));
+        let file = directory.join("file");
+        fs::create_dir_all(&directory).unwrap();
+        fs::write(&file, b"x").unwrap();
+        // Go names the first non-directory ancestor, not the requested leaf.
+        let error = mkdir_all(&file.join("a/b")).unwrap_err();
+        assert_eq!(error, format!("mkdir {}: not a directory", file.display()));
+        fs::remove_dir_all(&directory).unwrap();
     }
 
     #[test]

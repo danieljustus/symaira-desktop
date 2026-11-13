@@ -1,12 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "gomod"
+  - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
     groups:
-      go-dependencies:
+      rust-dependencies:
         patterns:
           - "*"
     open-pull-requests-limit: 10
@@ -21,3 +21,18 @@ updates:
         patterns:
           - "*"
     open-pull-requests-limit: 10
+
+  # Swift packages embedded in the app targets (the app's own exact-pinned
+  # AppKit dependency is managed through project.yml).
+  - package-ecosystem: "swift"
+    directories:
+      - "/meet"
+      - "/room/client"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      swift-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5

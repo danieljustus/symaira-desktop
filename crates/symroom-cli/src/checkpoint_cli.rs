@@ -28,13 +28,14 @@ const RESOLVE_FLAGS: &str = "Usage of checkpoint resolve:\n  -answer string\n   
 struct Parsed {
     values: BTreeMap<String, String>,
     positionals: Vec<String>,
+    raw_values: std::collections::BTreeMap<String, String>,
 }
 
 pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
         return stdout(USAGE, CoreExitCode::Ok);
     };
-    match action.to_string_lossy().as_ref() {
+    match symroom_core::goio::os_text(action).as_str() {
         "request" => request(&args[1..]),
         "resolve" => resolve(&args[1..]),
         other => stderr(
@@ -75,7 +76,7 @@ fn request(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     }
-    let signer = match load_identity(parsed.values.get("identity")) {
+    let signer = match load_identity(parsed.raw_values.get("identity")) {
         Ok(identity) => identity,
         Err(code) => return code,
     };
@@ -134,7 +135,7 @@ fn resolve(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     }
-    let signer = match load_identity(parsed.values.get("identity")) {
+    let signer = match load_identity(parsed.raw_values.get("identity")) {
         Ok(identity) => identity,
         Err(code) => return code,
     };
@@ -175,6 +176,7 @@ fn parse(args: &[OsString], allowed: &[&str], usage: &str) -> Result<Parsed, Exi
     Ok(Parsed {
         values: parsed.values,
         positionals: parsed.positionals,
+        raw_values: parsed.raw_values,
     })
 }
 
@@ -411,7 +413,10 @@ enum ResolveError {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -419,7 +424,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

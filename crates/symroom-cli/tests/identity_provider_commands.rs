@@ -5,6 +5,8 @@
 //! macOS `security`, identity file) observed through `symroom identity
 //! show|export` with fake provider executables on a scoped `PATH`.
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -18,7 +20,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 
 /// Cases in the committed fixture (macOS-only and Unix-only ones included).
 const EXPECTED_CASES: usize = 119;
@@ -119,13 +120,7 @@ fn identity_provider_chain_matches_go_process_contract() {
     );
     assert_eq!(fixture.source_hashes.len(), 2);
     for (path, hash) in &fixture.source_hashes {
-        assert_eq!(
-            hex::encode(Sha256::digest(
-                fs::read(root.join(path)).expect("Go source")
-            )),
-            *hash,
-            "{path} changed since the fixture was recorded"
-        );
+        oracle_sources::assert_recorded_source_hash(path, hash);
     }
     for needle in [
         "env-seed-wins",

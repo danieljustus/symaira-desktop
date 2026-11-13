@@ -10,6 +10,7 @@ use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
 mod artifact_cli;
+mod backup_cli;
 mod brain_profile_cli;
 mod checkpoint_cli;
 mod decide_cli;
@@ -45,6 +46,16 @@ fn main() -> ExitCode {
     };
     if command == "-h" || command == "--help" || command == "help" {
         return write_stdout(USAGE.to_owned());
+    }
+    // Hidden RUST-018 restore command (not in USAGE), then the one-time backup
+    // of the identity store before any subcommand can touch state.
+    if let Some(code) = backup_cli::intercept(&args) {
+        return code;
+    }
+    if command != "version"
+        && let Err(code) = backup_cli::gate()
+    {
+        return code;
     }
     if command == "run" {
         return run_cli::run(&args[2..]);
@@ -95,7 +106,7 @@ fn main() -> ExitCode {
         return write_stderr(
             &format!(
                 "Unknown subcommand: {}\n\n{USAGE}",
-                command.to_string_lossy()
+                symroom_core::goio::os_text(command)
             ),
             2,
         );
@@ -120,14 +131,20 @@ fn main() -> ExitCode {
 }
 
 fn write_stdout(value: String) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(&value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     process_exit(CoreExitCode::Ok)
 }
 
 fn write_stderr(value: &str, code: u8) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     ExitCode::from(code)

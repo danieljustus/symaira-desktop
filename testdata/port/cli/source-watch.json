@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "sources": [
+      "cmd/symdesk/sources.go",
+      "internal/retrieval/sources.go",
+      "internal/retrieval/retrieval.go",
+      "internal/retrieval/internal/engine/sync.go",
+      "internal/service/service.go"
+    ]
+  },
+  "originals": {
+    "alpha.md": "# Alpha\n\nquartzalpha searchable note.\n",
+    "plain.txt": "quartztext searchable plain text.\n",
+    "source.go": "// quartzgocode searchable Go source.\npackage fixture\n"
+  },
+  "kind": "watch",
+  "ready_line": "Watching 3 files in <SOURCE>",
+  "observations": [
+    {
+      "action": "write",
+      "content": "# Watched\n\nwatchnewxyz first state.\n",
+      "indexed_sha256": "bd2f31995edcf19c7b769790c652b3c09ef5d287cdc5872e44d221c1deeb6beb"
+    },
+    {
+      "action": "write",
+      "content": "# Watched\n\nwatchupdatedxyz second state.\n",
+      "indexed_sha256": "6d4c66794cf353be9ea355ebf23a13ccb4b393ac89cebd59c73f795a9cb6baf9"
+    },
+    {
+      "action": "delete",
+      "content": null,
+      "indexed_sha256": null
+    }
+  ]
+}

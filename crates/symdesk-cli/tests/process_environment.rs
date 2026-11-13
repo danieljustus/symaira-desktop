@@ -11,14 +11,31 @@ fn isolated_environment_drops_parent_state_but_keeps_windows_system_root() {
     command.env("MUST_NOT_LEAK", "sentinel").isolated_env();
     let variables: Vec<_> = command.get_envs().collect();
     assert!(!variables.iter().any(|(key, _)| *key == "MUST_NOT_LEAK"));
+    // RUST-018: the only variable a hermetic process carries is the opt-out of
+    // the automatic pre-Rust state backup (it would add files to fixture trees).
+    assert!(variables.iter().any(|(key, value)| {
+        *key == "SYMDESK_PRE_RUST_BACKUP" && *value == Some(std::ffi::OsStr::new("off"))
+    }));
+    // Under a coverage run the child profile goes to /dev/null, so
+    // instrumented children do not drop `default_*.profraw` into the observed
+    // directory.
+    let coverage = std::env::var_os("LLVM_PROFILE_FILE").is_some();
+    assert_eq!(
+        variables.iter().any(|(key, value)| {
+            *key == "LLVM_PROFILE_FILE" && *value == Some(std::ffi::OsStr::new("/dev/null"))
+        }),
+        coverage
+    );
+    let forwarded = usize::from(coverage);
     #[cfg(windows)]
     {
-        assert_eq!(variables.len(), 1);
-        assert_eq!(variables[0].0, "SYSTEMROOT");
-        assert_eq!(variables[0].1, std::env::var_os("SYSTEMROOT").as_deref());
+        assert_eq!(variables.len(), 2 + forwarded);
+        assert!(variables.iter().any(|(key, value)| {
+            *key == "SYSTEMROOT" && *value == std::env::var_os("SYSTEMROOT").as_deref()
+        }));
     }
     #[cfg(not(windows))]
-    assert!(variables.is_empty());
+    assert_eq!(variables.len(), 1 + forwarded);
 }
 
 // Keep shared-helper controls outside the frozen fixture replay binaries: an

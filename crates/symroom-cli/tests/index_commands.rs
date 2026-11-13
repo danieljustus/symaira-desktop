@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -15,7 +17,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::index;
 
 #[derive(Deserialize)]
@@ -50,12 +51,7 @@ fn index_cli_matches_go_process_and_db_contract() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.source_hashes.len(), 3);
     for (path, hash) in &fixture.source_hashes {
-        assert_eq!(
-            hex::encode(Sha256::digest(
-                fs::read(root.join(path)).expect("Go source")
-            )),
-            *hash
-        );
+        oracle_sources::assert_recorded_source_hash(path, hash);
     }
     assert!(
         fixture

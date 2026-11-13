@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "hermes_script": "#!/bin/sh\nlog=\"$FAKE_HERMES_LOG\"\n{\n  printf 'argc=%s\\n' \"$#\"\n  for a in \"$@\"; do printf 'arg\u003c\u003c%s\u003e\u003e\\n' \"$a\"; done\n  if IFS= read -r _line; then printf 'stdin=data\\n'; else printf 'stdin=eof\\n'; fi\n} \u003e\u003e \"$log\"\ncase \"$FAKE_HERMES_MODE\" in\n  ok) printf 'Answer from \u003chermes\u003e [[alpha.md]]\\n' ;;\n  fail) printf 'hermes exploded\\n' \u003e\u00262; exit 4 ;;\n  empty) : ;;\n  *) exit 9 ;;\nesac\n",
+  "files": {
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n"
+  },
+  "cases": [
+    {
+      "name": "ok_json",
+      "args": [
+        "--json",
+        "ask",
+        "budget hiring"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget hiring\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "ok_text",
+      "args": [
+        "ask",
+        "budget hiring"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring. \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project  \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer Answer from \u003chermes\u003e [[alpha.md]]    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [] 0 0}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget hiring\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "session_language",
+      "args": [
+        "--json",
+        "ask",
+        "budget"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_HERMES_SESSION": "weekly",
+        "SYMDESK_LANG": "German",
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=4\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in German.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget\n\u003e\u003e\narg\u003c\u003c--resume\u003e\u003e\narg\u003c\u003cweekly\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "no_hits",
+      "args": [
+        "--json",
+        "ask",
+        "zzzznomatch"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\nQuestion: zzzznomatch\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "empty_query_hits",
+      "args": [
+        "--json",
+        "ask",
+        "tomatoes"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\nQuestion: tomatoes\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "backend_fails",
+      "args": [
+        "--json",
+        "ask",
+        "budget"
+      ],
+      "mode": "fail",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend failed: hermes exploded\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "backend_fails_text",
+      "args": [
+        "ask",
+        "budget"
+      ],
+      "mode": "fail",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring. \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project  \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer ⚠️ Request failed: hermes backend failed: hermes exploded\n    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [] 0 0}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "backend_empty",
+      "args": [
+        "--json",
+        "ask",
+        "budget"
+      ],
+      "mode": "empty",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend returned an empty answer\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: budget\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "backend_missing",
+      "args": [
+        "--json",
+        "ask",
+        "budget hiring"
+      ],
+      "no_binary": true,
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "unconfigured_default",
+      "args": [
+        "--json",
+        "ask",
+        "budget hiring"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "unconfigured_text",
+      "args": [
+        "ask",
+        "budget hiring"
+      ],
+      "exit_code": 0,
+      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring. \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project  \u003cSCORE\u003e   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer ⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n    0   0 []  false [] [] 0 0}\n{answer - [[alpha.md]]\n    0   0 []  false [] [] 0 0}\n{answer - [[alpha.md]]\n    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [] 0 0}\n",
+      "stderr": ""
+    },
+    {
+      "name": "unindexed_vault",
+      "args": [
+        "--json",
+        "ask",
+        "budget"
+      ],
+      "mode": "ok",
+      "no_index": true,
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
+      },
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\nQuestion: budget\n\u003e\u003e\nstdin=eof\n"
+    }
+  ]
+}

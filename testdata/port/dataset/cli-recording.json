@@ -1,0 +1,785 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source": {
+    "cases_file": "testdata/port/dataset/cli.json",
+    "cases_sha256": "ea8dd24fc359d4d761f5716841205cf3e69f8a220b6f243e91b753621becbbec",
+    "go_version": "go1.26.10",
+    "binary_version": "devel"
+  },
+  "stage": "dataset-cli",
+  "cases": [
+    {
+      "id": "sync-cli-inline-provenance-large-integer-json",
+      "case": {
+        "id": "sync-cli-inline-provenance-large-integer-json",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "sync",
+          "rounded",
+          "--rows",
+          "[{\"identity\":\"one\",\"values\":{\"id\":\"one\",\"amount\":9007199254740993}}]",
+          "--provenance",
+          "{\"source_name\":\"feed\",\"source_sha256\":\"sha-1\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"slug\":\"rounded\",\"rows\":1,\"imported_rows\":1,\"raw_path\":\"datasets/rounded/2026-04-03.csv\",\"handle_path\":\"datasets/rounded.md\",\"idempotent\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "sync-cli-file-inputs-flag-overrides-text",
+      "case": {
+        "id": "sync-cli-file-inputs-flag-overrides-text",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "sync",
+          "file-ledger",
+          "--rows",
+          "${WORKSPACE}/rows.json",
+          "--provenance",
+          "${WORKSPACE}/provenance.json",
+          "--source-name",
+          "override-feed",
+          "--source-sha256",
+          "override-sha",
+          "--imported-at",
+          "2026-04-05T08:09:10Z",
+          "--title",
+          "File Ledger",
+          "--identity-field",
+          "id",
+          "--schema",
+          "${WORKSPACE}/schema.json",
+          "--sensitivity",
+          "confidential",
+          "--retention-rule",
+          "finance-7y",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          },
+          {
+            "path": "rows.json",
+            "content": "[{\"identity\":\"one\",\"values\":{\"id\":\"one\",\"amount\":12.5}}]\n",
+            "mode": 420
+          },
+          {
+            "path": "provenance.json",
+            "content": "{\"source_name\":\"feed\",\"source_sha256\":\"source-sha\",\"imported_at\":\"2026-04-05T08:09:10Z\"}\n",
+            "mode": 420
+          },
+          {
+            "path": "schema.json",
+            "content": "{\"amount\":{\"type\":\"number\",\"label\":\"Amount\"}}\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "&{Slug:file-ledger Rows:1 ImportedRows:1 RawPath:datasets/file-ledger/2026-04-05.csv HandlePath:datasets/file-ledger.md Idempotent:false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-projected-key-ordered-first-page",
+      "case": {
+        "id": "query-cli-projected-key-ordered-first-page",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--columns",
+          "_key,identity,id",
+          "--limit",
+          "1",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":2}},{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":1}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"_key\",\"identity\",\"id\"],\"rows\":[{\"_key\":\"identity:a\",\"id\":\"a\",\"identity\":\"a\"}],\"total_rows\":2,\"returned_rows\":1,\"limit\":1,\"capped\":true}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-default-columns-and-limit",
+      "case": {
+        "id": "query-cli-default-columns-and-limit",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":2}},{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":1}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\"],\"rows\":[{\"amount\":1,\"id\":\"a\"},{\"amount\":2,\"id\":\"b\"}],\"total_rows\":2,\"returned_rows\":2,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-console-output",
+      "case": {
+        "id": "query-cli-console-output",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":2}},{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":1}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "&{Dataset:orders Columns:[amount id] Rows:[map[amount:1 id:a] map[amount:2 id:b]] TotalRows:2 ReturnedRows:2 Limit:10 Capped:false}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "query-cli-unknown-column",
+      "case": {
+        "id": "query-cli-unknown-column",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--columns",
+          "absent",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "bytes",
+        "stdout": "{\"error\":\"dataset column \\\"absent\\\" not found\"}\n",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "query-cli-missing-dataset",
+      "case": {
+        "id": "query-cli-missing-dataset",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "missing",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "stdout_mode": "ignore",
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "ignore",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "query-cli-filter-text-case-insensitive-equals",
+      "case": {
+        "id": "query-cli-filter-text-case-insensitive-equals",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"OPEN\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":10,\"id\":\"a\",\"status\":\"open\"}],\"total_rows\":1,\"returned_rows\":1,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-numeric-coercion",
+      "case": {
+        "id": "query-cli-filter-numeric-coercion",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"amount\",\"operator\":\"equals\",\"value\":\"10.0\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":10,\"id\":\"a\",\"status\":\"open\"}],\"total_rows\":1,\"returned_rows\":1,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-not-equals-missing-null",
+      "case": {
+        "id": "query-cli-filter-not-equals-missing-null",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"status\",\"operator\":\"not_equals\",\"value\":\"open\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":20,\"id\":\"b\",\"status\":\"\"},{\"amount\":30,\"id\":\"c\",\"status\":\"\"},{\"amount\":40,\"id\":\"d\",\"status\":\"\"},{\"amount\":50,\"id\":\"e\",\"status\":\"paid\"}],\"total_rows\":4,\"returned_rows\":4,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-is-empty-missing-null-empty",
+      "case": {
+        "id": "query-cli-filter-is-empty-missing-null-empty",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"status\",\"operator\":\"is_empty\",\"value\":\"\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":20,\"id\":\"b\",\"status\":\"\"},{\"amount\":30,\"id\":\"c\",\"status\":\"\"},{\"amount\":40,\"id\":\"d\",\"status\":\"\"}],\"total_rows\":3,\"returned_rows\":3,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-unknown-column",
+      "case": {
+        "id": "query-cli-filter-unknown-column",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"absent\",\"operator\":\"equals\",\"value\":\"x\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "stdout_mode": "ignore",
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 1,
+        "stdout_mode": "ignore",
+        "stderr_mode": "bytes"
+      }
+    },
+    {
+      "id": "query-cli-nested-group-all-any",
+      "case": {
+        "id": "query-cli-nested-group-all-any",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filter-group",
+          "{\"operator\":\"any\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"paid\"}],\"groups\":[{\"operator\":\"all\",\"filters\":[{\"key\":\"amount\",\"operator\":\"greater_than\",\"value\":\"20\"}],\"groups\":[{\"operator\":\"any\",\"filters\":[{\"key\":\"status\",\"operator\":\"is_empty\",\"value\":\"\"},{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"OPEN\"}]}]}]}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":30,\"id\":\"c\",\"status\":\"\"},{\"amount\":40,\"id\":\"d\",\"status\":\"\"},{\"amount\":50,\"id\":\"e\",\"status\":\"paid\"}],\"total_rows\":3,\"returned_rows\":3,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-is-not-empty-aliases",
+      "case": {
+        "id": "query-cli-filter-is-not-empty-aliases",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"status\",\"operator\":\"is_not_empty\",\"value\":\"\"},{\"key\":\"status\",\"operator\":\"not_empty\",\"value\":\"\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":10,\"id\":\"a\",\"status\":\"open\"},{\"amount\":50,\"id\":\"e\",\"status\":\"paid\"}],\"total_rows\":2,\"returned_rows\":2,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-text-pattern-operators",
+      "case": {
+        "id": "query-cli-filter-text-pattern-operators",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "labels",
+          "--filters",
+          "[{\"key\":\"label\",\"operator\":\"contains\",\"value\":\"ph%_\"},{\"key\":\"starts\",\"operator\":\"starts_with\",\"value\":\"al\"},{\"key\":\"starts_alias\",\"operator\":\"prefix\",\"value\":\"al\"},{\"key\":\"ends\",\"operator\":\"ends_with\",\"value\":\"ga\"},{\"key\":\"ends_alias\",\"operator\":\"suffix\",\"value\":\"ga\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "labels",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"label\":\"AlPhX_beta\",\"starts\":\"ALPHA start\",\"starts_alias\":\"alpine\",\"ends\":\"the OMEGA\",\"ends_alias\":\"subomega\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"label\":\"nothing\",\"starts\":\"no\",\"starts_alias\":\"no\",\"ends\":\"no\",\"ends_alias\":\"no\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"label\":{\"type\":\"text\"},\"starts\":{\"type\":\"text\"},\"starts_alias\":{\"type\":\"text\"},\"ends\":{\"type\":\"text\"},\"ends_alias\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"labels\",\"columns\":[\"ends\",\"ends_alias\",\"id\",\"label\",\"starts\",\"starts_alias\"],\"rows\":[{\"ends\":\"the OMEGA\",\"ends_alias\":\"subomega\",\"id\":\"a\",\"label\":\"AlPhX_beta\",\"starts\":\"ALPHA start\",\"starts_alias\":\"alpine\"}],\"total_rows\":1,\"returned_rows\":1,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    },
+    {
+      "id": "query-cli-filter-not-contains-missing-null",
+      "case": {
+        "id": "query-cli-filter-not-contains-missing-null",
+        "stage": "dataset-cli",
+        "args": [
+          "dataset",
+          "query",
+          "orders",
+          "--filters",
+          "[{\"key\":\"status\",\"operator\":\"not_contains\",\"value\":\"open\"}]",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "prepare_args": [
+          "dataset",
+          "sync",
+          "orders",
+          "--rows",
+          "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+          "--provenance",
+          "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+          "--identity-field",
+          "id",
+          "--schema",
+          "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+          "--json",
+          "--vault",
+          "${WORKSPACE}/vault"
+        ],
+        "compare_sidecar_layout": true,
+        "setup": [
+          {
+            "path": "vault/.seed",
+            "content": "seed\n",
+            "mode": 420
+          }
+        ]
+      },
+      "observation": {
+        "exit_code": 0,
+        "stdout_mode": "bytes",
+        "stdout": "{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\",\"status\"],\"rows\":[{\"amount\":20,\"id\":\"b\",\"status\":\"\"},{\"amount\":30,\"id\":\"c\",\"status\":\"\"},{\"amount\":40,\"id\":\"d\",\"status\":\"\"},{\"amount\":50,\"id\":\"e\",\"status\":\"paid\"}],\"total_rows\":4,\"returned_rows\":4,\"limit\":10,\"capped\":false}\n",
+        "stderr_mode": "bytes",
+        "sidecar_layout": [
+          "home/.local/share/symdesk/vaults/<vault-hash>/metadata.json",
+          "home/.local/share/symdesk/vaults/<vault-hash>/sidecar.db"
+        ]
+      }
+    }
+  ]
+}

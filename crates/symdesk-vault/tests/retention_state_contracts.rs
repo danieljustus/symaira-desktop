@@ -5,6 +5,8 @@
 
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 
 use std::{
     collections::BTreeMap,
@@ -14,10 +16,7 @@ use std::{
 };
 
 use serde::Deserialize;
-use symdesk_vault::{
-    retention_state::{RetentionState, RetentionStateError, retention_state},
-    sha256,
-};
+use symdesk_vault::retention_state::{RetentionState, RetentionStateError, retention_state};
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -306,7 +305,6 @@ fn load_fixture() -> Fixture {
 }
 
 fn assert_source_hashes(fixture: &Fixture) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for relative in [
         "internal/dataset/dataset.go",
         "internal/retention/fingerprint.go",
@@ -324,9 +322,7 @@ fn assert_source_hashes(fixture: &Fixture) {
             .source_hashes
             .get(relative)
             .unwrap_or_else(|| panic!("missing source hash for {relative}"));
-        let data = fs::read(root.join(relative))
-            .unwrap_or_else(|error| panic!("read {relative}: {error}"));
-        assert_eq!(sha256_hex(&data), *expected, "source hash for {relative}");
+        oracle_sources::assert_recorded_source_hash(relative, expected);
     }
 }
 
@@ -442,13 +438,6 @@ fn sanitise_error(message: &str, sandbox: &Sandbox) -> String {
             "{{OUTSIDE_FILE}}",
         )
         .replace('\\', "/")
-}
-
-fn sha256_hex(data: &[u8]) -> String {
-    sha256::digest(data)
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
 }
 
 static NEXT_SANDBOX: AtomicU64 = AtomicU64::new(0);

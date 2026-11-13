@@ -47,18 +47,13 @@ materialized per platform and canonicalized to `/` in recorded path fields.
 No credentials, provider calls or operator databases are accessed.
 
 ```sh
-# Immutable regeneration/comparison followed by Rust replay:
+# Replay the frozen Go recording (testdata/port/ingest/queue.json) in Rust:
 make ingest-queue-differential
-# Deliberate fixture generation only:
-make ingest-queue-fixtures-generate
 ```
 
-The Make target accepts `INGEST_GO` and `CARGO` command overrides. In delegated
-worktrees both must point to the approved compiler launcher. Direct equivalent:
-`PORT_GENERATE=1 go test ./internal/ingest/internal/store -count=1 -run
-'^TestPortIngestQueueContract$' -args -port-ingest-queue`; omit `PORT_GENERATE`
-for immutable check mode. Do not pass the oracle flag to the whole Go suite:
-its test-only SQLite clock registration is intentionally process-global.
+The fixture was recorded once from Go at `36aad3d4`; the generator is retired.
+The Make target accepts a `CARGO` command override. In delegated worktrees it
+must point to the approved compiler launcher.
 
 Rust adds independent-connection claim exclusion and nonempty migration-13 to
 migration-14 upgrade tests. These supplemental tests are not a substitute for

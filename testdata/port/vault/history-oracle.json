@@ -1,0 +1,905 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source_hashes": {
+    "go.mod": "e15fa6a3f35dca55c548dd18913c26b43b20b4ae047ff5677ac265c24a3a53c5",
+    "go.sum": "2b2e10452b842861551cb81451fdce09c0fe58942d69df6a414b93367d982c5e",
+    "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
+    "internal/history/history.go": "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",
+    "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89"
+  },
+  "initial_files": [
+    {
+      "path": "notes/initial.md",
+      "content": "Initial notes content\n"
+    },
+    {
+      "path": "notes/nested/deep/doc.md",
+      "content": "Deeply nested note content\n"
+    },
+    {
+      "path": "binary/data.bin",
+      "content_base64": "AP/+AYCqVQA="
+    },
+    {
+      "path": "unicode/mädchen_übersicht.md",
+      "content": "Unicode file path and content: Grüß Gott 🚀\n"
+    },
+    {
+      "path": "html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c/script\u003e.md",
+      "content": "HTML / injection path test\n"
+    }
+  ],
+  "operations": [
+    {
+      "step": 1,
+      "op": "snapshot",
+      "path": "notes/initial.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.269563Z"
+      ],
+      "snapshot_result": {
+        "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+        "timestamp": "2026-11-05T08:59:27.269563Z",
+        "size": 22
+      }
+    },
+    {
+      "step": 2,
+      "op": "snapshot",
+      "path": "notes/initial.md",
+      "snapshot_result": {
+        "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+        "timestamp": "2026-11-05T08:59:27.269563Z",
+        "size": 22
+      }
+    },
+    {
+      "step": 3,
+      "op": "write_raw",
+      "path": "notes/initial.md",
+      "content": "Updated notes content v2\n"
+    },
+    {
+      "step": 4,
+      "op": "snapshot",
+      "path": "notes/initial.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.276885Z"
+      ],
+      "snapshot_result": {
+        "id": "6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+        "timestamp": "2026-11-05T08:59:27.276885Z",
+        "size": 25
+      }
+    },
+    {
+      "step": 5,
+      "op": "write_raw",
+      "path": "notes/initial.md",
+      "content": "Updated notes content v3\n"
+    },
+    {
+      "step": 6,
+      "op": "snapshot",
+      "path": "notes/initial.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.333902Z"
+      ],
+      "snapshot_result": {
+        "id": "c54416a9ef34853c7111f2f59bd5dad6e6e30ac6be323879fed092f0e24975cc",
+        "timestamp": "2026-11-05T08:59:27.333902Z",
+        "size": 25
+      }
+    },
+    {
+      "step": 7,
+      "op": "snapshot",
+      "path": "notes/missing.md"
+    },
+    {
+      "step": 8,
+      "op": "snapshot",
+      "path": "../outside.md",
+      "error": "invalid vault-relative path: \"../outside.md\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 9,
+      "op": "snapshot",
+      "path": "/abs/evil.md",
+      "error": "invalid vault-relative path: \"/abs/evil.md\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 10,
+      "op": "snapshot",
+      "path": ".",
+      "error": "invalid vault-relative path: \".\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 11,
+      "op": "snapshot",
+      "error": "invalid vault-relative path: \"\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 12,
+      "op": "snapshot",
+      "path": "notes/../../evil.md",
+      "error": "invalid vault-relative path: \"notes/../../evil.md\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 13,
+      "op": "list",
+      "path": "notes/initial.md",
+      "list_result": [
+        {
+          "id": "c54416a9ef34853c7111f2f59bd5dad6e6e30ac6be323879fed092f0e24975cc",
+          "timestamp": "2026-11-05T08:59:27.333902Z",
+          "size": 25
+        },
+        {
+          "id": "6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+          "timestamp": "2026-11-05T08:59:27.276885Z",
+          "size": 25
+        },
+        {
+          "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+          "timestamp": "2026-11-05T08:59:27.269563Z",
+          "size": 22
+        }
+      ]
+    },
+    {
+      "step": 14,
+      "op": "list",
+      "path": "notes/never_snapshotted.md",
+      "list_result": null
+    },
+    {
+      "step": 15,
+      "op": "list",
+      "path": "../evil.md",
+      "error": "invalid vault-relative path: \"../evil.md\"",
+      "error_class": "invalid_path"
+    },
+    {
+      "step": 16,
+      "op": "content",
+      "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+      "content_result_base64": "SW5pdGlhbCBub3RlcyBjb250ZW50Cg=="
+    },
+    {
+      "step": 17,
+      "op": "content",
+      "id": "6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+      "content_result_base64": "VXBkYXRlZCBub3RlcyBjb250ZW50IHYyCg=="
+    },
+    {
+      "step": 18,
+      "op": "content",
+      "id": "invalid_short_id",
+      "error": "invalid snapshot id: \"invalid_short_id\"",
+      "error_class": "invalid_id"
+    },
+    {
+      "step": 19,
+      "op": "content",
+      "id": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeg",
+      "error": "invalid snapshot id: \"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeg\"",
+      "error_class": "invalid_id"
+    },
+    {
+      "step": 20,
+      "op": "content",
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "error": "snapshot object ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff not found: openat .symdesk/history/objects/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff: no such file or directory",
+      "error_class": "not_found"
+    },
+    {
+      "step": 21,
+      "op": "snapshot",
+      "path": "binary/data.bin",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.350945Z"
+      ],
+      "snapshot_result": {
+        "id": "8de4a3a7ac1718df46f959ea03047c8bc324821b6070de5524cdf803a8f3260c",
+        "timestamp": "2026-11-05T08:59:27.350945Z",
+        "size": 8
+      }
+    },
+    {
+      "step": 22,
+      "op": "content",
+      "id": "8de4a3a7ac1718df46f959ea03047c8bc324821b6070de5524cdf803a8f3260c",
+      "content_result_base64": "AP/+AYCqVQA="
+    },
+    {
+      "step": 23,
+      "op": "snapshot",
+      "path": "unicode/mädchen_übersicht.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.370147Z"
+      ],
+      "snapshot_result": {
+        "id": "c4177f08e1e341607e74860de957bac48ffeeedb2086432baf5b6c190870b801",
+        "timestamp": "2026-11-05T08:59:27.370147Z",
+        "size": 48
+      }
+    },
+    {
+      "step": 24,
+      "op": "list",
+      "path": "unicode/mädchen_übersicht.md",
+      "list_result": [
+        {
+          "id": "c4177f08e1e341607e74860de957bac48ffeeedb2086432baf5b6c190870b801",
+          "timestamp": "2026-11-05T08:59:27.370147Z",
+          "size": 48
+        }
+      ]
+    },
+    {
+      "step": 25,
+      "op": "snapshot",
+      "path": "html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c/script\u003e.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.385648Z"
+      ],
+      "snapshot_result": {
+        "id": "77461272d4a249feae8a1d6e89b535ce24d896caabdf9384736b3258bf52e6e4",
+        "timestamp": "2026-11-05T08:59:27.385648Z",
+        "size": 27
+      }
+    },
+    {
+      "step": 26,
+      "op": "list",
+      "path": "html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c/script\u003e.md",
+      "list_result": [
+        {
+          "id": "77461272d4a249feae8a1d6e89b535ce24d896caabdf9384736b3258bf52e6e4",
+          "timestamp": "2026-11-05T08:59:27.385648Z",
+          "size": 27
+        }
+      ]
+    },
+    {
+      "step": 27,
+      "op": "snapshot",
+      "path": "notes/nested/deep/doc.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.480359Z"
+      ],
+      "snapshot_result": {
+        "id": "36dc89543265d05dbfd9bfbebf758c571ee68ef1e74e786c021395f4488fce12",
+        "timestamp": "2026-11-05T08:59:27.480359Z",
+        "size": 27
+      }
+    },
+    {
+      "step": 28,
+      "op": "list",
+      "path": "notes/nested/deep/doc.md",
+      "list_result": [
+        {
+          "id": "36dc89543265d05dbfd9bfbebf758c571ee68ef1e74e786c021395f4488fce12",
+          "timestamp": "2026-11-05T08:59:27.480359Z",
+          "size": 27
+        }
+      ]
+    },
+    {
+      "step": 29,
+      "op": "restore",
+      "path": "notes/initial.md",
+      "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+      "restore_result": {
+        "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+        "timestamp": "2026-11-05T08:59:27.269563Z",
+        "size": 22
+      }
+    },
+    {
+      "step": 30,
+      "op": "restore",
+      "path": "notes/initial.md",
+      "id": "6d45bf6d",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.50075Z"
+      ],
+      "restore_result": {
+        "id": "6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+        "timestamp": "2026-11-05T08:59:27.276885Z",
+        "size": 25
+      }
+    },
+    {
+      "step": 31,
+      "op": "write_raw",
+      "path": "notes/initial.md",
+      "content": "working copy content\n"
+    },
+    {
+      "step": 32,
+      "op": "restore",
+      "path": "notes/initial.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.573155Z"
+      ],
+      "restore_result": {
+        "id": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+        "timestamp": "2026-11-05T08:59:27.50075Z",
+        "size": 22
+      }
+    },
+    {
+      "step": 33,
+      "op": "restore",
+      "path": "notes/initial.md",
+      "id": "ffffffffffffffff",
+      "error": "no snapshot \"ffffffffffffffff\" for notes/initial.md",
+      "error_class": "no_snapshot"
+    },
+    {
+      "step": 34,
+      "op": "restore",
+      "path": "notes/unseen.md",
+      "error": "no snapshots recorded for notes/unseen.md",
+      "error_class": "no_snapshots"
+    },
+    {
+      "step": 35,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/corrupt.md.json",
+      "content": "invalid manifest json {"
+    },
+    {
+      "step": 36,
+      "op": "list",
+      "path": "corrupt.md",
+      "error": "corrupt history manifest for corrupt.md: invalid character 'i' looking for beginning of value",
+      "error_class": "corrupt_manifest"
+    },
+    {
+      "step": 37,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/null_manifest.md.json",
+      "content": "null"
+    },
+    {
+      "step": 38,
+      "op": "list",
+      "path": "null_manifest.md",
+      "list_result": null
+    },
+    {
+      "step": 39,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/empty_manifest.md.json",
+      "content": "[]"
+    },
+    {
+      "step": 40,
+      "op": "list",
+      "path": "empty_manifest.md",
+      "list_result": []
+    },
+    {
+      "step": 41,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/default_manifest.md.json",
+      "content": "[{}]"
+    },
+    {
+      "step": 42,
+      "op": "list",
+      "path": "default_manifest.md",
+      "list_result": [
+        {
+          "id": "",
+          "timestamp": "0001-01-01T00:00:00Z",
+          "size": 0
+        }
+      ]
+    },
+    {
+      "step": 43,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/default_manifest.md.json",
+      "content": "[{\"id\":null,\"timestamp\":null,\"size\":null}]"
+    },
+    {
+      "step": 44,
+      "op": "list",
+      "path": "default_manifest.md",
+      "list_result": [
+        {
+          "id": "",
+          "timestamp": "0001-01-01T00:00:00Z",
+          "size": 0
+        }
+      ]
+    },
+    {
+      "step": 45,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/duplicate_manifest.md.json",
+      "content": "[{\"id\":\"2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae\",\"id\":null,\"timestamp\":\"2026-09-15T04:00:00Z\",\"timestamp\":null,\"size\":128,\"size\":null}]"
+    },
+    {
+      "step": 46,
+      "op": "list",
+      "path": "duplicate_manifest.md",
+      "list_result": [
+        {
+          "id": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+          "timestamp": "2026-09-15T04:00:00Z",
+          "size": 128
+        }
+      ]
+    },
+    {
+      "step": 47,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/folded_manifest.md.json",
+      "content": "[{\"ID\":\"2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae\",\"TimeStamp\":\"2026-09-15T04:00:00Z\",\"ſize\":128}]"
+    },
+    {
+      "step": 48,
+      "op": "list",
+      "path": "folded_manifest.md",
+      "list_result": [
+        {
+          "id": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+          "timestamp": "2026-09-15T04:00:00Z",
+          "size": 128
+        }
+      ]
+    },
+    {
+      "step": 49,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/null_element_manifest.md.json",
+      "content": "[null]"
+    },
+    {
+      "step": 50,
+      "op": "list",
+      "path": "null_element_manifest.md",
+      "list_result": [
+        {
+          "id": "",
+          "timestamp": "0001-01-01T00:00:00Z",
+          "size": 0
+        }
+      ]
+    },
+    {
+      "step": 51,
+      "op": "write_raw",
+      "path": ".symdesk/history/manifest/notes/tz.md.json",
+      "content": "[{\"id\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"timestamp\":\"2026-09-15T15:04:05.123456+05:30\",\"size\":64},{\"id\":\"2222222222222222222222222222222222222222222222222222222222222222\",\"timestamp\":\"2026-09-15T09:00:00-00:30\",\"size\":128}]"
+    },
+    {
+      "step": 52,
+      "op": "write_raw",
+      "path": "notes/tz.md",
+      "content": "Timezone test note content\n"
+    },
+    {
+      "step": 53,
+      "op": "list",
+      "path": "notes/tz.md",
+      "list_result": [
+        {
+          "id": "1111111111111111111111111111111111111111111111111111111111111111",
+          "timestamp": "2026-09-15T15:04:05.123456+05:30",
+          "size": 64
+        },
+        {
+          "id": "2222222222222222222222222222222222222222222222222222222222222222",
+          "timestamp": "2026-09-15T09:00:00-00:30",
+          "size": 128
+        }
+      ]
+    },
+    {
+      "step": 54,
+      "op": "snapshot",
+      "path": "notes/tz.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.701756Z"
+      ],
+      "snapshot_result": {
+        "id": "cecbd1d7134f3d827bc6c47ed98d1bc72329b41c85833729719c55dc58c26823",
+        "timestamp": "2026-11-05T08:59:27.701756Z",
+        "size": 27
+      }
+    },
+    {
+      "step": 55,
+      "op": "write_raw",
+      "path": "notes\\backslash.md",
+      "content": "Backslash path test content\n"
+    },
+    {
+      "step": 56,
+      "op": "snapshot",
+      "path": "notes\\backslash.md",
+      "created_timestamps": [
+        "2026-11-05T08:59:27.714249Z"
+      ],
+      "snapshot_result": {
+        "id": "c9c4c81671862d754fd4dd9feb16c6e0a4a2efa26e9c329f86efb17c1768f98f",
+        "timestamp": "2026-11-05T08:59:27.714249Z",
+        "size": 28
+      }
+    }
+  ],
+  "final_filesystem": [
+    {
+      "path": ".symdesk",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history",
+      "mode": 488,
+      "size": 128,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest",
+      "mode": 488,
+      "size": 448,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/binary",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/binary/data.bin.json",
+      "mode": 420,
+      "size": 151,
+      "sha256": "fb83758de1e0478ec84cd0bb7f84e422bc10c331b4e7dd995e33245fd964b515",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICI4ZGU0YTNhN2FjMTcxOGRmNDZmOTU5ZWEwMzA0N2M4YmMzMjQ4MjFiNjA3MGRlNTUyNGNkZjgwM2E4ZjMyNjBjIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy4zNTA5NDVaIiwKICAgICJzaXplIjogOAogIH0KXQ==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/corrupt.md.json",
+      "mode": 420,
+      "size": 23,
+      "sha256": "206627d1afe701bef0ad1a596dd57fa87b5342433e04f87269f3d134ccc2721c",
+      "content_base64": "aW52YWxpZCBtYW5pZmVzdCBqc29uIHs=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/default_manifest.md.json",
+      "mode": 420,
+      "size": 42,
+      "sha256": "fe119c3e3498d520d4ee91a72934bca8653f168529aad05f8dd422069cd6561a",
+      "content_base64": "W3siaWQiOm51bGwsInRpbWVzdGFtcCI6bnVsbCwic2l6ZSI6bnVsbH1d",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/duplicate_manifest.md.json",
+      "mode": 420,
+      "size": 160,
+      "sha256": "39eb87a07b18381c0e3a3e57d4646f606588ff2f35fe8d826173b317dbe2c549",
+      "content_base64": "W3siaWQiOiIyYzI2YjQ2YjY4ZmZjNjhmZjk5YjQ1M2MxZDMwNDEzNDEzNDIyZDcwNjQ4M2JmYTBmOThhNWU4ODYyNjZlN2FlIiwiaWQiOm51bGwsInRpbWVzdGFtcCI6IjIwMjYtMDktMTVUMDQ6MDA6MDBaIiwidGltZXN0YW1wIjpudWxsLCJzaXplIjoxMjgsInNpemUiOm51bGx9XQ==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/empty_manifest.md.json",
+      "mode": 420,
+      "size": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "content_base64": "W10=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/folded_manifest.md.json",
+      "mode": 420,
+      "size": 122,
+      "sha256": "8390a7e8ccb4e67003d56dc41c82f97ae1b87a778e6da9dfcbd9b44bca86e337",
+      "content_base64": "W3siSUQiOiIyYzI2YjQ2YjY4ZmZjNjhmZjk5YjQ1M2MxZDMwNDEzNDEzNDIyZDcwNjQ4M2JmYTBmOThhNWU4ODYyNjZlN2FlIiwiVGltZVN0YW1wIjoiMjAyNi0wOS0xNVQwNDowMDowMFoiLCLFv2l6ZSI6MTI4fV0=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/html",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c/script\u003e.md.json",
+      "mode": 420,
+      "size": 152,
+      "sha256": "aab91c56f5b374d06edbb721a89d3e38daec6fd6f4d5050ce61141172d074c47",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICI3NzQ2MTI3MmQ0YTI0OWZlYWU4YTFkNmU4OWI1MzVjZTI0ZDg5NmNhYWJkZjkzODQ3MzZiMzI1OGJmNTJlNmU0IiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy4zODU2NDhaIiwKICAgICJzaXplIjogMjcKICB9Cl0=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/notes",
+      "mode": 488,
+      "size": 160,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/notes/initial.md.json",
+      "mode": 420,
+      "size": 751,
+      "sha256": "4d030cf15bf4c042899e1b4c2fa0fc35fe00ef74b225a70d8914ec97d82aa42d",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICIxYTZhMzFhN2VmODgyNGU4ZjA3YzUwMmRlOWRiNDc1ZmU2NWY4MjM4NzQyNjU2ZTM0M2ViZTBjZjQ2NjZhZjIyIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy41NzMxNTVaIiwKICAgICJzaXplIjogMjEKICB9LAogIHsKICAgICJpZCI6ICI2MThlMTEzYjkyMjdmYjE1MWJkNTk4OGI3ODY1ODMzZWI4YWZmMWM2NjcwODkxMGNkYWE0YzMyZTA5OWY5Y2U0IiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy41MDA3NVoiLAogICAgInNpemUiOiAyMgogIH0sCiAgewogICAgImlkIjogImM1NDQxNmE5ZWYzNDg1M2M3MTExZjJmNTliZDVkYWQ2ZTZlMzBhYzZiZTMyMzg3OWZlZDA5MmYwZTI0OTc1Y2MiLAogICAgInRpbWVzdGFtcCI6ICIyMDI2LTExLTA1VDA4OjU5OjI3LjMzMzkwMloiLAogICAgInNpemUiOiAyNQogIH0sCiAgewogICAgImlkIjogIjZkNDViZjZkMTc5Yzg2MzBlMzc5MDk5ZmNmYWNlMjU3ZmU3YTEyYWMzOTVlOWJhMWEyYTgzZDA1ZDBjOTdiNTQiLAogICAgInRpbWVzdGFtcCI6ICIyMDI2LTExLTA1VDA4OjU5OjI3LjI3Njg4NVoiLAogICAgInNpemUiOiAyNQogIH0sCiAgewogICAgImlkIjogIjYxOGUxMTNiOTIyN2ZiMTUxYmQ1OTg4Yjc4NjU4MzNlYjhhZmYxYzY2NzA4OTEwY2RhYTRjMzJlMDk5ZjljZTQiLAogICAgInRpbWVzdGFtcCI6ICIyMDI2LTExLTA1VDA4OjU5OjI3LjI2OTU2M1oiLAogICAgInNpemUiOiAyMgogIH0KXQ==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/notes/nested",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/notes/nested/deep",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/notes/nested/deep/doc.md.json",
+      "mode": 420,
+      "size": 152,
+      "sha256": "86ac2710ccbd0159c0a9ec76abec3b7b31b857129e2d50f42f784dd8939b9331",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICIzNmRjODk1NDMyNjVkMDVkYmZkOWJmYmViZjc1OGM1NzFlZTY4ZWYxZTc0ZTc4NmMwMjEzOTVmNDQ4OGZjZTEyIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy40ODAzNTlaIiwKICAgICJzaXplIjogMjcKICB9Cl0=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/notes/tz.md.json",
+      "mode": 420,
+      "size": 456,
+      "sha256": "d50812f181aaa892c3f9ebc7ce94988313f4f41ea430d9ca06bdafa2681f4eec",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICJjZWNiZDFkNzEzNGYzZDgyN2JjNmM0N2VkOThkMWJjNzIzMjliNDFjODU4MzM3Mjk3MTljNTVkYzU4YzI2ODIzIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy43MDE3NTZaIiwKICAgICJzaXplIjogMjcKICB9LAogIHsKICAgICJpZCI6ICIxMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0wOS0xNVQxNTowNDowNS4xMjM0NTYrMDU6MzAiLAogICAgInNpemUiOiA2NAogIH0sCiAgewogICAgImlkIjogIjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIiLAogICAgInRpbWVzdGFtcCI6ICIyMDI2LTA5LTE1VDA5OjAwOjAwLTAwOjMwIiwKICAgICJzaXplIjogMTI4CiAgfQpd",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/notes\\backslash.md.json",
+      "mode": 420,
+      "size": 152,
+      "sha256": "aa385b12f27d634ef99e91b2eb2e1af65d5d584accaa9aaba7650b90c7d80415",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICJjOWM0YzgxNjcxODYyZDc1NGZkNGRkOWZlYjE2YzZlMGE0YTJlZmEyNmU5YzMyOWY4NmVmYjE3YzE3NjhmOThmIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy43MTQyNDlaIiwKICAgICJzaXplIjogMjgKICB9Cl0=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/null_element_manifest.md.json",
+      "mode": 420,
+      "size": 6,
+      "sha256": "1d8fc6ceb1f94c6326d6d5483d258fcb2e179e9869325b245d105c2219bf69fd",
+      "content_base64": "W251bGxd",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/null_manifest.md.json",
+      "mode": 420,
+      "size": 4,
+      "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "content_base64": "bnVsbA==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/manifest/unicode",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/manifest/unicode/mädchen_übersicht.md.json",
+      "mode": 420,
+      "size": 152,
+      "sha256": "ed6b4914a5c056e87b829c40994d0cdf09611a6a45fff4666f734dedb26a6181",
+      "content_base64": "WwogIHsKICAgICJpZCI6ICJjNDE3N2YwOGUxZTM0MTYwN2U3NDg2MGRlOTU3YmFjNDhmZmVlZWRiMjA4NjQzMmJhZjViNmMxOTA4NzBiODAxIiwKICAgICJ0aW1lc3RhbXAiOiAiMjAyNi0xMS0wNVQwODo1OToyNy4zNzAxNDdaIiwKICAgICJzaXplIjogNDgKICB9Cl0=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects",
+      "mode": 488,
+      "size": 384,
+      "is_dir": true
+    },
+    {
+      "path": ".symdesk/history/objects/1a6a31a7ef8824e8f07c502de9db475fe65f8238742656e343ebe0cf4666af22",
+      "mode": 420,
+      "size": 21,
+      "sha256": "1a6a31a7ef8824e8f07c502de9db475fe65f8238742656e343ebe0cf4666af22",
+      "content_base64": "d29ya2luZyBjb3B5IGNvbnRlbnQK",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/36dc89543265d05dbfd9bfbebf758c571ee68ef1e74e786c021395f4488fce12",
+      "mode": 420,
+      "size": 27,
+      "sha256": "36dc89543265d05dbfd9bfbebf758c571ee68ef1e74e786c021395f4488fce12",
+      "content_base64": "RGVlcGx5IG5lc3RlZCBub3RlIGNvbnRlbnQK",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+      "mode": 420,
+      "size": 22,
+      "sha256": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+      "content_base64": "SW5pdGlhbCBub3RlcyBjb250ZW50Cg==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+      "mode": 420,
+      "size": 25,
+      "sha256": "6d45bf6d179c8630e379099fcface257fe7a12ac395e9ba1a2a83d05d0c97b54",
+      "content_base64": "VXBkYXRlZCBub3RlcyBjb250ZW50IHYyCg==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/77461272d4a249feae8a1d6e89b535ce24d896caabdf9384736b3258bf52e6e4",
+      "mode": 420,
+      "size": 27,
+      "sha256": "77461272d4a249feae8a1d6e89b535ce24d896caabdf9384736b3258bf52e6e4",
+      "content_base64": "SFRNTCAvIGluamVjdGlvbiBwYXRoIHRlc3QK",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/8de4a3a7ac1718df46f959ea03047c8bc324821b6070de5524cdf803a8f3260c",
+      "mode": 420,
+      "size": 8,
+      "sha256": "8de4a3a7ac1718df46f959ea03047c8bc324821b6070de5524cdf803a8f3260c",
+      "content_base64": "AP/+AYCqVQA=",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/c4177f08e1e341607e74860de957bac48ffeeedb2086432baf5b6c190870b801",
+      "mode": 420,
+      "size": 48,
+      "sha256": "c4177f08e1e341607e74860de957bac48ffeeedb2086432baf5b6c190870b801",
+      "content_base64": "VW5pY29kZSBmaWxlIHBhdGggYW5kIGNvbnRlbnQ6IEdyw7zDnyBHb3R0IPCfmoAK",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/c54416a9ef34853c7111f2f59bd5dad6e6e30ac6be323879fed092f0e24975cc",
+      "mode": 420,
+      "size": 25,
+      "sha256": "c54416a9ef34853c7111f2f59bd5dad6e6e30ac6be323879fed092f0e24975cc",
+      "content_base64": "VXBkYXRlZCBub3RlcyBjb250ZW50IHYzCg==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/c9c4c81671862d754fd4dd9feb16c6e0a4a2efa26e9c329f86efb17c1768f98f",
+      "mode": 420,
+      "size": 28,
+      "sha256": "c9c4c81671862d754fd4dd9feb16c6e0a4a2efa26e9c329f86efb17c1768f98f",
+      "content_base64": "QmFja3NsYXNoIHBhdGggdGVzdCBjb250ZW50Cg==",
+      "is_dir": false
+    },
+    {
+      "path": ".symdesk/history/objects/cecbd1d7134f3d827bc6c47ed98d1bc72329b41c85833729719c55dc58c26823",
+      "mode": 420,
+      "size": 27,
+      "sha256": "cecbd1d7134f3d827bc6c47ed98d1bc72329b41c85833729719c55dc58c26823",
+      "content_base64": "VGltZXpvbmUgdGVzdCBub3RlIGNvbnRlbnQK",
+      "is_dir": false
+    },
+    {
+      "path": "binary",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "binary/data.bin",
+      "mode": 420,
+      "size": 8,
+      "sha256": "8de4a3a7ac1718df46f959ea03047c8bc324821b6070de5524cdf803a8f3260c",
+      "content_base64": "AP/+AYCqVQA=",
+      "is_dir": false
+    },
+    {
+      "path": "html",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "html/\u003cdiv\u003e\u003cscript\u003ealert(1)\u003c/script\u003e.md",
+      "mode": 420,
+      "size": 27,
+      "sha256": "77461272d4a249feae8a1d6e89b535ce24d896caabdf9384736b3258bf52e6e4",
+      "content_base64": "SFRNTCAvIGluamVjdGlvbiBwYXRoIHRlc3QK",
+      "is_dir": false
+    },
+    {
+      "path": "notes",
+      "mode": 488,
+      "size": 160,
+      "is_dir": true
+    },
+    {
+      "path": "notes/initial.md",
+      "mode": 420,
+      "size": 22,
+      "sha256": "618e113b9227fb151bd5988b7865833eb8aff1c66708910cdaa4c32e099f9ce4",
+      "content_base64": "SW5pdGlhbCBub3RlcyBjb250ZW50Cg==",
+      "is_dir": false
+    },
+    {
+      "path": "notes/nested",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "notes/nested/deep",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "notes/nested/deep/doc.md",
+      "mode": 420,
+      "size": 27,
+      "sha256": "36dc89543265d05dbfd9bfbebf758c571ee68ef1e74e786c021395f4488fce12",
+      "content_base64": "RGVlcGx5IG5lc3RlZCBub3RlIGNvbnRlbnQK",
+      "is_dir": false
+    },
+    {
+      "path": "notes/tz.md",
+      "mode": 420,
+      "size": 27,
+      "sha256": "cecbd1d7134f3d827bc6c47ed98d1bc72329b41c85833729719c55dc58c26823",
+      "content_base64": "VGltZXpvbmUgdGVzdCBub3RlIGNvbnRlbnQK",
+      "is_dir": false
+    },
+    {
+      "path": "notes\\backslash.md",
+      "mode": 420,
+      "size": 28,
+      "sha256": "c9c4c81671862d754fd4dd9feb16c6e0a4a2efa26e9c329f86efb17c1768f98f",
+      "content_base64": "QmFja3NsYXNoIHBhdGggdGVzdCBjb250ZW50Cg==",
+      "is_dir": false
+    },
+    {
+      "path": "unicode",
+      "mode": 488,
+      "size": 96,
+      "is_dir": true
+    },
+    {
+      "path": "unicode/mädchen_übersicht.md",
+      "mode": 420,
+      "size": 48,
+      "sha256": "c4177f08e1e341607e74860de957bac48ffeeedb2086432baf5b6c190870b801",
+      "content_base64": "VW5pY29kZSBmaWxlIHBhdGggYW5kIGNvbnRlbnQ6IEdyw7zDnyBHb3R0IPCfmoAK",
+      "is_dir": false
+    }
+  ]
+}

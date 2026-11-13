@@ -1,0 +1,684 @@
+{
+  "normalizations": [
+    "temporary root replaced by \u003cROOT\u003e; rule created_at replaced by \u003cCREATED_AT\u003e"
+  ],
+  "notes": [
+    {
+      "content": "---\nsource: x\n---\n\nINVOICE body\n",
+      "mode": "file",
+      "name": "a.md"
+    },
+    {
+      "content": "no frontmatter but invoice mentioned",
+      "mode": "file",
+      "name": "b.md"
+    },
+    {
+      "content": "---\ninvoice: only in frontmatter\n---\n\nunrelated body\n",
+      "mode": "file",
+      "name": "c.md"
+    },
+    {
+      "content": "---\ninvoice: unterminated frontmatter\n\nbody\n",
+      "mode": "file",
+      "name": "d.md"
+    },
+    {
+      "content": "---\r\ninvoice: crlf frontmatter\r\n---\r\n\r\nbody invoice\r\n",
+      "mode": "file",
+      "name": "e.md"
+    },
+    {
+      "content": "---\n---\n\ninvoice after empty frontmatter\n",
+      "mode": "file",
+      "name": "f.md"
+    },
+    {
+      "content": "---\nk: v\n---\ninvoice with no blank line\n",
+      "mode": "file",
+      "name": "g.md"
+    },
+    {
+      "content": "missing",
+      "mode": "missing",
+      "name": "h.md"
+    },
+    {
+      "content": "directory",
+      "mode": "dir",
+      "name": "sub"
+    },
+    {
+      "content": "STRASSE and Straße\n",
+      "mode": "file",
+      "name": "i.md"
+    },
+    {
+      "content": "---\nk: v\n---\n\n\n\ninvoice after many blanks",
+      "mode": "file",
+      "name": "j.md"
+    },
+    {
+      "content": "Rechnung 日本語",
+      "mode": "file",
+      "name": "k 日本語.md"
+    }
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "rules": [
+    {
+      "pattern": "invoice",
+      "kind": "category",
+      "value": "Finance"
+    },
+    {
+      "pattern": "RECHNUNG",
+      "kind": "category",
+      "value": "Ignored second category"
+    },
+    {
+      "pattern": "invoice",
+      "kind": "tag",
+      "value": "billing"
+    },
+    {
+      "pattern": "Rechnung",
+      "kind": "tag",
+      "value": "billing"
+    },
+    {
+      "pattern": "rechnung",
+      "kind": "tag",
+      "value": "de"
+    },
+    {
+      "pattern": "acme",
+      "kind": "correspondent",
+      "value": "ACME GmbH"
+    },
+    {
+      "pattern": "ACME",
+      "kind": "correspondent",
+      "value": "Second ACME"
+    },
+    {
+      "pattern": "contract",
+      "kind": "document_type",
+      "value": "Contract"
+    },
+    {
+      "pattern": "straße",
+      "kind": "tag",
+      "value": "ß-tag"
+    },
+    {
+      "pattern": "İSTANBUL",
+      "kind": "tag",
+      "value": "dotted-capital-I"
+    },
+    {
+      "pattern": "σίσυφος",
+      "kind": "tag",
+      "value": "sigma"
+    },
+    {
+      "pattern": "kelvin k",
+      "kind": "tag",
+      "value": "kelvin"
+    },
+    {
+      "pattern": "ǅ",
+      "kind": "tag",
+      "value": "titlecase"
+    },
+    {
+      "pattern": "日本語",
+      "kind": "category",
+      "value": "Japanese"
+    },
+    {
+      "pattern": " ",
+      "kind": "tag",
+      "value": "space-only-pattern"
+    }
+  ],
+  "schema_version": 1,
+  "source_hashes": {
+    "api.go": "2faeb0ddb7f1ef55e24b8be320a8a125f9624dd4d88b9e6dc11eb13bd98f0790",
+    "classification_port_test.go": "6377ad909384e7d8ff57afa975eb7700066356958c4b0cfb0f1b9b6c81bf96a0",
+    "internal/store/store.go": "29723d070ee76d5767ab0f588c718f0cf125174cbb587073b86e9a97181fa396"
+  },
+  "steps": [
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "rules",
+        "pattern": "",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "[]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "category",
+        "op": "add",
+        "pattern": "invoice",
+        "text": "",
+        "value": "Finance"
+      },
+      "result_json": "{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "category",
+        "op": "add",
+        "pattern": "RECHNUNG",
+        "text": "",
+        "value": "Ignored second category"
+      },
+      "result_json": "{\"id\":2,\"pattern\":\"RECHNUNG\",\"kind\":\"category\",\"value\":\"Ignored second category\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "invoice",
+        "text": "",
+        "value": "billing"
+      },
+      "result_json": "{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "Rechnung",
+        "text": "",
+        "value": "billing"
+      },
+      "result_json": "{\"id\":4,\"pattern\":\"Rechnung\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "rechnung",
+        "text": "",
+        "value": "de"
+      },
+      "result_json": "{\"id\":5,\"pattern\":\"rechnung\",\"kind\":\"tag\",\"value\":\"de\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "correspondent",
+        "op": "add",
+        "pattern": "acme",
+        "text": "",
+        "value": "ACME GmbH"
+      },
+      "result_json": "{\"id\":6,\"pattern\":\"acme\",\"kind\":\"correspondent\",\"value\":\"ACME GmbH\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "correspondent",
+        "op": "add",
+        "pattern": "ACME",
+        "text": "",
+        "value": "Second ACME"
+      },
+      "result_json": "{\"id\":7,\"pattern\":\"ACME\",\"kind\":\"correspondent\",\"value\":\"Second ACME\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "document_type",
+        "op": "add",
+        "pattern": "contract",
+        "text": "",
+        "value": "Contract"
+      },
+      "result_json": "{\"id\":8,\"pattern\":\"contract\",\"kind\":\"document_type\",\"value\":\"Contract\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "straße",
+        "text": "",
+        "value": "ß-tag"
+      },
+      "result_json": "{\"id\":9,\"pattern\":\"straße\",\"kind\":\"tag\",\"value\":\"ß-tag\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "İSTANBUL",
+        "text": "",
+        "value": "dotted-capital-I"
+      },
+      "result_json": "{\"id\":10,\"pattern\":\"İSTANBUL\",\"kind\":\"tag\",\"value\":\"dotted-capital-I\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "σίσυφος",
+        "text": "",
+        "value": "sigma"
+      },
+      "result_json": "{\"id\":11,\"pattern\":\"σίσυφος\",\"kind\":\"tag\",\"value\":\"sigma\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "kelvin k",
+        "text": "",
+        "value": "kelvin"
+      },
+      "result_json": "{\"id\":12,\"pattern\":\"kelvin k\",\"kind\":\"tag\",\"value\":\"kelvin\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "ǅ",
+        "text": "",
+        "value": "titlecase"
+      },
+      "result_json": "{\"id\":13,\"pattern\":\"ǅ\",\"kind\":\"tag\",\"value\":\"titlecase\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "category",
+        "op": "add",
+        "pattern": "日本語",
+        "text": "",
+        "value": "Japanese"
+      },
+      "result_json": "{\"id\":14,\"pattern\":\"日本語\",\"kind\":\"category\",\"value\":\"Japanese\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": " ",
+        "text": "",
+        "value": "space-only-pattern"
+      },
+      "result_json": "{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}"
+    },
+    {
+      "error": "pattern cannot be empty",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "",
+        "text": "",
+        "value": "v"
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "invalid rule kind: \"bogus\"",
+      "input": {
+        "kind": "bogus",
+        "op": "add",
+        "pattern": "p",
+        "text": "",
+        "value": "v"
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "value cannot be empty",
+      "input": {
+        "kind": "tag",
+        "op": "add",
+        "pattern": "p",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "rules",
+        "pattern": "",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":2,\"pattern\":\"RECHNUNG\",\"kind\":\"category\",\"value\":\"Ignored second category\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":4,\"pattern\":\"Rechnung\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":5,\"pattern\":\"rechnung\",\"kind\":\"tag\",\"value\":\"de\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":6,\"pattern\":\"acme\",\"kind\":\"correspondent\",\"value\":\"ACME GmbH\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":7,\"pattern\":\"ACME\",\"kind\":\"correspondent\",\"value\":\"Second ACME\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":8,\"pattern\":\"contract\",\"kind\":\"document_type\",\"value\":\"Contract\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":9,\"pattern\":\"straße\",\"kind\":\"tag\",\"value\":\"ß-tag\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":10,\"pattern\":\"İSTANBUL\",\"kind\":\"tag\",\"value\":\"dotted-capital-I\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":11,\"pattern\":\"σίσυφος\",\"kind\":\"tag\",\"value\":\"sigma\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":12,\"pattern\":\"kelvin k\",\"kind\":\"tag\",\"value\":\"kelvin\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":13,\"pattern\":\"ǅ\",\"kind\":\"tag\",\"value\":\"titlecase\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":14,\"pattern\":\"日本語\",\"kind\":\"category\",\"value\":\"Japanese\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "[]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "Nothing relevant here",
+        "value": ""
+      },
+      "result_json": "[{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "INVOICE 2024 from Acme",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\"},{\"id\":6,\"pattern\":\"acme\",\"kind\":\"correspondent\",\"value\":\"ACME GmbH\"},{\"id\":7,\"pattern\":\"ACME\",\"kind\":\"correspondent\",\"value\":\"Second ACME\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "Rechnung Nr. 5 — ACME GmbH, Vertrag contract",
+        "value": ""
+      },
+      "result_json": "[{\"id\":2,\"pattern\":\"RECHNUNG\",\"kind\":\"category\",\"value\":\"Ignored second category\"},{\"id\":4,\"pattern\":\"Rechnung\",\"kind\":\"tag\",\"value\":\"billing\"},{\"id\":5,\"pattern\":\"rechnung\",\"kind\":\"tag\",\"value\":\"de\"},{\"id\":6,\"pattern\":\"acme\",\"kind\":\"correspondent\",\"value\":\"ACME GmbH\"},{\"id\":7,\"pattern\":\"ACME\",\"kind\":\"correspondent\",\"value\":\"Second ACME\"},{\"id\":8,\"pattern\":\"contract\",\"kind\":\"document_type\",\"value\":\"Contract\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "Hauptstraße 5 STRASSE",
+        "value": ""
+      },
+      "result_json": "[{\"id\":9,\"pattern\":\"straße\",\"kind\":\"tag\",\"value\":\"ß-tag\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "İstanbul and istanbul and İstanbul",
+        "value": ""
+      },
+      "result_json": "[{\"id\":10,\"pattern\":\"İSTANBUL\",\"kind\":\"tag\",\"value\":\"dotted-capital-I\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "ΣΊΣΥΦΟΣ ΣΊΣΥΦΟΣ",
+        "value": ""
+      },
+      "result_json": "[{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "KELVIN K and kelvin k",
+        "value": ""
+      },
+      "result_json": "[{\"id\":12,\"pattern\":\"kelvin k\",\"kind\":\"tag\",\"value\":\"kelvin\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "Ǆǅǆ titlecase",
+        "value": ""
+      },
+      "result_json": "[{\"id\":13,\"pattern\":\"ǅ\",\"kind\":\"tag\",\"value\":\"titlecase\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "日本語のテキスト",
+        "value": ""
+      },
+      "result_json": "[{\"id\":14,\"pattern\":\"日本語\",\"kind\":\"category\",\"value\":\"Japanese\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "a b c",
+        "value": ""
+      },
+      "result_json": "[{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "nospace",
+        "value": ""
+      },
+      "result_json": "[]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "CONTRACT\r\ninvoice\r\n",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\"},{\"id\":8,\"pattern\":\"contract\",\"kind\":\"document_type\",\"value\":\"Contract\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "invalid utf8 \ufffd\ufffd invoice",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "test",
+        "pattern": "",
+        "text": "invoice\u0000nul",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\"}]"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "invoice",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":7,\"skipped_documents\":2,\"matches\":[{\"document_id\":1,\"note_path\":\"\\u003cROOT\\u003e/vault/a.md\",\"title\":\"a\",\"matched_rule_ids\":[0]},{\"document_id\":2,\"note_path\":\"\\u003cROOT\\u003e/vault/b.md\",\"title\":\"b\",\"matched_rule_ids\":[0]},{\"document_id\":4,\"note_path\":\"\\u003cROOT\\u003e/vault/d.md\",\"title\":\"d\",\"matched_rule_ids\":[0]},{\"document_id\":5,\"note_path\":\"\\u003cROOT\\u003e/vault/e.md\",\"title\":\"e\",\"matched_rule_ids\":[0]},{\"document_id\":6,\"note_path\":\"\\u003cROOT\\u003e/vault/f.md\",\"title\":\"f\",\"matched_rule_ids\":[0]},{\"document_id\":7,\"note_path\":\"\\u003cROOT\\u003e/vault/g.md\",\"title\":\"g\",\"matched_rule_ids\":[0]},{\"document_id\":11,\"note_path\":\"\\u003cROOT\\u003e/vault/j.md\",\"title\":\"j\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "category",
+        "op": "dryrun",
+        "pattern": "INVOICE",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"INVOICE\",\"kind\":\"category\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":7,\"skipped_documents\":2,\"matches\":[{\"document_id\":1,\"note_path\":\"\\u003cROOT\\u003e/vault/a.md\",\"title\":\"a\",\"matched_rule_ids\":[0]},{\"document_id\":2,\"note_path\":\"\\u003cROOT\\u003e/vault/b.md\",\"title\":\"b\",\"matched_rule_ids\":[0]},{\"document_id\":4,\"note_path\":\"\\u003cROOT\\u003e/vault/d.md\",\"title\":\"d\",\"matched_rule_ids\":[0]},{\"document_id\":5,\"note_path\":\"\\u003cROOT\\u003e/vault/e.md\",\"title\":\"e\",\"matched_rule_ids\":[0]},{\"document_id\":6,\"note_path\":\"\\u003cROOT\\u003e/vault/f.md\",\"title\":\"f\",\"matched_rule_ids\":[0]},{\"document_id\":7,\"note_path\":\"\\u003cROOT\\u003e/vault/g.md\",\"title\":\"g\",\"matched_rule_ids\":[0]},{\"document_id\":11,\"note_path\":\"\\u003cROOT\\u003e/vault/j.md\",\"title\":\"j\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "body",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"body\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":4,\"skipped_documents\":2,\"matches\":[{\"document_id\":1,\"note_path\":\"\\u003cROOT\\u003e/vault/a.md\",\"title\":\"a\",\"matched_rule_ids\":[0]},{\"document_id\":3,\"note_path\":\"\\u003cROOT\\u003e/vault/c.md\",\"title\":\"c\",\"matched_rule_ids\":[0]},{\"document_id\":4,\"note_path\":\"\\u003cROOT\\u003e/vault/d.md\",\"title\":\"d\",\"matched_rule_ids\":[0]},{\"document_id\":5,\"note_path\":\"\\u003cROOT\\u003e/vault/e.md\",\"title\":\"e\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "straße",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"straße\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":1,\"skipped_documents\":2,\"matches\":[{\"document_id\":10,\"note_path\":\"\\u003cROOT\\u003e/vault/i.md\",\"title\":\"i\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "strasse",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"strasse\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":1,\"skipped_documents\":2,\"matches\":[{\"document_id\":10,\"note_path\":\"\\u003cROOT\\u003e/vault/i.md\",\"title\":\"i\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "category",
+        "op": "dryrun",
+        "pattern": "日本語",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"日本語\",\"kind\":\"category\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":1,\"skipped_documents\":2,\"matches\":[{\"document_id\":12,\"note_path\":\"\\u003cROOT\\u003e/vault/k 日本語.md\",\"title\":\"k 日本語\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "no-such-text",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"no-such-text\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":0,\"skipped_documents\":2,\"matches\":[],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "---",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"---\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":3,\"skipped_documents\":2,\"matches\":[{\"document_id\":4,\"note_path\":\"\\u003cROOT\\u003e/vault/d.md\",\"title\":\"d\",\"matched_rule_ids\":[0]},{\"document_id\":5,\"note_path\":\"\\u003cROOT\\u003e/vault/e.md\",\"title\":\"e\",\"matched_rule_ids\":[0]},{\"document_id\":6,\"note_path\":\"\\u003cROOT\\u003e/vault/f.md\",\"title\":\"f\",\"matched_rule_ids\":[0]}],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "source",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "{\"proposed_rule\":{\"pattern\":\"source\",\"kind\":\"tag\",\"value\":\"x\"},\"vault_path\":\"\\u003cROOT\\u003e/vault\",\"total_documents\":12,\"matched_documents\":0,\"skipped_documents\":2,\"matches\":[],\"skipped\":[{\"document_id\":8,\"note_path\":\"\\u003cROOT\\u003e/vault/h.md\",\"reason\":\"open \\u003cROOT\\u003e/vault/h.md: no such file or directory\"},{\"document_id\":9,\"note_path\":\"\\u003cROOT\\u003e/vault/sub\",\"reason\":\"read \\u003cROOT\\u003e/vault/sub: is a directory\"}]}"
+    },
+    {
+      "error": "pattern cannot be empty",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "invalid rule kind: \"bogus\"",
+      "input": {
+        "kind": "bogus",
+        "op": "dryrun",
+        "pattern": "p",
+        "text": "",
+        "value": "x"
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "value cannot be empty",
+      "input": {
+        "kind": "tag",
+        "op": "dryrun",
+        "pattern": "p",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "null"
+    },
+    {
+      "error": "",
+      "input": {
+        "kind": "",
+        "op": "rules",
+        "pattern": "",
+        "text": "",
+        "value": ""
+      },
+      "result_json": "[{\"id\":1,\"pattern\":\"invoice\",\"kind\":\"category\",\"value\":\"Finance\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":2,\"pattern\":\"RECHNUNG\",\"kind\":\"category\",\"value\":\"Ignored second category\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":3,\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":4,\"pattern\":\"Rechnung\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":5,\"pattern\":\"rechnung\",\"kind\":\"tag\",\"value\":\"de\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":6,\"pattern\":\"acme\",\"kind\":\"correspondent\",\"value\":\"ACME GmbH\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":7,\"pattern\":\"ACME\",\"kind\":\"correspondent\",\"value\":\"Second ACME\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":8,\"pattern\":\"contract\",\"kind\":\"document_type\",\"value\":\"Contract\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":9,\"pattern\":\"straße\",\"kind\":\"tag\",\"value\":\"ß-tag\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":10,\"pattern\":\"İSTANBUL\",\"kind\":\"tag\",\"value\":\"dotted-capital-I\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":11,\"pattern\":\"σίσυφος\",\"kind\":\"tag\",\"value\":\"sigma\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":12,\"pattern\":\"kelvin k\",\"kind\":\"tag\",\"value\":\"kelvin\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":13,\"pattern\":\"ǅ\",\"kind\":\"tag\",\"value\":\"titlecase\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":14,\"pattern\":\"日本語\",\"kind\":\"category\",\"value\":\"Japanese\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"},{\"id\":15,\"pattern\":\" \",\"kind\":\"tag\",\"value\":\"space-only-pattern\",\"created_at\":\"\\u003cCREATED_AT\\u003e\"}]"
+    }
+  ]
+}

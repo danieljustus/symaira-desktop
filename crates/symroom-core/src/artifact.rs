@@ -13,6 +13,7 @@ use sha2::{Digest, Sha256};
 use crate::{
     desk_watch::EventStreamItem,
     event::{self, Event},
+    goio,
     identity::Identity,
     journal,
 };
@@ -80,14 +81,13 @@ pub fn link(
     let abs_path = clean_path(&room_dir.join(&rel));
     let hash = hash_file(&abs_path)
         .map_err(|error| ArtifactError::Message(format!("compute sha256: {error}")))?;
-    let digest = Sha256::digest(format!("{}{}", rel.to_string_lossy(), hash).as_bytes());
+    let mut digest_input = goio::out_bytes(&goio::os_text(rel.as_os_str())).into_owned();
+    digest_input.extend_from_slice(hash.as_bytes());
+    let digest = Sha256::digest(&digest_input);
     let artifact_id = format!("art_{}", hex::encode(digest)[..16].to_owned());
-    let rel_text = rel.to_string_lossy().replace('\\', "/");
+    let rel_text = goio::os_text(rel.as_os_str()).replace('\\', "/");
     let title = if title.is_empty() {
-        rel.file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .into_owned()
+        goio::os_text(rel.file_name().unwrap_or_default())
     } else {
         title.to_owned()
     };
@@ -125,7 +125,7 @@ pub fn unlink(
 ) -> Result<Event, ArtifactError> {
     let body = serde_json::json!({"artifact_id": artifact_id});
     let raw_body = json_body(&body)?;
-    let digest = Sha256::digest(artifact_id.as_bytes());
+    let digest = Sha256::digest(goio::out_bytes(artifact_id));
     let event_id = format!("ev_{}", &hex::encode(digest)[..16]);
     append_signed_event(room_dir, signer, event_id, "artifact.unlinked", raw_body)
 }
@@ -310,7 +310,7 @@ fn normalize_absolute(path: PathBuf) -> PathBuf {
 /// Go `filepath.Clean` (a leading `..` is kept; `Join` cleans before any
 /// filesystem call).
 fn clean_path(path: &Path) -> PathBuf {
-    PathBuf::from(crate::goio::clean(path))
+    crate::goio::text_path(&crate::goio::clean(path))
 }
 
 fn json_body(value: &impl Serialize) -> Result<Box<RawValue>, ArtifactError> {

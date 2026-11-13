@@ -1,0 +1,2875 @@
+{
+  "schema_version": 1,
+  "benchmark": "VALUE-002",
+  "summation": "left_fold",
+  "captured_at": "2026-11-05T12:16:40Z",
+  "runner": {
+    "path": "scripts/rust-port/value002.py",
+    "profile": "smoke",
+    "samples": 4,
+    "warmups": 2,
+    "probe_runs": 2,
+    "pairing": "VALUE-001 schema-6 pairing for the representative slice; every new workload alternates go-rust/rust-go per post-warmup round with untimed per-run setup; sustained load runs each side alone in alternating order"
+  },
+  "host": {
+    "os": "darwin",
+    "os_version": "macOS-27.2-arm64-arm-64bit-Mach-O",
+    "arch": "arm64",
+    "machine": "arm64",
+    "python": "3.14.2",
+    "cpu_count": 12,
+    "quiet_limit_load1": 6.0,
+    "load_before": {
+      "captured_at": "2026-11-05T12:13:35Z",
+      "load1": 5.85693359375,
+      "load5": 14.1806640625,
+      "load15": 30.16455078125,
+      "uptime": "13:13  up 6 days,  1:52, 1 user, load averages: 5.86 14.18 30.16",
+      "build_processes": [],
+      "quiet": true
+    },
+    "load_after": {
+      "captured_at": "2026-11-05T12:16:27Z",
+      "load1": 20.349609375,
+      "load5": 15.66845703125,
+      "load15": 27.7548828125,
+      "uptime": "13:16  up 6 days,  1:55, 1 user, load averages: 20.35 15.67 27.75",
+      "build_processes": [
+        "47677 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo test -p symdesk-ingest --locked",
+        "50638 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/cargo --color=auto test --no-run --message-format json-render-diagnostics --workspace --all-features --locked",
+        "51586 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name symdesk_render --edition=2024 crates/symdesk-render/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,a",
+        "53249 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name symdesk_index --edition=2024 crates/symdesk-index/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,art",
+        "53622 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name cli_admin_bodies --edition=2024 crates/symdesk-cli/tests/cli_admin_bodies.rs --error-format=json --json=diagnostic-r",
+        "53728 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name draw_layout_contract --edition=2024 crates/symdesk-render/tests/draw_layout_contract.rs --error-format=json --json=d",
+        "53734 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name ocr_contracts --edition=2024 crates/symdesk-ingest/tests/ocr_contracts.rs --error-format=json --json=diagnostic-rend",
+        "53764 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name mcp_ask_offline --edition=2024 crates/symdesk-cli/tests/mcp_ask_offline.rs --error-format=json --json=diagnostic-ren",
+        "53805 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name paperless_state_contracts --edition=2024 crates/symdesk-ingest/tests/paperless_state_contracts.rs --error-format=jso",
+        "53848 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name ask_hermes --edition=2024 crates/symdesk-cli/tests/ask_hermes.rs --error-format=json --json=diagnostic-rendered-ansi",
+        "53905 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name remote_command --edition=2024 crates/symdesk-cli/tests/remote_command.rs --error-format=json --json=diagnostic-rende",
+        "53912 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name mcp_read --edition=2024 crates/symdesk-cli/tests/mcp_read.rs --error-format=json --json=diagnostic-rendered-ansi,art",
+        "53934 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name retrieval_embedding --edition=2024 crates/symdesk-protocol/tests/retrieval_embedding.rs --error-format=json --json=d",
+        "53937 /Users/daniel/.rustup/toolchains/1.98.0-aarch64-apple-darwin/bin/rustc --crate-name draw_typst_contract --edition=2024 crates/symdesk-render/tests/draw_typst_contract.rs --error-format=json --json=dia"
+      ],
+      "quiet": false
+    },
+    "load_timeline": [
+      {
+        "t_s": 30.1,
+        "load1": 7.1494140625
+      },
+      {
+        "t_s": 60.2,
+        "load1": 6.73291015625
+      },
+      {
+        "t_s": 90.3,
+        "load1": 10.91552734375
+      },
+      {
+        "t_s": 120.4,
+        "load1": 14.99365234375
+      },
+      {
+        "t_s": 150.6,
+        "load1": 18.66015625
+      },
+      {
+        "t_s": 172.1,
+        "load1": 20.349609375
+      }
+    ]
+  },
+  "repository": {
+    "root": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+    "head": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+    "candidate_commit": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+    "status": "?? scripts/rust-port/value002.py",
+    "changed_since_candidate": [],
+    "non_harness_changes": []
+  },
+  "toolchains": {
+    "go": "go version go1.26.10 darwin/arm64",
+    "rust": "rustc 1.98.0 (88d9e12ae 2026-08-18);binary: rustc;commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea;commit-date: 2026-08-18;host: aarch64-apple-darwin;release: 1.98.0;LLVM version: 22.1.8;",
+    "python": "3.14.2"
+  },
+  "build_record": {
+    "schema_version": 1,
+    "candidate": {
+      "commit": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+      "tree": "e07d175b91d7d4f17aecd2a07435ca44dad277a7",
+      "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "entries": [
+      {
+        "name": "go-archive",
+        "command": "python3 scripts/release/package.py archive --version 0.12.2 --os darwin --arch arm64 --symdesk rebuild/go/symdesk --symroom rebuild/go/symroom --out rebuild/go-archive",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {},
+        "toolchain": "python3 package.py (Go binaries above)",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:09Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/go-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz",
+            "bytes": 12580463,
+            "sha256": "c32762904f24a5704668f342845fc05271ba64473d5739a2db6e375693cbc7d3"
+          }
+        ]
+      },
+      {
+        "name": "go-symdesk",
+        "command": "dev-external go build -trimpath -ldflags=\"-s -w -X main.version=0.12.2\" -o rebuild/go/symdesk ./cmd/symdesk",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/go/symdesk",
+            "bytes": 24238754,
+            "sha256": "67331ecc6cd6f928429ed97a68705268d7187c02a9a089626db7472ea1ae3636"
+          }
+        ]
+      },
+      {
+        "name": "go-symroom",
+        "command": "dev-external go build -trimpath -ldflags=\"-s -w -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2\" -o rebuild/go/symroom ./cmd/symroom",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/go/symroom",
+            "bytes": 7748258,
+            "sha256": "b75aa1e35379a130e20b6153ae6c84738c28f30f20d8c2fd18888b6a298626ec"
+          }
+        ]
+      },
+      {
+        "name": "go-tool-diffharness",
+        "command": "dev-external go build -trimpath -o rebuild/tools/diffharness ./scripts/rust-port/cmd/diffharness",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/diffharness",
+            "bytes": 4245426,
+            "sha256": "d17c00d2226330b001755809da7b95b9114e109b7e2f327579d8b95fd4845d23"
+          }
+        ]
+      },
+      {
+        "name": "go-tool-httpdiff",
+        "command": "dev-external go build -trimpath -o rebuild/tools/httpdiff ./scripts/rust-port/cmd/httpdiff",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/httpdiff",
+            "bytes": 17382034,
+            "sha256": "494e8505d1553786b13a024f6b632d03fba5d3e2c83a2116b5452b37f8b0f367"
+          }
+        ]
+      },
+      {
+        "name": "go-tool-mcpdiff",
+        "command": "dev-external go build -trimpath -o rebuild/tools/mcpdiff ./scripts/rust-port/cmd/mcpdiff",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/mcpdiff",
+            "bytes": 3570498,
+            "sha256": "1a1f9b7c138c0be5a5ba350d68e14bc25e057f8c6d4fba0da6190d5b03a3a76b"
+          }
+        ]
+      },
+      {
+        "name": "go-tool-representativegen",
+        "command": "dev-external go build -trimpath -o rebuild/tools/representativegen ./scripts/rust-port/cmd/representativegen",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "GOTOOLCHAIN": "go1.26.10",
+          "CGO_ENABLED": "0",
+          "GOFLAGS": "-mod=readonly",
+          "GOPROXY": "off"
+        },
+        "toolchain": "go version go1.26.10 darwin/arm64",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:08Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/representativegen",
+            "bytes": 4215506,
+            "sha256": "d9a30d24aa5b198b187956286c83aaf6de9ce244ff3eb1fce3181c65f7dc4407"
+          }
+        ]
+      },
+      {
+        "name": "rust-release-archive",
+        "command": "dev-external scripts/release/build.sh darwin arm64 0.12.2 rebuild/rust-archive",
+        "cwd": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+        "env": {
+          "HOME": "/Users/daniel",
+          "CARGO_TARGET_DIR": "builds/symaira-desktop/.worktrees/r-value002",
+          "SYMDESK_VERSION": "0.12.2",
+          "SYMROOM_VERSION": "0.12.2"
+        },
+        "toolchain": "rustc 1.98.0 (88d9e12ae 2026-08-18);binary: rustc;commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea;commit-date: 2026-08-18;host: aarch64-apple-darwin;release: 1.98.0;LLVM version: 22.1.8;",
+        "exit_code": 0,
+        "recorded_at": "2026-11-05T12:10:09Z",
+        "untracked_at_build": [
+          "scripts/rust-port/value002.py"
+        ],
+        "artifacts": [
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/rust-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz",
+            "bytes": 11199556,
+            "sha256": "72b71800d26430af9786bcc6c07601f832552778706fc2c642931deb22578173"
+          },
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r-value002/aarch64-apple-darwin/release/symdesk",
+            "bytes": 20314144,
+            "sha256": "9e7ab51b266e45fba25b97e69e32208219e07d51aa7f89f8c6ad44e90a9ebfbb"
+          },
+          {
+            "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r-value002/aarch64-apple-darwin/release/symroom",
+            "bytes": 3329840,
+            "sha256": "0d3a325f59e721b9a960cb19a6f14144f8b935b319994a3f7a893d75fced924b"
+          }
+        ]
+      }
+    ]
+  },
+  "binaries": {
+    "go": {
+      "symdesk": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk",
+        "bytes": 24238754,
+        "sha256": "67331ecc6cd6f928429ed97a68705268d7187c02a9a089626db7472ea1ae3636"
+      },
+      "symroom": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/go/symroom",
+        "bytes": 7748258,
+        "sha256": "b75aa1e35379a130e20b6153ae6c84738c28f30f20d8c2fd18888b6a298626ec"
+      }
+    },
+    "rust": {
+      "symdesk": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk",
+        "bytes": 20314144,
+        "sha256": "9e7ab51b266e45fba25b97e69e32208219e07d51aa7f89f8c6ad44e90a9ebfbb"
+      },
+      "symroom": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/rust/symroom",
+        "bytes": 3329840,
+        "sha256": "0d3a325f59e721b9a960cb19a6f14144f8b935b319994a3f7a893d75fced924b"
+      }
+    }
+  },
+  "archives": {
+    "go": {
+      "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/go-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz",
+      "bytes": 12580463,
+      "sha256": "c32762904f24a5704668f342845fc05271ba64473d5739a2db6e375693cbc7d3",
+      "members": {
+        "symdesk": {
+          "path": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk",
+          "bytes": 24238754,
+          "sha256": "67331ecc6cd6f928429ed97a68705268d7187c02a9a089626db7472ea1ae3636"
+        },
+        "symroom": {
+          "path": "/private/tmp/r-value002/smoke-bin/smoke/go/symroom",
+          "bytes": 7748258,
+          "sha256": "b75aa1e35379a130e20b6153ae6c84738c28f30f20d8c2fd18888b6a298626ec"
+        }
+      }
+    },
+    "rust": {
+      "path": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/rust-archive/symaira-desktop_0.12.2_darwin_arm64.tar.gz",
+      "bytes": 11199556,
+      "sha256": "72b71800d26430af9786bcc6c07601f832552778706fc2c642931deb22578173",
+      "members": {
+        "symdesk": {
+          "path": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk",
+          "bytes": 20314144,
+          "sha256": "9e7ab51b266e45fba25b97e69e32208219e07d51aa7f89f8c6ad44e90a9ebfbb"
+        },
+        "symroom": {
+          "path": "/private/tmp/r-value002/smoke-bin/smoke/rust/symroom",
+          "bytes": 3329840,
+          "sha256": "0d3a325f59e721b9a960cb19a6f14144f8b935b319994a3f7a893d75fced924b"
+        }
+      }
+    },
+    "published_go_bytes": 12629014,
+    "rust_vs_go_built": 0.1097659919193753,
+    "rust_vs_published": 0.11318840884965366
+  },
+  "vaults": {
+    "representative": {
+      "documents": 10000,
+      "search_matches": 100,
+      "generation": "value001.write_vault (unchanged)"
+    },
+    "linked": {
+      "documents": 10000,
+      "target": "cohort-042/note-00042.md",
+      "edges": 20000,
+      "generation": "value001 documents plus frontmatter related=[[note-(i+3)]] and body links [[note-(i+1)]] [[note-(7i+3, bumped to stay distinct)]]"
+    }
+  },
+  "representative": {
+    "schema_version": 6,
+    "benchmark": "VALUE-001",
+    "summation": "left_fold",
+    "captured_at": "2026-11-05T12:14:15Z",
+    "runner": {
+      "path": "scripts/rust-port/value002.py",
+      "samples": 4,
+      "warmups": 2,
+      "pairing": "rotating HTTP operations; per-operation go-rust/rust-go order by round plus original operation index; Connection: close per request; alternating untimed healthz priming per round; 5ms idle after each HTTP request"
+    },
+    "host": {
+      "os": "darwin",
+      "os_version": "macOS-27.2-arm64-arm-64bit-Mach-O",
+      "arch": "arm64",
+      "machine": "arm64",
+      "python": "3.14.2"
+    },
+    "repository": {
+      "root": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Worktrees/symaira-desktop/r-value002",
+      "head": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+      "status": "?? scripts/rust-port/value002.py",
+      "dirty_allowed": true,
+      "candidate_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_value_baseline_commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+      "current_behaviour_oracle_commit": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe"
+    },
+    "toolchains": {
+      "go_oracle": "go version go1.26.10 darwin/arm64",
+      "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18);binary: rustc;commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea;commit-date: 2026-08-18;host: aarch64-apple-darwin;release: 1.98.0;LLVM version: 22.1.8;",
+      "python": "3.14.2"
+    },
+    "binaries": {
+      "go": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk",
+        "bytes": 24238754,
+        "sha256": "67331ecc6cd6f928429ed97a68705268d7187c02a9a089626db7472ea1ae3636",
+        "source": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+        "build_command": "dev-external go build -trimpath -ldflags=\"-s -w -X main.version=0.12.2\" -o rebuild/go/symdesk ./cmd/symdesk"
+      },
+      "rust": {
+        "path": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk",
+        "bytes": 20314144,
+        "sha256": "9e7ab51b266e45fba25b97e69e32208219e07d51aa7f89f8c6ad44e90a9ebfbb",
+        "source": "e8b7e654ce27e689a2676bdc0ad6466ce00d07fe",
+        "build_command": "dev-external scripts/release/build.sh darwin arm64 0.12.2 rebuild/rust-archive"
+      }
+    },
+    "vault": {
+      "documents": 10000,
+      "generated_bytes": 1460000,
+      "search_token": "value001cohort042",
+      "search_matches": 100,
+      "generation": "Python stdlib deterministic loop; cohort = index % 100; 10,000 Markdown files"
+    },
+    "index_preparation": {
+      "go": {
+        "command": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk ls --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/go-search/vault --json",
+        "elapsed_ms": 1674.9396660597995,
+        "exit_code": 0,
+        "stdout_semantics": "exact expected path/title set",
+        "documents": 10000
+      },
+      "rust": {
+        "command": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk ls --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/rust-search/vault --json",
+        "elapsed_ms": 1246.8382499646395,
+        "exit_code": 0,
+        "stdout_semantics": "exact expected path/title set",
+        "documents": 10000
+      },
+      "vault_justification": "10,000 Markdown documents exercise recursive walk, 50 SQLite batches of 200, FTS/snippet search and realistic path/title metadata (VALUE-001 vault, unchanged)."
+    },
+    "contracts": [
+      {
+        "command": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/representativegen --check",
+        "elapsed_ms": 1625.8837500354275,
+        "exit_code": 0,
+        "stdout": "PASS representative HTTP fixture verified: testdata/port/http/representative.json\nPASS representative fixture verified: testdata/port/representative/cases.json\n",
+        "stderr": "",
+        "name": "./scripts/rust-port/cmd/representativegen"
+      },
+      {
+        "command": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/diffharness --symdesk-left /private/tmp/r-value002/smoke-bin/smoke/go/symdesk --symdesk-right /private/tmp/r-value002/smoke-bin/smoke/rust/symdesk --cases testdata/port/representative/cases.json --stage representative",
+        "elapsed_ms": 1542.0161659130827,
+        "exit_code": 0,
+        "stdout": "PASS version-positional-ls-not-command\nPASS version-positional-search-not-command\nPASS desk-ls-json\nPASS desk-ls-text\nPASS desk-ls-dir-json\nPASS desk-search-json\nPASS desk-search-text\nPASS desk-search-inherited-output\nPASS desk-search-fresh-index-empty\nPASS transform-no-provider-json\nPASS transform-empty-text-json\nPASS ask-no-provider-json\nPASS ask-no-provider-no-results-json\nPASS desk-search-too-many-json\nPASS desk-search-required-text\nPASS desk-search-required-json\nPASS all 16 selected differential cases\n",
+        "stderr": "",
+        "name": "./scripts/rust-port/cmd/diffharness"
+      },
+      {
+        "command": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/mcpdiff --left /private/tmp/r-value002/smoke-bin/smoke/go/symdesk --right /private/tmp/r-value002/smoke-bin/smoke/rust/symdesk --fixture testdata/port/mcp/representative.json",
+        "elapsed_ms": 526.6324579715729,
+        "exit_code": 0,
+        "stdout": "PASS mcp001-initialize-string-id (1 response(s))\nPASS mcp001-initialize-null-id (1 response(s))\nPASS mcp001-ping-string-id (1 response(s))\nPASS mcp001-initialize-notification (0 response(s))\nPASS mcp001-null-method (1 response(s))\nPASS mcp001-invalid-array (1 response(s))\nPASS mcp001-invalid-method-type (1 response(s))\nPASS initialize-line (1 response(s))\nPASS tools-list-line (1 response(s))\nPASS status-call (1 response(s))\nPASS ls-call (1 response(s))\nPASS ls-empty-call (1 response(s))\nPASS search-call (1 response(s))\nPASS missing-search-query (1 response(s))\nPASS unknown-method (1 response(s))\nPASS notification-silent (0 response(s))\nPASS cancel-notification-silent (0 response(s))\nPASS clean-eof (0 response(s))\nPASS invalid-request (1 response(s))\nPASS malformed-line (1 response(s))\nPASS truncated-frame (0 response(s))\nPASS invalid-content-length (0 response(s))\nPASS initialize-framed (1 response(s))\nPASS MCP differential: 23 cases\n",
+        "stderr": "",
+        "name": "./scripts/rust-port/cmd/mcpdiff"
+      },
+      {
+        "command": "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/value002/rebuild/tools/httpdiff --left /private/tmp/r-value002/smoke-bin/smoke/go/symdesk --right /private/tmp/r-value002/smoke-bin/smoke/rust/symdesk --fixture testdata/port/http/representative.json",
+        "elapsed_ms": 17653.09754188638,
+        "exit_code": 0,
+        "stdout": "PASS healthz\nPASS healthz-slow-header\nPASS healthz-large-header\nPASS healthz-many-headers\nPASS status-missing-auth\nPASS status-wrong-auth\nPASS status-raw-token-without-bearer\nPASS status-authorized\nPASS status-worker-token\nPASS status-wrong-auth-2\nPASS status-wrong-auth-3\nPASS status-wrong-auth-4\nPASS status-wrong-auth-5\nPASS snapshot-plain\nPASS snapshot-not-modified\nPASS snapshot-gzip\nPASS snapshot-gzip-q0\nPASS snapshot-head-gzip\nPASS file-get-worker-acl-denied\nPASS file-get-worker-acl-group\nPASS file-get-worker-acl-public\nPASS file-put-worker-denied\nPASS snapshot-worker-acl-filter\nPASS notebook-worker-acl-filter\nPASS file-get-named-user-denied\nPASS status-named-user\nPASS file-get-named-user-allowed\nPASS file-get-named-user-range\nPASS file-get-named-user-not-modified\nPASS file-get-named-user-denied-not-modified\nPASS file-get-named-user-wrong-token\nPASS snapshot-named-user-filter\nPASS snapshot-named-user-head-gzip\nPASS notebooks-list-named-user\nPASS notebook-get-named-user-filter\nPASS notebook-head-named-user\nPASS jobs-named-user-forbidden\nPASS jobs-named-worker-forbidden\nPASS command-missing-auth\nPASS command-worker-forbidden\nPASS command-named-user-forbidden\nPASS command-named-worker-forbidden\nPASS command-admin-empty\nPASS command-method-not-allowed\nPASS command-admin-null-arguments\nPASS command-admin-unavailable\nPASS command-admin-controlled-path\nPASS command-admin-stream-controlled-path\nPASS command-admin-stream-transform\nPASS command-admin-stream-ask-no-provider\nPASS ai-transform-missing-auth\nPASS ai-transform-empty-text\nPASS ai-transform-null-strings\nPASS ai-transform-no-provider\nPASS ai-transform-local-ollama-stream\nPASS ai-transform-local-ollama-error\nPASS ai-transform-local-ollama-oversized-line\nPASS ai-transform-local-ollama-disconnect\nPASS ai-question-local-ollama-empty-results\nPASS ai-question-local-ollama-worker-denied-source-not-forwarded\nPASS ai-question-local-ollama-with-citation\nPASS ai-question-local-ollama-disconnect\nPASS ai-question-local-ollama-notebook-citation-warning\nPASS ai-question-local-ollama-notebook-worker-acl\nPASS ai-transform-openai-provider-falls-back-to-local-ollama\nPASS ai-transform-trailing-json\nPASS ai-transform-named-user-no-provider\nPASS ai-transform-method-not-allowed\nPASS ai-ask-missing-auth\nPASS ai-ask-invalid-json\nPASS ai-ask-empty-query\nPASS ai-ask-no-provider\nPASS ai-ask-ranked-citations\nPASS ai-ask-trailing-json\nPASS ai-ask-named-user-acl-filter\nPASS ai-ask-worker-acl-filter\nPASS ai-ask-worker-acl-denied\nPASS ai-ask-notebook-scoped-sources\nPASS ai-ask-notebook-unmatched-fallback\nPASS ai-ask-notebook-worker-acl\nPASS ai-ask-notebook-worker-acl-fallback\nPASS ai-ask-method-not-allowed\nPASS ai-ask-notebook-nonempty-hybrid-index\nPASS ai-ask-unscoped-hybrid-index\nPASS command-admin-invalid-subcommand\nPASS command-admin-trailing-data\nPASS command-admin-over-limit-prefix\nPASS file-put-worker-group\nPASS file-put-named-user\nPASS file-get-named-user-updated\nPASS file-exact-bytes\nPASS file-internal-symlink\nPASS file-range\nPASS file-range-if-range-match\nPASS file-range-if-range-legacy-date\nPASS file-range-if-range-stale\nPASS file-range-if-range-etag\nPASS file-head\nPASS file-traversal\nPASS file-absolute\nPASS file-backslash\nPASS file-nul\nPASS file-invalid-separator\nPASS file-dot-segment\nPASS file-range-overflow\nPASS file-internal\nPASS file-symlink\nPASS file-missing\nPASS file-put-missing-auth\nPASS file-put-bad-extension\nPASS file-put-internal\nPASS file-put-traversal\nPASS file-put-symlink-parent\nPASS file-put-create\nPASS file-put-read-created\nPASS file-put-update\nPASS file-put-read-updated\nPASS file-put-over-limit\nPASS files-method-not-allowed\nPASS health-method-not-allowed\nPASS unknown-route\nPASS status-head\nPASS notebooks-missing-auth\nPASS notebooks-wrong-auth\nPASS notebooks-list\nPASS notebook-get-missing-auth\nPASS notebook-get-wrong-auth\nPASS notebook-get-research\nPASS notebook-get-mixed-sources\nPASS notebook-get-unknown\nPASS notebooks-empty\nPASS jobs-missing-auth\nPASS jobs-worker-token\nPASS jobs-worker-head\nPASS jobs-wrong-auth\nPASS worker-lease-no-jobs\nPASS worker-lease-valid-prefix-over-limit-trailing\nPASS jobs-empty\nPASS jobs-populated\nPASS jobs-first-page\nPASS jobs-second-page\nPASS jobs-beyond-end\nPASS jobs-invalid-limit\nPASS jobs-invalid-offset\nPASS jobs-retry-missing-auth\nPASS jobs-retry-worker-token\nPASS jobs-retry-method-not-allowed\nPASS jobs-retry-nonfailed\nPASS jobs-retry-failed\nPASS worker-input-missing-auth\nPASS worker-input-worker-token\nPASS worker-input-missing-job\nPASS worker-input-valid\nPASS worker-input-named-worker\nPASS worker-input-head-range\nPASS worker-lease-missing-auth\nPASS worker-method-not-allowed\nPASS worker-lease-invalid-json\nPASS worker-lease-missing-worker\nPASS worker-lease-oversized\nPASS worker-lease-no-capability\nPASS worker-lease-valid\nPASS worker-lease-named-worker\nPASS worker-lease-expired-reclaim\nPASS worker-complete-missing-auth\nPASS worker-complete-worker-token\nPASS worker-complete-missing-job\nPASS worker-complete-null-strings\nPASS worker-complete-trailing-json\nPASS worker-complete-not-leased\nPASS worker-complete-invalid-json\nPASS worker-complete-oversized\nPASS worker-complete-valid\nPASS worker-complete-named-worker\nPASS worker-fail-missing-auth\nPASS worker-fail-worker-token\nPASS worker-fail-not-leased\nPASS worker-fail-valid\nPASS worker-fail-named-worker\nPASS worker-fail-retry\nPASS ingest-missing-auth\nPASS ingest-method-not-allowed\nPASS ingest-worker-token\nPASS ingest-invalid-multipart\nPASS ingest-missing-file\nPASS ingest-valid\nPASS shares-missing-auth\nPASS shares-wrong-auth\nPASS shares-empty\nPASS shares-populated\nPASS shares-worker-owned\nPASS share-revoke-missing-auth\nPASS share-revoke-wrong-auth\nPASS share-revoke-unknown\nPASS share-revoke-worker-nonowned\nPASS share-revoke-worker-owned\nPASS share-revoke-already\nPASS share-revoke-valid\nPASS share-revoke-repeat\nPASS share-method-not-allowed\nPASS share-item-method-not-allowed\nPASS share-create-missing-auth\nPASS share-create-wrong-auth\nPASS share-create-worker-token\nPASS share-create-invalid-json\nPASS share-create-missing-path\nPASS share-create-traversal\nPASS share-create-internal\nPASS share-create-dataset\nPASS share-create-expiry-zero\nPASS share-create-expiry-high\nPASS share-create-missing-document\nPASS share-create-valid\nPASS share-access-valid\nPASS share-access-head\nPASS share-access-range\nPASS share-access-not-modified\nPASS share-access-dataset\nPASS share-access-missing-file\nPASS share-access-symlink-escape\nPASS share-access-large-file\nPASS share-access-large-range\nPASS share-access-invalid-first\nPASS share-access-expired\nPASS share-access-revoked-threshold\nPASS share-access-invalid-blocked\nPASS shares-named-user-owned\nPASS share-revoke-named-nonowned\nPASS share-revoke-named-owned\nPASS share-create-named-user-denied\nPASS share-create-named-worker-denied\nPASS share-create-named-user-valid\nPASS ingest-filename-traversal\nPASS ingest-filename-backslash-traversal\nPASS ingest-filename-windows-path\nPASS ingest-filename-dot\nPASS ingest-filename-dotdot\nPASS ingest-filename-spaces\nPASS ingest-filename-trimmed\nPASS ingest-filename-unicode\nPASS ingest-filename-quote\nPASS ingest-filename-control\nPASS ingest-filename-long\nPASS ingest-filename-trailing-slash\nPASS ingest-filename-nested\nPASS ingest-filename-star-encoded\nPASS ingest-filename-empty-is-not-a-file\nPASS ingest-field-without-filename\nPASS ingest-wrong-field-name\nPASS ingest-two-files-first-wins\nPASS ingest-fields-before-file\nPASS ingest-other-file-then-file\nPASS ingest-part-content-type-charset\nPASS ingest-part-content-type-odd-case\nPASS ingest-part-no-content-type\nPASS ingest-empty-file\nPASS ingest-binary-content\nPASS ingest-content-looks-like-boundary\nPASS ingest-lf-only-framing\nPASS ingest-quoted-boundary\nPASS ingest-boundary-with-spaces\nPASS ingest-preamble-and-epilogue\nPASS ingest-missing-closing-boundary\nPASS ingest-missing-boundary-parameter\nPASS ingest-multipart-mixed\nPASS ingest-content-type-json\nPASS ingest-content-type-missing\nPASS ingest-content-type-urlencoded\nPASS ingest-part-header-folded\nPASS ingest-part-header-lowercase\nPASS ingest-part-transfer-encoding-ignored\nPASS ingest-query-string-ignored\nPASS ingest-query-bad-escape\nPASS ingest-query-semicolon\nPASS ingest-query-truncated-escape\nPASS ingest-over-body-limit\nPASS ingest-file-over-upload-limit\nPASS ingest-file-at-upload-limit\nPASS ingest-named-user-forbidden\nPASS ingest-named-worker-forbidden\nPASS ingest-wrong-auth\nPASS ingest-head-method\nPASS ingest-put-method\nPASS ingest-trailing-slash-path\nPASS jobs-retry-named-user-forbidden\nPASS jobs-retry-named-worker-forbidden\nPASS worker-lease-named-user-allowed\nPASS worker-input-named-user-allowed\nPASS worker-complete-named-user-allowed\nPASS worker-fail-named-user-allowed\nPASS command-admin-exec-ls\nPASS HTTP differential: 291 cases; isolated roots, loopback ports, readiness, harness bounds and shutdown verified\n",
+        "stderr": "Indexed: /private/tmp/r-value002/tmp/symdesk-http-diff-4225322471/go/vault/Hello.md (1 chunks)\nIndexed: /private/tmp/r-value002/tmp/symdesk-http-diff-4225322471/go/vault/nested/Note.md (1 chunks)\nIndexed: /private/tmp/r-value002/tmp/symdesk-http-diff-4225322471/rust/vault/Hello.md (1 chunks)\nIndexed: /private/tmp/r-value002/tmp/symdesk-http-diff-4225322471/rust/vault/nested/Note.md (1 chunks)\n",
+        "name": "./scripts/rust-port/cmd/httpdiff"
+      }
+    ],
+    "metrics": {
+      "startup": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 10.816041,
+          "mean": 11.4290625,
+          "p50": 11.317959,
+          "p95": 12.213375,
+          "p99": 12.213375,
+          "max": 12.213375,
+          "raw": [
+            12.213375,
+            11.317959,
+            10.816041,
+            11.368875
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 12.213375
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 7.192042,
+          "mean": 8.230875000000001,
+          "p50": 8.4255,
+          "p95": 8.679333,
+          "p99": 8.679333,
+          "max": 8.679333,
+          "raw": [
+            8.679333,
+            7.192042,
+            8.626625,
+            8.4255
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 8.679333
+        }
+      },
+      "search": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 38.146125,
+          "mean": 42.102625,
+          "p50": 38.935583,
+          "p95": 48.307708,
+          "p99": 48.307708,
+          "max": 48.307708,
+          "raw": [
+            48.307708,
+            38.146125,
+            38.935583,
+            43.021084
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 48.307708
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 24.81275,
+          "mean": 25.82992675,
+          "p50": 24.953708,
+          "p95": 27.623958,
+          "p99": 27.623958,
+          "max": 27.623958,
+          "raw": [
+            24.81275,
+            24.953708,
+            27.623958,
+            25.929291
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 27.623958
+        }
+      },
+      "mcp": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 20,
+          "min": 10.533583,
+          "mean": 20.9687291,
+          "p50": 12.263958,
+          "p95": 44.004458,
+          "p99": 49.915458,
+          "max": 49.915458,
+          "raw": [
+            11.88275,
+            12.124917,
+            10.90875,
+            12.263958,
+            10.679542,
+            13.136375,
+            11.184292,
+            10.533583,
+            10.628541,
+            10.749625,
+            11.241958,
+            19.859375,
+            25.184,
+            25.05725,
+            23.592083,
+            25.326917,
+            44.004458,
+            40.21375,
+            40.887,
+            49.915458
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 49.915458
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 20,
+          "min": 6.619583,
+          "mean": 14.23236455,
+          "p50": 7.682542,
+          "p95": 35.529709,
+          "p99": 39.878292,
+          "max": 39.878292,
+          "raw": [
+            6.963417,
+            6.772833,
+            7.682459,
+            7.147375,
+            7.360291,
+            7.682542,
+            7.515916,
+            6.619583,
+            9.439542,
+            8.007208,
+            7.219875,
+            6.734,
+            15.331625,
+            17.650916,
+            16.71725,
+            15.644542,
+            27.51075,
+            27.239166,
+            39.878292,
+            35.529709
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 39.878292
+        },
+        "operations": {
+          "initialize": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 10.90875,
+              "mean": 11.79509375,
+              "p50": 11.88275,
+              "p95": 12.263958,
+              "p99": 12.263958,
+              "max": 12.263958,
+              "raw": [
+                11.88275,
+                12.124917,
+                10.90875,
+                12.263958
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 12.263958
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 6.772833,
+              "mean": 7.141521,
+              "p50": 6.963417,
+              "p95": 7.682459,
+              "p99": 7.682459,
+              "max": 7.682459,
+              "raw": [
+                6.963417,
+                6.772833,
+                7.682459,
+                7.147375
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 7.682459
+            }
+          },
+          "tools-list": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 10.533583,
+              "mean": 11.383448,
+              "p50": 10.679542,
+              "p95": 13.136375,
+              "p99": 13.136375,
+              "max": 13.136375,
+              "raw": [
+                10.679542,
+                13.136375,
+                11.184292,
+                10.533583
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 13.136375
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 6.619583,
+              "mean": 7.294582999999999,
+              "p50": 7.360291,
+              "p95": 7.682542,
+              "p99": 7.682542,
+              "max": 7.682542,
+              "raw": [
+                7.360291,
+                7.682542,
+                7.515916,
+                6.619583
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 7.682542
+            }
+          },
+          "desk_status": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 10.628541,
+              "mean": 13.119874750000001,
+              "p50": 10.749625,
+              "p95": 19.859375,
+              "p99": 19.859375,
+              "max": 19.859375,
+              "raw": [
+                10.628541,
+                10.749625,
+                11.241958,
+                19.859375
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 19.859375
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 6.734,
+              "mean": 7.850156250000001,
+              "p50": 7.219875,
+              "p95": 9.439542,
+              "p99": 9.439542,
+              "max": 9.439542,
+              "raw": [
+                9.439542,
+                8.007208,
+                7.219875,
+                6.734
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 9.439542
+            }
+          },
+          "desk_ls": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 23.592083,
+              "mean": 24.790062499999998,
+              "p50": 25.05725,
+              "p95": 25.326917,
+              "p99": 25.326917,
+              "max": 25.326917,
+              "raw": [
+                25.184,
+                25.05725,
+                23.592083,
+                25.326917
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 25.326917
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 15.331625,
+              "mean": 16.336083249999998,
+              "p50": 15.644542,
+              "p95": 17.650916,
+              "p99": 17.650916,
+              "max": 17.650916,
+              "raw": [
+                15.331625,
+                17.650916,
+                16.71725,
+                15.644542
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 17.650916
+            }
+          },
+          "desk_search": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 40.21375,
+              "mean": 43.7551665,
+              "p50": 40.887,
+              "p95": 49.915458,
+              "p99": 49.915458,
+              "max": 49.915458,
+              "raw": [
+                44.004458,
+                40.21375,
+                40.887,
+                49.915458
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 49.915458
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 27.239166,
+              "mean": 32.53947925,
+              "p50": 27.51075,
+              "p95": 39.878292,
+              "p99": 39.878292,
+              "max": 39.878292,
+              "raw": [
+                27.51075,
+                27.239166,
+                39.878292,
+                35.529709
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 39.878292
+            }
+          }
+        }
+      },
+      "http": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 28,
+          "min": 0.514167,
+          "mean": 1.244007392857143,
+          "p50": 0.766417,
+          "p95": 2.862458,
+          "p99": 6.24625,
+          "max": 6.24625,
+          "raw": [
+            1.377542,
+            0.68275,
+            0.639708,
+            0.645833,
+            0.659583,
+            0.722083,
+            0.677,
+            2.526084,
+            6.24625,
+            2.862458,
+            1.85225,
+            1.324625,
+            1.728583,
+            1.775458,
+            0.615375,
+            0.98225,
+            0.776125,
+            0.568958,
+            0.627875,
+            1.389208,
+            0.776875,
+            0.766417,
+            0.615916,
+            0.514167,
+            0.577667,
+            1.4305,
+            0.782125,
+            0.688542
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 6.24625
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 28,
+          "min": 0.516833,
+          "mean": 1.456342214285714,
+          "p50": 0.697167,
+          "p95": 4.644459,
+          "p99": 8.444958,
+          "max": 8.444958,
+          "raw": [
+            1.390583,
+            0.658042,
+            0.62025,
+            0.667833,
+            0.786667,
+            0.697167,
+            0.820917,
+            1.5965,
+            1.979833,
+            4.04475,
+            2.085041,
+            4.644459,
+            1.800292,
+            8.444958,
+            0.681292,
+            0.592416,
+            1.001833,
+            0.516833,
+            0.646708,
+            1.329334,
+            0.644875,
+            0.724208,
+            0.612375,
+            0.537875,
+            0.601916,
+            1.376291,
+            0.641667,
+            0.632667
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "rust-go",
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 8.444958
+        },
+        "operation_order": [
+          "snapshot",
+          "file-read",
+          "file-range",
+          "file-missing",
+          "file-traversal",
+          "healthz",
+          "status",
+          "file-read",
+          "file-range",
+          "file-missing",
+          "file-traversal",
+          "healthz",
+          "status",
+          "snapshot",
+          "file-range",
+          "file-missing",
+          "file-traversal",
+          "healthz",
+          "status",
+          "snapshot",
+          "file-read",
+          "file-missing",
+          "file-traversal",
+          "healthz",
+          "status",
+          "snapshot",
+          "file-read",
+          "file-range"
+        ],
+        "operations": {
+          "snapshot": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 1.377542,
+              "mean": 1.4931770000000002,
+              "p50": 1.389208,
+              "p95": 1.775458,
+              "p99": 1.775458,
+              "max": 1.775458,
+              "raw": [
+                1.377542,
+                1.775458,
+                1.389208,
+                1.4305
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 1.775458
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 1.329334,
+              "mean": 3.1352914999999997,
+              "p50": 1.376291,
+              "p95": 8.444958,
+              "p99": 8.444958,
+              "max": 8.444958,
+              "raw": [
+                1.390583,
+                8.444958,
+                1.329334,
+                1.376291
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 8.444958
+            }
+          },
+          "file-read": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.68275,
+              "mean": 1.1919585,
+              "p50": 0.776875,
+              "p95": 2.526084,
+              "p99": 2.526084,
+              "max": 2.526084,
+              "raw": [
+                0.68275,
+                2.526084,
+                0.776875,
+                0.782125
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 2.526084
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.641667,
+              "mean": 0.8852709999999999,
+              "p50": 0.644875,
+              "p95": 1.5965,
+              "p99": 1.5965,
+              "max": 1.5965,
+              "raw": [
+                0.658042,
+                1.5965,
+                0.644875,
+                0.641667
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 1.5965
+            }
+          },
+          "file-range": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.615375,
+              "mean": 2.04746875,
+              "p50": 0.639708,
+              "p95": 6.24625,
+              "p99": 6.24625,
+              "max": 6.24625,
+              "raw": [
+                0.639708,
+                6.24625,
+                0.615375,
+                0.688542
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 6.24625
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.62025,
+              "mean": 0.9785105,
+              "p50": 0.632667,
+              "p95": 1.979833,
+              "p99": 1.979833,
+              "max": 1.979833,
+              "raw": [
+                0.62025,
+                1.979833,
+                0.681292,
+                0.632667
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 1.979833
+            }
+          },
+          "file-missing": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.645833,
+              "mean": 1.3142395,
+              "p50": 0.766417,
+              "p95": 2.862458,
+              "p99": 2.862458,
+              "max": 2.862458,
+              "raw": [
+                0.645833,
+                2.862458,
+                0.98225,
+                0.766417
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 2.862458
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.592416,
+              "mean": 1.5073017499999999,
+              "p50": 0.667833,
+              "p95": 4.04475,
+              "p99": 4.04475,
+              "max": 4.04475,
+              "raw": [
+                0.667833,
+                4.04475,
+                0.592416,
+                0.724208
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 4.04475
+            }
+          },
+          "file-traversal": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.615916,
+              "mean": 0.9759685,
+              "p50": 0.659583,
+              "p95": 1.85225,
+              "p99": 1.85225,
+              "max": 1.85225,
+              "raw": [
+                0.659583,
+                1.85225,
+                0.776125,
+                0.615916
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 1.85225
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.612375,
+              "mean": 1.121479,
+              "p50": 0.786667,
+              "p95": 2.085041,
+              "p99": 2.085041,
+              "max": 2.085041,
+              "raw": [
+                0.786667,
+                2.085041,
+                1.001833,
+                0.612375
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 2.085041
+            }
+          },
+          "healthz": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.514167,
+              "mean": 0.7824582499999999,
+              "p50": 0.568958,
+              "p95": 1.324625,
+              "p99": 1.324625,
+              "max": 1.324625,
+              "raw": [
+                0.722083,
+                1.324625,
+                0.568958,
+                0.514167
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 1.324625
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.516833,
+              "mean": 1.5990835,
+              "p50": 0.537875,
+              "p95": 4.644459,
+              "p99": 4.644459,
+              "max": 4.644459,
+              "raw": [
+                0.697167,
+                4.644459,
+                0.516833,
+                0.537875
+              ],
+              "pair_order": [
+                "go-rust",
+                "rust-go",
+                "go-rust",
+                "rust-go"
+              ],
+              "max_observed": 4.644459
+            }
+          },
+          "status": {
+            "go": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.577667,
+              "mean": 0.90278125,
+              "p50": 0.627875,
+              "p95": 1.728583,
+              "p99": 1.728583,
+              "max": 1.728583,
+              "raw": [
+                0.677,
+                1.728583,
+                0.627875,
+                0.577667
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 1.728583
+            },
+            "rust": {
+              "unit": "milliseconds",
+              "warmup_samples": 2,
+              "samples": 4,
+              "min": 0.601916,
+              "mean": 0.96745825,
+              "p50": 0.646708,
+              "p95": 1.800292,
+              "p99": 1.800292,
+              "max": 1.800292,
+              "raw": [
+                0.820917,
+                1.800292,
+                0.646708,
+                0.601916
+              ],
+              "pair_order": [
+                "rust-go",
+                "go-rust",
+                "rust-go",
+                "go-rust"
+              ],
+              "max_observed": 1.800292
+            }
+          }
+        }
+      },
+      "rss": {
+        "go": {
+          "unit": "bytes",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 51216384.0,
+          "mean": 53735424.0,
+          "p50": 51216384.0,
+          "p95": 61292544.0,
+          "p99": 61292544.0,
+          "max": 61292544.0,
+          "raw": [
+            61292544.0,
+            51216384.0,
+            51216384.0,
+            51216384.0
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 61292544.0
+        },
+        "rust": {
+          "unit": "bytes",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 24018944.0,
+          "mean": 25415680.0,
+          "p50": 24018944.0,
+          "p95": 29589504.0,
+          "p99": 29589504.0,
+          "max": 29589504.0,
+          "raw": [
+            29589504.0,
+            24018944.0,
+            24018944.0,
+            24035328.0
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 29589504.0
+        }
+      }
+    },
+    "thresholds": {
+      "minimum_improvement": 0.2,
+      "maximum_latency_regression": 0.1,
+      "latency_estimator": "order_stratified_paired_median_ratio",
+      "binary_size_reduction": 0.16191467597715625,
+      "representative_rss_reduction_max": 0.5172413793103449,
+      "improvement_pass": true,
+      "latency_regressions": {
+        "startup": -0.2458906980706166,
+        "search": -0.37156386916113004,
+        "mcp": -0.31939910153775797,
+        "mcp.initialize": -0.3548710112033244,
+        "mcp.tools-list": -0.31939910153775797,
+        "mcp.desk_status": -0.23482137378529744,
+        "mcp.desk_ls": -0.33893616473898547,
+        "mcp.desk_search": -0.19974482641209879,
+        "http": 0.012122831605324791,
+        "http.snapshot": 1.859300182757949,
+        "http.file-read": -0.10305022310217327,
+        "http.file-range": 0.03834989797123578,
+        "http.file-missing": 0.1789803405385837,
+        "http.file-traversal": 0.241743614660324,
+        "http.healthz": 1.276176970650459,
+        "http.status": 0.1212876630130646
+      },
+      "latency_order_regressions": {
+        "startup": {
+          "go-rust": -0.2458906980706166,
+          "rust-go": -0.31172183815761545
+        },
+        "search": {
+          "go-rust": -0.38844098191891374,
+          "rust-go": -0.37156386916113004
+        },
+        "mcp": {
+          "go-rust": -0.31939910153775797,
+          "rust-go": -0.376934655444376
+        },
+        "mcp.initialize": {
+          "go-rust": -0.3548710112033244,
+          "rust-go": -0.4293084405322196
+        },
+        "mcp.tools-list": {
+          "go-rust": -0.31939910153775797,
+          "rust-go": -0.3933718951529346
+        },
+        "mcp.desk_status": {
+          "go-rust": -0.23482137378529744,
+          "rust-go": -0.4580166359525816
+        },
+        "mcp.desk_ls": {
+          "go-rust": -0.34130994604522336,
+          "rust-go": -0.33893616473898547
+        },
+        "mcp.desk_search": {
+          "go-rust": -0.19974482641209879,
+          "rust-go": -0.30542138691599285
+        },
+        "http": {
+          "go-rust": -0.01047507038354678,
+          "rust-go": 0.012122831605324791
+        },
+        "http.snapshot": {
+          "go-rust": -0.016816257748306862,
+          "rust-go": 1.859300182757949
+        },
+        "http.file-read": {
+          "go-rust": -0.2737896007372346,
+          "rust-go": -0.10305022310217327
+        },
+        "http.file-range": {
+          "go-rust": 0.03834989797123578,
+          "rust-go": -0.382093137855229
+        },
+        "http.file-missing": {
+          "go-rust": 0.1789803405385837,
+          "rust-go": -0.18140703067581487
+        },
+        "http.file-traversal": {
+          "go-rust": 0.241743614660324,
+          "rust-go": 0.05996547908732053
+        },
+        "http.healthz": {
+          "go-rust": -0.06306028767796334,
+          "rust-go": 1.276176970650459
+        },
+        "http.status": {
+          "go-rust": 0.04173086959987882,
+          "rust-go": 0.1212876630130646
+        }
+      },
+      "latency_order_regression_intervals": {
+        "startup": {
+          "go-rust": [
+            -0.28935834689428597,
+            -0.2024230492469472
+          ],
+          "rust-go": [
+            -0.36454602813104375,
+            -0.25889764818418703
+          ]
+        },
+        "search": {
+          "go-rust": [
+            -0.486360437551705,
+            -0.2905215262861225
+          ],
+          "rust-go": [
+            -0.39728875729863067,
+            -0.34583898102362953
+          ]
+        },
+        "mcp": {
+          "go-rust": [
+            -0.3912156527954257,
+            -0.11186850575257701
+          ],
+          "rust-go": [
+            -0.44141201131521146,
+            -0.28820228394979375
+          ]
+        },
+        "mcp.initialize": {
+          "go-rust": [
+            -0.4139894384717342,
+            -0.29575258393491466
+          ],
+          "rust-go": [
+            -0.44141201131521146,
+            -0.41720486974922777
+          ]
+        },
+        "mcp.tools-list": {
+          "go-rust": [
+            -0.32799358242792653,
+            -0.3108046206475895
+          ],
+          "rust-go": [
+            -0.41517031905681745,
+            -0.3715734712490517
+          ]
+        },
+        "mcp.desk_status": {
+          "go-rust": [
+            -0.35777424181801787,
+            -0.11186850575257701
+          ],
+          "rust-go": [
+            -0.6609158143194336,
+            -0.2551174575857297
+          ]
+        },
+        "mcp.desk_ls": {
+          "go-rust": [
+            -0.3912156527954257,
+            -0.29140423929502113
+          ],
+          "rust-go": [
+            -0.3822958396397004,
+            -0.29557648983827045
+          ]
+        },
+        "mcp.desk_search": {
+          "go-rust": [
+            -0.3748190240179756,
+            -0.02467062880622195
+          ],
+          "rust-go": [
+            -0.32264048988219196,
+            -0.28820228394979375
+          ]
+        },
+        "http": {
+          "go-rust": [
+            -0.0916148467900969,
+            0.19267324961377108
+          ],
+          "rust-go": [
+            -0.16991150442477876,
+            0.21258050221565727
+          ]
+        },
+        "http.snapshot": {
+          "go-rust": [
+            -0.04309937748702852,
+            0.009466861990414799
+          ],
+          "rust-go": [
+            -0.03789514155889562,
+            3.756495507074794
+          ]
+        },
+        "http.file-read": {
+          "go-rust": [
+            -0.3679940967917139,
+            -0.17958510468275524
+          ],
+          "rust-go": [
+            -0.16991150442477876,
+            -0.036188941779567885
+          ]
+        },
+        "http.file-range": {
+          "go-rust": [
+            -0.03041700275750825,
+            0.1071167986999797
+          ],
+          "rust-go": [
+            -0.6830365419251552,
+            -0.08114973378530288
+          ]
+        },
+        "http.file-missing": {
+          "go-rust": [
+            -0.05507315208300445,
+            0.41303383316017195
+          ],
+          "rust-go": [
+            -0.3968785950623568,
+            0.03406453371072704
+          ]
+        },
+        "http.file-traversal": {
+          "go-rust": [
+            0.19267324961377108,
+            0.29081397970687717
+          ],
+          "rust-go": [
+            -0.005749160599822112,
+            0.1256801187744634
+          ]
+        },
+        "http.healthz": {
+          "go-rust": [
+            -0.0916148467900969,
+            -0.034505728565829785
+          ],
+          "rust-go": [
+            0.04610953250597549,
+            2.5062444087949425
+          ]
+        },
+        "http.status": {
+          "go-rust": [
+            0.04148426774994318,
+            0.04197747144981445
+          ],
+          "rust-go": [
+            0.029994823810471916,
+            0.21258050221565727
+          ]
+        }
+      },
+      "latency_interval_confidence": 0.95,
+      "latency_interval_width_limit": 0.4,
+      "latency_pass": false,
+      "contracts_pass": true,
+      "fail_closed": true
+    },
+    "passed": false
+  },
+  "workloads": {
+    "symroom-startup": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 6.695167,
+          "mean": 6.89852125,
+          "p50": 6.798542,
+          "p95": 7.257709,
+          "p99": 7.257709,
+          "max": 7.257709,
+          "raw": [
+            7.257709,
+            6.842667,
+            6.798542,
+            6.695167
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 7.257709
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 5.601875,
+          "mean": 6.176125,
+          "p50": 6.260458,
+          "p95": 6.532667,
+          "p99": 6.532667,
+          "max": 6.532667,
+          "raw": [
+            6.3095,
+            6.532667,
+            6.260458,
+            5.601875
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 6.532667
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symroom version",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symroom version"
+      },
+      "output_sha256": {
+        "go": "64332284b237cc315e153015756efce0298908be8c8816cd4daf7aa988e58bad",
+        "rust": "64332284b237cc315e153015756efce0298908be8c8816cd4daf7aa988e58bad"
+      },
+      "outputs_equal": true,
+      "setup_runs": 0,
+      "peak_rss_bytes": {
+        "go": [
+          11501568,
+          11681792
+        ],
+        "rust": [
+          6324224,
+          6356992
+        ]
+      }
+    },
+    "index-build": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 2040.950625,
+          "mean": 2376.9588750000003,
+          "p50": 2070.730833,
+          "p95": 3155.761292,
+          "p99": 3155.761292,
+          "max": 3155.761292,
+          "raw": [
+            2240.39275,
+            2040.950625,
+            2070.730833,
+            3155.761292
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 3155.761292
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 1331.132125,
+          "mean": 1423.779646,
+          "p50": 1391.617625,
+          "p95": 1531.307625,
+          "p99": 1531.307625,
+          "max": 1531.307625,
+          "raw": [
+            1441.061209,
+            1331.132125,
+            1391.617625,
+            1531.307625
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 1531.307625
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk ls --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-go/vault --json",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk ls --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-rust/vault --json"
+      },
+      "output_sha256": {
+        "go": "02f76f9ee3db4d6fc655604ad9ddd1165a9463e08b106f8141f23ec771292ff3",
+        "rust": "02f76f9ee3db4d6fc655604ad9ddd1165a9463e08b106f8141f23ec771292ff3"
+      },
+      "outputs_equal": true,
+      "setup_runs": 12,
+      "peak_rss_bytes": {
+        "go": [
+          47382528,
+          49446912
+        ],
+        "rust": [
+          29736960,
+          32620544
+        ]
+      }
+    },
+    "graph": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 959.164209,
+          "mean": 1977.8845105,
+          "p50": 2173.337916,
+          "p95": 2491.322292,
+          "p99": 2491.322292,
+          "max": 2491.322292,
+          "raw": [
+            2173.337916,
+            2287.713625,
+            2491.322292,
+            959.164209
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 2491.322292
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 136.766166,
+          "mean": 189.317677,
+          "p50": 149.972834,
+          "p95": 249.359167,
+          "p99": 249.359167,
+          "max": 249.359167,
+          "raw": [
+            249.359167,
+            136.766166,
+            221.172541,
+            149.972834
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 249.359167
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk graph --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-go/vault --json",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk graph --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-rust/vault --json"
+      },
+      "output_sha256": {
+        "go": "2696a41d0dc1d44231b43ad53706fb66ea4bae46ed1a8ba6ea50411f97032073",
+        "rust": "2696a41d0dc1d44231b43ad53706fb66ea4bae46ed1a8ba6ea50411f97032073"
+      },
+      "outputs_equal": true,
+      "setup_runs": 0,
+      "peak_rss_bytes": {
+        "go": [
+          86343680,
+          86573056
+        ],
+        "rust": [
+          52690944,
+          52215808
+        ]
+      }
+    },
+    "backlinks": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 41.928541,
+          "mean": 78.86994775,
+          "p50": 53.053875,
+          "p95": 163.16275,
+          "p99": 163.16275,
+          "max": 163.16275,
+          "raw": [
+            53.053875,
+            57.334625,
+            41.928541,
+            163.16275
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 163.16275
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 26.39025,
+          "mean": 27.154228999999997,
+          "p50": 26.420708,
+          "p95": 29.19975,
+          "p99": 29.19975,
+          "max": 29.19975,
+          "raw": [
+            26.420708,
+            26.39025,
+            29.19975,
+            26.606208
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 29.19975
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk backlinks cohort-042/note-00042.md --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-go/vault --json",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk backlinks cohort-042/note-00042.md --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-rust/vault --json"
+      },
+      "output_sha256": {
+        "go": "47e6a6938f8951de1a59997137c1ceff68615a5a5c1362bd41531af77b9269ae",
+        "rust": "47e6a6938f8951de1a59997137c1ceff68615a5a5c1362bd41531af77b9269ae"
+      },
+      "outputs_equal": true,
+      "setup_runs": 0,
+      "peak_rss_bytes": {
+        "go": [
+          31506432,
+          30867456
+        ],
+        "rust": [
+          15876096,
+          15826944
+        ]
+      }
+    },
+    "relations-inverse": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 346.3785,
+          "mean": 385.01510425000004,
+          "p50": 369.151458,
+          "p95": 448.166042,
+          "p99": 448.166042,
+          "max": 448.166042,
+          "raw": [
+            448.166042,
+            376.364417,
+            369.151458,
+            346.3785
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 448.166042
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 145.577583,
+          "mean": 166.74935399999998,
+          "p50": 149.502291,
+          "p95": 217.83575,
+          "p99": 217.83575,
+          "max": 217.83575,
+          "raw": [
+            217.83575,
+            149.502291,
+            154.081792,
+            145.577583
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 217.83575
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk relations inverse cohort-042/note-00042.md --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-go/vault --json",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk relations inverse cohort-042/note-00042.md --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-rust/vault --json"
+      },
+      "output_sha256": {
+        "go": "c2b41c606a7864a38a95c8675c2d4192ae37958cd8ad37ef5770a1e3f8c1c774",
+        "rust": "c2b41c606a7864a38a95c8675c2d4192ae37958cd8ad37ef5770a1e3f8c1c774"
+      },
+      "outputs_equal": true,
+      "setup_runs": 0,
+      "peak_rss_bytes": {
+        "go": [
+          44580864,
+          46170112
+        ],
+        "rust": [
+          17874944,
+          17874944
+        ]
+      }
+    },
+    "duplicates": {
+      "pair": {
+        "go": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 1196.700375,
+          "mean": 1312.40263575,
+          "p50": 1212.8705,
+          "p95": 1433.194209,
+          "p99": 1433.194209,
+          "max": 1433.194209,
+          "raw": [
+            1406.845459,
+            1196.700375,
+            1212.8705,
+            1433.194209
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 1433.194209
+        },
+        "rust": {
+          "unit": "milliseconds",
+          "warmup_samples": 2,
+          "samples": 4,
+          "min": 284.440625,
+          "mean": 406.49115600000005,
+          "p50": 365.973333,
+          "p95": 543.242333,
+          "p99": 543.242333,
+          "max": 543.242333,
+          "raw": [
+            543.242333,
+            432.308333,
+            284.440625,
+            365.973333
+          ],
+          "pair_order": [
+            "go-rust",
+            "rust-go",
+            "go-rust",
+            "rust-go"
+          ],
+          "max_observed": 543.242333
+        }
+      },
+      "command": {
+        "go": "/private/tmp/r-value002/smoke-bin/smoke/go/symdesk duplicates --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-go/vault --json",
+        "rust": "/private/tmp/r-value002/smoke-bin/smoke/rust/symdesk duplicates --vault /private/tmp/r-value002/tmp/symdesk-value002-97n15fvo/linked-rust/vault --json"
+      },
+      "output_sha256": {
+        "go": "84c3c324183de9b5de7132f880314ab7a704ac7899aade3f3971da08a0a11709",
+        "rust": "84c3c324183de9b5de7132f880314ab7a704ac7899aade3f3971da08a0a11709"
+      },
+      "outputs_equal": true,
+      "setup_runs": 0,
+      "peak_rss_bytes": {
+        "go": [
+          38338560,
+          39682048
+        ],
+        "rust": [
+          24215552,
+          25935872
+        ]
+      }
+    }
+  },
+  "sustained": {
+    "http_cycle": [
+      "snapshot",
+      "healthz",
+      "status",
+      "file-read",
+      "file-range",
+      "file-missing",
+      "file-traversal",
+      "healthz",
+      "status",
+      "file-read",
+      "file-range",
+      "file-missing",
+      "file-traversal",
+      "healthz",
+      "status",
+      "file-read",
+      "file-range",
+      "file-missing",
+      "file-traversal",
+      "healthz",
+      "status",
+      "file-read",
+      "file-range",
+      "file-missing",
+      "file-traversal"
+    ],
+    "mcp_cycle": [
+      "desk_status",
+      "desk_search",
+      "desk_ls"
+    ],
+    "rss_interval_s": 0.1,
+    "rounds": 2,
+    "http_requests_per_run": 100,
+    "mcp_requests_per_run": 60,
+    "runs": [
+      {
+        "side": "go",
+        "http_requests": 100,
+        "mcp_requests": 60,
+        "errors": 0,
+        "duration_s": 2.2715842080069706,
+        "idle_rss_bytes": {
+          "server": 41402368,
+          "mcp": 22331392
+        },
+        "final_rss_bytes": {
+          "server": 53002240,
+          "mcp": 35962880
+        },
+        "rss_series_bytes": {
+          "server": [
+            41549824,
+            44859392,
+            45514752,
+            45891584,
+            48447488,
+            50266112,
+            51527680,
+            52101120,
+            58703872,
+            63471616,
+            53002240,
+            53002240
+          ],
+          "mcp": [
+            26148864,
+            32964608,
+            36388864,
+            34291712,
+            35569664,
+            36618240,
+            36896768,
+            36995072,
+            36929536,
+            36732928,
+            35962880,
+            35962880
+          ]
+        },
+        "max_rss_bytes": {
+          "server": 63471616,
+          "mcp": 36995072,
+          "combined": 100204544
+        },
+        "http_latency": {
+          "count": 100,
+          "p50_ms": 1.052959,
+          "p95_ms": 5.268792,
+          "max_ms": 1838.837791
+        },
+        "mcp_latency": {
+          "count": 60,
+          "p50_ms": 28.976125,
+          "p95_ms": 85.993917,
+          "max_ms": 279.938167
+        },
+        "clean_shutdown": true,
+        "round": 0,
+        "order": "go-rust"
+      },
+      {
+        "side": "rust",
+        "http_requests": 100,
+        "mcp_requests": 60,
+        "errors": 0,
+        "duration_s": 1.5030331659363583,
+        "idle_rss_bytes": {
+          "server": 19234816,
+          "mcp": 11042816
+        },
+        "final_rss_bytes": {
+          "server": 25821184,
+          "mcp": 19922944
+        },
+        "rss_series_bytes": {
+          "server": [
+            19513344,
+            21413888,
+            20234240,
+            20398080,
+            20742144,
+            25329664,
+            26738688,
+            25821184
+          ],
+          "mcp": [
+            13598720,
+            22298624,
+            19365888,
+            19513344,
+            19726336,
+            19873792,
+            20004864,
+            19922944
+          ]
+        },
+        "max_rss_bytes": {
+          "server": 26738688,
+          "mcp": 22298624,
+          "combined": 46743552
+        },
+        "http_latency": {
+          "count": 100,
+          "p50_ms": 0.988917,
+          "p95_ms": 5.324625,
+          "max_ms": 1122.072375
+        },
+        "mcp_latency": {
+          "count": 60,
+          "p50_ms": 10.68425,
+          "p95_ms": 63.649708,
+          "max_ms": 129.920459
+        },
+        "clean_shutdown": true,
+        "round": 0,
+        "order": "go-rust"
+      },
+      {
+        "side": "rust",
+        "http_requests": 100,
+        "mcp_requests": 60,
+        "errors": 0,
+        "duration_s": 1.5244370839791372,
+        "idle_rss_bytes": {
+          "server": 17301504,
+          "mcp": 11075584
+        },
+        "final_rss_bytes": {
+          "server": 27639808,
+          "mcp": 23166976
+        },
+        "rss_series_bytes": {
+          "server": [
+            17760256,
+            18972672,
+            19513344,
+            20217856,
+            20955136,
+            22396928,
+            27623424,
+            27639808
+          ],
+          "mcp": [
+            20119552,
+            22429696,
+            22904832,
+            23166976,
+            23166976,
+            23166976,
+            23166976,
+            23166976
+          ]
+        },
+        "max_rss_bytes": {
+          "server": 27639808,
+          "mcp": 23166976,
+          "combined": 50806784
+        },
+        "http_latency": {
+          "count": 100,
+          "p50_ms": 0.645583,
+          "p95_ms": 3.962125,
+          "max_ms": 1259.697792
+        },
+        "mcp_latency": {
+          "count": 60,
+          "p50_ms": 8.860667,
+          "p95_ms": 29.8415,
+          "max_ms": 56.006167
+        },
+        "clean_shutdown": true,
+        "round": 1,
+        "order": "rust-go"
+      },
+      {
+        "side": "go",
+        "http_requests": 100,
+        "mcp_requests": 60,
+        "errors": 0,
+        "duration_s": 4.223931499989703,
+        "idle_rss_bytes": {
+          "server": 40910848,
+          "mcp": 18907136
+        },
+        "final_rss_bytes": {
+          "server": 61915136,
+          "mcp": 36405248
+        },
+        "rss_series_bytes": {
+          "server": [
+            41025536,
+            37732352,
+            38223872,
+            40452096,
+            41156608,
+            41222144,
+            42237952,
+            42270720,
+            44204032,
+            44220416,
+            44793856,
+            45203456,
+            46596096,
+            47316992,
+            47382528,
+            61587456,
+            61898752,
+            61898752,
+            61915136,
+            61915136
+          ],
+          "mcp": [
+            27623424,
+            36175872,
+            37666816,
+            39862272,
+            40468480,
+            40534016,
+            40599552,
+            40730624,
+            40747008,
+            40763392,
+            38551552,
+            38551552,
+            38551552,
+            38551552,
+            38289408,
+            37781504,
+            36405248,
+            36405248,
+            36405248,
+            36405248
+          ]
+        },
+        "max_rss_bytes": {
+          "server": 61915136,
+          "mcp": 40763392,
+          "combined": 99368960
+        },
+        "http_latency": {
+          "count": 100,
+          "p50_ms": 2.474334,
+          "p95_ms": 14.862167,
+          "max_ms": 3393.394625
+        },
+        "mcp_latency": {
+          "count": 60,
+          "p50_ms": 28.436583,
+          "p95_ms": 75.092791,
+          "max_ms": 224.438666
+        },
+        "clean_shutdown": true,
+        "round": 1,
+        "order": "rust-go"
+      }
+    ],
+    "max_rss_bytes": {
+      "go": 100204544,
+      "rust": 50806784
+    },
+    "rss_reduction": 0.4929692609548725
+  },
+  "thresholds": {
+    "minimum_improvement": 0.2,
+    "maximum_latency_regression": 0.1,
+    "latency_interval_width_limit": 0.4,
+    "latency_interval_confidence": 0.95,
+    "latency_estimator": "order_stratified_paired_median_ratio",
+    "combined_binary_bytes": {
+      "go": 31987012,
+      "rust": 23643984
+    },
+    "combined_binary_size_reduction": 0.2608254875447572,
+    "representative_rss_reduction_max": 0.5172413793103449,
+    "sustained_rss_reduction": 0.4929692609548725,
+    "improvement_basis": [
+      "combined_binary_size",
+      "representative_rss"
+    ],
+    "improvement_pass": true,
+    "latency_order_regressions": {
+      "startup": {
+        "go-rust": -0.2458906980706166,
+        "rust-go": -0.31172183815761545
+      },
+      "search": {
+        "go-rust": -0.38844098191891374,
+        "rust-go": -0.37156386916113004
+      },
+      "mcp": {
+        "go-rust": -0.31939910153775797,
+        "rust-go": -0.376934655444376
+      },
+      "mcp.initialize": {
+        "go-rust": -0.3548710112033244,
+        "rust-go": -0.4293084405322196
+      },
+      "mcp.tools-list": {
+        "go-rust": -0.31939910153775797,
+        "rust-go": -0.3933718951529346
+      },
+      "mcp.desk_status": {
+        "go-rust": -0.23482137378529744,
+        "rust-go": -0.4580166359525816
+      },
+      "mcp.desk_ls": {
+        "go-rust": -0.34130994604522336,
+        "rust-go": -0.33893616473898547
+      },
+      "mcp.desk_search": {
+        "go-rust": -0.19974482641209879,
+        "rust-go": -0.30542138691599285
+      },
+      "http": {
+        "go-rust": -0.01047507038354678,
+        "rust-go": 0.012122831605324791
+      },
+      "http.snapshot": {
+        "go-rust": -0.016816257748306862,
+        "rust-go": 1.859300182757949
+      },
+      "http.file-read": {
+        "go-rust": -0.2737896007372346,
+        "rust-go": -0.10305022310217327
+      },
+      "http.file-range": {
+        "go-rust": 0.03834989797123578,
+        "rust-go": -0.382093137855229
+      },
+      "http.file-missing": {
+        "go-rust": 0.1789803405385837,
+        "rust-go": -0.18140703067581487
+      },
+      "http.file-traversal": {
+        "go-rust": 0.241743614660324,
+        "rust-go": 0.05996547908732053
+      },
+      "http.healthz": {
+        "go-rust": -0.06306028767796334,
+        "rust-go": 1.276176970650459
+      },
+      "http.status": {
+        "go-rust": 0.04173086959987882,
+        "rust-go": 0.1212876630130646
+      },
+      "workload.symroom-startup": {
+        "go-rust": -0.10489774919282757,
+        "rust-go": -0.10429983777883356
+      },
+      "workload.index-build": {
+        "go-rust": -0.34237005322238345,
+        "rust-go": -0.4312731360571006
+      },
+      "workload.graph": {
+        "go-rust": -0.8982436297761526,
+        "rust-go": -0.89192963274142
+      },
+      "workload.backlinks": {
+        "go-rust": -0.4027926323643234,
+        "rust-go": -0.6883249285309327
+      },
+      "workload.relations-inverse": {
+        "go-rust": -0.548272562352002,
+        "rust-go": -0.5912439086297128
+      },
+      "workload.duplicates": {
+        "go-rust": -0.6896696514973211,
+        "rust-go": -0.6916973562542356
+      }
+    },
+    "latency_order_regression_intervals": {
+      "startup": {
+        "go-rust": [
+          -0.28935834689428597,
+          -0.2024230492469472
+        ],
+        "rust-go": [
+          -0.36454602813104375,
+          -0.25889764818418703
+        ]
+      },
+      "search": {
+        "go-rust": [
+          -0.486360437551705,
+          -0.2905215262861225
+        ],
+        "rust-go": [
+          -0.39728875729863067,
+          -0.34583898102362953
+        ]
+      },
+      "mcp": {
+        "go-rust": [
+          -0.3912156527954257,
+          -0.11186850575257701
+        ],
+        "rust-go": [
+          -0.44141201131521146,
+          -0.28820228394979375
+        ]
+      },
+      "mcp.initialize": {
+        "go-rust": [
+          -0.4139894384717342,
+          -0.29575258393491466
+        ],
+        "rust-go": [
+          -0.44141201131521146,
+          -0.41720486974922777
+        ]
+      },
+      "mcp.tools-list": {
+        "go-rust": [
+          -0.32799358242792653,
+          -0.3108046206475895
+        ],
+        "rust-go": [
+          -0.41517031905681745,
+          -0.3715734712490517
+        ]
+      },
+      "mcp.desk_status": {
+        "go-rust": [
+          -0.35777424181801787,
+          -0.11186850575257701
+        ],
+        "rust-go": [
+          -0.6609158143194336,
+          -0.2551174575857297
+        ]
+      },
+      "mcp.desk_ls": {
+        "go-rust": [
+          -0.3912156527954257,
+          -0.29140423929502113
+        ],
+        "rust-go": [
+          -0.3822958396397004,
+          -0.29557648983827045
+        ]
+      },
+      "mcp.desk_search": {
+        "go-rust": [
+          -0.3748190240179756,
+          -0.02467062880622195
+        ],
+        "rust-go": [
+          -0.32264048988219196,
+          -0.28820228394979375
+        ]
+      },
+      "http": {
+        "go-rust": [
+          -0.0916148467900969,
+          0.19267324961377108
+        ],
+        "rust-go": [
+          -0.16991150442477876,
+          0.21258050221565727
+        ]
+      },
+      "http.snapshot": {
+        "go-rust": [
+          -0.04309937748702852,
+          0.009466861990414799
+        ],
+        "rust-go": [
+          -0.03789514155889562,
+          3.756495507074794
+        ]
+      },
+      "http.file-read": {
+        "go-rust": [
+          -0.3679940967917139,
+          -0.17958510468275524
+        ],
+        "rust-go": [
+          -0.16991150442477876,
+          -0.036188941779567885
+        ]
+      },
+      "http.file-range": {
+        "go-rust": [
+          -0.03041700275750825,
+          0.1071167986999797
+        ],
+        "rust-go": [
+          -0.6830365419251552,
+          -0.08114973378530288
+        ]
+      },
+      "http.file-missing": {
+        "go-rust": [
+          -0.05507315208300445,
+          0.41303383316017195
+        ],
+        "rust-go": [
+          -0.3968785950623568,
+          0.03406453371072704
+        ]
+      },
+      "http.file-traversal": {
+        "go-rust": [
+          0.19267324961377108,
+          0.29081397970687717
+        ],
+        "rust-go": [
+          -0.005749160599822112,
+          0.1256801187744634
+        ]
+      },
+      "http.healthz": {
+        "go-rust": [
+          -0.0916148467900969,
+          -0.034505728565829785
+        ],
+        "rust-go": [
+          0.04610953250597549,
+          2.5062444087949425
+        ]
+      },
+      "http.status": {
+        "go-rust": [
+          0.04148426774994318,
+          0.04197747144981445
+        ],
+        "rust-go": [
+          0.029994823810471916,
+          0.21258050221565727
+        ]
+      },
+      "workload.symroom-startup": {
+        "go-rust": [
+          -0.13064852834413732,
+          -0.07914697004151783
+        ],
+        "rust-go": [
+          -0.16329570270614613,
+          -0.0453039728515211
+        ]
+      },
+      "workload.index-build": {
+        "go-rust": [
+          -0.356781881658919,
+          -0.3279582247858478
+        ],
+        "rust-go": [
+          -0.5147580937500136,
+          -0.3477881783641875
+        ]
+      },
+      "workload.graph": {
+        "go-rust": [
+          -0.9112228306589567,
+          -0.8852644288933484
+        ],
+        "rust-go": [
+          -0.9402170951357602,
+          -0.8436421703470798
+        ]
+      },
+      "workload.backlinks": {
+        "go-rust": [
+          -0.5020022948370877,
+          -0.3035829698915591
+        ],
+        "rust-go": [
+          -0.8369345454155437,
+          -0.5397153116463219
+        ]
+      },
+      "workload.relations-inverse": {
+        "go-rust": [
+          -0.5826054898041334,
+          -0.5139396348998705
+        ],
+        "rust-go": [
+          -0.6027725144909222,
+          -0.5797153027685031
+        ]
+      },
+      "workload.duplicates": {
+        "go-rust": [
+          -0.7654814549451074,
+          -0.6138578480495347
+        ],
+        "rust-go": [
+          -0.7446449820256007,
+          -0.6387497304828704
+        ]
+      }
+    },
+    "latency_failure": "mcp.desk_status.rust-go interval width 0.4058 exceeds the 0.40 precision limit",
+    "latency_pass": false,
+    "contracts_pass": true,
+    "sustained_pass": true,
+    "fail_closed": true
+  },
+  "passed": false
+}

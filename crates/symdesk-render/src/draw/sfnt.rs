@@ -555,7 +555,7 @@ fn parse_cmap(src: &[u8], cmap: Table) -> Result<Cmap, FontError> {
 mod tests {
     use super::*;
 
-    const REGULAR: &[u8] = include_bytes!("../../../../internal/draw/fonts/Inter-Regular.ttf");
+    const REGULAR: &[u8] = include_bytes!("../../assets/fonts/Inter-Regular.ttf");
 
     #[test]
     fn scale_rounds_half_away_from_zero_like_go() {

@@ -1,0 +1,2408 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "init-id-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":-1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":-1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":-1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":-1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\",\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"\",\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1.5,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1.5,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1.5,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1.5,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1e3,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1e3,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1e3,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1e3,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":-0,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":-0,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":-0,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":-0,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":12345678901234567890,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":12345678901234567890,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":12345678901234567890,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":12345678901234567890,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":true,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":true,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":false,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":false,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":[],\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":[],\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":{},\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":{},\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-14",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":[1,\"x\"],\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-14",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":[1,\"x\"],\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-15",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":{\"a\":1},\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-15",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":{\"a\":1},\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\\u00e9\\\"\\\\\\n\\u2028\",\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"é\\\"\\\\\\n\\u2028\",\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\\u00e9\\\"\\\\\\n\\u2028\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"é\\\"\\\\\\n\\u2028\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\u003c\u0026\u003e\",\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"\\u003c\\u0026\\u003e\",\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\u003c\u0026\u003e\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"\\u003c\\u0026\\u003e\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1E2,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1E2,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1E2,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1E2,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":0.0,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":0.0,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":0.0,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":0.0,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-id-20",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":100000000000000000000000000000000000000,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":100000000000000000000000000000000000000,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-id-20",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":100000000000000000000000000000000000000,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":100000000000000000000000000000000000000,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":[]}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":\"str\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":5}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":true}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"x\",\"version\":\"1\"}}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"1999-01-01\"}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":7}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":null,\"capabilities\":null}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"capabilities\":{\"roots\":{\"listChanged\":true},\"sampling\":{}},\"clientInfo\":{\"name\":\"é\",\"version\":\"\"}}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"unknown\":[1,2,3]}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-params-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-03-26\"}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-00",
+      "input": "{\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-01",
+      "input": "{\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-02",
+      "input": "{\"jsonrpc\":2,\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-03",
+      "input": "{\"jsonrpc\":null,\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-05",
+      "input": "{\"JSONRPC\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-06",
+      "input": "{\"jsonrpc\":\"\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-jsonrpc-07",
+      "input": "{\"jsonrpc\":[],\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-00",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"Initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: Initialize\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"Initialize\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-01",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"Initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: Initialize\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialize \"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialize \"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"initialize \"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-02",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialize \"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialize \"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\" initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found:  initialize\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\" initialize\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-03",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\" initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found:  initialize\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"INITIALIZE\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: INITIALIZE\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"INITIALIZE\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-04",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"INITIALIZE\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: INITIALIZE\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-05",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"Ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: Ping\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"Ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-06",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"Ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: Ping\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-07",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-08",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":1}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":1}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-09",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":1}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":true}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":true}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":true}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":[]}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":[]}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-11",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":[]}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":{}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":{}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-12",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":{}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialized\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialized\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"initialized\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-13",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialized\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialized\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-14",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"notifications/initialized\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/initialized\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-14",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-14",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"notifications/initialized\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/initialized\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-15",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"notifications/cancelled\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/cancelled\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-15",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-15",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"notifications/cancelled\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/cancelled\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"notifications/progress\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/progress\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/progress\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"notifications/progress\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/progress\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{\"tools\":[{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns the current version and vault path configuration for symdesk.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_status\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists files in the vault.\",\"inputSchema\":{\"properties\":{\"dir\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_ls\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_search\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Answers \\\"what happened on day X\\\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.\",\"inputSchema\":{\"properties\":{\"from\":{\"type\":\"string\"},\"limit\":{\"type\":\"integer\"},\"to\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"vault_timeline\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets properties (frontmatter) for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_props\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets backlinks for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_backlinks\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"optional: notebook id or path to restrict retrieval and citations to\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"intent\":{\"enum\":[\"summarize\",\"rewrite\",\"continue\"],\"type\":\"string\"},\"text\":{\"type\":\"string\"}},\"required\":[\"text\",\"intent\"],\"type\":\"object\"},\"name\":\"desk_transform\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_docs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns documents needing review: confidence below threshold or missing document_type/document_date.\",\"inputSchema\":{\"properties\":{\"threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"docs_review\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \\u003e= threshold.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"},\"threshold\":{\"type\":\"integer\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"docs_similar\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.\",\"inputSchema\":{\"properties\":{\"duplicate_threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"vault_health\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets related entities and notes for a given file path based on composition with symmemory.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_related\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.\",\"inputSchema\":{\"properties\":{\"title\":{\"description\":\"optional diagram title\",\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_diagram\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue from symingest.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_ingest_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias: list_rules.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_rules_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists meetings already imported into the vault as reviewed meeting notes.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"meeting_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one imported meeting note by its vault-relative path, including the reviewed transcript.\",\"inputSchema\":{\"properties\":{\"path\":{\"description\":\"vault-relative meeting note path\",\"type\":\"string\"}},\"required\":[\"path\"],\"type\":\"object\"},\"name\":\"meeting_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Reads the full output of an externalized tool result by its handle (returned as \\\"[Full result externalized to \\u003chandle\\u003e…]\\\"). Use this to re-read a result that was summarized because it was large.\",\"inputSchema\":{\"properties\":{\"handle\":{\"description\":\"the externalized-result handle from the tool output\",\"type\":\"string\"}},\"required\":[\"handle\"],\"type\":\"object\"},\"name\":\"desk_read_result\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"notebook_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"}},\"required\":[\"notebook\"],\"type\":\"object\"},\"name\":\"notebook_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"notebook\",\"query\"],\"type\":\"object\"},\"name\":\"notebook_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists Markdown-backed datasets and their materialized row counts.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{},\"type\":\"object\"},\"name\":\"desk_dataset_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"dataset\":{\"type\":\"string\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_describe\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"aggregates\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"as\":{\"type\":\"string\"},\"column\":{\"type\":\"string\"},\"function\":{\"enum\":[\"sum\",\"count\",\"min\",\"max\",\"average\"],\"type\":\"string\"}},\"required\":[\"function\"],\"type\":\"object\"},\"type\":\"array\"},\"columns\":{\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"dataset\":{\"type\":\"string\"},\"filter_group\":{\"type\":\"object\"},\"filters\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"key\",\"value\"],\"type\":\"object\"},\"type\":\"array\"},\"group_by\":{\"type\":\"string\"},\"limit\":{\"minimum\":1,\"type\":\"integer\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_query\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"list_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"search_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias for desk_rules_list.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_rules\"}]}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"tools/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{\"tools\":[{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns the current version and vault path configuration for symdesk.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_status\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists files in the vault.\",\"inputSchema\":{\"properties\":{\"dir\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_ls\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_search\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Answers \\\"what happened on day X\\\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.\",\"inputSchema\":{\"properties\":{\"from\":{\"type\":\"string\"},\"limit\":{\"type\":\"integer\"},\"to\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"vault_timeline\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets properties (frontmatter) for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_props\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets backlinks for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_backlinks\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"optional: notebook id or path to restrict retrieval and citations to\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"intent\":{\"enum\":[\"summarize\",\"rewrite\",\"continue\"],\"type\":\"string\"},\"text\":{\"type\":\"string\"}},\"required\":[\"text\",\"intent\"],\"type\":\"object\"},\"name\":\"desk_transform\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_docs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns documents needing review: confidence below threshold or missing document_type/document_date.\",\"inputSchema\":{\"properties\":{\"threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"docs_review\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \\u003e= threshold.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"},\"threshold\":{\"type\":\"integer\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"docs_similar\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.\",\"inputSchema\":{\"properties\":{\"duplicate_threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"vault_health\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets related entities and notes for a given file path based on composition with symmemory.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_related\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.\",\"inputSchema\":{\"properties\":{\"title\":{\"description\":\"optional diagram title\",\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_diagram\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue from symingest.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_ingest_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias: list_rules.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_rules_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists meetings already imported into the vault as reviewed meeting notes.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"meeting_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one imported meeting note by its vault-relative path, including the reviewed transcript.\",\"inputSchema\":{\"properties\":{\"path\":{\"description\":\"vault-relative meeting note path\",\"type\":\"string\"}},\"required\":[\"path\"],\"type\":\"object\"},\"name\":\"meeting_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Reads the full output of an externalized tool result by its handle (returned as \\\"[Full result externalized to \\u003chandle\\u003e…]\\\"). Use this to re-read a result that was summarized because it was large.\",\"inputSchema\":{\"properties\":{\"handle\":{\"description\":\"the externalized-result handle from the tool output\",\"type\":\"string\"}},\"required\":[\"handle\"],\"type\":\"object\"},\"name\":\"desk_read_result\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"notebook_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"}},\"required\":[\"notebook\"],\"type\":\"object\"},\"name\":\"notebook_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"notebook\",\"query\"],\"type\":\"object\"},\"name\":\"notebook_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists Markdown-backed datasets and their materialized row counts.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{},\"type\":\"object\"},\"name\":\"desk_dataset_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"dataset\":{\"type\":\"string\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_describe\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"aggregates\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"as\":{\"type\":\"string\"},\"column\":{\"type\":\"string\"},\"function\":{\"enum\":[\"sum\",\"count\",\"min\",\"max\",\"average\"],\"type\":\"string\"}},\"required\":[\"function\"],\"type\":\"object\"},\"type\":\"array\"},\"columns\":{\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"dataset\":{\"type\":\"string\"},\"filter_group\":{\"type\":\"object\"},\"filters\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"key\",\"value\"],\"type\":\"object\"},\"type\":\"array\"},\"group_by\":{\"type\":\"string\"},\"limit\":{\"minimum\":1,\"type\":\"integer\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_query\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"list_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"search_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias for desk_rules_list.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_rules\"}]}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32602,\"message\":\"Invalid params: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"tools/call\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32602,\"message\":\"Invalid params: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"resources/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"resources/list\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"resources/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-20",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"resources/read\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/read\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-20",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"resources/read\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-20",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"resources/read\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/read\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-21",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"resources/templates/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/templates/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-21",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"resources/templates/list\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-21",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"resources/templates/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: resources/templates/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-22",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"prompts/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: prompts/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-22",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"prompts/list\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-22",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"prompts/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: prompts/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-23",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"prompts/get\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: prompts/get\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-23",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"prompts/get\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-23",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"prompts/get\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: prompts/get\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-24",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"completion/complete\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: completion/complete\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-24",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"completion/complete\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-24",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"completion/complete\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: completion/complete\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-25",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"logging/setLevel\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: logging/setLevel\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-25",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"logging/setLevel\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-25",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"logging/setLevel\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: logging/setLevel\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-26",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"roots/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: roots/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-26",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"roots/list\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-26",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"roots/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: roots/list\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-27",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"sampling/createMessage\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: sampling/createMessage\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-27",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"sampling/createMessage\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-27",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"sampling/createMessage\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: sampling/createMessage\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-28",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"shutdown\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: shutdown\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-28",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"shutdown\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-28",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"shutdown\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: shutdown\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-29",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"exit\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: exit\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-29",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"exit\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-29",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"exit\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: exit\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-30",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"rpc.discover\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: rpc.discover\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-30",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.discover\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-30",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"rpc.discover\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: rpc.discover\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-31",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"initialize\\u0000\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialize\\u0000\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-31",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\\u0000\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-31",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialize\\u0000\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: initialize\\u0000\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-id-32",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"\\u00e9\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":7,\"error\":{\"code\":-32601,\"message\":\"Method not found: é\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-notification-32",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"\\u00e9\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "method-null-id-32",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"\\u00e9\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found: é\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "notif-initialized-with-id",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"notifications/initialized\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/initialized\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "notif-initialized-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\",\"params\":{\"x\":1}}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "notif-cancelled-id",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"notifications/cancelled\",\"params\":{\"requestId\":3}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":4,\"error\":{\"code\":-32601,\"message\":\"Method not found: notifications/cancelled\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "notif-cancelled-null-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\",\"params\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-with-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\",\"params\":{\"a\":[1,2]}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "ping-bad-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\",\"params\":7}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-list-bad-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/list\",\"params\":\"x\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-no-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32602,\"message\":\"Invalid params: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-null-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":null}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-array-params",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":[]}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32602,\"message\":\"Invalid params: json: cannot unmarshal array into Go value of type struct { Name string \\\"json:\\\\\\\"name\\\\\\\"\\\"; Arguments json.RawMessage \\\"json:\\\\\\\"arguments\\\\\\\"\\\"; Meta map[string]interface {} \\\"json:\\\\\\\"_meta,omitempty\\\\\\\"\\\" }\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-name-number",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":5}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32602,\"message\":\"Invalid params: json: cannot unmarshal number into Go struct field .name of type string\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-name-missing",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"arguments\":{}}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32601,\"message\":\"Unknown tool: \"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-name-unknown",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"nope\",\"arguments\":{}}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32601,\"message\":\"Unknown tool: nope\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "tools-call-unknown-notification",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"nope\",\"arguments\":{}}}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-00",
+      "input": "[]\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-01",
+      "input": "[{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}]\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-02",
+      "input": "[{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"},{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}]\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-03",
+      "input": "null\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-04",
+      "input": "1\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-05",
+      "input": "\"str\"\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-06",
+      "input": "true\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-07",
+      "input": "{}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-08",
+      "input": "{\"id\":1}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-09",
+      "input": "{\"jsonrpc\":\"2.0\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-10",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-11",
+      "input": "{\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-12",
+      "input": "{\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-13",
+      "input": "{\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-14",
+      "input": "}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-15",
+      "input": "{\"a\":}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '}' looking for beginning of value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-16",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-17",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"} x\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'x' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-18",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '{' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-19",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"},\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character ',' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-20",
+      "input": "{'jsonrpc':'2.0'}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '\\\\'' looking for beginning of object key string\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-21",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '}' looking for beginning of object key string\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-22",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":01,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '1' after object key:value pair\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-23",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":+1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '+' looking for beginning of value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-24",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":NaN,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'N' looking for beginning of value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-25",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":.5,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '.' looking for beginning of value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-26",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-27",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"id\":2,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-28",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"Method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-29",
+      "input": "{\"jsonrpc\":\"2.0\",\"ID\":9,\"method\":\"ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-30",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"extra\":{\"deep\":[[[[1]]]]}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-31",
+      "input": "\"\\ud800\"\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-32",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"\\ud800\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"�\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-33",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"pi\\ud800ng\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: pi�ng\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-34",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}          \n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-35",
+      "input": "   {\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-36",
+      "input": "\t{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-37",
+      "input": "﻿{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "invalid-38",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"pi\\u006eg\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "deep-nesting-5000",
+      "input": "",
+      "generate": {
+        "kind": "deep-line",
+        "n": 5000
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "deep-nesting-9998",
+      "input": "",
+      "generate": {
+        "kind": "deep-line",
+        "n": 9998
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "deep-nesting-9999",
+      "input": "",
+      "generate": {
+        "kind": "deep-line",
+        "n": 9999
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "deep-nesting-10000",
+      "input": "",
+      "generate": {
+        "kind": "deep-line",
+        "n": 10000
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '[' exceeded max depth\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "deep-nesting-20000",
+      "input": "",
+      "generate": {
+        "kind": "deep-line",
+        "n": 20000
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '[' exceeded max depth\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-empty-input",
+      "input": "",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-only-newline",
+      "input": "\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-many-newlines",
+      "input": "\n\n\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-only-spaces",
+      "input": "   \n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-spaces-then-request",
+      "input": "   \n\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-crlf",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\r\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-crlf-two",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\r\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\r\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-cr-only",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\r{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\r",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '{' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-no-trailing-newline",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-no-trailing-newline-garbage",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"pi",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-nul",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\u0000\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '\\\\x00' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-nul-first",
+      "input": "\u0000{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-two-requests",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-five-mixed",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"nope\"}\n{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/list\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-32601,\"message\":\"Method not found: nope\"}}\n{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"tools\":[{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns the current version and vault path configuration for symdesk.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_status\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists files in the vault.\",\"inputSchema\":{\"properties\":{\"dir\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_ls\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_search\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Answers \\\"what happened on day X\\\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.\",\"inputSchema\":{\"properties\":{\"from\":{\"type\":\"string\"},\"limit\":{\"type\":\"integer\"},\"to\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"vault_timeline\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets properties (frontmatter) for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_props\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets backlinks for a note.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_backlinks\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"optional: notebook id or path to restrict retrieval and citations to\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"desk_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"intent\":{\"enum\":[\"summarize\",\"rewrite\",\"continue\"],\"type\":\"string\"},\"text\":{\"type\":\"string\"}},\"required\":[\"text\",\"intent\"],\"type\":\"object\"},\"name\":\"desk_transform\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_docs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Returns documents needing review: confidence below threshold or missing document_type/document_date.\",\"inputSchema\":{\"properties\":{\"threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"docs_review\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \\u003e= threshold.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"},\"threshold\":{\"type\":\"integer\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"docs_similar\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.\",\"inputSchema\":{\"properties\":{\"duplicate_threshold\":{\"type\":\"integer\"}},\"type\":\"object\"},\"name\":\"vault_health\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets related entities and notes for a given file path based on composition with symmemory.\",\"inputSchema\":{\"properties\":{\"file\":{\"type\":\"string\"}},\"required\":[\"file\"],\"type\":\"object\"},\"name\":\"desk_related\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.\",\"inputSchema\":{\"properties\":{\"title\":{\"description\":\"optional diagram title\",\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"desk_diagram\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue from symingest.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_ingest_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias: list_rules.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"desk_rules_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists meetings already imported into the vault as reviewed meeting notes.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"meeting_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one imported meeting note by its vault-relative path, including the reviewed transcript.\",\"inputSchema\":{\"properties\":{\"path\":{\"description\":\"vault-relative meeting note path\",\"type\":\"string\"}},\"required\":[\"path\"],\"type\":\"object\"},\"name\":\"meeting_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Reads the full output of an externalized tool result by its handle (returned as \\\"[Full result externalized to \\u003chandle\\u003e…]\\\"). Use this to re-read a result that was summarized because it was large.\",\"inputSchema\":{\"properties\":{\"handle\":{\"description\":\"the externalized-result handle from the tool output\",\"type\":\"string\"}},\"required\":[\"handle\"],\"type\":\"object\"},\"name\":\"desk_read_result\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"notebook_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"}},\"required\":[\"notebook\"],\"type\":\"object\"},\"name\":\"notebook_get\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).\",\"inputSchema\":{\"properties\":{\"notebook\":{\"description\":\"notebook id or path\",\"type\":\"string\"},\"query\":{\"type\":\"string\"}},\"required\":[\"notebook\",\"query\"],\"type\":\"object\"},\"name\":\"notebook_ask\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists Markdown-backed datasets and their materialized row counts.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{},\"type\":\"object\"},\"name\":\"desk_dataset_list\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"dataset\":{\"type\":\"string\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_describe\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.\",\"inputSchema\":{\"additionalProperties\":false,\"properties\":{\"aggregates\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"as\":{\"type\":\"string\"},\"column\":{\"type\":\"string\"},\"function\":{\"enum\":[\"sum\",\"count\",\"min\",\"max\",\"average\"],\"type\":\"string\"}},\"required\":[\"function\"],\"type\":\"object\"},\"type\":\"array\"},\"columns\":{\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"dataset\":{\"type\":\"string\"},\"filter_group\":{\"type\":\"object\"},\"filters\":{\"items\":{\"additionalProperties\":false,\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"key\",\"value\"],\"type\":\"object\"},\"type\":\"array\"},\"group_by\":{\"type\":\"string\"},\"limit\":{\"minimum\":1,\"type\":\"integer\"}},\"required\":[\"dataset\"],\"type\":\"object\"},\"name\":\"desk_dataset_query\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_jobs\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.\",\"inputSchema\":{\"properties\":{\"correspondent\":{\"type\":\"string\"},\"due_before\":{\"type\":\"string\"},\"max_confidence\":{\"type\":\"integer\"},\"min_confidence\":{\"type\":\"integer\"},\"person\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"year\":{\"type\":\"string\"}},\"type\":\"object\"},\"name\":\"list_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.\",\"inputSchema\":{\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"],\"type\":\"object\"},\"name\":\"search_documents\"},{\"annotations\":{\"readOnlyHint\":true},\"description\":\"Lists the configured document classification rules. Legacy alias for desk_rules_list.\",\"inputSchema\":{\"properties\":{},\"type\":\"object\"},\"name\":\"list_rules\"}]}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-bad-then-good",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-good-then-bad-then-good",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n{oops\n{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'o' looking for beginning of object key string\"}}\n{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-notifications-only",
+      "input": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-then-framed",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\nContent-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "framed-then-line",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\"}{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{}}{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-embedded-frame-header",
+      "input": "Content-Length: 3\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-unicode-id",
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":\"日本語\",\"method\":\"ping\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"日本語\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-ping",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-initialize",
+      "input": "Content-Length: 46\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}",
+      "stdout": "Content-Length: 148\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-two",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}Content-Length: 46\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}Content-Length: 148\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-notification",
+      "input": "Content-Length: 54\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-notification-then-ping",
+      "input": "Content-Length: 54\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-extra-header",
+      "input": "Content-Type: application/vscode-jsonrpc; charset=utf-8\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-extra-header-after",
+      "input": "Content-Length: 40\r\nContent-Type: x\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-lowercase",
+      "input": "content-length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-mixed-case",
+      "input": "CoNtEnT-lEnGtH: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-no-space",
+      "input": "Content-Length:40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-many-spaces",
+      "input": "Content-Length:    40   \r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-tab",
+      "input": "Content-Length:\t40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-space-before-colon",
+      "input": "Content-Length : 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-lf-only",
+      "input": "Content-Length: 40\n\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-lf-crlf-mix",
+      "input": "Content-Length: 40\r\n\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-cr-lf-lf",
+      "input": "Content-Length: 40\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-duplicate-same",
+      "input": "Content-Length: 40\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-duplicate-different",
+      "input": "Content-Length: 3\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-duplicate-different-reverse",
+      "input": "Content-Length: 40\r\nContent-Length: 3\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-length-00",
+      "input": "Content-Length: +5\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'r' in literal null (expecting 'u')\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-length-01",
+      "input": "Content-Length: -1\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: -1\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-02",
+      "input": "Content-Length: 0\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 0\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-03",
+      "input": "Content-Length: 00\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 0\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-04",
+      "input": "Content-Length: 1e3\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"1e3\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-05",
+      "input": "Content-Length: 0x10\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"0x10\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-06",
+      "input": "Content-Length:  5\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'r' in literal null (expecting 'u')\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-length-07",
+      "input": "Content-Length: 5 5\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"5 5\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-08",
+      "input": "Content-Length: nope\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"nope\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-09",
+      "input": "Content-Length: \r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-10",
+      "input": "Content-Length: 99999999999999999999\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"99999999999999999999\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-11",
+      "input": "Content-Length: 18446744073709551616\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"18446744073709551616\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-12",
+      "input": "Content-Length: 9223372036854775807\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 9223372036854775807\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-13",
+      "input": "Content-Length: -9223372036854775808\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: -9223372036854775808\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-14",
+      "input": "Content-Length: 1048576\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: read body: unexpected EOF\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-15",
+      "input": "Content-Length: 1048577\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 1048577\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-16",
+      "input": "Content-Length: 4294967296\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 4294967296\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-17",
+      "input": "Content-Length: ٣\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"٣\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-18",
+      "input": "Content-Length: 5.0\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"5.0\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-19",
+      "input": "Content-Length: ５\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"５\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-length-zero-then-ping",
+      "input": "Content-Length: 0\r\n\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 0\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-missing-length",
+      "input": "Content-Type: x\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-header-only",
+      "input": "Content-Length: 5\r\n",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-no-blank",
+      "input": "Content-Length: 5",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-then-eof-after-blank",
+      "input": "Content-Length: 5\r\n\r\n",
+      "stdout": "",
+      "stderr": "mcpserver: read error: read body: EOF\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-body-short",
+      "input": "Content-Length: 100\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: read body: unexpected EOF\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-body-long",
+      "input": "Content-Length: 5\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'r' in literal null (expecting 'u')\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-exact-then-junk",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}junk",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-exact-then-newline",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-exact-then-crlf",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\r\n",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-invalid-json",
+      "input": "Content-Length: 11\r\n\r\n{\"jsonrpc\":",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-array",
+      "input": "Content-Length: 2\r\n\r\n[]",
+      "stdout": "Content-Length: 79\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-batch",
+      "input": "Content-Length: 42\r\n\r\n[{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}]",
+      "stdout": "Content-Length: 79\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-empty-object",
+      "input": "Content-Length: 2\r\n\r\n{}",
+      "stdout": "Content-Length: 79\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-null",
+      "input": "Content-Length: 4\r\n\r\nnull",
+      "stdout": "Content-Length: 79\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-whitespace",
+      "input": "Content-Length: 2\r\n\r\n  ",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-newline-inside",
+      "input": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\n\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-trailing-newline-counted",
+      "input": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-multibyte",
+      "input": "Content-Length: 47\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"日本\",\"method\":\"ping\"}",
+      "stdout": "Content-Length: 43\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"日本\",\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-body-length-chars-not-bytes",
+      "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"日本\",\"method\":\"ping\"}",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '}' after top-level value\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-no-colon",
+      "input": "Content-Length 5\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-header-garbage-line",
+      "input": "Garbage\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-empty-name",
+      "input": ": x\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-obsolete-fold",
+      "input": "Content-Length: 40\r\n x\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-leading-space",
+      "input": " Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-header-utf8-name",
+      "input": "Content-Léngth: 3\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-bom",
+      "input": "﻿Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-leading-blank-lines",
+      "input": "\r\n\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-leading-newline",
+      "input": "\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-three-notifications-then-init",
+      "input": "Content-Length: 54\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}Content-Length: 54\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}Content-Length: 54\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}Content-Length: 46\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}",
+      "stdout": "Content-Length: 148\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-bad-then-good",
+      "input": "Content-Length: nope\r\n\r\nContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"nope\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-garbage-body-then-good",
+      "input": "Content-Length: 3\r\n\r\nabcContent-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "Content-Length: 129\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'a' looking for beginning of value\"}}Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-size-1048575",
+      "input": "",
+      "generate": {
+        "kind": "pad-line",
+        "n": 1048575
+      },
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-size-1048575",
+      "input": "",
+      "generate": {
+        "kind": "pad-frame",
+        "n": 1048575
+      },
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-size-1048576",
+      "input": "",
+      "generate": {
+        "kind": "pad-line",
+        "n": 1048576
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: line exceeds 1048576 bytes\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-size-1048576",
+      "input": "",
+      "generate": {
+        "kind": "pad-frame",
+        "n": 1048576
+      },
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-size-1048577",
+      "input": "",
+      "generate": {
+        "kind": "pad-line",
+        "n": 1048577
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: line exceeds 1048576 bytes\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-size-1048577",
+      "input": "",
+      "generate": {
+        "kind": "pad-frame",
+        "n": 1048577
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 1048577\n",
+      "exit_code": 1
+    },
+    {
+      "id": "line-size-long-garbage",
+      "input": "",
+      "generate": {
+        "kind": "garbage-line",
+        "n": 1048586
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: line exceeds 1048576 bytes\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-claim-over-limit-short-body",
+      "input": "Content-Length: 1048577\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 1048577\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-claim-limit-short-body",
+      "input": "Content-Length: 1048576\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: read body: unexpected EOF\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-claim-huge",
+      "input": "Content-Length: 4294967295\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 4294967295\n",
+      "exit_code": 1
+    },
+    {
+      "id": "line-size-oversized-then-ping",
+      "input": "",
+      "generate": {
+        "kind": "garbage-line-then-ping",
+        "n": 1048586
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: line exceeds 1048576 bytes\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-oversized-then-ping",
+      "input": "",
+      "generate": {
+        "kind": "oversized-frame-then-ping",
+        "n": 1048577
+      },
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: 1048577\n",
+      "exit_code": 1
+    },
+    {
+      "id": "init-read-write",
+      "allow_write": true,
+      "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "init-read-write-framed",
+      "allow_write": true,
+      "input": "Content-Length: 46\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}",
+      "stdout": "Content-Length: 148\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{\"tools\":{}},\"protocolVersion\":\"2024-11-05\",\"serverInfo\":{\"name\":\"symdesk\",\"version\":\"\u003cVERSION\u003e\"}}}",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-invalid-utf8-id",
+      "input": "",
+      "input_hex": "7b226a736f6e727063223a22322e30222c226964223a22ff222c226d6574686f64223a2270696e67227d0a",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"�\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-invalid-utf8-method",
+      "input": "",
+      "input_hex": "7b226a736f6e727063223a22322e30222c226964223a312c226d6574686f64223a227069ff6e67227d0a",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: pi�ng\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "line-invalid-utf8-garbage",
+      "input": "",
+      "input_hex": "fffe0a7b226a736f6e727063223a22322e30222c226964223a312c226d6574686f64223a2270696e67227d0a",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-invalid-utf8-body",
+      "input": "",
+      "input_hex": "436f6e74656e742d4c656e6774683a2034300d0a0d0a7b226a736f6e727063223a22322e30222c226964223a22ff222c226d6574686f64223a2270696e67227d",
+      "stdout": "Content-Length: 105\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: unexpected end of JSON input\"}}\n",
+      "stderr": "",
+      "exit_code": 0
+    },
+    {
+      "id": "frame-invalid-utf8-header",
+      "input": "",
+      "input_hex": "436f6e74656e742d4c656e6774683a20ff0d0a0d0a7b7d",
+      "stdout": "",
+      "stderr": "mcpserver: read error: invalid Content-Length: \"\\xff\"\n",
+      "exit_code": 1
+    },
+    {
+      "id": "frame-binary-header",
+      "input": "",
+      "input_hex": "0001020d0a0d0a",
+      "stdout": "",
+      "stderr": "mcpserver: read error: missing Content-Length header\n",
+      "exit_code": 1
+    },
+    {
+      "id": "line-overlong-utf8",
+      "input": "",
+      "input_hex": "7b226a736f6e727063223a22322e30222c226964223a22c0af222c226d6574686f64223a2270696e67227d0a",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"��\",\"result\":{}}\n",
+      "stderr": "",
+      "exit_code": 0
+    }
+  ]
+}

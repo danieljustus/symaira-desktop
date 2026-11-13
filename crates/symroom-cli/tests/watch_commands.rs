@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -19,7 +21,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::Digest;
 use symroom_core::{event::Event, identity};
 
 #[derive(Deserialize)]
@@ -75,12 +76,12 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
         "internal/room/artifact/artifact.go",
         "internal/room/event/event.go",
     ] {
-        let bytes =
-            fs::read(root.join(source)).unwrap_or_else(|error| panic!("read {source}: {error}"));
-        assert_eq!(
-            fixture.source_hashes.get(source),
-            Some(&hex::encode(sha2::Sha256::digest(bytes))),
-            "Go oracle source hash {source}"
+        oracle_sources::assert_recorded_source_hash(
+            source,
+            fixture
+                .source_hashes
+                .get(source)
+                .unwrap_or_else(|| panic!("missing source hash for {source}")),
         );
     }
     assert!(

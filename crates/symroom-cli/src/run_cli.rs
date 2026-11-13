@@ -19,7 +19,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
         return stdout(USAGE.to_owned(), CoreExitCode::Ok);
     };
-    match action.to_string_lossy().as_ref() {
+    match symroom_core::goio::os_text(action).as_str() {
         "request" => request(&args[1..]),
         "list" => list(&args[1..]),
         "show" => show(&args[1..]),
@@ -47,7 +47,7 @@ fn approve(args: &[OsString]) -> ExitCode {
     let Some(run_id) = parsed.positionals.first() else {
         return stderr(USAGE, CoreExitCode::NoInput);
     };
-    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+    let identity_name = match resolve_identity_name(parsed.raw_values.get("identity")) {
         Ok(name) => name,
         Err(code) => return code,
     };
@@ -112,7 +112,7 @@ fn deny(args: &[OsString]) -> ExitCode {
     else {
         return stderr(USAGE, CoreExitCode::NoInput);
     };
-    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+    let identity_name = match resolve_identity_name(parsed.raw_values.get("identity")) {
         Ok(name) => name,
         Err(code) => return code,
     };
@@ -195,7 +195,7 @@ fn request(args: &[OsString]) -> ExitCode {
     let Some(title) = parsed.values.get("title").filter(|title| !title.is_empty()) else {
         return stderr("Error: --title is required\n", CoreExitCode::NoInput);
     };
-    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+    let identity_name = match resolve_identity_name(parsed.raw_values.get("identity")) {
         Ok(name) => name,
         Err(code) => return code,
     };
@@ -230,7 +230,7 @@ fn start(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+    let identity_name = match resolve_identity_name(parsed.raw_values.get("identity")) {
         Ok(name) => name,
         Err(code) => return code,
     };
@@ -263,7 +263,7 @@ fn cancel(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+    let identity_name = match resolve_identity_name(parsed.raw_values.get("identity")) {
         Ok(name) => name,
         Err(code) => return code,
     };
@@ -292,6 +292,7 @@ fn cancel(args: &[OsString]) -> ExitCode {
 struct ParsedStringFlags {
     values: std::collections::BTreeMap<String, String>,
     positionals: Vec<String>,
+    raw_values: std::collections::BTreeMap<String, String>,
 }
 
 fn parse_string_flags(
@@ -316,6 +317,7 @@ fn parse_string_flags(
     Ok(ParsedStringFlags {
         values: parsed.values,
         positionals: parsed.positionals,
+        raw_values: parsed.raw_values,
     })
 }
 
@@ -519,14 +521,20 @@ fn room_dir() -> PathBuf {
 }
 
 fn stdout(value: String, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(&value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     process_exit(code)
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     process_exit(code)

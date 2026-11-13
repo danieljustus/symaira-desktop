@@ -92,8 +92,8 @@ The embedded-in-binary path is the default and recommended deployment. For opera
 
 ### Constraints
 
-1. **CGO-free.** The Go core cross-compiles to linux/darwin/windows × amd64/arm64 without CGO; every dependency must stay within that boundary.
-2. **Single binary.** GoReleaser ships one `symdesk` binary; adding a Node.js build step to the release pipeline is a regression.
+1. **No C toolchain.** The Rust core ships as static musl binaries on Linux (`scripts/release/build.sh`); every dependency must stay within that boundary.
+2. **Single binary.** `scripts/release/build.sh` (driven by `.github/workflows/release.yml`) ships one `symdesk` binary; adding a Node.js build step to the release pipeline is a regression.
 3. **No SPA framework that needs its own build toolchain.** The abandoned React SPA proved that a separate `web/` directory with its own `package.json`, bundler and CI matrix doubles the maintenance surface for a feature that is read-only and document-focused.
 4. **Assets must embed.** Users run `symdesk serve` and get the browser UI without installing extra packages, mounting volumes or configuring paths.
 
@@ -128,7 +128,7 @@ internal/webfront/           # new package
     app.js                   # ~200 lines: search debounce, collapsible sections, fetch wrappers
 ```
 
-Templates receive data from the same service layer the CLI and MCP server use (`internal/service`). Rendering a note calls the vault reader, applies the permissions filter, converts Markdown to HTML (existing `internal/service` already does this for the API), and injects the result into the template. No new data path, no second source of truth.
+Templates receive data from the same service layer the CLI and MCP server use (`crates/symdesk-service`). Rendering a note calls the vault reader, applies the permissions filter, converts Markdown to HTML (`render_note_html` in `crates/symdesk-render/src/export_html.rs` is the current HTML export helper), and injects the result into the template. No new data path, no second source of truth.
 
 ### Markdown rendering
 
@@ -140,7 +140,7 @@ A single stylesheet, no CSS framework. Dark and light themes are driven by `pref
 
 ### Build integration
 
-The `embed` directive makes the templates and assets part of the `symdesk` binary at compile time. `go build ./cmd/symdesk` produces a binary that serves the browser UI. No additional build step. `make build` and GoReleaser stay unchanged.
+The `embed` directive makes the templates and assets part of the `symdesk` binary at compile time. `cargo build --release --locked -p symdesk-cli --bin symdesk` (`make build`) produces a binary that serves the browser UI. No additional build step. The release pipeline stays unchanged.
 
 During development, `symdesk serve` can optionally read templates and assets from a directory on disk (behind a `--dev-ui` flag) so changes are visible on reload without recompiling. Production builds always use the embedded files.
 
@@ -225,4 +225,4 @@ As part of implementing this proposal:
 
 - `docs/PLAN.md` §0: remove the "Keine Web-UI" line and replace it with a reference to this document.
 - `.gitignore`: remove `web/node_modules/` and `web/dist/` entries (no `web/` directory exists and one will not be reintroduced).
-- `AGENTS.md`: update the "no embedded web UI" anti-pattern to reference this proposal and note that a server-rendered HTML surface served by the Go binary is the chosen path.
+- `AGENTS.md`: update the "no embedded web UI" anti-pattern to reference this proposal and note that a server-rendered HTML surface served by the `symdesk` binary is the chosen path.

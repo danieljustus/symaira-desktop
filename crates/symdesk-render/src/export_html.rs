@@ -151,8 +151,8 @@ mod tests {
                 .expect("decode Go-generated note HTML fixture");
 
         assert_eq!(fixture.schema_version, 1);
-        // The commit is the canonical P that `make port-fixtures-generate`
-        // refreshes; the source digest below keeps the fixture bound to the
+        // The commit is the canonical P recorded with the fixture (the
+        // generator is retired); the source digest below keeps the fixture bound to the
         // exact Go renderer bytes.
         let provenance: serde_json::Value =
             serde_json::from_str(include_str!("../../../testdata/port/provenance.json"))

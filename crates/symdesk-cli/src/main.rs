@@ -1,30 +1,64 @@
 #![deny(unsafe_code)]
 
+mod admin_ai_cli;
+mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
+mod asset_export_cli;
+mod backup_cli;
+mod clip_cli;
+mod cobra;
 mod config_cli;
 mod config_paths;
 mod conflict_cli;
+mod consume_cli;
+mod contact_cli;
 mod dataset;
+mod demo_cli;
 mod docs_cli;
+mod doctor_cli;
 mod duplicates_cli;
+mod events_cli;
+mod export_cli;
+mod external_index;
 mod graph_cli;
 mod help_cli;
 mod history;
 mod history_cli;
 mod http;
 mod index_cli;
+mod ingest_cli;
+mod ingest_common;
+mod lifecycle;
 mod links_cli;
+mod mail_cli;
+mod mail_rules_cli;
 mod mcp;
+mod meeting_cli;
 mod mutate_cli;
 mod notebook_cli;
+mod paperless_cli;
+mod perm_cli;
+mod props_tags_cli;
 mod recipe;
+mod related_cli;
 mod relations_cli;
 mod restore_cli;
 mod retention;
+mod rules_cli;
 mod search_cli;
+mod search_export_cli;
+mod serve_cli;
+mod service_cli;
+mod sidecar_cli;
 mod source_cli;
+mod vault_cli;
+mod vault_health_cli;
 mod views_cli;
+mod views_exec_cli;
+mod views_query;
+mod views_write_cli;
+mod worker_cli;
 
 use std::{
     ffi::OsString,
@@ -60,19 +94,32 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
-    if let Some(result) = help_cli::intercept(&args) {
-        return result;
+    serve_cli::take_internal_options_path(&mut args);
+    // Go logs every lazy retrieval-index migration through slog on stderr.
+    symdesk_index::set_retrieval_migration_hook(conflict_cli::log_retrieval_migration);
+    // Hidden RUST-018 restore command; it must run before the one-time backup
+    // gate below and is not part of the Go-recorded cobra tree.
+    if let Some(code) = backup_cli::intercept(&args) {
+        return code;
+    }
+    // Cobra/pflag front half: command resolution, flag grammar, help,
+    // version, argument counts and the generated commands (CLI-001..004).
+    match cobra::front(&args) {
+        cobra::Front::Exit(code) => return code,
+        cobra::Front::Continue(valid) => args = valid,
+    }
+    // RUST-018: back up state that earlier Go builds created before any Rust
+    // code can touch it; a failed backup aborts with state untouched.
+    if let Err(code) = backup_cli::gate(&args) {
+        return code;
     }
     if let Some(result) = config_cli::intercept(&args) {
         return result;
     }
-    if args.get(1).is_some_and(|arg| arg == "--version") {
-        return write_stdout(format!("symdesk version {VERSION}\n"));
-    }
-    if args.iter().skip(2).any(|arg| arg == "--version") {
-        return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
-    }
     rewrite_index_output_flag(&mut args);
+    search_export_cli::rewrite_output_flag(&mut args);
+    ingest_cli::rewrite_output_flag(&mut args);
+    views_exec_cli::rewrite_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
         return exit;
     }
@@ -159,6 +206,17 @@ fn main() -> ExitCode {
             },
             output_json,
         ),
+        Some(("search", command))
+            if matches!(command.subcommand_name(), Some("export" | "notebook")) =>
+        {
+            let (name, sub) = command.subcommand().expect("checked subcommand");
+            search_export_cli::run(
+                name,
+                sub,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            )
+        }
         Some(("search", command)) => {
             let queries = command
                 .get_many::<String>("query")
@@ -185,7 +243,7 @@ fn main() -> ExitCode {
             command.get_flag("allow-write"),
         ) {
             Ok(()) => process_exit(CoreExitCode::Ok),
-            Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
+            Err(error) => write_stderr(&format!("{error}\n"), CoreExitCode::Generic),
         },
         Some(("transform", command)) => ai_cli::run_transform(command, output_json),
         Some(("ask", command)) => ai_cli::run_ask(
@@ -193,18 +251,87 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("serve", command)) => run_http_server(
-            command.get_one::<String>("listen").cloned(),
-            command.get_one::<String>("token").cloned(),
-            command.get_one::<String>("worker-token").cloned(),
-            matches.get_one::<String>("vault").cloned(),
+        Some(("events", _)) => {
+            events_cli::run(matches.get_one::<String>("vault").map(String::as_str))
+        }
+        Some(("worker", command)) => worker_cli::run(command),
+        Some(("serve", command)) => {
+            serve_cli::run(command, matches.get_one::<String>("vault").cloned())
+        }
+        Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("clip", command)) => clip_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("ingest", command)) => ingest_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("meeting", command)) => meeting_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("rules", command)) => rules_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("mail", command)) => match command.subcommand() {
+            Some(("rules", sub)) => mail_rules_cli::run(sub, output_json),
+            Some((name @ ("status" | "fetch"), _)) => mail_cli::run(
+                name,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            ),
+            _ => process_exit(CoreExitCode::Ok),
+        },
+        Some(("consume", command)) => consume_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("asset", command)) => asset_export_cli::run_asset(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("export", command)) if command.subcommand_name() == Some("profiles") => {
+            asset_export_cli::run_export(command, output_json)
+        }
+        Some(("export", command)) => export_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("related", command)) => relations_cli::run_related(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
         ),
         Some(("notebook", command)) => notebook_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
+        Some(("paperless", command)) => paperless_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("views", command)) => views_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("props", command)) => props_tags_cli::run_props(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("tags", command)) => props_tags_cli::run_tags(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -300,7 +427,31 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("recipe", command)) => recipe::run(command, output_json),
+        Some(("vault", command)) => vault_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("demo", command)) => demo_cli::run(command, output_json),
+        Some(("ai", command)) => admin_ai_cli::run_ai(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("doctor", _)) => doctor_cli::run(
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("perm", command)) => perm_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("recipe", command)) => recipe::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
@@ -514,59 +665,6 @@ fn rewrite_index_output_flag(args: &mut [OsString]) {
     }
 }
 
-fn run_http_server(
-    listen: Option<String>,
-    token: Option<String>,
-    worker_token: Option<String>,
-    vault: Option<String>,
-) -> ExitCode {
-    let vault = match resolve_vault(vault.as_deref()) {
-        Ok(path) => path,
-        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    };
-    // A flag wins without reading its environment fallback. Never turn an
-    // invalid consumed value into a missing token or a default listener.
-    let setting = |flag: Option<String>, name: &str| {
-        flag.filter(|value| !value.is_empty()).map_or_else(
-            || symdesk_core::config::environment_value(name),
-            |value| Ok(Some(value)),
-        )
-    };
-    let config = match (|| {
-        let token = setting(token, "SYMDESK_SERVER_TOKEN")?.unwrap_or_default();
-        let worker_token =
-            setting(worker_token, "SYMDESK_WORKER_TOKEN")?.filter(|value| !value.is_empty());
-        let listen_address = setting(listen, "SYMDESK_SERVER_LISTEN")?
-            .unwrap_or_else(|| "127.0.0.1:8787".to_owned());
-        Ok::<_, String>(http::HttpConfig {
-            listen_address,
-            vault_root: vault,
-            token,
-            worker_token,
-            version: VERSION.to_owned(),
-        })
-    })() {
-        Ok(config) => config,
-        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    };
-    let runtime = match tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-    {
-        Ok(runtime) => runtime,
-        Err(error) => {
-            return write_stderr(
-                &format!("http: create runtime: {error}\n"),
-                CoreExitCode::Generic,
-            );
-        }
-    };
-    match runtime.block_on(http::run(config)) {
-        Ok(()) => process_exit(CoreExitCode::Ok),
-        Err(error) => write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    }
-}
-
 fn cli() -> Command {
     Command::new("symdesk")
         .about("Markdown vault workspace (contract v6)")
@@ -581,29 +679,40 @@ fn cli() -> Command {
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
         .subcommand(config_paths::command())
-        .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
         .subcommand(
-            Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
+            Command::new("ls")
+                .arg(Arg::new("dir").long("dir").num_args(1))
+                // Go's `ls` takes no argument validator: extra words are ignored.
+                .arg(Arg::new("extra").num_args(0..)),
+        )
+        .subcommand(
+            Command::new("search")
+                .subcommand_precedence_over_arg(true)
+                .arg(Arg::new("query").num_args(0..).action(ArgAction::Append))
+                .subcommand(search_export_cli::export_cli())
+                .subcommand(search_export_cli::notebook_cli()),
         )
         .subcommand(ai_cli::transform_cli())
         .subcommand(ai_cli::ask_cli())
         .subcommand(
-            Command::new("mcp").arg(
-                Arg::new("allow-write")
-                    .long("allow-write")
-                    .help("enable mutating MCP tools (note creation, ingest, status changes)")
-                    .action(ArgAction::Set)
-                    .num_args(0..=1)
-                    .require_equals(true)
-                    .default_missing_value("true")
-                    .default_value("false")
-                    .overrides_with("allow-write")
-                    .value_parser(|value: &str| match value {
-                        "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
-                        "0" | "f" | "F" | "false" | "FALSE" | "False" => Ok(false),
-                        _ => Err("invalid boolean value"),
-                    }),
-            ),
+            Command::new("mcp")
+                .arg(Arg::new("extra").num_args(0..).hide(true))
+                .arg(
+                    Arg::new("allow-write")
+                        .long("allow-write")
+                        .help("enable mutating MCP tools (note creation, ingest, status changes)")
+                        .action(ArgAction::Set)
+                        .num_args(0..=1)
+                        .require_equals(true)
+                        .default_missing_value("true")
+                        .default_value("false")
+                        .overrides_with("allow-write")
+                        .value_parser(|value: &str| match value {
+                            "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
+                            "0" | "f" | "F" | "false" | "FALSE" | "False" => Ok(false),
+                            _ => Err("invalid boolean value"),
+                        }),
+                ),
         )
         .subcommand(history_cli::cli())
         .subcommand(history_cli::trash_cli())
@@ -612,7 +721,25 @@ fn cli() -> Command {
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
         .subcommand(views_cli::cli())
+        .subcommand(paperless_cli::cli())
+        .subcommand(props_tags_cli::props_cli())
+        .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())
+        .subcommand(sidecar_cli::cli())
+        .subcommand(consume_cli::cli())
+        .subcommand(rules_cli::cli())
+        .subcommand(meeting_cli::cli())
+        .subcommand(ingest_cli::cli())
+        .subcommand(clip_cli::cli())
+        .subcommand(
+            Command::new("mail")
+                .subcommand(mail_cli::status_cli())
+                .subcommand(mail_cli::fetch_cli())
+                .subcommand(mail_rules_cli::cli()),
+        )
+        .subcommand(asset_export_cli::asset_cli())
+        .subcommand(asset_export_cli::export_cli())
+        .subcommand(relations_cli::related_command())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
@@ -624,12 +751,14 @@ fn cli() -> Command {
         .subcommand(links_cli::backlinks_cli())
         .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())
-        .subcommand(
-            Command::new("serve")
-                .arg(Arg::new("listen").long("listen").num_args(1))
-                .arg(Arg::new("token").long("token").num_args(1))
-                .arg(Arg::new("worker-token").long("worker-token").num_args(1)),
-        )
+        .subcommand(events_cli::cli())
+        .subcommand(worker_cli::cli())
+        .subcommand(perm_cli::cli())
+        .subcommand(demo_cli::cli())
+        .subcommand(doctor_cli::command())
+        .subcommand(vault_cli::cli())
+        .subcommand(admin_ai_cli::ai_cli())
+        .subcommand(serve_cli::command())
 }
 
 fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode {
@@ -671,30 +800,42 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let Some(query) = parsed.query.as_deref() else {
                 return emit_error("search query is required".to_owned(), output_json);
             };
-            let sources = match SourceRegistry::open(&vault).and_then(|registry| registry.list()) {
-                Ok(sources) => sources,
-                Err(error) => return emit_error(error.to_string(), output_json),
-            };
-            let hits = match search_cli::hybrid_search(&vault, query, &sources, &sidecar) {
-                Ok(Some(hits)) => hits,
-                Ok(None) => match sidecar.search_plan(&vault, query) {
-                    Ok(response) => search_cli::lexical_hits(response.results, &sources)
-                        .into_iter()
-                        .map(|mut hit| {
-                            if hit.source_type.is_none() {
-                                hit.path = relative_path(&vault, &hit.path);
-                            }
-                            hit
-                        })
-                        .collect(),
-                    Err(error) => return emit_error(error.to_string(), output_json),
-                },
+            let hits = match search_hits(&vault, &sidecar, query) {
+                Ok(hits) => hits,
                 Err(error) => return emit_error(error, output_json),
             };
             let hint = search_cli::syntax_fallback_hint(query);
             render_search(&hits, hint, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),
+    }
+}
+
+/// Go `Service.SearchWithMeta` as the CLI renders it.
+pub(crate) fn search_hits(
+    vault: &Path,
+    sidecar: &symdesk_index::Sidecar,
+    query: &str,
+) -> Result<Vec<search_cli::CliSearchHit>, String> {
+    let sources = SourceRegistry::open(vault)
+        .and_then(|registry| registry.list())
+        .map_err(|error| error.to_string())?;
+    match search_cli::hybrid_search(vault, query, &sources, sidecar)? {
+        Some(hits) => Ok(hits),
+        None => {
+            let response = sidecar
+                .search_plan(vault, query)
+                .map_err(|error| error.to_string())?;
+            Ok(search_cli::lexical_hits(response.results, &sources)
+                .into_iter()
+                .map(|mut hit| {
+                    if hit.source_type.is_none() {
+                        hit.path = relative_path(vault, &hit.path);
+                    }
+                    hit
+                })
+                .collect())
+        }
     }
 }
 
@@ -711,6 +852,33 @@ fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
 }
 
 fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
+    resolve_vault_inner(flag, report)
+}
+
+/// Go `vault.ResolveVaultRoot`, whose wording differs from the service-deps
+/// resolver used by most commands (it names the stat call and path).
+fn resolve_vault_root(flag: Option<&str>) -> Result<PathBuf, String> {
+    resolve_vault_inner(flag, || {})
+}
+
+fn resolve_vault_inner(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
+    resolve_vault_fallback(flag, None, report)
+}
+
+/// `serve`: the Home Assistant options vault applies only when neither the
+/// flag nor the environment/config names a vault.
+fn resolve_vault_with_fallback(
+    flag: Option<&str>,
+    fallback: Option<&str>,
+) -> Result<PathBuf, String> {
+    resolve_vault_fallback(flag, fallback, || {})
+}
+
+fn resolve_vault_fallback(
+    flag: Option<&str>,
+    fallback: Option<&str>,
+    report: impl FnOnce(),
+) -> Result<PathBuf, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
@@ -728,9 +896,8 @@ fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Resul
                 .filter(|value| !value.is_empty())
         })
         .or_else(|| (!config.vault.is_empty()).then_some(config.vault.as_str()))
-        .ok_or_else(|| {
-            "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)".to_owned()
-        })?;
+        .or(fallback.filter(|value| !value.is_empty()))
+        .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
     report();
     let path = PathBuf::from(raw);
     let absolute = if path.is_absolute() {
@@ -741,8 +908,17 @@ fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Resul
             .join(path)
     };
     let absolute = lexical_clean(&absolute);
-    let metadata = std::fs::metadata(&absolute)
-        .map_err(|error| format!("vault path does not exist: {error}"))?;
+    let metadata = std::fs::metadata(&absolute).map_err(|error| {
+        let operation = if cfg!(windows) {
+            "GetFileAttributesEx"
+        } else {
+            "stat"
+        };
+        format!(
+            "vault path does not exist: {}",
+            symdesk_vault::go_path_error(operation, &absolute, &error)
+        )
+    })?;
     if !metadata.is_dir() {
         return Err("vault path is not a directory".to_owned());
     }
@@ -878,10 +1054,7 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
                 modified: file.modified_at.clone(),
             })
             .collect::<Vec<_>>();
-        return write_stdout(format!(
-            "{}\n",
-            serde_json::to_string(&entries).unwrap_or_default()
-        ));
+        return write_go_json(&entries);
     }
     let entries = files
         .iter()
@@ -922,10 +1095,7 @@ fn render_search(
                 read_only: hit.read_only,
             })
             .collect::<Vec<_>>();
-        return write_stdout(format!(
-            "{}\n",
-            serde_json::to_string(&SearchJsonResponse { results, hint }).unwrap_or_default()
-        ));
+        return write_go_json(&SearchJsonResponse { results, hint });
     }
     let results = hits
         .iter()

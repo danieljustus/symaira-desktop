@@ -45,6 +45,7 @@
 		2B00DA7BB2B7112DB63A3E17 /* ClassificationRulesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */; };
 		2BB0DBBD123F594ED26DC97F /* MobileComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3AB907D049AA91605CEE06 /* MobileComposerTests.swift */; };
 		2BC4F88B2DF3C7035A2030A1 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = B65D992D4DD6927D37A99FCD /* SymairaTheme */; };
+		2C3D1F9171B813330E7D5403 /* MobileServerDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E685B99ABEC73E9C572478BB /* MobileServerDateTests.swift */; };
 		30182046814ABEF3821AC5DA /* ContentSheetsModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D69CFD0FA830A87D9173FD3 /* ContentSheetsModifier.swift */; };
 		30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */; };
 		339765624B98BAE38ED98952 /* VaultRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */; };
@@ -56,6 +57,7 @@
 		3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233223A3C27BEA490CADB82C /* NotificationScheduler.swift */; };
 		3D7FF457BB8F9D51AA0C9F2C /* DeskCoreTagManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECC061F608A1EBD12BD49FA /* DeskCoreTagManagement.swift */; };
 		40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EBE73852F5829E6BB25B82 /* NotificationManager.swift */; };
+		41C2B975145B05095586B693 /* RustBackendConsumerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677B56B0F0F5C5EBF5379BB2 /* RustBackendConsumerTests.swift */; };
 		43B3DD60075DA79BF9CD7333 /* VaultEditorPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4B91B1FDAE86F0921F94CD /* VaultEditorPaneView.swift */; };
 		43D7F72894ECBE4D6D041244 /* MobileOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A13C8C1820E7FD3D336D83A /* MobileOutbox.swift */; };
 		458C4ED10EE0E0F69A9FF3B7 /* MobileDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB570847E4BA53C453D1BCC8 /* MobileDraftStore.swift */; };
@@ -65,6 +67,7 @@
 		4A0570925954FEF676DF3D27 /* MeetingAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6031E3F5930844C981F51544 /* MeetingAudioPlayer.swift */; };
 		4C61971FE7AC481D84BE4B3D /* MobileTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2277ACA3457731ED5743E9C9 /* MobileTheme.swift */; };
 		4E253561856346850ECFDA0B /* MobileChatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFBE961E405D3DD1E993FC /* MobileChatTests.swift */; };
+		4ED5F4614A6424BB2F9FB145 /* RustFilesModeConsumerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E58C5A7666726B7A9AF6FA /* RustFilesModeConsumerTests.swift */; };
 		4FD24BEA0B694143C38E741B /* MobileOnDeviceAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 511728C20551DAF6D081D86B /* MobileOnDeviceAIProvider.swift */; };
 		501D1A781F9C96208374CF89 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = 6BFDEE30809F14AC06D066FB /* SymairaTheme */; };
 		524E51523D98702E134FDEF6 /* DeskCoreNotebooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67032F1435DB95BCADBE6766 /* DeskCoreNotebooks.swift */; };
@@ -95,6 +98,7 @@
 		6FCD2E684BED82EFC30F8E8F /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 0687139EDC20F1840AE4F33C /* SymairaKeychain */; };
 		70B3931D242794CAD7D9371B /* SymDeskWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2AFBBE444A6AEA77255B775 /* SymDeskWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3BEF32958D7F1CBB107FC724 /* SymairaToolKit */; };
+		71FE6BC74B05780E1BB5B518 /* RustServerConsumerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC125F16744589036882638 /* RustServerConsumerTests.swift */; };
 		737DF186EECD165A5C85B191 /* DeskCoreDocumentLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE5638BF232CC6E164F5B8D8 /* DeskCoreDocumentLibrary.swift */; };
 		74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41A2D45CCFD80688933E2FC /* MobileRootView.swift */; };
 		7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F412CD083C6229C36515FB /* MobileSearchIndex.swift */; };
@@ -333,6 +337,7 @@
 		3A52EF5C8FFEE77D751DDAFE /* FilterChipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChipsView.swift; sourceTree = "<group>"; };
 		3BBB65842111D3EB48F18EED /* MobileRustPortContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileRustPortContractTests.swift; sourceTree = "<group>"; };
 		3BEAE732E5A965CF86E19185 /* DeskCoreRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreRules.swift; sourceTree = "<group>"; };
+		3DC125F16744589036882638 /* RustServerConsumerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustServerConsumerTests.swift; sourceTree = "<group>"; };
 		3FF0F6FCF62E02972BF275E9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		402C51836E43171C7FCAFADE /* MobileShareInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileShareInbox.swift; sourceTree = "<group>"; };
 		4361A3B66293519600E22473 /* MarkdownPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreview.swift; sourceTree = "<group>"; };
@@ -347,6 +352,7 @@
 		511728C20551DAF6D081D86B /* MobileOnDeviceAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileOnDeviceAIProvider.swift; sourceTree = "<group>"; };
 		51C61A8C8D833F893CA57C53 /* TagEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagEntry.swift; sourceTree = "<group>"; };
 		52A229FB109C64F994E04199 /* DeskCoreConsume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreConsume.swift; sourceTree = "<group>"; };
+		53E58C5A7666726B7A9AF6FA /* RustFilesModeConsumerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustFilesModeConsumerTests.swift; sourceTree = "<group>"; };
 		56278C647AEC161C2B94531F /* PropertiesInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesInspector.swift; sourceTree = "<group>"; };
 		565FECB395ABE250121EC9A8 /* MobileNoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileNoteDetailView.swift; sourceTree = "<group>"; };
 		59762A8D6DF418D30855BEDA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -360,6 +366,7 @@
 		64F7B37FFE5B2F1BE3C5D241 /* meet */ = {isa = PBXFileReference; lastKnownFileType = folder; name = meet; path = meet; sourceTree = SOURCE_ROOT; };
 		65599DAF58FD73838B2B81B0 /* MobileAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileAISettingsView.swift; sourceTree = "<group>"; };
 		67032F1435DB95BCADBE6766 /* DeskCoreNotebooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreNotebooks.swift; sourceTree = "<group>"; };
+		677B56B0F0F5C5EBF5379BB2 /* RustBackendConsumerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustBackendConsumerTests.swift; sourceTree = "<group>"; };
 		6A13C8C1820E7FD3D336D83A /* MobileOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileOutbox.swift; sourceTree = "<group>"; };
 		6A860CADC4C77161CF214DF1 /* MobileWriteLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileWriteLayer.swift; sourceTree = "<group>"; };
 		6ED4910C2AAB0E28F8439A27 /* MobileFallbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileFallbackTests.swift; sourceTree = "<group>"; };
@@ -455,6 +462,7 @@
 		E41862E9148BA99F226260FD /* MobileWriteLayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileWriteLayerTests.swift; sourceTree = "<group>"; };
 		E56B93A09A224783CB0CC57F /* DeskCoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreModels.swift; sourceTree = "<group>"; };
 		E5DEC229A613FCBF72AB65DC /* MobileDocumentScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileDocumentScanner.swift; sourceTree = "<group>"; };
+		E685B99ABEC73E9C572478BB /* MobileServerDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileServerDateTests.swift; sourceTree = "<group>"; };
 		EA90D714EDFDB61E00133A5E /* AudioOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOverview.swift; sourceTree = "<group>"; };
 		EB570847E4BA53C453D1BCC8 /* MobileDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileDraftStore.swift; sourceTree = "<group>"; };
 		EDBAE07809E36B3393ACA8A0 /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
@@ -749,9 +757,12 @@
 				D004D51B133B26F28BBF9DA1 /* MobileScanTests.swift */,
 				0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */,
 				2448F2F4AC761DBAB48D7DD1 /* MobileSearchQueryTests.swift */,
+				E685B99ABEC73E9C572478BB /* MobileServerDateTests.swift */,
 				236368393EE29942F774E3C7 /* MobileShareInboxTests.swift */,
 				A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */,
 				E41862E9148BA99F226260FD /* MobileWriteLayerTests.swift */,
+				53E58C5A7666726B7A9AF6FA /* RustFilesModeConsumerTests.swift */,
+				3DC125F16744589036882638 /* RustServerConsumerTests.swift */,
 			);
 			name = SymDeskMobileTests;
 			path = Tests/SymDeskMobileTests;
@@ -825,6 +836,7 @@
 				BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */,
 				CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */,
 				B9BAB2ADA2A1F0FDAFA121EF /* RetrievalStatusTests.swift */,
+				677B56B0F0F5C5EBF5379BB2 /* RustBackendConsumerTests.swift */,
 				37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */,
 				BCF6BD41C7B07849B8A25596 /* VaultAvailabilityTests.swift */,
 				FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */,
@@ -1226,9 +1238,12 @@
 				BFAF73CB87A7F841B28FAF03 /* MobileScanTests.swift in Sources */,
 				6E590402856D2491045A5C95 /* MobileSearchIndexTests.swift in Sources */,
 				58685B1550A724CF753BF9F8 /* MobileSearchQueryTests.swift in Sources */,
+				2C3D1F9171B813330E7D5403 /* MobileServerDateTests.swift in Sources */,
 				7F1E10853CF5FF4E4B200CAB /* MobileShareInboxTests.swift in Sources */,
 				19D58D1D913AEA689B0EEA71 /* MobileVaultParserTests.swift in Sources */,
 				BE21D45712A9681E128E0B6A /* MobileWriteLayerTests.swift in Sources */,
+				4ED5F4614A6424BB2F9FB145 /* RustFilesModeConsumerTests.swift in Sources */,
+				71FE6BC74B05780E1BB5B518 /* RustServerConsumerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1267,6 +1282,7 @@
 				62EF7665587A0B5275D86D6F /* MarkdownTableTests.swift in Sources */,
 				B30A7969A90708A80F8EC725 /* ModelDownloadManagerTests.swift in Sources */,
 				6B73103C2097D1655E0BB1B7 /* RetrievalStatusTests.swift in Sources */,
+				41C2B975145B05095586B693 /* RustBackendConsumerTests.swift in Sources */,
 				5FD95A9B634F3C3A5DEC9547 /* UpdateInstallerTests.swift in Sources */,
 				821BBB6688CB3D7FE25D943C /* VaultAvailabilityTests.swift in Sources */,
 				339765624B98BAE38ED98952 /* VaultRegistryTests.swift in Sources */,
@@ -2028,7 +2044,7 @@
 			repositoryURL = "https://github.com/danieljustus/symaira-corekit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.20.0;
+				version = 0.21.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

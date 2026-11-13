@@ -3,6 +3,7 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod activity_journal;
+mod adopt;
 mod base_write;
 pub mod conflict;
 pub mod dataset;
@@ -23,6 +24,7 @@ mod resolver;
 pub mod retention;
 pub mod retention_state;
 pub mod sha256;
+mod tag_rewrite;
 mod tags;
 mod typed;
 mod walk;
@@ -37,16 +39,18 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use adopt::{backfill_frontmatter, backfill_frontmatter_bytes};
 pub use base_write::{
-    BaseWriteError, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
-    get_base, list_bases, migrate_legacy_views, save_base, save_base_with_snapshot, save_view,
-    save_view_with_snapshot,
+    BASES_DIR, BaseWriteError, delete_base, delete_base_with_snapshot, delete_view,
+    delete_view_with_snapshot, get_base, list_bases, migrate_legacy_views, save_base,
+    save_base_with_snapshot, save_view, save_view_with_snapshot, slugify,
 };
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
 pub use go_io::{
-    path_error as go_path_error, read as go_read, read_to_string as go_read_to_string,
+    go_path_io_error, path_error as go_path_error, read as go_read,
+    read_to_string as go_read_to_string,
 };
 pub use go_string::{lowercase as go_lowercase, quote as go_quote};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
@@ -61,16 +65,23 @@ pub use metadata::{
 };
 pub use mutations::{
     MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_map,
-    render_go_yaml_string, set_frontmatter_key, set_frontmatter_value, write_atomic,
+    render_go_yaml_meeting_map, render_go_yaml_string, set_frontmatter_key, set_frontmatter_value,
+    write_atomic,
 };
 pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
-    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
+    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query, notebook_slug,
     remove_notebook_source,
 };
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
 pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};
+/// Go `encoding/json` syntax check (the first error Go's scanner reports).
+pub use retention::json_decoder::validate_syntax as go_json_validate_syntax;
+pub use tag_rewrite::{
+    BodyRewrite, FrontmatterTagRewrite, InlineTagRewrite, rewrite_document_tags_and_body,
+    rewrite_inline_tags,
+};
 pub use tags::{TagSpan, extract_inline_tags, find_inline_tag_spans};
 pub use typed::{
     Base, ComputedColumn, Coverage, DatasetHandle, Filter, FilterGroup, Notebook, PropertyConfig,
@@ -115,6 +126,35 @@ pub enum VaultError {
     Asn { path: String, reason: &'static str },
 }
 
+/// Go's yaml.v3 wording for a frontmatter document that is a sequence or a
+/// scalar instead of a mapping (`map[string]interface{}` target); `None` when
+/// the document is anything else.
+fn go_not_a_mapping(frontmatter: &[u8]) -> Option<String> {
+    let kind = match noyalib::from_slice::<Value>(frontmatter).ok()? {
+        Value::Sequence(_) => "!!seq".to_owned(),
+        Value::String(text) => format!("!!str `{text}`"),
+        Value::Bool(flag) => format!("!!bool `{flag}`"),
+        Value::Number(number) => {
+            let text = number.to_string();
+            let tag = if text.contains(['.', 'e', 'E']) {
+                "!!float"
+            } else {
+                "!!int"
+            };
+            format!("{tag} `{text}`")
+        }
+        _ => return None,
+    };
+    // The error carries the line of the node: the first line with content.
+    let line = String::from_utf8_lossy(frontmatter)
+        .lines()
+        .position(|line| !line.trim().is_empty() && !line.trim_start().starts_with('#'))?
+        + 1;
+    Some(format!(
+        "yaml: unmarshal errors:\n  line {line}: cannot unmarshal {kind} into map[string]interface {{}}"
+    ))
+}
+
 /// Parses exact bytes without touching the filesystem.
 ///
 /// # Errors
@@ -128,20 +168,28 @@ pub fn parse_bytes(path: &str, input: &[u8]) -> Result<Document, VaultError> {
     }
     let (frontmatter_bytes, body_bytes, frontmatter_found) = split_frontmatter(input);
     let frontmatter = if frontmatter_found && !frontmatter_bytes.is_empty() {
-        if let Some((key, first, second)) = duplicate_top_level_key(&frontmatter_bytes) {
-            // Go's YAML decoder reports duplicate top-level keys with its own
-            // unmarshal wording and both line numbers.
+        let duplicates = duplicate_top_level_keys(&frontmatter_bytes);
+        if !duplicates.is_empty() {
+            // Go's YAML decoder reports every duplicate top-level key, in
+            // document order, with its own unmarshal wording and both line
+            // numbers.
+            let lines = duplicates
+                .iter()
+                .map(|(key, first, second)| {
+                    format!("line {second}: mapping key {key:?} already defined at line {first}")
+                })
+                .collect::<Vec<_>>()
+                .join("\n  ");
             return Err(VaultError::Frontmatter {
                 path: path.to_owned(),
-                detail: format!(
-                    "yaml: unmarshal errors:\n  line {second}: mapping key {key:?} already defined at line {first}"
-                ),
+                detail: format!("yaml: unmarshal errors:\n  {lines}"),
             });
         }
+
         noyalib::from_slice::<BTreeMap<String, Value>>(&frontmatter_bytes).map_err(|error| {
             VaultError::Frontmatter {
                 path: path.to_owned(),
-                detail: error.to_string(),
+                detail: go_not_a_mapping(&frontmatter_bytes).unwrap_or_else(|| error.to_string()),
             }
         })?
     } else {
@@ -293,22 +341,113 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
         if value.starts_with(['"', '\'']) {
             continue;
         }
-        if is_iso_date(value) {
-            result.insert(key.trim().to_owned(), format!("{value}T00:00:00Z"));
-        } else if time::OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339)
-            .is_ok()
-        {
-            result.insert(key.trim().to_owned(), value.to_owned());
+        if let Some(stamp) = yaml_v3_timestamp(value) {
+            result.insert(key.trim().to_owned(), stamp);
         }
     }
     result
 }
 
-/// Returns the first repeated top-level key with its 1-based line numbers in
-/// the frontmatter block, first occurrence before the repeat.
-fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
+/// yaml.v3 `parseTimestamp` (`2006-1-2T15:4:5.999999999Z07:00`, the
+/// lowercase-`t` form, `2006-1-2 15:4:5.999999999` and `2006-1-2`), as the
+/// RFC3339Nano text Go formats a decoded `time.Time` with.
+fn yaml_v3_timestamp(value: &str) -> Option<String> {
+    let bytes = value.as_bytes();
+    let number = |at: &mut usize, max: usize| -> Option<u32> {
+        let start = *at;
+        while *at < bytes.len() && *at - start < max && bytes[*at].is_ascii_digit() {
+            *at += 1;
+        }
+        if *at == start {
+            return None;
+        }
+        value[start..*at].parse().ok()
+    };
+    if bytes.len() < 8 || !bytes[0..4].iter().all(u8::is_ascii_digit) || bytes[4] != b'-' {
+        return None;
+    }
+    let year: u32 = value[0..4].parse().ok()?;
+    let mut at = 5;
+    let month = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b'-') || !(1..=12).contains(&month) {
+        return None;
+    }
+    at += 1;
+    let day = number(&mut at, 2)?;
+    let leap = (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400);
+    let days = match month {
+        2 if leap => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+    if day == 0 || day > days {
+        return None;
+    }
+    let date = format!("{year:04}-{month:02}-{day:02}");
+    if at == bytes.len() {
+        return Some(format!("{date}T00:00:00Z"));
+    }
+    let zoned = match bytes[at] {
+        b'T' | b't' => true,
+        b' ' => false,
+        _ => return None,
+    };
+    at += 1;
+    let hour = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b':') || hour > 23 {
+        return None;
+    }
+    at += 1;
+    let minute = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b':') || minute > 59 {
+        return None;
+    }
+    at += 1;
+    let second = number(&mut at, 2)?;
+    if second > 59 {
+        return None;
+    }
+    let mut fraction = String::new();
+    if matches!(bytes.get(at), Some(b'.' | b',')) {
+        let start = at + 1;
+        let mut end = start;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+        }
+        if end == start {
+            return None;
+        }
+        let digits = value[start..end].trim_end_matches('0');
+        if !digits.is_empty() {
+            fraction = format!(".{digits}");
+        }
+        at = end;
+    }
+    let clock = format!("{date}T{hour:02}:{minute:02}:{second:02}{fraction}");
+    if !zoned {
+        return (at == bytes.len()).then(|| format!("{clock}Z"));
+    }
+    if bytes.get(at) == Some(&b'Z') {
+        return (at + 1 == bytes.len()).then(|| format!("{clock}Z"));
+    }
+    if at + 6 != bytes.len() || !matches!(bytes[at], b'+' | b'-') || bytes[at + 3] != b':' {
+        return None;
+    }
+    let zone_hours: u32 = value[at + 1..at + 3].parse().ok()?;
+    let zone_minutes: u32 = value[at + 4..at + 6].parse().ok()?;
+    if zone_hours == 0 && zone_minutes == 0 {
+        return Some(format!("{clock}Z"));
+    }
+    Some(format!("{clock}{}", &value[at..]))
+}
+
+/// Returns every repeated top-level key, in document order, with its 1-based
+/// line numbers in the frontmatter block: first occurrence, then the repeat.
+fn duplicate_top_level_keys(input: &[u8]) -> Vec<(String, usize, usize)> {
     let text = String::from_utf8_lossy(input);
     let mut seen = std::collections::BTreeMap::new();
+    let mut duplicates = Vec::new();
     for (index, line) in text.lines().enumerate() {
         if line.starts_with([' ', '\t']) || line.trim_start().starts_with('#') {
             continue;
@@ -321,22 +460,12 @@ fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
             continue;
         }
         if let Some(first) = seen.get(key) {
-            return Some((key.to_owned(), *first, index + 1));
+            duplicates.push((key.to_owned(), *first, index + 1));
+            continue;
         }
         seen.insert(key.to_owned(), index + 1);
     }
-    None
-}
-
-fn is_iso_date(value: &str) -> bool {
-    let bytes = value.as_bytes();
-    bytes.len() == 10
-        && bytes[4] == b'-'
-        && bytes[7] == b'-'
-        && bytes
-            .iter()
-            .enumerate()
-            .all(|(index, byte)| matches!(index, 4 | 7) || byte.is_ascii_digit())
+    duplicates
 }
 
 fn string_or_list(values: &BTreeMap<String, Value>, key: &str) -> Vec<String> {

@@ -155,6 +155,20 @@ impl Sidecar {
         Ok((nodes, edges))
     }
 
+    /// Go `GetAllLinks`: every stored `(from_path, to_path)` edge in table order.
+    ///
+    /// # Errors
+    /// Returns an error when the link query cannot read the derived database.
+    pub fn all_links(&self) -> Result<Vec<(String, String)>, SidecarError> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT from_path, to_path FROM links")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     /// Returns distinct indexed sources linking to a path, title, or alias.
     ///
     /// # Errors

@@ -306,17 +306,33 @@ fn replay_case(
         assert_eq!(actual_result, call.expected["result"]);
     }
 
-    let configured_provider_frames = run_mcp(
+    // The replayed cases may leave a deliberately corrupt source registry
+    // behind; the provider-selection checks below need a healthy vault.
+    let _ = fs::remove_file(vault.join(".symdesk/search-sources.json"));
+    // Go treats an unknown provider id as Ollama; with no endpoint configured
+    // it answers exactly like the default offline path instead of failing.
+    let unknown_provider_frames = run_mcp(
         &root,
         &vault,
         &sidecar_path,
         &[call_request(101, r#"{"query":"tag:askscope"}"#)],
         Some("llm_provider = \"openai\"\n"),
     );
-    assert!(configured_provider_frames[0]["result"]["isError"] == true);
+    assert_ne!(
+        unknown_provider_frames[0]["result"]["isError"], true,
+        "{}",
+        unknown_provider_frames[0]["result"]
+    );
+    let default_frames = run_mcp(
+        &root,
+        &vault,
+        &sidecar_path,
+        &[call_request(101, r#"{"query":"tag:askscope"}"#)],
+        None,
+    );
     assert_eq!(
-        configured_provider_frames[0]["result"]["content"][0]["text"],
-        "Rust ask provider \"openai\" is not implemented"
+        unknown_provider_frames[0]["result"],
+        default_frames[0]["result"]
     );
 }
 

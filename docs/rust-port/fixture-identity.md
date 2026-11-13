@@ -1,5 +1,12 @@
 # Fixture source identity
 
+> **RUST-019:** the Go generators, `portgen` and the Go replay gate described below
+> were removed with the Go tree (last Go commit `36aad3d4`). What remains is
+> checked without Go by `scripts/rust-port/provenance_check.py`: the fixture
+> checksums, the identity shape, the oracle bundle and (`--history`) the recorded
+> source hashes against the Go blobs at `36aad3d4`. The text below documents the
+> model under which the fixtures were recorded.
+
 The live fixture source is **P**, the full lowercase commit and release in
 `testdata/port/provenance.json`. P must either exist in the checked Git ancestry
 or be explicitly preserved by the generated `oracle_bundle` record below. Its

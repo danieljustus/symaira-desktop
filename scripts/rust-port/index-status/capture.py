@@ -268,6 +268,10 @@ def isolated_env(paths: dict[str, Path], binary: Path) -> dict[str, str]:
     if system.startswith("win"):
         system_root = os.environ.get("SystemRoot", r"C:\Windows")
         env["SystemRoot"] = system_root
+    # A coverage run starts an instrumented binary; without this it writes
+    # default_*.profraw into its working directory, the worktree.
+    if "LLVM_PROFILE_FILE" in os.environ:
+        env["LLVM_PROFILE_FILE"] = os.devnull
     env["PATH"] = os.pathsep.join(dict.fromkeys(path_entries))
     return env
 
@@ -448,11 +452,13 @@ def seed_go_index(
     world_key: str,
     output_dir: Path,
     manifest: dict[str, Any],
+    role: str = "go",
 ) -> None:
+    """Seed the populated world with `index`; the frozen replay seeds with the Rust binary."""
     vault = paths["vault"]
     run = record_run(
         case_id="seed_index",
-        role="go",
+        role=role,
         binary=go_binary,
         args=["--json", "--vault", str(vault), "index", str(vault)],
         paths=paths,
@@ -466,7 +472,7 @@ def seed_go_index(
     if not stdout_path.read_bytes().strip():
         run["success"] = False
         persist_manifest(output_dir, manifest)
-        raise RuntimeError(f"Go index seed emitted no stdout; raw output retained at {stdout_path}")
+        raise RuntimeError(f"{role} index seed emitted no stdout; raw output retained at {stdout_path}")
 
     sidecars = list((paths["xdg_data"] / "symdesk" / "vaults").glob("*/sidecar.db"))
     if len(sidecars) != 1:

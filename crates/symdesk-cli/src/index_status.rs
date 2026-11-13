@@ -250,6 +250,46 @@ fn render_documents(
     Ok(rendered)
 }
 
+/// What `symdesk doctor` reports for the shared hybrid index (Go
+/// `retrieval.CurrentStatus` plus `CountPendingChunks`).
+pub(crate) struct RetrievalHealth {
+    pub document_count: i64,
+    pub chunk_count: i64,
+    pub pending_chunk_count: i64,
+    pub embedding_model: String,
+    pub backend_available: bool,
+    pub location: String,
+}
+
+pub(crate) fn retrieval_health() -> Result<RetrievalHealth, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let cwd = std::env::current_dir()
+        .map_err(|error| format!("failed to get current directory: {error}"))?;
+    let temp_root = std::env::temp_dir();
+    let location = index_location_for_vault("", &environment, &cwd, &temp_root)
+        .map_err(|error| error.to_string())?;
+    let database = RetrievalDb::open_at(&location).map_err(retrieval_open_error)?;
+    let snapshot = database
+        .status_snapshot()
+        .map_err(|error| error.to_string())?;
+    let embedding_config =
+        retrieval_embedding_config(&environment, &cwd).map_err(|error| error.to_string())?;
+    let backend_available = embedding_backend_available(&embedding_config)?;
+    let embedding_model = if backend_available {
+        embedding_config.model.clone()
+    } else {
+        "local-hash".to_owned()
+    };
+    Ok(RetrievalHealth {
+        document_count: snapshot.document_count,
+        chunk_count: snapshot.chunk_count,
+        pending_chunk_count: snapshot.pending_chunk_count,
+        embedding_model,
+        backend_available,
+        location: location.to_string_lossy().into_owned(),
+    })
+}
+
 fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, String> {
     eprintln!("{WORKER_PHASE_PREFIX}retrieval status");
     let environment = symdesk_core::config::environment_snapshot()?;
@@ -416,7 +456,7 @@ fn duration_quote(value: &str) -> String {
     output
 }
 
-fn parse_go_duration_nanos(input: &str) -> Result<i128, String> {
+pub(crate) fn parse_go_duration_nanos(input: &str) -> Result<i128, String> {
     let original = input;
     let invalid = || format!("time: invalid duration {}", duration_quote(original));
     let (negative, input) = match input.strip_prefix('-') {

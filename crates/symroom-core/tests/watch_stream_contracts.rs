@@ -1,9 +1,10 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use std::{fs, io::BufReader, path::Path};
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use symroom_core::desk_watch::{EventStreamItem, watch_stream};
 
 #[derive(Deserialize)]
@@ -38,11 +39,9 @@ fn watch_stream_replays_go_scanner_and_handler_contract() {
     )
     .expect("parse Go watch fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.source_hash,
-        hex::encode(Sha256::digest(
-            fs::read(root.join("internal/room/desk/watch.go")).expect("Go watch source")
-        ))
+    oracle_sources::assert_recorded_source_hash(
+        "internal/room/desk/watch.go",
+        &fixture.source_hash,
     );
     for case in fixture.cases {
         let mut input = if case.input_hex.is_empty() {

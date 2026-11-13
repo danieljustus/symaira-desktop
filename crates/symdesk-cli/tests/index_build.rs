@@ -107,6 +107,7 @@ fn fixture() -> Fixture {
 
 fn run(root: &TempRoot, args: &[&str]) -> ProcessResult {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+    command.env("SYMDESK_PRE_RUST_BACKUP", "off");
     command.args(args).current_dir(root.path("cwd"));
     for (key, value) in [
         ("HOME", root.path("home")),

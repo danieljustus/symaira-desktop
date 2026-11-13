@@ -168,6 +168,8 @@ fn resume_primary_thread(pid: u32) -> io::Result<()> {
     // CREATE_SUSPENDED guarantees user code has not run yet, so the process has
     // only its primary thread. Assigning the process to the Job Object above
     // happens before this thread is resumed and before it can spawn children.
+    // SAFETY: a thread-only snapshot request takes no pointers; the result is
+    // checked and owned by `OwnedHandle` immediately below.
     let snapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0) };
     let snapshot = OwnedHandle::new(snapshot)?;
     let mut entry = THREADENTRY32 {
@@ -230,8 +232,11 @@ pub(super) fn terminate_test_process(pid: u32) -> io::Result<()> {
         OpenProcess, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE, TerminateProcess, WaitForSingleObject,
     };
 
+    // SAFETY: `OpenProcess` takes only scalar arguments; a null result is
+    // handled below and a valid handle is owned and closed by this function.
     let process = unsafe { OpenProcess(PROCESS_TERMINATE | PROCESS_SYNCHRONIZE, 0, pid) };
     if process.is_null() {
+        // SAFETY: `GetLastError` reads thread-local state and has no preconditions.
         let error = unsafe { GetLastError() };
         return if error == windows_sys::Win32::Foundation::ERROR_INVALID_PARAMETER {
             Ok(())
@@ -267,8 +272,11 @@ pub(super) fn terminate_test_process(pid: u32) -> io::Result<()> {
 pub(super) fn process_is_gone(pid: u32, timeout: Duration) -> io::Result<bool> {
     use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_SYNCHRONIZE};
 
+    // SAFETY: `OpenProcess` takes only scalar arguments; a null result is
+    // handled below and a valid handle is owned by `OwnedHandle`.
     let process = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, pid) };
     if process.is_null() {
+        // SAFETY: `GetLastError` reads thread-local state and has no preconditions.
         let error = unsafe { GetLastError() };
         return if error == windows_sys::Win32::Foundation::ERROR_INVALID_PARAMETER {
             Ok(true)

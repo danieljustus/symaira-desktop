@@ -27,7 +27,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
         Ok(parsed) => parsed,
         Err(code) => return code,
     };
-    let identity_name = parsed.string("identity").to_owned();
+    let identity_name = parsed.text("identity").to_owned();
     let json = parsed.boolean("json");
     let message = parsed.positionals.first().cloned();
 
@@ -154,7 +154,10 @@ fn write_stdout(bytes: &[u8]) -> ExitCode {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -162,7 +165,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

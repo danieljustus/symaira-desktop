@@ -15,7 +15,7 @@ impl fmt::Display for Error {
     }
 }
 impl std::error::Error for Error {}
-fn error(kind: &'static str, op: &str, message: &str) -> Error {
+pub(crate) fn error(kind: &'static str, op: &str, message: &str) -> Error {
     Error {
         kind,
         message: format!("{op}: {message}"),
@@ -35,7 +35,7 @@ pub(crate) fn sql_error(e: rusqlite::Error) -> Error {
         message,
     }
 }
-fn wrapped(op: &str, message: &str, e: rusqlite::Error) -> Error {
+pub(crate) fn wrapped(op: &str, message: &str, e: rusqlite::Error) -> Error {
     error("internal", op, &format!("{message}: {}", sql_error(e)))
 }
 
@@ -168,9 +168,9 @@ pub struct ContactPointInput {
 }
 
 pub struct Service<'a, I, T> {
-    db: &'a Connection,
-    id: I,
-    timestamp: T,
+    pub(crate) db: &'a Connection,
+    pub(crate) id: I,
+    pub(crate) timestamp: T,
 }
 impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
     pub fn new(db: &'a Connection, id: I, timestamp: T) -> Self {

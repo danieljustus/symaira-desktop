@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/danieljustus/symaira-desktop)](https://github.com/danieljustus/symaira-desktop/releases)
-[![Go version](https://img.shields.io/github/go-mod/go-version/danieljustus/symaira-desktop)](https://go.dev/dl/)
+[![Rust](https://img.shields.io/badge/rust-1.98-orange.svg)](rust-toolchain.toml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 ![Symaira Desktop social preview](docs/assets/social-preview.png)
@@ -13,16 +13,16 @@ The local-first Markdown-vault workspace and human-facing shell of the [Symaira]
 
 A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.
 
-**Status:** Working MVP — Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v6 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides a live dashboard, editing, sidebar note creation, full-text search, link graph, saved views, document workflow, ingest, companion tools installer, and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server. Not yet complete Paperless-ngx parity — the self-hosted path covers central originals, Markdown, index, upload queue, remote OCR, native clients, IMAP mail ingestion, users/groups/document-level permissions, storage-path templating and retention rules, and expiring share links; a browser admin UI remains future work. For recovery guidance, see [BACKUP.md](BACKUP.md).
+**Status:** Working MVP — Rust core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v6 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides a live dashboard, editing, sidebar note creation, full-text search, link graph, saved views, document workflow, ingest, companion tools installer, and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server. Not yet complete Paperless-ngx parity — the self-hosted path covers central originals, Markdown, index, upload queue, remote OCR, native clients, IMAP mail ingestion, users/groups/document-level permissions, storage-path templating and retention rules, and expiring share links; a browser admin UI remains future work. For recovery guidance, see [BACKUP.md](BACKUP.md).
 
-`symdesk` is a Go core that can run as a **CLI**, **MCP server**, authenticated **self-hosted document server**, or distributed **OCR worker**. Native SwiftUI apps for macOS and iPhone/iPad can either open a local/iCloud vault directly or connect to the self-hosted server as frontends.
+`symdesk` is a Rust core that can run as a **CLI**, **MCP server**, authenticated **self-hosted document server**, or distributed **OCR worker**. Native SwiftUI apps for macOS and iPhone/iPad can either open a local/iCloud vault directly or connect to the self-hosted server as frontends.
 
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
 - **Composes at runtime today:** [`symmemory`](https://github.com/danieljustus/symaira-brain) (RAG/graph — built by `symaira-brain`), [`symbrowse`](https://github.com/danieljustus/symaira-browse) (web clipping), and [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets resolution), all detected dynamically via `PATH` probe (the core never depends on their presence and degrades gracefully).
-- **Ships in-repo:** the tools absorbed by the repo consolidation live here as [`meet/`](meet/) (meeting capture, macOS app target) and directly in the root module as [`internal/pdf/`](internal/pdf/) (Markdown → PDF, former `symaira-print`), [`internal/contacts/`](internal/contacts/) (contact references, former `symaira-relate`), [`internal/retrieval/`](internal/retrieval/) (hybrid search, former `symaira-seek`), [`internal/ingest/`](internal/ingest/) (OCR/ingest, former `symaira-ingest`), and [`internal/room/`](internal/room/) + [`cmd/symroom`](cmd/symroom) (signed project journal, former `symaira-room`). PDF rendering, contact references, hybrid search, ingest, and the room logic are linked into `symdesk` in-process, so there is no separate `symprint`, `symrelate`, `symseek` or `symingest` binary to install any more. Meet is the exception: its module lives here and its libraries are available to the app, but recording still runs in the separate SymMeet menu-bar agent, which SymDesk brings forward rather than links against — SymDesk itself never captures audio. Room is the second exception: it ships as the `symroom` binary (built from the root module since the 2026-08 module dissolution), and its SwiftUI module in [`room/client/`](room/client/) is embedded in the app as the Project Journal surface, which bridges that binary rather than linking Go code. See `docs/repo-konsolidierung.md` §10 in the workspace.
+- **Ships in-repo:** the tools absorbed by the repo consolidation live here as [`meet/`](meet/) (meeting capture, macOS app target) and as Rust crates under [`crates/`](crates/): `symdesk-render` (Markdown → PDF, SymDraw, archive; former `symaira-print`), `symdesk-contacts` (contact references, former `symaira-relate`), `symdesk-index` (sidecar and hybrid search, former `symaira-seek`), `symdesk-ingest` (OCR/ingest, former `symaira-ingest`), and `symroom-core`/`symroom-cli` (signed project journal, former `symaira-room`). PDF rendering, contact references, hybrid search, ingest, and the room logic are linked into `symdesk` in-process, so there is no separate `symprint`, `symrelate`, `symseek` or `symingest` binary to install any more. Meet is the exception: its libraries are available to the app, but recording still runs in the separate SymMeet menu-bar agent, which SymDesk brings forward rather than links against — SymDesk itself never captures audio. Room is the second exception: it ships as the `symroom` binary, and its SwiftUI module in [`room/client/`](room/client/) is embedded in the app as the Project Journal surface, which bridges that binary. See `docs/repo-konsolidierung.md` §10 in the workspace.
 - **Runs on:** macOS Apple Silicon, Linux amd64/arm64, Docker/Compose, Raspberry Pi, Mac mini, NAS-class hosts, and Home Assistant OS as an app/add-on
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; Obsidian Canvas/whiteboards → Obsidian; iCloud sync → the OS
-- **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
+- **Language:** Rust (core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
 [![SymDesk architecture](assets/symdesk-architecture.png)](assets/symdesk-architecture.svg)
 
@@ -96,7 +96,7 @@ they are not included inside the archive.
 ### CLI from source
 
 ```sh
-go install github.com/danieljustus/symaira-desktop/cmd/symdesk@latest
+cargo install --locked --git https://github.com/danieljustus/symaira-desktop symdesk-cli --bin symdesk
 ```
 
 ### Native macOS app from source
@@ -191,23 +191,20 @@ $ symdesk version --json
 
 ## Development
 
-Use Go 1.26.10 for the frozen Go/Rust oracle contracts. A newer Go version can
-change their Unicode and JSON behavior; do not regenerate fixtures to work
-around a toolchain mismatch.
+The core is a Rust workspace pinned by `rust-toolchain.toml`. The Go implementation was retired in RUST-019: its last commit is `36aad3d4`, kept on GitHub as branch `oracle-pins/last-go-36aad3d4`, where the Go sources stay readable. The last Go release tag is `v0.12.2` (`29520267`), an ancestor of `36aad3d4`.
 
 ```sh
-export GOTOOLCHAIN=go1.26.10
-make build          # → bin/symdesk
-make build-identity-check # verify bin/symdesk is stamped with this checkout's HEAD
-make test           # macOS: CGO_ENABLED=0 go test -race ./...
-make lint           # formatting, vet, dependency/boundary/version/signing guards
-make benchmark-large # generate and index a deterministic 10k-document vault
+make build          # → bin/symdesk, bin/symroom (release, stamped with VERSION)
+make test           # cargo nextest + doc tests for the whole workspace
+make lint           # cargo fmt --check, clippy -D warnings, release-signing contract
+make rust-gates     # check, lint, test, features, coverage, audit/deny, unsafe inventory, version contract
+make port-contract  # Go-free: fixture checksums + frozen replay of every Go-recorded fixture
 docker compose build # multi-architecture-compatible Linux server/worker image
 ```
 
-On Linux, `make test` cannot run the race detector with CGO disabled.
-Use `CGO_ENABLED=1 go test -race -count=1 ./...` with a C toolchain, as CI does.
-CGO-free production builds remain supported.
+The committed Go-recorded fixtures under `testdata/port/` are replayed by the Rust tests without Go;
+`python3 scripts/rust-port/provenance_check.py [--history]` verifies their checksums and, with the
+full git history, their recorded Go source hashes.
 
 ### macOS app (requires xcodegen)
 
@@ -250,23 +247,7 @@ grouped together under **Vault**.
 
 ### Large-vault performance baseline
 
-Run `make benchmark-large` on a quiet machine to measure one complete index and
-search pass over the deterministic 10,000-document fixture. Record the result
-with the machine model and Go version before comparing changes; the target is
-intended for explicit performance checks, not routine CI. The core budget is a
-typical search below 100 ms after indexing. App measurements (grid scrolling,
-graph render, and viewer-open time) remain manual because they depend on the
-host GPU and the native app runtime.
-
-Baseline (2026-07-11): Apple M4 Pro, Go benchmark harness, one index-and-search
-pass: **3.44 s** (`BenchmarkLargeVaultIndexAndSearch`, `-benchtime=1x`).
-
-Baseline (2026-07-19): Apple M4 Pro, Go 1.26.5, one `symdesk graph` pass over
-the same fixture with Memory entities present: **488 ms**
-(`BenchmarkGraphLargeVaultWithEntities`, `-benchtime=1x`). Previously this scaled
-with entities × documents because each entity re-parsed every vault file from
-disk; the graph endpoint now parses each file once per call and reuses it
-across all matched entities.
+The Go benchmark harness (`make benchmark-large`) was retired with the Go tree. The historical Go baselines (2026-07-11, Apple M4 Pro: 3.44 s for one index-and-search pass over the deterministic 10,000-document fixture; 2026-07-19: 488 ms for one `symdesk graph` pass with Memory entities present) and the Go/Rust paired benchmark results are retained under `docs/rust-port/results/`. The core budget remains a typical search below 100 ms after indexing. App measurements (grid scrolling, graph render, viewer-open time) stay manual.
 
 ### Reviewed recipes (optional)
 

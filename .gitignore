@@ -14,10 +14,7 @@ coverage.*
 fuzz/artifacts/
 fuzz/corpus/
 
-# Go
-vendor/
-
-# Frontend (no separate web/ build; browser UI assets are embedded in the Go binary)
+# Frontend (no separate web/ build; browser UI assets are embedded in the Rust binary)
 node_modules/
 
 # macOS

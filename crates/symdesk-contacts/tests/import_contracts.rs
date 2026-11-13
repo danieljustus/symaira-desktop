@@ -1,3 +1,5 @@
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use serde_json::{Value, json};
 use symdesk_contacts::{
     open_memory,
@@ -7,17 +9,9 @@ use symdesk_contacts::{
 fn go_import_plan_apply_and_database() {
     let fixture: Value =
         serde_json::from_str(include_str!("../../../testdata/port/contacts/import.json")).unwrap();
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let _root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, expected) in fixture["source_hashes"].as_object().unwrap() {
-        use sha2::{Digest, Sha256};
-        assert_eq!(
-            format!(
-                "{:x}",
-                Sha256::digest(std::fs::read(root.join(path)).unwrap())
-            ),
-            expected.as_str().unwrap(),
-            "{path}"
-        );
+        oracle_sources::assert_recorded_source_hash(path, expected.as_str().unwrap());
     }
     let mut db = open_memory().unwrap();
     db.execute_batch(fixture["seed"].as_str().unwrap()).unwrap();

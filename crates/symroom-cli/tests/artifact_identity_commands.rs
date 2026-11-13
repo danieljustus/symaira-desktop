@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -19,7 +21,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::Digest;
 use symroom_core::{event::Event, identity};
 
 #[derive(Deserialize)]
@@ -81,12 +82,12 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
         "internal/room/desk/desk.go",
         "internal/room/config/config.go",
     ] {
-        let source_bytes =
-            fs::read(root.join(source)).unwrap_or_else(|error| panic!("read {source}: {error}"));
-        assert_eq!(
-            fixture.source_hashes.get(source),
-            Some(&hex::encode(sha2::Sha256::digest(source_bytes))),
-            "Go source hash {source}"
+        oracle_sources::assert_recorded_source_hash(
+            source,
+            fixture
+                .source_hashes
+                .get(source)
+                .unwrap_or_else(|| panic!("missing source hash for {source}")),
         );
     }
     for name in [

@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -18,7 +20,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -231,13 +232,7 @@ fn run_request_start_cancel_match_go_process_contract() {
     assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 8);
     for (path, expected) in &fixture.source_hashes {
-        let source = fs::read(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../..")
-                .join(path),
-        )
-        .expect("read Go oracle source");
-        assert_eq!(hex::encode(Sha256::digest(source)), *expected, "{path}");
+        oracle_sources::assert_recorded_source_hash(path, expected);
     }
     assert!(fixture.cases.iter().any(|case| case.stdout.ends_with('\n')));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 2));

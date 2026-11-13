@@ -75,7 +75,7 @@ fn identity_cli_matches_go_process_and_key_file_contract() {
         let identities = data_home.join("symroom/identities");
         fs::create_dir_all(&home).expect("create isolated HOME");
         fs::create_dir_all(&tmp).expect("create isolated TMPDIR");
-        fs::create_dir_all(&identities).expect("create identities directory");
+        create_private_dirs(&identities);
         if !case.empty_store {
             for file in &fixture.seed_files {
                 fs::write(identities.join(&file.name), file.content.as_bytes())
@@ -226,6 +226,22 @@ fn verify_generated_key(path: &Path) {
             0o700
         );
     }
+}
+
+/// Go's harness uses `os.MkdirAll(dir, 0o700)`; `symroom` keeps the mode of a
+/// directory that already exists, so the fixture directory must be private.
+fn create_private_dirs(path: &Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        fs::DirBuilder::new()
+            .recursive(true)
+            .mode(0o700)
+            .create(path)
+            .expect("create identities directory");
+    }
+    #[cfg(not(unix))]
+    fs::create_dir_all(path).expect("create identities directory");
 }
 
 struct TempDir {

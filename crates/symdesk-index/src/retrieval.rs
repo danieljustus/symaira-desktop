@@ -11,6 +11,9 @@ use rusqlite::{Connection, OptionalExtension, params};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
+use crate::retrieval_vector::{
+    INDEX_BUILD_THRESHOLD, IndexChunk, ScanRow, VectorIndex, score_rows,
+};
 #[cfg(windows)]
 use crate::strip_verbatim_prefix;
 use crate::{SidecarError, absolute_non_verbatim};
@@ -271,6 +274,31 @@ pub struct StoredRetrievalChunk {
     pub embedding_pending: bool,
 }
 
+/// A chunk's id and character span (`None` for synthetic chunks), as Go's
+/// `GetChunkSpansForDocument` returns them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ChunkSpan {
+    pub(crate) id: i64,
+    pub(crate) start: Option<i64>,
+    pub(crate) end: Option<i64>,
+}
+
+/// One row of the retrieval `extractions` table.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ExtractionRow {
+    pub(crate) document_path: String,
+    pub(crate) chunk_id: Option<i64>,
+    pub(crate) class: String,
+    pub(crate) value: String,
+    pub(crate) evidence_text: String,
+    pub(crate) span_start: Option<i64>,
+    pub(crate) span_end: Option<i64>,
+    pub(crate) matched: bool,
+    pub(crate) producer: String,
+    pub(crate) source_ref: String,
+    pub(crate) created_at: String,
+}
+
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RetrievalSearchResult {
@@ -382,7 +410,6 @@ where
 /// Per-vault list of canonical, read-only external search roots.
 pub struct SourceRegistry {
     vault_root: PathBuf,
-    vault_input: PathBuf,
     path: PathBuf,
     lock: Mutex<()>,
 }
@@ -398,37 +425,59 @@ impl SourceRegistry {
         Ok(Self {
             path: root.join(".symdesk/search-sources.json"),
             vault_root: root,
-            vault_input: absolute_source_input(vault_root)?,
             lock: Mutex::new(()),
         })
     }
 
-    pub fn add(&self, source_path: &Path) -> Result<SearchSource, SidecarError> {
+    /// Go's `ValidateExternalFolder`: the folder must resolve outside the
+    /// canonical vault, exist, be a readable directory and keep its resolved
+    /// identity. Error wording is Go's.
+    fn validate_external_folder(&self, source_path: &Path) -> Result<PathBuf, SidecarError> {
+        let inside =
+            || SidecarError::Contract("external source must be outside the vault".to_owned());
         let input = absolute_source_input(source_path)?;
-        if input == self.vault_input || input.starts_with(&self.vault_input) {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+        if input.starts_with(&self.vault_root) {
+            return Err(inside());
         }
         if let Some(parent) = input.parent()
             && let Ok(parent) = fs::canonicalize(parent)
             && parent.starts_with(&self.vault_root)
         {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+            return Err(inside());
         }
-        let source = fs::canonicalize(source_path)?;
-        if !source.is_dir() {
-            return Err(SidecarError::Contract(
-                "source path is not a directory".to_owned(),
-            ));
+        let wrapped =
+            |detail: String| SidecarError::Contract(format!("validate source folder: {detail}"));
+        let source = match fs::canonicalize(&input) {
+            Ok(source) => source,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Err(SidecarError::Contract(format!(
+                    "external source directory does not exist: {}",
+                    input.display()
+                )));
+            }
+            Err(error) => return Err(wrapped(error.to_string())),
+        };
+        let metadata = fs::metadata(&source).map_err(|error| wrapped(error.to_string()))?;
+        if !metadata.is_dir() {
+            return Err(wrapped(format!(
+                "source path is not a directory: {}",
+                source.display()
+            )));
+        }
+        if let Err(error) = fs::read_dir(&source).and_then(|mut entries| entries.next().transpose())
+        {
+            return Err(wrapped(format!(
+                "source directory is not readable: {error}"
+            )));
         }
         if source.starts_with(&self.vault_root) {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+            return Err(inside());
         }
+        Ok(source)
+    }
+
+    pub fn add(&self, source_path: &Path) -> Result<SearchSource, SidecarError> {
+        let source = self.validate_external_folder(source_path)?;
         let path = absolute_non_verbatim(&source)?;
         let path = path
             .to_str()
@@ -578,6 +627,14 @@ fn absolute_source_input(path: &Path) -> Result<PathBuf, SidecarError> {
 /// Isolated provider-free retrieval storage using the Go database's schema.
 pub struct RetrievalDb {
     connection: Connection,
+    /// Go's warm IVF prefilter and the generation it was built against.
+    vector: std::cell::RefCell<VectorState>,
+}
+
+#[derive(Default)]
+struct VectorState {
+    index: Option<VectorIndex>,
+    generation: i64,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -590,7 +647,7 @@ pub struct RetrievalStatusSnapshot {
     pub mixed_embedding_spaces: bool,
 }
 
-const RETRIEVAL_MIGRATIONS: &[(&str, &str)] = &[
+pub(crate) const RETRIEVAL_MIGRATIONS: &[(&str, &str)] = &[
     (
         "0001_baseline",
         include_str!("../migrations/retrieval/0001_baseline.sql"),
@@ -663,13 +720,17 @@ impl RetrievalDb {
             super::create_parent_dir(parent)?;
         }
         create_database_file(&path)?;
-        let mut connection = Connection::open(path)?;
-        connection.execute_batch(
-            "PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
-        )?;
+        let mut connection = super::open_existing_parent(&path)?;
         migrate_retrieval(&mut connection)?;
         backfill_content_norm(&connection)?;
-        Ok(Self { connection })
+        let database = Self {
+            connection,
+            vector: std::cell::RefCell::new(VectorState::default()),
+        };
+        let generation = database.load_generation();
+        let index = database.load_vector_index(generation);
+        *database.vector.borrow_mut() = VectorState { index, generation };
+        Ok(database)
     }
 
     /// Delete a document, its chunks and extraction cache in one transaction.
@@ -677,15 +738,22 @@ impl RetrievalDb {
     /// # Errors
     /// Returns the database failure without committing a partial deletion.
     pub fn delete_document(&self, path: &str) -> Result<(), SidecarError> {
+        let result = self.delete_document_inner(path);
+        if result.is_err() {
+            self.reset_vector_state();
+        }
+        result
+    }
+
+    fn delete_document_inner(&self, path: &str) -> Result<(), SidecarError> {
         let transaction = self.connection.unchecked_transaction()?;
+        let removed = self.chunk_ids_for_warm_index(path)?;
         transaction.execute("DELETE FROM extractions WHERE document_path = ?1", [path])?;
         transaction.execute("DELETE FROM chunks WHERE document_path = ?1", [path])?;
         transaction.execute("DELETE FROM documents WHERE path = ?1", [path])?;
         transaction.commit()?;
-        let _ = self.connection.execute(
-            "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
-            [],
-        );
+        self.vector_after_delete(&removed);
+        self.bump_generation();
         Ok(())
     }
 
@@ -699,17 +767,56 @@ impl RetrievalDb {
     }
 
     pub fn save_chunks(&self, chunks: &[StoredRetrievalChunk]) -> Result<(), SidecarError> {
-        let transaction = self.connection.unchecked_transaction()?;
-        insert_chunks(&transaction, chunks, &[])?;
-        transaction.commit()?;
-        let _ = self.connection.execute(
-            "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
-            [],
-        );
-        Ok(())
+        let result = (|| {
+            let transaction = self.connection.unchecked_transaction()?;
+            let ids = insert_chunks(&transaction, chunks, &[])?;
+            transaction.commit()?;
+            self.vector_after_save(chunks, &ids);
+            self.bump_generation();
+            Ok(())
+        })();
+        if result.is_err() {
+            self.reset_vector_state();
+        }
+        result
     }
 
-    /// Replaces one document and all of its chunks atomically in the Rust DB.
+    /// `save_chunks` where `raw_contents[i]`, when `Some`, are the exact stored
+    /// bytes of `chunks[i]` (see `replace_document_chunks_raw`).
+    pub fn save_chunks_raw(
+        &self,
+        chunks: &[StoredRetrievalChunk],
+        raw_contents: &[Option<Vec<u8>>],
+    ) -> Result<(), SidecarError> {
+        let result = (|| {
+            let transaction = self.connection.unchecked_transaction()?;
+            let ids = insert_chunks(&transaction, chunks, raw_contents)?;
+            transaction.commit()?;
+            self.vector_after_save(chunks, &ids);
+            self.bump_generation();
+            Ok(())
+        })();
+        if result.is_err() {
+            self.reset_vector_state();
+        }
+        result
+    }
+
+    /// Go's `ListDocuments`: every document, newest `updated_at` first.
+    pub fn list_documents(&self) -> Result<Vec<RetrievalDocument>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT path, hash, CAST(updated_at AS TEXT) FROM documents ORDER BY updated_at DESC",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(RetrievalDocument {
+                path: row.get(0)?,
+                hash: row.get(1)?,
+                updated_at: row.get(2)?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     /// Go's current commitIndex performs delete, document save, and chunk save
     /// as separate operations; this helper guarantees rollback only for this
     /// Rust operation and does not claim Go transaction parity.
@@ -739,7 +846,25 @@ impl RetrievalDb {
                 "replacement chunks must belong to the replacement document".to_owned(),
             ));
         }
+        let result = self.replace_document_chunks_inner(document, chunks, raw_contents);
+        if result.is_err() {
+            self.reset_vector_state();
+        }
+        result
+    }
+
+    /// Go's `commitIndex` for an existing document: `DeleteDocument`,
+    /// `SaveDocument`, `SaveChunks`, each updating the warm IVF index and
+    /// bumping the generation. One transaction keeps Rust atomic; the warm
+    /// index sees the same intermediate database states as in Go.
+    fn replace_document_chunks_inner(
+        &self,
+        document: &RetrievalDocument,
+        chunks: &[StoredRetrievalChunk],
+        raw_contents: &[Option<Vec<u8>>],
+    ) -> Result<(), SidecarError> {
         let transaction = self.connection.unchecked_transaction()?;
+        let removed = self.chunk_ids_for_warm_index(&document.path)?;
         transaction.execute(
             "DELETE FROM extractions WHERE document_path = ?1",
             [&document.path],
@@ -749,16 +874,263 @@ impl RetrievalDb {
             [&document.path],
         )?;
         transaction.execute("DELETE FROM documents WHERE path = ?1", [&document.path])?;
+        self.vector_after_delete(&removed);
+        self.bump_generation();
         transaction.execute(
             "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)
              ",
             params![document.path, document.hash, document.updated_at],
         )?;
-        insert_chunks(&transaction, chunks, raw_contents)?;
-        transaction.execute(
-            "UPDATE index_meta SET value = value + 2 WHERE key = 'generation'",
-            [],
+        let ids = insert_chunks(&transaction, chunks, raw_contents)?;
+        self.vector_after_save(chunks, &ids);
+        self.bump_generation();
+        transaction.commit()?;
+        Ok(())
+    }
+
+    fn load_generation(&self) -> i64 {
+        self.connection
+            .query_row(
+                "SELECT value FROM index_meta WHERE key = 'generation'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0)
+    }
+
+    /// Go's `bumpGeneration`: the in-memory copy follows only a successful bump.
+    fn bump_generation(&self) {
+        if self
+            .connection
+            .execute(
+                "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
+                [],
+            )
+            .is_ok()
+        {
+            let generation = self.load_generation();
+            self.vector.borrow_mut().generation = generation;
+        }
+    }
+
+    /// After a failed write the in-memory state may no longer match the
+    /// rolled-back database, so drop the warm index and re-read the generation.
+    fn reset_vector_state(&self) {
+        let generation = self.load_generation();
+        *self.vector.borrow_mut() = VectorState {
+            index: None,
+            generation,
+        };
+    }
+
+    /// Chunk ids of a document, read only while a warm index exists.
+    fn chunk_ids_for_warm_index(&self, path: &str) -> Result<Vec<i64>, SidecarError> {
+        if !self
+            .vector
+            .borrow()
+            .index
+            .as_ref()
+            .is_some_and(VectorIndex::is_ready)
+        {
+            return Ok(Vec::new());
+        }
+        let mut statement = self
+            .connection
+            .prepare("SELECT id FROM chunks WHERE document_path = ?1")?;
+        let ids = statement
+            .query_map([path], |row| row.get::<_, i64>(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(ids)
+    }
+
+    /// Go's `DeleteDocument` tail: drop ids from a warm index and re-cluster
+    /// once enough churn accumulated.
+    fn vector_after_delete(&self, removed: &[i64]) {
+        let rebuild = {
+            let mut state = self.vector.borrow_mut();
+            match state.index.as_mut() {
+                Some(index) if index.is_ready() => {
+                    for id in removed {
+                        index.remove_chunk(*id);
+                    }
+                    index.needs_rebuild()
+                }
+                _ => false,
+            }
+        };
+        if rebuild {
+            self.rebuild_vector_index();
+        }
+    }
+
+    /// Go's `SaveChunks` tail: add chunks to a warm index incrementally.
+    fn vector_after_save(&self, chunks: &[StoredRetrievalChunk], ids: &[i64]) {
+        let rebuild = {
+            let mut state = self.vector.borrow_mut();
+            match state.index.as_mut() {
+                Some(index) if index.is_ready() => {
+                    let added = chunks
+                        .iter()
+                        .zip(ids)
+                        .map(|(chunk, id)| IndexChunk {
+                            id: *id,
+                            embedding: chunk.embedding.clone(),
+                        })
+                        .collect::<Vec<_>>();
+                    index.add_chunks(&added);
+                    index.needs_rebuild()
+                }
+                _ => false,
+            }
+        };
+        if rebuild {
+            self.rebuild_vector_index();
+        }
+    }
+
+    /// Go's `rebuildVectorIndex`: re-cluster every embedded chunk and persist.
+    fn rebuild_vector_index(&self) {
+        let chunks = (|| -> rusqlite::Result<Vec<IndexChunk>> {
+            let mut statement = self
+                .connection
+                .prepare("SELECT id, embedding FROM chunks WHERE embedding_pending = 0")?;
+            let rows = statement.query_map([], |row| {
+                Ok(IndexChunk {
+                    id: row.get(0)?,
+                    embedding: decode_embedding(&row.get::<_, Vec<u8>>(1)?),
+                })
+            })?;
+            rows.collect()
+        })();
+        let Ok(chunks) = chunks else {
+            self.vector.borrow_mut().index = None;
+            return;
+        };
+        {
+            let mut state = self.vector.borrow_mut();
+            state
+                .index
+                .get_or_insert_with(VectorIndex::default)
+                .build(&chunks);
+        }
+        self.save_vector_index();
+    }
+
+    /// Go's `saveVectorIndex`: persist the warm index under the current
+    /// generation, or drop the stored snapshot when none is ready.
+    fn save_vector_index(&self) {
+        let state = self.vector.borrow();
+        let snapshot = state
+            .index
+            .as_ref()
+            .filter(|index| index.is_ready())
+            .map(|index| index.serialize(state.generation));
+        match snapshot {
+            None => {
+                let _ = self
+                    .connection
+                    .execute("DELETE FROM index_storage WHERE key = 'ivf'", []);
+            }
+            Some(None) => {}
+            Some(Some(data)) => {
+                let _ = self.connection.execute(
+                    "INSERT INTO index_storage (key, data) VALUES ('ivf', ?1)
+                     ON CONFLICT(key) DO UPDATE SET data = excluded.data",
+                    [data],
+                );
+            }
+        }
+    }
+
+    /// Go's `loadVectorIndex`: restore a snapshot unless it is stale.
+    fn load_vector_index(&self, generation: i64) -> Option<VectorIndex> {
+        let data: Vec<u8> = self
+            .connection
+            .query_row(
+                "SELECT data FROM index_storage WHERE key = 'ivf'",
+                [],
+                |row| row.get(0),
+            )
+            .ok()?;
+        let discard = || {
+            let _ = self
+                .connection
+                .execute("DELETE FROM index_storage WHERE key = 'ivf'", []);
+        };
+        let Ok((index, stored_generation)) = VectorIndex::deserialize(&data) else {
+            discard();
+            return None;
+        };
+        if stored_generation != generation {
+            discard();
+            return None;
+        }
+        let chunk_count: i64 = self
+            .connection
+            .query_row("SELECT COUNT(*) FROM chunks", [], |row| row.get(0))
+            .ok()?;
+        if i64::try_from(index.total_chunks()).ok()? != chunk_count {
+            discard();
+            return None;
+        }
+        Some(index)
+    }
+
+    /// Go's `GetChunkSpansForDocument`: id and character span of each chunk in
+    /// `chunk_index` order, for linking extractions to chunks.
+    pub(crate) fn chunk_spans_for_document(
+        &self,
+        path: &str,
+    ) -> Result<Vec<ChunkSpan>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id, char_start, char_end FROM chunks WHERE document_path = ?1
+             ORDER BY chunk_index ASC",
         )?;
+        let rows = statement.query_map([path], |row| {
+            Ok(ChunkSpan {
+                id: row.get(0)?,
+                start: row.get(1)?,
+                end: row.get(2)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    /// Go's `DeleteExtractionsForDocument` followed by `SaveExtractions`:
+    /// replaces every extraction row of one document in a single transaction.
+    pub(crate) fn replace_extractions(
+        &self,
+        path: &str,
+        rows: &[ExtractionRow],
+    ) -> Result<(), SidecarError> {
+        let transaction = self.connection.unchecked_transaction()?;
+        transaction.execute("DELETE FROM extractions WHERE document_path = ?1", [path])?;
+        {
+            let mut insert = transaction.prepare(
+                "INSERT INTO extractions (document_path, chunk_id, class, value, evidence_text,
+                 span_start, span_end, matched, producer, source_ref, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            )?;
+            for row in rows {
+                insert
+                    .execute(params![
+                        row.document_path,
+                        row.chunk_id,
+                        row.class,
+                        row.value,
+                        row.evidence_text,
+                        row.span_start,
+                        row.span_end,
+                        row.matched,
+                        row.producer,
+                        row.source_ref,
+                        row.created_at,
+                    ])
+                    .map_err(|error| {
+                        SidecarError::Contract(format!("failed to insert extraction: {error}"))
+                    })?;
+            }
+        }
         transaction.commit()?;
         Ok(())
     }
@@ -981,72 +1353,145 @@ impl RetrievalDb {
         self.search_vector_with_path(query, "", limit)
     }
 
-    /// Scores every stored chunk by cosine similarity, matching the Go
-    /// database fallback when its Hamming shortlist covers the scanned rows.
+    /// Go's `SearchVectorWithPath`: the warm IVF prefilter when a snapshot is
+    /// ready, otherwise a scan of every (path-scoped) chunk. Rows are cut to a
+    /// Hamming shortlist, ranked through a bounded min-heap and hydrated with
+    /// their content. An unscoped scan of at least 128 chunks builds and
+    /// persists the IVF index that later searches reuse.
     pub fn search_vector_with_path(
         &self,
         query: &[f32],
         path_prefix: &str,
         limit: i64,
     ) -> Result<Vec<RetrievalVectorSearchResult>, SidecarError> {
-        if limit <= 0 {
+        let Ok(limit) = usize::try_from(limit) else {
+            return Ok(Vec::new());
+        };
+        if limit == 0 {
             return Ok(Vec::new());
         }
-
-        let mut statement = self.connection.prepare(
-            "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm
-             FROM chunks WHERE (?1 = '' OR document_path LIKE ?1 || '%')",
-        )?;
-        let mut rows = statement.query([path_prefix])?;
         let query_norm = embedding_norm(query);
-        let mut results = Vec::new();
-        while let Some(row) = rows.next()? {
-            let embedding = decode_embedding(&row.get::<_, Vec<u8>>(5)?);
-            let norm: f32 = row.get(7)?;
-            let dot = query
-                .iter()
-                .zip(&embedding)
-                .map(|(left, right)| f64::from(*left * *right))
-                .sum::<f64>();
-            let score = if query.len() == embedding.len()
-                && !query.is_empty()
-                && query_norm > 0.0
-                && norm > 0.0
-            {
-                (dot / (f64::from(query_norm) * f64::from(norm))) as f32
-            } else {
-                0.0
-            };
-            let result_embedding = if !path_prefix.is_empty() && query_norm > 0.0 && norm > 0.0 {
-                None
-            } else {
-                Some(embedding)
-            };
+
+        // Detect writes from other processes before trusting the warm index.
+        let current = self.load_generation();
+        {
+            let mut state = self.vector.borrow_mut();
+            if current != state.generation {
+                state.generation = current;
+                state.index = None;
+            }
+        }
+
+        let candidates = {
+            let state = self.vector.borrow();
+            state
+                .index
+                .as_ref()
+                .filter(|index| index.is_ready())
+                .and_then(|index| index.candidate_ids(query, index.probe_count()))
+        };
+        let (rows, collected) = match candidates {
+            Some(ids) => (
+                self.scan_chunk_rows(Some(ids.as_slice()), path_prefix)?,
+                false,
+            ),
+            None => {
+                let ready = self
+                    .vector
+                    .borrow()
+                    .index
+                    .as_ref()
+                    .is_some_and(VectorIndex::is_ready);
+                (
+                    self.scan_chunk_rows(None, path_prefix)?,
+                    path_prefix.is_empty() && !ready,
+                )
+            }
+        };
+        let index_chunks = if collected {
+            rows.iter()
+                .map(|row| IndexChunk {
+                    id: row.id,
+                    embedding: decode_embedding(&row.embedding_bytes),
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        let scored = score_rows(rows, query, query_norm, limit, true, collected);
+        let mut results = Vec::with_capacity(scored.len());
+        for (index, scored) in scored.into_iter().enumerate() {
+            let content: String = self.connection.query_row(
+                "SELECT content FROM chunks WHERE id = ?1",
+                [scored.row.id],
+                |row| lossy_text(row, 0),
+            )?;
+            let embedding = (scored.embedding_loaded
+                && scored.row.embedding_bytes.len().is_multiple_of(4))
+            .then(|| decode_embedding(&scored.row.embedding_bytes));
             results.push(RetrievalVectorSearchResult {
                 chunk: RetrievalVectorSearchChunk {
-                    id: row.get(0)?,
-                    uuid: row.get(1)?,
-                    document_path: row.get(2)?,
-                    chunk_index: row.get(3)?,
-                    content: row.get(4)?,
-                    embedding: result_embedding,
-                    hash: row.get(6)?,
+                    id: scored.row.id,
+                    uuid: scored.row.uuid,
+                    document_path: scored.row.document_path,
+                    chunk_index: scored.row.chunk_index,
+                    content,
+                    embedding,
+                    hash: scored.row.hash,
                 },
-                vector_rank: 0,
-                cosine_score: score,
+                vector_rank: index + 1,
+                cosine_score: scored.score,
             });
         }
-        results.sort_by(|left, right| {
-            right
-                .cosine_score
-                .partial_cmp(&left.cosine_score)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        results.truncate(limit as usize);
-        for (index, result) in results.iter_mut().enumerate() {
-            result.vector_rank = index + 1;
+        if index_chunks.len() >= INDEX_BUILD_THRESHOLD {
+            self.vector
+                .borrow_mut()
+                .index
+                .get_or_insert_with(VectorIndex::default)
+                .build(&index_chunks);
+            self.save_vector_index();
         }
         Ok(results)
+    }
+
+    /// Go's `searchVectorScanSelect` rows, either all chunks or the IVF
+    /// candidates, restricted to a path prefix.
+    fn scan_chunk_rows(
+        &self,
+        candidate_ids: Option<&[i64]>,
+        path_prefix: &str,
+    ) -> Result<Vec<ScanRow>, SidecarError> {
+        let mut sql = "SELECT id, uuid, document_path, chunk_index, embedding, hash, norm, \
+                       binary_signature FROM chunks"
+            .to_owned();
+        let mut values: Vec<rusqlite::types::Value> = Vec::new();
+        let mut clauses = Vec::new();
+        if let Some(ids) = candidate_ids {
+            clauses.push(format!("id IN ({})", vec!["?"; ids.len()].join(",")));
+            values.extend(ids.iter().map(|id| rusqlite::types::Value::Integer(*id)));
+        }
+        if !path_prefix.is_empty() {
+            clauses.push("document_path LIKE ? || '%'".to_owned());
+            values.push(rusqlite::types::Value::Text(path_prefix.to_owned()));
+        }
+        if !clauses.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&clauses.join(" AND "));
+        }
+        let mut statement = self.connection.prepare(&sql)?;
+        let rows = statement.query_map(rusqlite::params_from_iter(values), |row| {
+            Ok(ScanRow {
+                id: row.get(0)?,
+                uuid: row.get(1)?,
+                document_path: row.get(2)?,
+                chunk_index: row.get(3)?,
+                embedding_bytes: row.get(4)?,
+                hash: row.get(5)?,
+                norm: row.get(6)?,
+                signature: row.get(7)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
     }
 
     /// Combines the existing local BM25 and full-scan vector searches using
@@ -1219,30 +1664,7 @@ fn create_database_file(path: &Path) -> Result<(), SidecarError> {
 }
 
 fn migrate_retrieval(connection: &mut Connection) -> Result<(), SidecarError> {
-    connection.execute_batch(
-        "CREATE TABLE IF NOT EXISTS schema_migrations (
-             version TEXT PRIMARY KEY,
-             applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
-         )",
-    )?;
-    for (version, sql) in RETRIEVAL_MIGRATIONS {
-        let applied: bool = connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = ?1)",
-            [version],
-            |row| row.get(0),
-        )?;
-        if applied {
-            continue;
-        }
-        let transaction = connection.transaction()?;
-        transaction.execute_batch(sql)?;
-        transaction.execute(
-            "INSERT INTO schema_migrations(version) VALUES (?1)",
-            [version],
-        )?;
-        transaction.commit()?;
-    }
-    Ok(())
+    super::migrate_embedded(connection, RETRIEVAL_MIGRATIONS)
 }
 
 fn backfill_content_norm(connection: &Connection) -> Result<(), SidecarError> {
@@ -1271,7 +1693,8 @@ fn insert_chunks(
     transaction: &rusqlite::Transaction<'_>,
     chunks: &[StoredRetrievalChunk],
     raw_contents: &[Option<Vec<u8>>],
-) -> Result<(), SidecarError> {
+) -> Result<Vec<i64>, SidecarError> {
+    let mut ids = Vec::with_capacity(chunks.len());
     let mut statement = transaction.prepare(
         "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
          binary_signature, embedding_dim, embedding_model, char_start, char_end,
@@ -1304,8 +1727,9 @@ fn insert_chunks(
             chunk.anchor_value,
             symdesk_core::german::normalized_text(&chunk.content),
         ])?;
+        ids.push(transaction.last_insert_rowid());
     }
-    Ok(())
+    Ok(ids)
 }
 
 /// Reads a TEXT column that Go may have filled with bytes outside UTF-8.
@@ -1353,7 +1777,7 @@ fn encode_embedding(values: &[f32]) -> Vec<u8> {
 
 /// Go's `SignBinarySignature`: one bit per non-negative component, packed
 /// into little-endian u64 words; empty vectors store NULL.
-fn sign_binary_signature(values: &[f32]) -> Option<Vec<u8>> {
+pub(crate) fn sign_binary_signature(values: &[f32]) -> Option<Vec<u8>> {
     if values.is_empty() {
         return None;
     }
@@ -1366,7 +1790,7 @@ fn sign_binary_signature(values: &[f32]) -> Option<Vec<u8>> {
     Some(words.iter().flat_map(|word| word.to_le_bytes()).collect())
 }
 
-fn decode_embedding(bytes: &[u8]) -> Vec<f32> {
+pub(crate) fn decode_embedding(bytes: &[u8]) -> Vec<f32> {
     let (chunks, remainder) = bytes.as_chunks::<4>();
     if !remainder.is_empty() {
         return Vec::new();

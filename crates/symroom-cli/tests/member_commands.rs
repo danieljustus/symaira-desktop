@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
 use process_env::IsolatedEnvironment;
@@ -18,7 +20,6 @@ use std::{
 };
 
 use serde::Deserialize;
-use sha2::Digest;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -82,15 +83,12 @@ fn member_cli_matches_go_process_and_journal_contract() {
         "internal/room/members/members.go",
         "internal/room/config/config.go",
     ] {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../")
-            .join(source);
-        let bytes =
-            fs::read(&path).unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
-        assert_eq!(
-            fixture.source_hashes.get(source),
-            Some(&hex::encode(sha2::Sha256::digest(bytes))),
-            "Go oracle source hash {source}"
+        oracle_sources::assert_recorded_source_hash(
+            source,
+            fixture
+                .source_hashes
+                .get(source)
+                .unwrap_or_else(|| panic!("missing source hash for {source}")),
         );
     }
     assert!(fixture.cases.iter().any(|case| case.dynamic_event));

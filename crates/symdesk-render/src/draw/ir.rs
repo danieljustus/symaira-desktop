@@ -350,6 +350,20 @@ pub struct ValidationError {
     pub message: String,
 }
 
+impl std::fmt::Display for ValidationError {
+    /// Go `(*ValidationError).Error`.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "invalid ir field {}: {}",
+            quote(&self.field),
+            self.message
+        )
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
 fn invalid(field: impl Into<String>, message: impl Into<String>) -> ValidationError {
     ValidationError {
         field: field.into(),

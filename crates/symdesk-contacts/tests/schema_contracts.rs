@@ -1,3 +1,5 @@
+#[path = "../../../scripts/rust-port/rust/oracle_sources.rs"]
+mod oracle_sources;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use symdesk_contacts::{MIGRATIONS, migrate, open_memory};
@@ -9,21 +11,20 @@ fn go_schema_and_migration_bookkeeping() {
     assert_eq!(MIGRATIONS.len(), 7);
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     for (path, expected) in fixture["source_hashes"].as_object().unwrap() {
-        let bytes = std::fs::read(root.join(path)).unwrap();
-        assert_eq!(
-            format!("{:x}", Sha256::digest(&bytes)),
-            expected.as_str().unwrap(),
-            "{path}"
-        );
+        oracle_sources::assert_recorded_source_hash(path, expected.as_str().unwrap());
         if path.ends_with(".sql") {
+            // The Go migration bytes are retired; the recorded hash must still
+            // match the byte-identical copy owned by this crate.
             let filename = std::path::Path::new(path).file_name().unwrap();
+            let bytes = std::fs::read(
+                root.join("crates/symdesk-contacts/migrations")
+                    .join(filename),
+            )
+            .unwrap();
             assert_eq!(
-                bytes,
-                std::fs::read(
-                    root.join("crates/symdesk-contacts/migrations")
-                        .join(filename)
-                )
-                .unwrap()
+                format!("{:x}", Sha256::digest(&bytes)),
+                expected.as_str().unwrap(),
+                "{path}"
             );
         }
     }

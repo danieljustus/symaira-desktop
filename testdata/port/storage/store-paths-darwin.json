@@ -1,0 +1,2734 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "goos": "darwin",
+  "goarch": "arm64",
+  "go_version": "go1.26.10",
+  "cases": [
+    {
+      "id": "fresh",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/fresh",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/fresh/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/fresh/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/fresh/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "legacy-files",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symrelate",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symrelate/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symingest/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-files/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "both-files",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/both-files",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/both-files/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/both-files/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/both-files/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "directory",
+        "data/symdesk/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "directory",
+        "data/symdesk/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "primary-directory",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-directory/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "directory",
+        "data/symdesk/symingest.db": "directory",
+        "data/symdesk/symrelate.db": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "directory",
+        "data/symdesk/symingest.db": "directory",
+        "data/symdesk/symrelate.db": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "legacy-directory",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symrelate",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symrelate/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symingest/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-directory/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "directory",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "directory",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "mixed-archive",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/mixed-archive/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "contacts-overrides",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/home",
+        "SYMRELATE_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override-cache/child/..",
+        "SYMRELATE_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override-config/child/..",
+        "SYMRELATE_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override/child/..",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override-config/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override-cache/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/override/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/contacts-overrides/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "padded-overrides",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/home",
+        "SYMRELATE_CACHE_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override-cache/child/.. \t",
+        "SYMRELATE_CONFIG_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override-config/child/.. \t",
+        "SYMRELATE_DATA_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override/child/.. \t",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override-config/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override-cache/child/..",
+        "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/override/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/padded-overrides/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "blank-overrides",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/home",
+        "SYMRELATE_CACHE_HOME": " \t\n",
+        "SYMRELATE_CONFIG_HOME": " \t\n",
+        "SYMRELATE_DATA_HOME": " \t\n",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/blank-overrides/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "home-defaults",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/home-defaults/home/.local/share/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "no-home",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/no-home",
+      "environment": {},
+      "contacts": [
+        ".config/symdesk",
+        ".local/share/symdesk",
+        ".cache/symdesk",
+        ".local/share/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "",
+          "error": "cannot determine home directory; set symingest.db explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "archive",
+          "value": "",
+          "error": "cannot determine home directory; set archive explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": " archive ",
+          "value": "",
+          "error": "cannot determine home directory; set  archive  explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "./archive",
+          "value": "",
+          "error": "cannot determine home directory; set ./archive explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "nested/../archive",
+          "value": "",
+          "error": "cannot determine home directory; set nested/../archive explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "nested\\file",
+          "value": "",
+          "error": "cannot determine home directory; set nested\\file explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "",
+          "error": "cannot determine home directory; set C:relative explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "",
+          "error": "cannot determine home directory; set C:\\absolute explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "\\absolute",
+          "value": "",
+          "error": "cannot determine home directory; set \\absolute explicitly: user home dir: $HOME is not defined"
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "xdg-without-home",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home",
+      "environment": {
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/xdg-without-home/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "relative-xdg",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/relative-xdg",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/relative-xdg/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/relative-xdg/home",
+        "XDG_CACHE_HOME": "cache",
+        "XDG_CONFIG_HOME": "config",
+        "XDG_DATA_HOME": "data"
+      },
+      "contacts": [
+        "config/symdesk",
+        "data/symdesk",
+        "cache/symdesk",
+        "data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "lexical-xdg",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/home",
+        "XDG_CACHE_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/cache/missing/.. \t",
+        "XDG_CONFIG_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/config/missing/.. \t",
+        "XDG_DATA_HOME": " \t/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/missing/.. \t"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/lexical-xdg/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "different-home-profile",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/profile"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/different-home-profile/home/.local/share/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "home": "directory"
+      }
+    },
+    {
+      "id": "legacy-symlink-files",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symrelate",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symrelate/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symingest/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-files/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574",
+        "targets/symrelate.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574",
+        "targets/symrelate.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574"
+      }
+    },
+    {
+      "id": "legacy-symlink-directories",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symrelate",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symrelate/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symingest/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-symlink-directories/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "directory",
+        "targets/symrelate.db": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "directory",
+        "targets/symrelate.db": "directory"
+      }
+    },
+    {
+      "id": "legacy-dangling-symlinks",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/legacy-dangling-symlinks/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symingest": "directory",
+        "data/symingest/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symingest/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "home": "directory",
+        "targets": "directory"
+      }
+    },
+    {
+      "id": "primary-symlinks",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-symlinks/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symdesk/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symdesk/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574",
+        "targets/symrelate.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symdesk/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symdesk/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory",
+        "targets": "directory",
+        "targets/archive": "directory",
+        "targets/symingest.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574",
+        "targets/symrelate.db": "file:72657461696e65642073796e746865746963206c696e6b20746172676574"
+      }
+    },
+    {
+      "id": "primary-dangling-symlinks",
+      "root": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks",
+      "environment": {
+        "HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/home",
+        "USERPROFILE": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/home",
+        "XDG_CACHE_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/cache",
+        "XDG_CONFIG_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/config",
+        "XDG_DATA_HOME": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data"
+      },
+      "contacts": [
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/config/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symrelate",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/cache/symdesk",
+        "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symrelate/symrelate.db"
+      ],
+      "ingest": [
+        {
+          "name": "symingest.db",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symingest/symingest.db",
+          "error": ""
+        },
+        {
+          "name": "archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": " archive ",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "./archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested/../archive",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symingest/archive",
+          "error": ""
+        },
+        {
+          "name": "nested\\file",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symdesk/nested\\file",
+          "error": ""
+        },
+        {
+          "name": "..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"..\""
+        },
+        {
+          "name": " . ",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \" . \""
+        },
+        {
+          "name": "nested/file",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/file\""
+        },
+        {
+          "name": "nested/../..",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/../..\""
+        },
+        {
+          "name": "../escape",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"../escape\""
+        },
+        {
+          "name": "/absolute",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"/absolute\""
+        },
+        {
+          "name": "C:relative",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symdesk/C:relative",
+          "error": ""
+        },
+        {
+          "name": "C:\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symdesk/C:\\absolute",
+          "error": ""
+        },
+        {
+          "name": "\\absolute",
+          "value": "/private/tmp/symdesk-store-paths-oracle/capture/primary-dangling-symlinks/data/symdesk/\\absolute",
+          "error": ""
+        },
+        {
+          "name": "nested/\"\n",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\\"\\n\""
+        },
+        {
+          "name": "nested/\u0000 ​\u2028",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/\\x00\\x7f\\u0085\\u00a0\\u200b\\u2028\""
+        },
+        {
+          "name": "nested/😀",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"nested/😀\""
+        },
+        {
+          "name": "",
+          "value": "",
+          "error": "ingest data artifact must be a single relative name: \"\""
+        }
+      ],
+      "before": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symdesk/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symdesk/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory",
+        "targets": "directory"
+      },
+      "after": {
+        ".": "directory",
+        "cache": "directory",
+        "config": "directory",
+        "data": "directory",
+        "data/symdesk": "directory",
+        "data/symdesk/archive": "symlink:2e2e2f2e2e2f746172676574732f61726368697665",
+        "data/symdesk/symingest.db": "symlink:2e2e2f2e2e2f746172676574732f73796d696e676573742e6462",
+        "data/symdesk/symrelate.db": "symlink:2e2e2f2e2e2f746172676574732f73796d72656c6174652e6462",
+        "data/symingest": "directory",
+        "data/symingest/archive": "directory",
+        "data/symingest/symingest.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "data/symrelate": "directory",
+        "data/symrelate/symrelate.db": "file:72657461696e65642073796e7468657469632073746f7265",
+        "home": "directory",
+        "targets": "directory"
+      }
+    }
+  ]
+}

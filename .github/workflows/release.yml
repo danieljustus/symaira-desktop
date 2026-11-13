@@ -118,7 +118,7 @@ jobs:
       - name: Install Cosign
         # v2.4.3 supports the separate .sig/.pem outputs required by the
         # release asset contract while obtaining its signing identity from OIDC.
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
         with:
           cosign-release: v2.4.3
 
@@ -357,7 +357,7 @@ jobs:
           echo "DMG_SHA256=$DMG_SHA256" >> "$GITHUB_ENV"
 
       - name: Upload app artifacts to GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           files: |
             dist/SymDesk-*.zip
@@ -443,13 +443,13 @@ jobs:
         run: bash scripts/release-ios.sh --dry-run
 
       - name: Import iOS distribution certificate
-        uses: Apple-Actions/import-codesign-certs@77ba2a2a8f5cfc8c405ebf3159f767c323e238f9 # v7.1.0
+        uses: Apple-Actions/import-codesign-certs@288b8ec97b82c66b6f2a6baaf7acc8dfbcbe331c # v7.2.0
         with:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
           p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
 
       - name: Download main app provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
+        uses: Apple-Actions/download-provisioning-profiles@233aa54e59082c0e8a8cf8b0b02c72dea2422ef9 # v7.1.0
         with:
           bundle-id: com.symaira.desktop.ios
           profile-type: IOS_APP_STORE
@@ -458,7 +458,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: Download Share Extension provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
+        uses: Apple-Actions/download-provisioning-profiles@233aa54e59082c0e8a8cf8b0b02c72dea2422ef9 # v7.1.0
         with:
           bundle-id: com.symaira.desktop.ios.share
           profile-type: IOS_APP_STORE
@@ -467,7 +467,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: Download Widget provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
+        uses: Apple-Actions/download-provisioning-profiles@233aa54e59082c0e8a8cf8b0b02c72dea2422ef9 # v7.1.0
         with:
           bundle-id: com.symaira.desktop.ios.widget
           profile-type: IOS_APP_STORE
@@ -524,7 +524,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload build to TestFlight
-        uses: Apple-Actions/upload-testflight-build@155ea93be9ee6d5186c71f660a612f5eddb14510 # v5.6.0
+        uses: Apple-Actions/upload-testflight-build@665328adbecbc3ad929d3da710696d928b8a7ba9 # v5.9.0
         with:
           app-path: ${{ env.IOS_IPA_PATH }}
           app-type: ios

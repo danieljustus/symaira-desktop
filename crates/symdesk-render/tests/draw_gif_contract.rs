@@ -20,7 +20,7 @@ const FIXTURE: &str = include_str!("../../../testdata/port/render/gif.json");
 const EMIT: &str = include_str!("../../../testdata/port/render/emit.json");
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    hex::encode(Sha256::digest(bytes))
 }
 
 fn sources() -> HashMap<String, (String, String)> {

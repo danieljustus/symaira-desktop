@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+hex.workspace = true
 noyalib.workspace = true
 regex.workspace = true
 rusqlite.workspace = true

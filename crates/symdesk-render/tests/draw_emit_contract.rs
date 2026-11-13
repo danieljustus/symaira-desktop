@@ -40,7 +40,7 @@ fn go_scene_lowering_svg_contract() {
                 canonical.push('\n');
             }
             assert_eq!(
-                format!("{:x}", Sha256::digest(canonical.as_bytes())),
+                hex::encode(Sha256::digest(canonical.as_bytes())),
                 c["expected"].as_str().unwrap(),
                 "{id}"
             );

@@ -19,7 +19,7 @@ const FIXTURE: &str = include_str!("../../../testdata/port/render/typst.json");
 const EMIT: &str = include_str!("../../../testdata/port/render/emit.json");
 
 fn sha(s: &str) -> String {
-    format!("{:x}", Sha256::digest(s.as_bytes()))
+    hex::encode(Sha256::digest(s.as_bytes()))
 }
 
 /// A JSON number, or the strings "NaN", "+Inf", "-Inf".

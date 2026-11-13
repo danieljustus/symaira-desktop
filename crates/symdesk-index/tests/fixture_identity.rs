@@ -64,7 +64,7 @@ fn frozen_live_fixtures_have_one_source_identity_and_exact_checksums() {
         assert!(rel.starts_with("testdata/port/") && !rel.split('/').any(|part| part == ".."));
         let bytes = fs::read(root.join(rel)).expect("committed fixture bytes");
         assert_eq!(
-            format!("{:x}", Sha256::digest(&bytes)),
+            hex::encode(Sha256::digest(&bytes)),
             expected.as_str().expect("SHA-256"),
             "{rel}"
         );

@@ -21,7 +21,7 @@ const FIXTURE: &str = include_str!("../../../testdata/port/render/facade.json");
 const EMIT: &str = include_str!("../../../testdata/port/render/emit.json");
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    hex::encode(Sha256::digest(bytes))
 }
 
 fn decode(mode: &str, input: &str) -> Diagram {

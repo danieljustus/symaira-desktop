@@ -29,34 +29,32 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
             Ok(Event::Start(e)) => {
                 let name = e.local_name();
                 match (mode, name.as_ref()) {
-                    (Mode::Office | Mode::Shared, b"t") => active = true,
-                    (Mode::Office, b"br" | b"cr") => out.push('\n'),
-                    (Mode::Office | Mode::Odf, b"tab") => out.push('\t'),
-                    (Mode::Odf, b"p" | b"h" | b"value") => in_block += 1,
-                    (Mode::Odf, b"line-break") => out.push('\n'),
-                    (Mode::Odf, b"s") => {
+                    (Mode::Office | Mode::Shared, "t") => active = true,
+                    (Mode::Office, "br" | "cr") => out.push('\n'),
+                    (Mode::Office | Mode::Odf, "tab") => out.push('\t'),
+                    (Mode::Odf, "p" | "h" | "value") => in_block += 1,
+                    (Mode::Odf, "line-break") => out.push('\n'),
+                    (Mode::Odf, "s") => {
                         let n = e
                             .attributes()
                             .flatten()
-                            .filter(|a| a.key.local_name().as_ref() == b"c")
-                            .filter_map(|a| {
-                                std::str::from_utf8(&a.value).ok()?.parse::<usize>().ok()
-                            })
+                            .filter(|a| a.key.local_name().as_ref() == "c")
+                            .filter_map(|a| a.value.parse::<usize>().ok())
                             .filter(|n| *n > 0)
                             .last()
                             .unwrap_or(1);
                         // Untrusted repetition counts must not allocate unbounded memory.
                         out.extend(std::iter::repeat_n(' ', bounded_odf_spaces(n)));
                     }
-                    (Mode::Sheet, b"c") => {
+                    (Mode::Sheet, "c") => {
                         cell_type = e
                             .attributes()
                             .flatten()
-                            .find(|a| a.key.local_name().as_ref() == b"t")
-                            .map(|a| String::from_utf8_lossy(&a.value).into_owned())
+                            .find(|a| a.key.local_name().as_ref() == "t")
+                            .map(|a| a.value.into_owned())
                             .unwrap_or_default();
                     }
-                    (Mode::Sheet, b"v") => {
+                    (Mode::Sheet, "v") => {
                         active = true;
                         current.clear();
                     }
@@ -65,17 +63,17 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
             }
             Ok(Event::End(e)) => {
                 match (mode, e.local_name().as_ref()) {
-                    (Mode::Office | Mode::Shared, b"t") | (Mode::Sheet, b"v") => active = false,
-                    (Mode::Office, b"p" | b"sp") => out.push_str("\n\n"),
-                    (Mode::Odf, b"p" | b"h") => {
+                    (Mode::Office | Mode::Shared, "t") | (Mode::Sheet, "v") => active = false,
+                    (Mode::Office, "p" | "sp") => out.push_str("\n\n"),
+                    (Mode::Odf, "p" | "h") => {
                         out.push_str("\n\n");
                         in_block -= 1;
                     }
-                    (Mode::Odf, b"value") => in_block -= 1,
-                    (Mode::Shared, b"si") => {
+                    (Mode::Odf, "value") => in_block -= 1,
+                    (Mode::Shared, "si") => {
                         strings.push(std::mem::take(&mut current));
                     }
-                    (Mode::Sheet, b"c") => {
+                    (Mode::Sheet, "c") => {
                         let mut value = current.clone();
                         if cell_type == "s" {
                             // fmt.Sscanf accepts a decimal prefix followed by junk.
@@ -102,7 +100,7 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
                             row_has_cell = true;
                         }
                     }
-                    (Mode::Sheet, b"row") => {
+                    (Mode::Sheet, "row") => {
                         out.push('\n');
                         row_has_cell = false;
                     }
@@ -110,7 +108,7 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
                 }
             }
             Ok(Event::Text(e)) => {
-                let Ok(text) = e.xml11_content() else { break };
+                let text = e.xml11_content();
                 if (mode == Mode::Odf && in_block > 0) || (mode == Mode::Office && active) {
                     out.push_str(&text);
                 }
@@ -119,16 +117,16 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
                 }
             }
             Ok(Event::CData(e)) => {
-                let Ok(text) = e.decode() else { break };
+                let text = e.as_ref();
                 if (mode == Mode::Odf && in_block > 0) || (mode == Mode::Office && active) {
-                    out.push_str(&text);
+                    out.push_str(text);
                 }
                 if matches!(mode, Mode::Shared | Mode::Sheet) && active {
-                    current.push_str(&text);
+                    current.push_str(text);
                 }
             }
             Ok(Event::GeneralRef(e)) => {
-                let Ok(name) = e.decode() else { break };
+                let name = e.as_ref();
                 let entity = format!("&{name};");
                 let Ok(text) = quick_xml::escape::unescape(&entity) else {
                     break;

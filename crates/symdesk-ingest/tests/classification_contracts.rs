@@ -190,7 +190,7 @@ fn pipeline_classification_matches_go() {
         assert_eq!(c.document_type, text(&out["document_type"]), "{name}");
 
         // Persisted columns: the same write the pipeline performs after the job.
-        let hash = format!("{:x}", Sha256::digest(body));
+        let hash = hex::encode(Sha256::digest(body));
         let (doc, created) = store
             .create_or_get(file_name, &hash, &mime, &format!("/v/{name}"))
             .unwrap();

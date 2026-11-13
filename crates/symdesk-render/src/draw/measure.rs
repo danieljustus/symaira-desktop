@@ -503,26 +503,29 @@ impl Measurer {
 
         let (width, height) = match shape {
             "circle" => {
-                let size = go_hypot(raw_w, raw_h).max(opts.min_width);
+                let size = go_max(go_hypot(raw_w, raw_h), opts.min_width);
                 (size, size)
             }
             "diamond" => (
-                (raw_w * 1.5).max(opts.min_width),
-                (raw_h * 1.5).max(opts.min_height),
+                go_max(raw_w * 1.5, opts.min_width),
+                go_max(raw_h * 1.5, opts.min_height),
             ),
             "cylinder" => (
-                (raw_w + 10.0).max(opts.min_width),
-                (raw_h + 24.0).max(opts.min_height + 16.0),
+                go_max(raw_w + 10.0, opts.min_width),
+                go_max(raw_h + 24.0, opts.min_height + 16.0),
             ),
             "pill" | "stadium" => {
-                let h = raw_h.max(opts.min_height);
-                ((raw_w + h / 2.0).max(opts.min_width), h)
+                let h = go_max(raw_h, opts.min_height);
+                (go_max(raw_w + h / 2.0, opts.min_width), h)
             }
             "hexagon" => {
-                let h = raw_h.max(opts.min_height);
-                ((raw_w + h * 0.5).max(opts.min_width), h)
+                let h = go_max(raw_h, opts.min_height);
+                (go_max(raw_w + h * 0.5, opts.min_width), h)
             }
-            _ => (raw_w.max(opts.min_width), raw_h.max(opts.min_height)),
+            _ => (
+                go_max(raw_w, opts.min_width),
+                go_max(raw_h, opts.min_height),
+            ),
         };
         NodeSize {
             width,
@@ -534,6 +537,21 @@ impl Measurer {
 
 /// Go's portable `math.hypot`: `p * sqrt(1 + q*q)` with `q = min/max`, without
 /// fused multiply-add.
+/// Go `math.Max`: `+Inf` wins, then `NaN` propagates, `+0` beats `-0`.
+fn go_max(x: f64, y: f64) -> f64 {
+    if x == f64::INFINITY || y == f64::INFINITY {
+        f64::INFINITY
+    } else if x.is_nan() || y.is_nan() {
+        f64::NAN
+    } else if x == 0.0 && x == y {
+        if x.is_sign_negative() { y } else { x }
+    } else if x > y {
+        x
+    } else {
+        y
+    }
+}
+
 fn go_hypot(p: f64, q: f64) -> f64 {
     let (mut p, mut q) = (p.abs(), q.abs());
     if p.is_infinite() || q.is_infinite() {
@@ -594,6 +612,17 @@ mod tests {
         assert_eq!(go_hypot(0.0, 0.0), 0.0);
         assert!(go_hypot(f64::NAN, 1.0).is_nan());
         assert_eq!(go_hypot(f64::INFINITY, f64::NAN), f64::INFINITY);
+    }
+
+    #[test]
+    fn go_max_follows_go_math_max() {
+        assert_eq!(go_max(1.0, 2.0), 2.0);
+        assert_eq!(go_max(f64::INFINITY, f64::NAN), f64::INFINITY);
+        assert!(go_max(f64::NAN, 1.0).is_nan());
+        assert!(go_max(1.0, f64::NAN).is_nan());
+        assert!(go_max(-0.0, 0.0).is_sign_positive());
+        assert!(go_max(0.0, -0.0).is_sign_positive());
+        assert!(go_max(-0.0, -0.0).is_sign_negative());
     }
 
     #[test]

@@ -2,14 +2,15 @@
 //! (v0.47.0) that `internal/draw/measure` calls for text measurement.
 //!
 //! Covered: the table directory checks, `head`, `maxp`, `hhea`, `hmtx` and
-//! `OS/2` (version >= 2) validation, `cmap` format 4/6/12 glyph lookup with the
+//! `OS/2` (version >= 2) validation, `cmap` format 12 glyph lookup with the
 //! "widest platform encoding wins" selection, advance widths and the font
 //! metrics (`Ascent`, `Descent`, `Height`, `XHeight`, `CapHeight`) at
 //! `font.HintingNone`, including `fixed.Int26_6` (int32) arithmetic.
 //!
 //! Unhinted TrueType glyph outlines (`glyf`/`loca`, `LoadGlyph`) are implemented
 //! by `sfnt_outline.rs`. Not covered: kerning, `post`, CFF/OpenType-PostScript
-//! fonts, `cmap` format 0 and `OS/2` versions below 2. Fonts needing those are
+//! fonts, `cmap` formats 0/4/6 (selected exactly like Go, but formats 4 and 6
+//! have no Go-recorded expectations) and `OS/2` versions below 2. Fonts needing those are
 //! rejected with [`FontError::Unsupported`] instead of being measured wrongly.
 //! Go additionally validates the `glyf`/`loca`/`post`/`kern`/`GPOS` tables at
 //! parse time; this reader does not, so accept/reject parity for corrupted font
@@ -54,26 +55,7 @@ struct Table {
 }
 
 #[derive(Clone)]
-struct Cmap4Entry {
-    end: u16,
-    start: u16,
-    delta: u16,
-    offset: u16,
-}
-
-#[derive(Clone)]
 enum Cmap {
-    /// Format 4 segments plus the byte range (absolute offset, length) of the
-    /// glyph-id array that follows them.
-    Fmt4 {
-        entries: Vec<Cmap4Entry>,
-        indexes_base: usize,
-        indexes_length: u32,
-    },
-    Fmt6 {
-        first_code: u16,
-        entries: Vec<u16>,
-    },
     Fmt12 {
         /// `(start, end, delta)`.
         entries: Vec<(u32, u32, u32)>,
@@ -338,49 +320,6 @@ impl Font {
     pub fn glyph_index(&self, r: char) -> Result<u16, GlyphError> {
         let r = r as u32;
         match &self.cmap {
-            Cmap::Fmt4 {
-                entries,
-                indexes_base,
-                indexes_length,
-            } => {
-                if r > 0xffff {
-                    return Ok(0);
-                }
-                let c = r as u16;
-                let (mut i, mut j) = (0usize, entries.len());
-                while i < j {
-                    let h = i + (j - i) / 2;
-                    let e = &entries[h];
-                    if c < e.start {
-                        j = h;
-                    } else if e.end < c {
-                        i = h + 1;
-                    } else if e.offset == 0 {
-                        return Ok(c.wrapping_add(e.delta));
-                    } else {
-                        // Go: uint32(entry.offset) + 2*uint32(h-len(entries)+int(c-entry.start))
-                        let rel = h as i64 - entries.len() as i64 + i64::from(c - e.start);
-                        let offset = (u32::from(e.offset) as i64 + 2 * rel) as u32;
-                        if offset > *indexes_length || offset.wrapping_add(2) > *indexes_length {
-                            return Err(GlyphError);
-                        }
-                        return u16_at(&self.data, indexes_base + offset as usize)
-                            .ok_or(GlyphError);
-                    }
-                }
-                Ok(0)
-            }
-            Cmap::Fmt6 {
-                first_code,
-                entries,
-            } => {
-                let c16 = r as u16;
-                if c16 < *first_code {
-                    return Ok(0);
-                }
-                let idx = usize::from(c16 - first_code);
-                Ok(entries.get(idx).copied().unwrap_or(0))
-            }
             Cmap::Fmt12 { entries } => {
                 let (mut i, mut j) = (0usize, entries.len());
                 while i < j {
@@ -454,67 +393,10 @@ fn parse_cmap(src: &[u8], cmap: Table) -> Result<Cmap, FontError> {
     }
     let mut offset = best_offset;
     match best_format {
-        4 => {
-            const SUB_HEADER: u32 = 14;
-            if offset + SUB_HEADER > cmap.length {
-                return Err(FontError::Invalid("cmap table"));
-            }
-            let seg_count_x2 = u16_at(src, base + offset as usize + 6).ok_or(bounds.clone())?;
-            if seg_count_x2 & 1 != 0 {
-                return Err(FontError::Invalid("cmap table"));
-            }
-            let seg_count = u32::from(seg_count_x2 / 2);
-            if seg_count > MAX_CMAP_SEGMENTS {
-                return Err(FontError::Unsupported("number of cmap segments"));
-            }
-            offset += SUB_HEADER;
-            let e_length = 8 * seg_count + 2;
-            if offset + e_length > cmap.length {
-                return Err(FontError::Invalid("cmap table"));
-            }
-            let b = src
-                .get(base + offset as usize..base + (offset + e_length) as usize)
-                .ok_or(bounds.clone())?;
-            let n = seg_count as usize;
-            let entries = (0..n)
-                .map(|i| Cmap4Entry {
-                    end: u16_at(b, 2 * i).unwrap_or(0),
-                    start: u16_at(b, 2 * n + 2 + 2 * i).unwrap_or(0),
-                    delta: u16_at(b, 4 * n + 2 + 2 * i).unwrap_or(0),
-                    offset: u16_at(b, 6 * n + 2 + 2 * i).unwrap_or(0),
-                })
-                .collect();
-            offset += e_length;
-            Ok(Cmap::Fmt4 {
-                entries,
-                indexes_base: base + offset as usize,
-                indexes_length: cmap.length - offset,
-            })
-        }
-        6 => {
-            const SUB_HEADER: u32 = 10;
-            if offset + SUB_HEADER > cmap.length {
-                return Err(FontError::Invalid("cmap table"));
-            }
-            let first_code = u16_at(src, base + offset as usize + 6).ok_or(bounds.clone())?;
-            let entry_count =
-                u32::from(u16_at(src, base + offset as usize + 8).ok_or(bounds.clone())?);
-            offset += SUB_HEADER;
-            let e_length = 2 * entry_count;
-            if offset + e_length > cmap.length {
-                return Err(FontError::Invalid("cmap table"));
-            }
-            let b = src
-                .get(base + offset as usize..base + (offset + e_length) as usize)
-                .ok_or(bounds.clone())?;
-            let entries = (0..entry_count as usize)
-                .map(|i| u16_at(b, 2 * i).unwrap_or(0))
-                .collect();
-            Ok(Cmap::Fmt6 {
-                first_code,
-                entries,
-            })
-        }
+        // Formats 4 and 6 take part in the selection above like Go, but no Go-recorded
+        // case exercises their lookup (the embedded Inter fonts select format 12), so
+        // they are rejected instead of measured unverified.
+        4 | 6 => Err(FontError::Unsupported("cmap format 4/6")),
         12 => {
             const SUB_HEADER: u32 = 16;
             if offset + SUB_HEADER > cmap.length {
@@ -564,6 +446,24 @@ mod tests {
         assert_eq!(scale(-1024, 2048), -1);
         assert_eq!(scale(-1023, 2048), 0);
         assert_eq!(scale(i32::MAX, 2048), (i32::MAX.wrapping_add(1024)) / 2048);
+    }
+
+    #[test]
+    fn cmap_formats_4_and_6_are_rejected_after_go_selection() {
+        for format in [4u8, 6] {
+            // version 0, one record (platform 3, encoding 1) pointing at offset 12.
+            let mut table = vec![0, 0, 0, 1, 0, 3, 0, 1, 0, 0, 0, 12, 0, format];
+            table.resize(64, 0);
+            let cmap = Table {
+                offset: 0,
+                length: table.len() as u32,
+            };
+            assert_eq!(
+                parse_cmap(&table, cmap).err(),
+                Some(FontError::Unsupported("cmap format 4/6")),
+                "format {format}"
+            );
+        }
     }
 
     #[test]

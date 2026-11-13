@@ -786,7 +786,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 99
+      "passed": 101
     },
     "cargo test -p symdesk-render --locked --examples --test pdfops_frozen": {
       "ignored": 0,

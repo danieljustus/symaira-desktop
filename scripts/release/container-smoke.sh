@@ -16,8 +16,10 @@ port="${SMOKE_PORT:-18787}"
 base="http://127.0.0.1:$port"
 cleanup() {
   docker rm -f "$name" >/dev/null 2>&1 || true
-  # Files below data/ belong to uid 10001 inside the container.
-  docker run --rm -v "$data:/data" --entrypoint rm "$image" -rf /data/vault /data/state /data/options.json >/dev/null 2>&1 || true
+  # The entrypoint hands /data and everything below it to uid 10001. On a
+  # native Linux host that includes the bind-mounted directory itself, so give
+  # it back to the caller before removing it.
+  docker run --rm --user 0 -v "$data:/data" --entrypoint chown "$image" -R "$(id -u):$(id -g)" /data >/dev/null 2>&1 || true
   rm -rf "$data" "$data.read"
 }
 trap cleanup EXIT

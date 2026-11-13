@@ -42,7 +42,13 @@ public enum ServerConnectionConfig {
     // replacement for the previous direct Keychain access: SymairaKeychain
     // stores items under kSecClassGenericPassword exactly as before, so any
     // already-saved token remains readable without a migration step.
-    private static let keychain = SymairaKeychain(service: "com.symaira.desktop.server")
+    // The macOS app has no keychain-access-groups entitlement, so it must use
+    // the login keychain; the data-protection keychain would reject every
+    // write with errSecMissingEntitlement.
+    private static let keychain = SymairaKeychain(
+        service: "com.symaira.desktop.server",
+        storage: .loginKeychain
+    )
     private static let account = "self-hosted-token"
 
     public static var hasConnection: Bool {

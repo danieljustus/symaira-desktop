@@ -1,13 +1,13 @@
 {
-  "originHash" : "e12aabaf591c7ec0873060ff2af89d6b1462b8bb6a49f3f70f090b404d51f016",
+  "originHash" : "b02649a0df4364ba1a73016f01c611bb22745dd25de1c0ad787f1e64752db6da",
   "pins" : [
     {
       "identity" : "argmax-oss-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/argmaxinc/argmax-oss-swift",
       "state" : {
-        "revision" : "1e2a163736dfa5a198e637ae44c114e1c6d5cc2d",
-        "version" : "1.1.0"
+        "revision" : "1bbc57cb7fe6410248a685b1c5a3c6d56adc2ed4",
+        "version" : "1.1.1"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/danieljustus/symaira-corekit.git",
       "state" : {
-        "revision" : "7bb2abf815892d47ca8ddb902a348a2990dcd1bf",
-        "version" : "0.21.0"
+        "revision" : "456a51036988b4e486ade68c6b3834c9e7e2ac23",
+        "version" : "0.22.2"
       }
     }
   ],

@@ -14,7 +14,7 @@ packages:
     url: https://github.com/danieljustus/symaira-corekit.git
     # AppKit lives in symaira-corekit (ADR 0006); since 0.21.0 the Swift
     # sources are under swift/. Product and module names are unchanged.
-    exactVersion: 0.21.0
+    exactVersion: 0.22.2
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet

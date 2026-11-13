@@ -1,5 +1,5 @@
 {
-  "originHash" : "64d67b85df6f1ff557d1b017dc6234980623d0b2266194188f6b3c5aa541400b",
+  "originHash" : "638b61a0d2f98bee23a180cc7050bf6182670f3228e6fbe2695be3820eecf3ef",
   "pins" : [
     {
       "identity" : "argmax-oss-swift",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/danieljustus/symaira-corekit.git",
       "state" : {
-        "revision" : "7bb2abf815892d47ca8ddb902a348a2990dcd1bf",
-        "version" : "0.21.0"
+        "revision" : "456a51036988b4e486ade68c6b3834c9e7e2ac23",
+        "version" : "0.22.2"
       }
     }
   ],

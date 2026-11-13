@@ -125,7 +125,7 @@ struct ContentView: View {
                     }
                 } else {
                     SymairaScreen {
-                        ProgressView("Connecting to SymDesk Core...")
+                        ProgressView("Connecting to SymDesk Core…")
                             .tint(SymairaTheme.goldPrimary)
                             .foregroundColor(SymairaTheme.textSecondary)
                     }

@@ -33,7 +33,7 @@ struct GraphView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                TextField("Filter by name or path...", text: $filterText)
+                TextField("Filter by name or path…", text: $filterText)
                     .textFieldStyle(.symaira)
 
                 Button {

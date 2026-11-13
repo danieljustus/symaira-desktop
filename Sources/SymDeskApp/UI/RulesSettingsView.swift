@@ -615,7 +615,7 @@ struct RulesSettingsView: View {
                         }
                     } else if aiProvider == "anthropic" {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("API key or symvault reference (op://...)")
+                            Text("API key or symvault reference (op://…)")
                                 .symairaText(.caption)
                                 .foregroundStyle(SymairaTheme.textSecondary)
                             SymairaProviderCredentialField(

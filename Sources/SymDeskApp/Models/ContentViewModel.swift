@@ -61,7 +61,7 @@ final class ContentViewModel: ObservableObject {
 
     // MARK: - Diagnostics State
 
-    @Published var doctorStatus: String = "Checking..."
+    @Published var doctorStatus: String = "Checking…"
     @Published var doctorReport: DoctorReport? = nil
     @Published var isShowingDoctorPopover = false
 

@@ -17,7 +17,7 @@ allow = [
 # Reviewed native watcher dependencies; keep exceptions package-scoped.
 [[licenses.exceptions]]
 name = "notify"
-version = "=8.2.0"
+version = "=8.2.2"
 allow = ["CC0-1.0"]
 
 [[licenses.exceptions]]
@@ -104,13 +104,14 @@ allow = ["MPL-2.0"]
 
 # ZIP/PDF deflate backend, retaining the zlib notice in these exact releases.
 [[licenses.exceptions]]
-name = "libz-rs-sys"
-version = "=0.5.5"
+name = "zlib-rs"
+version = "=0.6.8"
 allow = ["Zlib"]
 
+# serde_json's hasher backend, retaining the zlib notice in this exact release.
 [[licenses.exceptions]]
-name = "zlib-rs"
-version = "=0.5.5"
+name = "foldhash"
+version = "=0.2.0"
 allow = ["Zlib"]
 
 [bans]

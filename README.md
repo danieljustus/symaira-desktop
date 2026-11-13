@@ -313,7 +313,7 @@ The API key (`SYMDESK_LLM_API_KEY`) is resolved dynamically in priority order:
 
 | Artifact | Build/run target | Storage and processing | Connects to |
 | --- | --- | --- | --- |
-| `symdesk` CLI/MCP | macOS, Linux, Windows; amd64/arm64 | Local vault and optional Symaira tools | Shell, agents, native Mac app |
+| `symdesk` CLI/MCP | macOS Apple Silicon; Linux amd64/arm64 | Local vault and optional Symaira tools | Shell, agents, native Mac app |
 | SymDesk Server container | Docker/Compose on Mac mini, Raspberry Pi 4/5 (64-bit), Linux server or NAS | Owns vault, originals, FTS index and durable OCR queue | Mac app, iOS app, workers |
 | Home Assistant app/add-on | Home Assistant OS on aarch64/amd64 | Persistent `/data/vault`; optional in-container Tesseract | Mac app, iOS app, remote workers |
 | Remote OCR worker | macOS or Linux | Downloads one leased original, runs Tesseract or local Ollama, returns text | One SymDesk Server |

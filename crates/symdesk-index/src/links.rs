@@ -97,6 +97,7 @@ impl Sidecar {
         let key = super::strip_verbatim_prefix(target);
         let target = key.as_str();
         let root = super::absolute_non_verbatim(root)?;
+        let canonical_root = std::fs::canonicalize(&root).ok();
         let root = root.as_path();
         let base = Path::new(target)
             .file_name()
@@ -139,10 +140,21 @@ impl Sidecar {
         let mut seen = BTreeSet::new();
         let mut results = Vec::new();
         let mut add = |source: &str, title: &str, property: &str| {
-            let rel = Path::new(source)
+            let path = Path::new(source);
+            let canonical_source = std::fs::canonicalize(path).ok();
+            let rel = path
                 .strip_prefix(root)
+                .ok()
+                .map(Path::to_path_buf)
+                .or_else(|| {
+                    canonical_source
+                        .as_ref()?
+                        .strip_prefix(canonical_root.as_ref()?)
+                        .ok()
+                        .map(Path::to_path_buf)
+                })
                 .map(|v| v.to_string_lossy().replace(std::path::MAIN_SEPARATOR, "/"))
-                .unwrap_or_else(|_| source.to_owned());
+                .unwrap_or_else(|| source.to_owned());
             if seen.insert((rel.clone(), property.to_owned())) {
                 results.push(InverseRelation {
                     source: rel,

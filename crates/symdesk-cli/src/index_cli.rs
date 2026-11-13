@@ -211,10 +211,24 @@ pub fn run(
 }
 
 fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
-    let requested = command
-        .get_one::<String>("path")
-        .map(String::as_str)
-        .or(vault);
+    let argument = command.get_one::<String>("path").map(String::as_str);
+    let configured_root = super::resolve_vault(vault).ok();
+    let file_candidate = argument.and_then(|arg| {
+        let path = Path::new(arg);
+        if path.is_absolute() {
+            path.is_file().then(|| path.to_path_buf())
+        } else {
+            configured_root
+                .as_ref()
+                .map(|root| root.join(path))
+                .filter(|p| p.is_file())
+        }
+    });
+    let requested = if file_candidate.is_some() {
+        vault
+    } else {
+        argument.or(vault)
+    };
     let root = match super::resolve_vault(requested) {
         Ok(path) => path,
         Err(error) => {
@@ -264,8 +278,34 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         Ok(paths) => paths,
         Err(error) => return super::emit_error(error, json_output),
     };
-    let discovered = match symdesk_vault::walk_markdown(&root) {
-        Ok(paths) => paths,
+    let selected = if let Some(path) = file_candidate {
+        let canonical_root = match fs::canonicalize(&root) {
+            Ok(path) => path,
+            Err(error) => return super::emit_error(error.to_string(), json_output),
+        };
+        let canonical_file = match fs::canonicalize(&path) {
+            Ok(path) => path,
+            Err(error) => return super::emit_error(error.to_string(), json_output),
+        };
+        match canonical_file.strip_prefix(&canonical_root) {
+            Ok(relative) => Some(relative.to_path_buf()),
+            Err(_) => {
+                return super::emit_error("file is outside the vault".to_owned(), json_output);
+            }
+        }
+    } else {
+        None
+    };
+    let discovered = if let Some(relative) = &selected {
+        vec![relative.clone()]
+    } else {
+        match symdesk_vault::walk_markdown(&root) {
+            Ok(paths) => paths,
+            Err(error) => return super::emit_error(error.to_string(), json_output),
+        }
+    };
+    let vault_dir = match cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()) {
+        Ok(dir) => dir,
         Err(error) => return super::emit_error(error.to_string(), json_output),
     };
     let mut indexed = 0usize;
@@ -282,7 +322,7 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
             skipped += 1;
             continue;
         }
-        let bytes = match fs::read(&path) {
+        let bytes = match read_index_document(&vault_dir, &relative) {
             Ok(bytes) => bytes,
             Err(error) => return super::emit_error(format!("{error}"), json_output),
         };
@@ -307,7 +347,26 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         }
     }
 
-    let refreshed = sidecar.refresh_index_for_cli(&root);
+    let refreshed = if let Some(relative) = &selected {
+        let mut result = Ok(());
+        for (key, document) in &retrieval_documents {
+            let modified = vault_dir
+                .metadata(relative)
+                .and_then(|metadata| metadata.modified())
+                .ok()
+                .and_then(|time| time.into_std().duration_since(std::time::UNIX_EPOCH).ok())
+                .and_then(|duration| i64::try_from(duration.as_nanos()).ok());
+            result = symdesk_index::IndexedDocument::from_vault(document, modified)
+                .and_then(|indexed| sidecar.index_document(&indexed));
+            if result.is_err() {
+                break;
+            }
+            record_index_status(&sidecar, key, "indexed", "");
+        }
+        result
+    } else {
+        sidecar.refresh_index_for_cli(&root)
+    };
     // Go writes the hybrid index for each document whose sidecar batch
     // committed, including batches flushed before a later walk error.
     let committed = indexed_paths(&root).unwrap_or_default();
@@ -358,6 +417,43 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
             summary
         };
         super::write_stdout(summary)
+    }
+}
+
+fn read_index_document(vault_dir: &cap_std::fs::Dir, relative: &Path) -> std::io::Result<Vec<u8>> {
+    vault_dir.read(relative)
+}
+
+#[cfg(all(test, unix))]
+mod confined_index_read_tests {
+    use super::*;
+    use std::os::unix::fs::symlink;
+
+    #[test]
+    fn swapped_link_cannot_read_outside_vault() {
+        let temp = std::env::temp_dir().join(format!(
+            "symdesk-index-confined-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&temp).unwrap();
+        let root = temp.join("vault");
+        fs::create_dir(&root).unwrap();
+        fs::write(root.join("inside.md"), "inside").unwrap();
+        fs::write(temp.join("outside.md"), "secret").unwrap();
+        symlink("inside.md", root.join("link.md")).unwrap();
+        let dir = cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
+        assert_eq!(
+            read_index_document(&dir, Path::new("link.md")).unwrap(),
+            b"inside"
+        );
+        fs::remove_file(root.join("link.md")).unwrap();
+        symlink(temp.join("outside.md"), root.join("link.md")).unwrap();
+        assert!(read_index_document(&dir, Path::new("link.md")).is_err());
+        fs::remove_dir_all(temp).unwrap();
     }
 }
 

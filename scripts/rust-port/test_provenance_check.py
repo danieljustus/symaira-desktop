@@ -80,6 +80,22 @@ class ProvenanceCheck(unittest.TestCase):
         kinds = {kind for _, kind, _ in pc.fixture_sources(pc.ROOT)}
         self.assertEqual(kinds, {"map", "single"})
 
+    def test_reachable_pin_passes_and_orphaned_commit_fails(self):
+        self.assertEqual(pc.check_reachable(pc.ROOT, pc.LAST_GO_COMMIT), [])
+        root = Path(tempfile.mkdtemp(prefix="provenance-reach-"))
+        self.addCleanup(shutil.rmtree, root)
+        git = ["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid"]
+        pc.subprocess.run(["git", "init", "-q", str(root)], check=True)
+        pc.subprocess.run(git + ["-C", str(root), "commit", "-q", "--allow-empty", "-m", "orphan"],
+                          check=True)
+        orphan = pc.subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], check=True,
+                                   capture_output=True, text=True).stdout.strip()
+        errors = pc.check_reachable(root, orphan)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not reachable", errors[0])
+        pc.subprocess.run(["git", "-C", str(root), "tag", "oracle/test-anchor", orphan], check=True)
+        self.assertEqual(pc.check_reachable(root, orphan), [])
+
     def test_history_missing_commit_fails_closed(self):
         root = Path(tempfile.mkdtemp(prefix="provenance-nohistory-"))
         self.addCleanup(shutil.rmtree, root)

@@ -143,12 +143,32 @@ def fixture_sources(root):
             yield rel, "single", single
 
 
+def check_reachable(root, commit):
+    """A pinned commit must stay reachable from a published branch or tag.
+
+    A squash merge orphans the commits of its PR branch; once that branch is
+    deleted a fresh clone can no longer fetch them, so an object that merely
+    exists in a local clone is not enough.
+    """
+    refs = subprocess.run(
+        ["git", "for-each-ref", "--count=1", "--contains", commit,
+         "--format=%(refname)", "refs/remotes", "refs/tags"],
+        cwd=root, capture_output=True, check=False, text=True,
+    )
+    if refs.returncode != 0 or not refs.stdout.strip():
+        return [f"pinned commit {commit} is not reachable from any remote branch or tag "
+                "(anchor it with an oracle-pins/* branch or oracle/* tag that is not an "
+                "ancestor of main)"]
+    return []
+
+
 def check_history(root, commit=LAST_GO_COMMIT):
     errors, checked = [], 0
     probe = subprocess.run(["git", "cat-file", "-e", f"{commit}^{{commit}}"],
                            cwd=root, capture_output=True, check=False)
     if probe.returncode != 0:
         return [f"last Go commit {commit} is not in this clone (need full history)"], 0
+    errors += check_reachable(root, commit)
     paths = tree_paths(root, commit)
     for rel, kind, value in fixture_sources(root):
         if kind == "map":

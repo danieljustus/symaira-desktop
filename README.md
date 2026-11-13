@@ -71,7 +71,7 @@ alongside the archive and checksum manifest, then verify them without a
 long-lived signing key:
 
 ```sh
-VERSION=0.12.2
+VERSION=0.13.0
 ARCHIVE="symaira-desktop_${VERSION}_darwin_arm64.tar.gz"
 IDENTITY=https://github.com/danieljustus/symaira-desktop/.github/workflows/release.yml@refs/tags/v.*
 ISSUER=https://token.actions.githubusercontent.com
@@ -129,7 +129,7 @@ repository script on a Mac with Xcode 26.x and the required Apple signing
 profiles installed:
 
 ```sh
-IOS_VERSION=0.12.2 \
+IOS_VERSION=0.13.0 \
 IOS_BUILD_NUMBER=1 \
 DEVELOPMENT_TEAM=M4744F3TAA \
 bash scripts/release-ios.sh
@@ -186,7 +186,7 @@ symdesk version --json         # {"tool":"symdesk","version":...,"schema_version
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.12.2","schema_version":1}
+{"tool":"symdesk","version":"0.13.0","schema_version":1}
 ```
 
 ## Development

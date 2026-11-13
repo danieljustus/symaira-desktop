@@ -70,7 +70,10 @@ pub fn note_file_name(title: &str) -> String {
 /// Renders the compact frontmatter document a Go `note new` writes.
 #[must_use]
 pub fn note_document(title: &str, created: &str, content: &str) -> String {
-    format!("---\ntitle: \"{title}\"\ncreated: \"{created}\"\ntags: []\n---\n\n{content}")
+    // JSON string escaping is also valid YAML double-quoted scalar escaping.
+    // Preserve the historical bytes for ordinary titles.
+    let title = serde_json::to_string(title).expect("serializing a string cannot fail");
+    format!("---\ntitle: {title}\ncreated: \"{created}\"\ntags: []\n---\n\n{content}")
 }
 
 /// Writes a new note and returns its vault-relative path.
@@ -159,4 +162,31 @@ fn write_direct(path: &Path, data: &[u8]) -> Result<(), NoteError> {
         .map_err(|source| NoteError::Create { source })?;
     file.write_all(data)
         .map_err(|source| NoteError::Create { source })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn note_titles_round_trip_through_yaml() {
+        assert_eq!(
+            note_document("Plain title", "today", "body"),
+            "---\ntitle: \"Plain title\"\ncreated: \"today\"\ntags: []\n---\n\nbody"
+        );
+        for title in [
+            "He said \"hi\"",
+            r"back\slash",
+            "a: b",
+            "#heading",
+            "[special]",
+            "line\nbreak",
+            "true",
+        ] {
+            let document = note_document(title, "today", "body");
+            let frontmatter = document.split("---\n").nth(1).unwrap();
+            let parsed: noyalib::Value = noyalib::from_str(frontmatter).unwrap();
+            assert_eq!(parsed["title"].as_str(), Some(title));
+        }
+    }
 }

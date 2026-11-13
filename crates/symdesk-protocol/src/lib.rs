@@ -8189,6 +8189,11 @@ mod tests {
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn successful_bodyless_handler_response_survives_continued_upload() {
+        assert_early_response_survives_upload("GET /healthz", true, b"", 0, 2 << 20, 200).await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn body_read_timeout_response_survives_continued_upload() {
         assert_early_response_survives_upload(
             "POST /test-body-timeout",

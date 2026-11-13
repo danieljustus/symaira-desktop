@@ -63,9 +63,11 @@ struct ReviewLaneView: View {
             Button(action: {
                 Task { await fetchReviewDocs() }
             }) {
-                Image(systemName: "arrow.clockwise")
+                SymairaIconView(.refresh, size: 16)
             }
             .buttonStyle(SymairaSecondaryButtonStyle())
+            .accessibilityLabel("Refresh")
+            .help("Refresh")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
@@ -73,10 +75,8 @@ struct ReviewLaneView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "checkmark.shield.fill")
-                .symairaText(.display)
+            SymairaIconView(.shieldCheck, size: 30)
                 .foregroundColor(SymairaTheme.goldPrimary)
-                .shadow(color: SymairaTheme.glowIntense, radius: 14)
             Text("All caught up!")
                 .symairaText(.heading)
                 .fontWeight(.medium)
@@ -111,8 +111,7 @@ struct ReviewLaneView: View {
 
                         ForEach(doc.reasons, id: \.self) { reason in
                             HStack(spacing: 4) {
-                                Image(systemName: "exclamationmark.circle")
-                                    .symairaText(.caption)
+                                SymairaIconView(.warning, size: 14)
                                     .foregroundColor(SymairaTheme.goldSecondary)
                                 Text(reason)
                                     .symairaText(.caption)
@@ -127,12 +126,13 @@ struct ReviewLaneView: View {
                 Button(action: {
                     Task { await ignoreDoc(doc) }
                 }) {
-                    Image(systemName: "eye.slash")
+                    SymairaIconView(.hidden, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
                 .help("Not a document — ignore, and don't show again")
                 .padding(.top, 8)
+                .accessibilityLabel("Not a document — ignore, and don't show again")
             }
             .background(selectedDoc?.id == doc.id ? SymairaTheme.goldPrimary.opacity(0.12) : Color.clear)
             .cornerRadius(8)
@@ -145,8 +145,7 @@ struct ReviewLaneView: View {
 
     private var noSelectionState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .symairaText(.display)
+            SymairaIconView(.documentSearch, size: 30)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select a document to review")
                 .symairaText(.heading)

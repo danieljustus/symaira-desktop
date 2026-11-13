@@ -49,7 +49,7 @@ struct DashboardView: View {
                 Spacer()
                 if let report = doctorReport {
                     HStack(spacing: 6) {
-                        Image(systemName: report.overall == "ok" ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                        SymairaIconView(report.overall == "ok" ? .shieldCheck : .shieldAlert, size: 16)
                             .foregroundColor(report.overall == "ok" ? SymairaTheme.goldPrimary : .orange)
                         Text(report.overall == "ok" ? "Healthy" : "Issues found")
                             .symairaText(.caption)
@@ -68,20 +68,20 @@ struct DashboardView: View {
     private var quickStatsSection: some View {
         HStack(spacing: 14) {
             statCard(
-                icon: "doc.text",
+                icon: .document,
                 label: "Documents",
                 value: "\(docTotalCount)",
                 color: SymairaTheme.goldPrimary
             )
             statCard(
-                icon: "note.text",
+                icon: .note,
                 label: "Notes",
                 value: "\(notes.count)",
                 color: SymairaTheme.iceSecondary
             )
             if let needsReview = docCounts["needs_review"], needsReview > 0 {
                 statCard(
-                    icon: "exclamationmark.triangle",
+                    icon: .warning,
                     label: "Needs Review",
                     value: "\(needsReview)",
                     color: .orange
@@ -89,7 +89,7 @@ struct DashboardView: View {
             }
             if let open = docCounts["open"], open > 0 {
                 statCard(
-                    icon: "circle",
+                    icon: .pending,
                     label: "Open",
                     value: "\(open)",
                     color: SymairaTheme.goldSecondary
@@ -98,10 +98,9 @@ struct DashboardView: View {
         }
     }
 
-    private func statCard(icon: String, label: String, value: String, color: Color) -> some View {
+    private func statCard(icon: SymairaIcon, label: String, value: String, color: Color) -> some View {
         VStack(spacing: 6) {
-            Image(systemName: icon)
-                .symairaText(.title)
+            SymairaIconView(icon, size: 24)
                 .foregroundColor(color)
             Text(value)
                 .symairaText(.title).fontWeight(.bold)
@@ -112,7 +111,7 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     // MARK: - Document Status
@@ -134,7 +133,7 @@ struct DashboardView: View {
                         onNavigate(.docs)
                     }) {
                         HStack {
-                            Image(systemName: preset.status?.systemImage ?? "doc.text")
+                            SymairaIconView(preset.status?.symairaIcon ?? .document, size: 16)
                                 .foregroundColor(SymairaTheme.goldPrimary)
                             Text(preset.label)
                                 .foregroundColor(SymairaTheme.textPrimary)
@@ -149,7 +148,7 @@ struct DashboardView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .glassCard()
+                        .symairaCard(padding: 0)
                     }
                     .buttonStyle(.plain)
                 }
@@ -181,7 +180,7 @@ struct DashboardView: View {
                         }
                     }) {
                         HStack {
-                            Image(systemName: "doc.text")
+                            SymairaIconView(.document, size: 16)
                                 .foregroundColor(SymairaTheme.iceSecondary)
                             Text(note.title)
                                 .foregroundColor(SymairaTheme.textPrimary)
@@ -193,7 +192,7 @@ struct DashboardView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .glassCard()
+                        .symairaCard(padding: 0)
                     }
                     .buttonStyle(.plain)
                 }
@@ -213,17 +212,17 @@ struct DashboardView: View {
                 onNavigate(.discover)
             }) {
                 HStack {
-                    Image(systemName: "sparkles")
+                    SymairaIconView(.ai, size: 16)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Text("Discover what SymDesk can do")
                         .foregroundColor(SymairaTheme.textPrimary)
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    SymairaIconView(.forward, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .glassCard()
+                .symairaCard(padding: 0)
             }
             .buttonStyle(.plain)
         }

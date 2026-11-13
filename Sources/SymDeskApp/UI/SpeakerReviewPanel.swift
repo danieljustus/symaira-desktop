@@ -73,7 +73,7 @@ struct SpeakerReviewPanel: View {
 
     private func speakerRow(_ speaker: MeetingSpeaker) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "person.crop.circle")
+            SymairaIconView(.user, size: 16)
                 .foregroundColor(SymairaTheme.goldSecondary)
 
             if renamingSpeakerID == speaker.speakerID {
@@ -120,7 +120,7 @@ struct SpeakerReviewPanel: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(symairaIcon: .more, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .menuStyle(.borderlessButton)

@@ -14,7 +14,7 @@ struct VaultEditorPaneView: View {
             VStack(spacing: 0) {
                 if model.isConflicted(note) {
                     HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
+                        SymairaIconView(.warning, size: 16)
                             .foregroundStyle(SymairaTheme.goldPrimary)
                         Text("iCloud sync conflict detected")
                             .symairaText(.caption)
@@ -52,7 +52,7 @@ struct VaultEditorPaneView: View {
 
                 if let saveError = model.mutationTracker.failureMessage(for: model.saveActionID(note)) {
                     HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
+                        SymairaIconView(.warning, size: 16)
                             .foregroundStyle(SymairaTokens.critical)
                         Text("Save failed: \(saveError)")
                             .symairaText(.caption)
@@ -64,10 +64,12 @@ struct VaultEditorPaneView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         Button(action: { model.mutationTracker.clearFailure(for: model.saveActionID(note)) }) {
-                            Image(systemName: "xmark")
+                            SymairaIconView(.close, size: 16)
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(SymairaTheme.textSecondary)
+                        .accessibilityLabel("Dismiss Error")
+                        .help("Dismiss Error")
                     }
                     .padding(8)
                     .background(SymairaTokens.critical.opacity(0.12))
@@ -149,7 +151,7 @@ struct VaultEditorPaneView: View {
             }
         } else {
             ContentUnavailableView {
-                Label("No Note Selected", systemImage: "doc.text")
+                Label("No Note Selected", symairaIcon: .document)
             } description: {
                 Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
             } actions: {

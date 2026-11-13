@@ -236,7 +236,7 @@ struct DocumentViewerView: View {
             Spacer(minLength: 16)
 
             Button(action: { isPDFMode.toggle() }) {
-                Label(isPDFMode ? "Text" : "Preview", systemImage: isPDFMode ? "doc.text" : "doc.richtext")
+                Label(isPDFMode ? "Text" : "Preview", symairaIcon: isPDFMode ? .document : .document)
             }
             .help("Toggle PDF/Text view (Space)")
 
@@ -258,7 +258,7 @@ struct DocumentViewerView: View {
             if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf", pageCount > 0 {
                 viewerDivider
                 Button(action: { goToPreviousPage() }) {
-                    Image(systemName: "chevron.left")
+                    SymairaIconView(.back, size: 16)
                 }
                 .disabled(currentPageIndex <= 0)
                 .help("Previous page")
@@ -266,7 +266,7 @@ struct DocumentViewerView: View {
                     .symairaText(.caption).monospacedDigit()
                     .foregroundStyle(SymairaTheme.textSecondary)
                 Button(action: { goToNextPage() }) {
-                    Image(systemName: "chevron.right")
+                    SymairaIconView(.forward, size: 16)
                 }
                 .disabled(currentPageIndex >= pageCount - 1)
                 .help("Next page")
@@ -274,17 +274,20 @@ struct DocumentViewerView: View {
 
             if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf" {
                 viewerDivider
-                Button(action: { zoomOut() }) { Image(systemName: "minus.magnifyingglass") }
+                Button(action: { zoomOut() }) { SymairaIconView(.zoomOut, size: 16) }
                     .help("Zoom out")
-                Button(action: { zoomFit() }) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                    .accessibilityLabel("Zoom out")
+                Button(action: { zoomFit() }) { SymairaIconView(.fullscreen, size: 16) }
                     .help("Zoom to fit")
-                Button(action: { zoomIn() }) { Image(systemName: "plus.magnifyingglass") }
+                    .accessibilityLabel("Zoom to fit")
+                Button(action: { zoomIn() }) { SymairaIconView(.zoomIn, size: 16) }
                     .help("Zoom in")
+                    .accessibilityLabel("Zoom in")
             }
 
             viewerDivider
             Button(action: { showInspector.toggle() }) {
-                Label("Inspector", systemImage: "sidebar.right")
+                Label("Inspector", symairaIcon: .sidebar)
             }
             .help("Toggle inspector (Cmd+I)")
 
@@ -293,7 +296,7 @@ struct DocumentViewerView: View {
                     onOpenInEditor?(document)
                     dismiss()
                 }) {
-                    Label("Open in Editor", systemImage: "pencil.and.outline")
+                    Label("Open in Editor", symairaIcon: .edit)
                 }
                 .help("Edit this note in the vault editor")
             }
@@ -306,7 +309,7 @@ struct DocumentViewerView: View {
                         ProgressView().controlSize(.small)
                             .accessibilityLabel("Loading document…")
                     } else {
-                        Label("Re-run OCR", systemImage: "doc.badge.gearshape")
+                        Label("Re-run OCR", symairaIcon: .scan)
                     }
                 }
                 .disabled(isReOCRRunning)
@@ -314,14 +317,15 @@ struct DocumentViewerView: View {
             }
 
             Button(action: { dismiss() }) {
-                Image(systemName: "xmark")
+                SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.bordered)
             .help("Close document")
+            .accessibilityLabel("Close document")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .symDeskLiquidGlass(cornerRadius: 0, prominence: .elevated)
+        .symDeskLiquidGlass(cornerRadius: 0)
         .accessibilityElement(children: .contain)
     }
 
@@ -352,7 +356,7 @@ struct DocumentViewerView: View {
                 } else if !noteContent.isEmpty {
                     VStack(spacing: 0) {
                         if let loadMessage {
-                            Label(loadMessage, systemImage: "exclamationmark.triangle.fill")
+                            Label(loadMessage, symairaIcon: .warning)
                                 .symairaText(.caption)
                                 .foregroundStyle(SymairaTheme.goldSecondary)
                                 .padding(.horizontal, 12)
@@ -384,8 +388,7 @@ struct DocumentViewerView: View {
 
     private var noContentView: some View {
         VStack(spacing: 12) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .symairaText(.display)
+            SymairaIconView(.documentSearch, size: 30)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("No preview available")
                 .symairaText(.heading)
@@ -511,8 +514,7 @@ struct DocumentViewerView: View {
     private func statusChip(status: DocumentStatus) -> some View {
         Button(action: { editStatus = status.rawValue }) {
             HStack(spacing: 4) {
-                Image(systemName: status.systemImage)
-                    .symairaText(.caption)
+                SymairaIconView(status.symairaIcon, size: 14)
                 Text(status.label)
                     .symairaText(.caption)
             }
@@ -559,7 +561,7 @@ struct DocumentViewerView: View {
             if let status = reOCRStatus {
                 Divider()
                 HStack(alignment: .top, spacing: 4) {
-                    Image(systemName: "doc.badge.gearshape")
+                    SymairaIconView(.scan, size: 16)
                         .foregroundColor(SymairaTheme.goldSecondary)
                     Text(status)
                         .symairaText(.caption)

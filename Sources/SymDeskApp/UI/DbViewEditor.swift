@@ -56,42 +56,80 @@ struct DbViewEditor: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Form {
-                Section("View") {
-                    TextField("Name", text: $name)
-                    Picker("Type", selection: $type) {
-                        ForEach(Self.viewTypes, id: \.self) { Text($0.capitalized).tag($0) }
+            ScrollView {
+                VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
+                    SymairaFormSection("View") {
+                        SymairaFormRow("Name") {
+                            TextField("Name", text: $name, prompt: Text("My view"))
+                                .textFieldStyle(.symaira)
+                                .frame(maxWidth: 300)
+                        }
+                        SymairaFormDivider()
+                        SymairaFormRow("Type") {
+                            Picker("Type", selection: $type) {
+                                ForEach(Self.viewTypes, id: \.self) { Text($0.capitalized).tag($0) }
+                            }
+                            .labelsHidden()
+                            .frame(maxWidth: 160)
+                        }
+                        SymairaFormDivider()
+                        SymairaFormRow("Source", description: "Optional") {
+                            TextField("Source", text: $source)
+                                .textFieldStyle(.symaira)
+                                .frame(maxWidth: 300)
+                        }
+                        SymairaFormDivider()
+                        SymairaFormRow("Columns", description: "Comma-separated") {
+                            TextField("Columns", text: $columnsText)
+                                .textFieldStyle(.symaira)
+                                .frame(maxWidth: 300)
+                        }
+                        if type == "board" {
+                            SymairaFormDivider()
+                            SymairaFormRow("Group by Property") {
+                                TextField("Group by property", text: $groupBy)
+                                    .textFieldStyle(.symaira)
+                                    .frame(maxWidth: 300)
+                            }
+                        }
+                        if type == "calendar" || type == "timeline" {
+                            SymairaFormDivider()
+                            SymairaFormRow("Date Property") {
+                                TextField("Date property", text: $dateProperty)
+                                    .textFieldStyle(.symaira)
+                                    .frame(maxWidth: 300)
+                            }
+                        }
                     }
-                    TextField("Source (optional)", text: $source)
-                    TextField("Columns (comma separated)", text: $columnsText)
-                    if type == "board" {
-                        TextField("Group by property", text: $groupBy)
-                    }
-                    if type == "calendar" || type == "timeline" {
-                        TextField("Date property", text: $dateProperty)
-                    }
-                }
 
-                Section("Filters (all must match)") {
-                    filterRows($filters)
-                    Button("Add Filter") { filters.append(EditableFilter()) }
-                }
-
-                Section("Condition Group") {
-                    Picker("Match", selection: $groupOperator) {
-                        Text("All conditions").tag("all")
-                        Text("Any condition").tag("any")
+                    SymairaFormSection("Filters (All Must Match)") {
+                        filterRows($filters)
+                        Button("Add Filter") { filters.append(EditableFilter()) }
+                            .padding(.vertical, SymairaSpacing.small)
                     }
-                    filterRows($groupFilters)
-                    Button("Add Condition") { groupFilters.append(EditableFilter()) }
-                }
 
-                if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(SymairaTokens.critical)
+                    SymairaFormSection("Condition Group") {
+                        SymairaFormRow("Match") {
+                            Picker("Match", selection: $groupOperator) {
+                                Text("All conditions").tag("all")
+                                Text("Any condition").tag("any")
+                            }
+                            .labelsHidden()
+                            .frame(maxWidth: 200)
+                        }
+                        SymairaFormDivider()
+                        filterRows($groupFilters)
+                        Button("Add Condition") { groupFilters.append(EditableFilter()) }
+                            .padding(.vertical, SymairaSpacing.small)
+                    }
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(SymairaTokens.critical)
+                    }
                 }
+                .padding()
             }
-            .formStyle(.grouped)
 
             Divider()
             HStack {
@@ -119,6 +157,7 @@ struct DbViewEditor: View {
         ForEach(items) { $filter in
             HStack {
                 TextField("Property", text: $filter.key)
+                    .textFieldStyle(.symaira)
                     .frame(minWidth: 100)
                 Picker("", selection: $filter.op) {
                     ForEach(Self.operators, id: \.0) { op in
@@ -128,15 +167,19 @@ struct DbViewEditor: View {
                 .labelsHidden()
                 if filter.op != "is_empty" && filter.op != "is_not_empty" {
                     TextField("Value", text: $filter.value)
+                        .textFieldStyle(.symaira)
                         .frame(minWidth: 100)
                 }
                 Button {
                     items.wrappedValue.removeAll { $0.id == filter.id }
                 } label: {
-                    Image(systemName: "minus.circle")
+                    SymairaIconView(.remove, size: 16)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Remove filter")
+                .help("Remove filter")
             }
+            .padding(.vertical, SymairaSpacing.xSmall)
         }
     }
 

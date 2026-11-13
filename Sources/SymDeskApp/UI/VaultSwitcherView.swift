@@ -56,7 +56,7 @@ struct VaultSwitcherView: View {
                         Button {
                             switchToLocal(entry)
                         } label: {
-                            Label(entry.name, systemImage: isActiveLocal(entry) ? "checkmark" : "folder")
+                            Label { Text(entry.name) } icon: { Image(symairaIcon: isActiveLocal(entry) ? .confirm : .folder, size: 16) }
                         }
                     }
                 }
@@ -68,19 +68,19 @@ struct VaultSwitcherView: View {
                         // Already connected — keep the entry visible as the
                         // active peer.
                     } label: {
-                        Label("Server · \(url.host ?? url.absoluteString)", systemImage: "checkmark")
+                        Label { Text("Server · \(url.host ?? url.absoluteString)") } icon: { Image(symairaIcon: .confirm, size: 16) }
                     }
                 } else if let connection = ServerConnectionConfig.connection() {
                     Button {
                         reconnectServer(connection)
                     } label: {
-                        Label("Server · \(connection.url.host ?? connection.url.absoluteString)", systemImage: "server.rack")
+                        Label { Text("Server · \(connection.url.host ?? connection.url.absoluteString)") } icon: { Image(symairaIcon: .server, size: 16) }
                     }
                 } else {
                     Button {
                         isShowingServerConnect = true
                     } label: {
-                        Label("Connect to Server…", systemImage: "server.rack")
+                        Label { Text("Connect to Server…") } icon: { Image(symairaIcon: .server, size: 16) }
                     }
                 }
             }
@@ -90,13 +90,13 @@ struct VaultSwitcherView: View {
             Button {
                 openOtherVault()
             } label: {
-                Label("Open Other Vault…", systemImage: "folder.badge.plus")
+                Label { Text("Open Other Vault…") } icon: { Image(symairaIcon: .folderAdd, size: 16) }
             }
 
             Button {
                 isShowingCreateVault = true
             } label: {
-                Label("Create New Vault…", systemImage: "folder.badge.plus")
+                Label { Text("Create New Vault…") } icon: { Image(symairaIcon: .folderAdd, size: 16) }
             }
 
             if let active = activeLocalEntry {
@@ -104,12 +104,12 @@ struct VaultSwitcherView: View {
                 Button(role: .destructive) {
                     pendingRemoval = active
                 } label: {
-                    Label("Remove “\(active.name)” from List", systemImage: "minus.circle")
+                    Label { Text("Remove “\(active.name)” from List") } icon: { Image(symairaIcon: .remove, size: 16) }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: core.isRemote ? "server.rack" : "internaldrive")
+                Image(symairaIcon: core.isRemote ? .server : .storage, size: 14)
                     .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text(activeName)
@@ -117,7 +117,7 @@ struct VaultSwitcherView: View {
                     .foregroundStyle(SymairaTheme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Image(systemName: "chevron.down")
+                Image(symairaIcon: .expand, size: 14)
                     .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
@@ -282,7 +282,7 @@ private struct CreateVaultSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "folder.badge.plus")
+                SymairaIconView(.folderAdd, size: 16)
                     .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
@@ -313,7 +313,7 @@ private struct CreateVaultSheet: View {
                 }
             }
             .padding(18)
-            .glassmorphicPanel()
+            .symairaCard(padding: 0)
 
             HStack {
                 Spacer()

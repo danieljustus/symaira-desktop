@@ -165,18 +165,18 @@ struct ChatTranscriptView: View {
                     Button {
                         copyToClipboard(text)
                     } label: {
-                        Image(systemName: "doc.on.doc")
-                            .symairaText(.caption)
+                        SymairaIconView(.copy, size: 14)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.borderless)
                     .help("Copy answer")
+                    .accessibilityLabel("Copy answer")
                 }
                 if text.contains("AI feature not configured") {
                     Button {
                         NotificationCenter.default.post(name: .openRulesSettings, object: "ai")
                     } label: {
-                        Label("Open AI Settings", systemImage: "gearshape")
+                        Label("Open AI Settings", symairaIcon: .settings)
                             .symairaText(.caption)
                     }
                     .buttonStyle(.borderless)
@@ -188,8 +188,7 @@ struct ChatTranscriptView: View {
         case .citation(_, let path, let title, let snippet, let score):
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Image(systemName: "doc.text")
-                        .symairaText(.caption)
+                    SymairaIconView(.document, size: 14)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Text(title.isEmpty ? path : title)
                         .symairaText(.caption).bold()
@@ -198,12 +197,12 @@ struct ChatTranscriptView: View {
                     Button {
                         onOpenFile(path)
                     } label: {
-                        Image(systemName: "arrow.up.right.square")
-                            .symairaText(.caption)
+                        SymairaIconView(.openExternal, size: 14)
                             .foregroundColor(SymairaTheme.goldSecondary)
                     }
                     .buttonStyle(.borderless)
                     .help("Open note")
+                    .accessibilityLabel("Open note")
                 }
                 Text(snippet)
                     .symairaText(.caption)
@@ -229,8 +228,7 @@ struct ChatTranscriptView: View {
                 // Agentic loop (issue #317): the model invoked a read-only
                 // tool — show name + inputs instead of a bare spinner.
                 HStack(spacing: 6) {
-                    Image(systemName: "wand.and.stars")
-                        .symairaText(.caption)
+                    SymairaIconView(.magic, size: 14)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(iterationLabel(iteration, toolName: toolName))
@@ -250,8 +248,7 @@ struct ChatTranscriptView: View {
                 .cornerRadius(6)
             } else if status == "result" {
                 HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .symairaText(.caption)
+                    SymairaIconView(.success, size: 14)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(iterationLabel(iteration, toolName: toolName))
@@ -293,12 +290,10 @@ struct ChatTranscriptView: View {
                             .controlSize(.small)
                             .tint(SymairaTheme.goldPrimary)
                     } else if status == "done" {
-                        Image(systemName: "checkmark.circle.fill")
-                            .symairaText(.caption)
+                        SymairaIconView(.success, size: 14)
                             .foregroundColor(SymairaTheme.goldPrimary)
                     } else if status == "error" {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .symairaText(.caption)
+                        SymairaIconView(.warning, size: 14)
                             .foregroundColor(SymairaTokens.warning)
                     }
                     Text("\(toolName): \(status)")

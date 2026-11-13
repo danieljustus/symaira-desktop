@@ -28,7 +28,7 @@ struct ContentSidebarView: View {
                 // secondary destination (issue #657).
                 SidebarDisclosureSection(
                     title: "Notes",
-                    systemImage: "doc.text",
+                    icon: .document,
                     isCollapsed: $isNotesSectionCollapsed
                 ) {
                     if model.folderTree.isEmpty {
@@ -43,20 +43,20 @@ struct ContentSidebarView: View {
 
                 Section {
                     Button { model.navigate(to: .dashboard) } label: {
-                        Label("Dashboard", systemImage: "rectangle.grid.1x2")
+                        Label("Dashboard", symairaIcon: .dashboard)
                     }
                 }
 
                 SidebarDisclosureSection(
                     title: "Library",
-                    systemImage: "books.vertical",
+                    icon: .library,
                     isCollapsed: $isLibrarySectionCollapsed
                 ) {
                     HStack(spacing: 8) {
                         Button {
                             model.navigate(to: .docs, docFilter: "all")
                         } label: {
-                            Label("All Documents", systemImage: "doc.on.doc")
+                            Label("All Documents", symairaIcon: .copy)
                         }
                         .buttonStyle(.plain)
                         Spacer(minLength: 4)
@@ -77,7 +77,7 @@ struct ContentSidebarView: View {
                                 }
                             }
                         } label: {
-                            Label("Filter Library", systemImage: "line.3.horizontal.decrease.circle")
+                            Label { Text("Filter Library") } icon: { Image(symairaIcon: .filter, size: 16) }
                                 .labelStyle(.iconOnly)
                         }
                         .menuStyle(.borderlessButton)
@@ -88,7 +88,7 @@ struct ContentSidebarView: View {
 
                 SidebarDisclosureSection(
                     title: "Tags",
-                    systemImage: "number",
+                    icon: .tag,
                     isCollapsed: $isTagsSectionCollapsed
                 ) {
                     TagBrowserView(
@@ -119,62 +119,62 @@ struct ContentSidebarView: View {
 
                 SidebarDisclosureSection(
                     title: "Discover",
-                    systemImage: "sparkles",
+                    icon: .ai,
                     isCollapsed: $isDiscoverSectionCollapsed
                 ) {
                     Button { model.navigate(to: .discover) } label: {
-                        Label("Discover", systemImage: "sparkles")
+                        Label("Discover", symairaIcon: .ai)
                     }
                     Button { model.navigate(to: .notebooks) } label: {
-                        Label("Notebooks", systemImage: "books.vertical")
+                        Label("Notebooks", symairaIcon: .library)
                     }
                     Button { model.navigate(to: .retrievalStatus) } label: {
-                        Label("Search Index", systemImage: "magnifyingglass.circle")
+                        Label("Search Index", symairaIcon: .search)
                     }
                     Button { model.navigate(to: .room) } label: {
                         Label("Project Journal", systemImage: "door.left.hand.open")
                     }
                     Button { model.navigate(to: .companionTools) } label: {
-                        Label("Companion Tools", systemImage: "wrench.and.screwdriver")
+                        Label("Companion Tools", symairaIcon: .tools)
                     }
                 }
 
                 SidebarDisclosureSection(
                     title: "Inbox & Processing",
-                    systemImage: "tray.and.arrow.down",
+                    icon: .inbox,
                     isCollapsed: $isInboxSectionCollapsed
                 ) {
                     Button { model.navigate(to: .ingestQueue) } label: {
-                        Label("Ingest Queue", systemImage: "tray.and.arrow.down")
+                        Label("Ingest Queue", symairaIcon: .inbox)
                     }
                     Button { model.navigate(to: .reviewLane) } label: {
-                        Label("Review Lane", systemImage: "exclamationmark.triangle")
+                        Label("Review Lane", symairaIcon: .warning)
                     }
                 }
 
                 SidebarDisclosureSection(
                     title: "Safety Net",
-                    systemImage: "shield",
+                    icon: .shield,
                     isCollapsed: $isSafetySectionCollapsed
                 ) {
                     Button { model.navigate(to: .history) } label: {
-                        Label("Version History", systemImage: "clock.arrow.circlepath")
+                        Label("Version History", symairaIcon: .history)
                     }
                     Button { model.navigate(to: .trash) } label: {
-                        Label("Trash", systemImage: "trash")
+                        Label("Trash", symairaIcon: .delete)
                     }
                     Button { model.navigate(to: .duplicates) } label: {
-                        Label("Possible Duplicates", systemImage: "arrow.triangle.2.circlepath")
+                        Label("Possible Duplicates", symairaIcon: .copy)
                     }
                 }
 
                 SidebarDisclosureSection(
                     title: "Settings",
-                    systemImage: "gearshape",
+                    icon: .settings,
                     isCollapsed: $isSettingsSectionCollapsed
                 ) {
                     Button { model.navigate(to: .rules) } label: {
-                        Label("Rules & Settings", systemImage: "gearshape")
+                        Label("Rules & Settings", symairaIcon: .settings)
                     }
                     // Local Models stays available in code for its
                     // eventual launch, but is intentionally not a
@@ -183,7 +183,7 @@ struct ContentSidebarView: View {
 
                 SidebarDisclosureSection(
                     title: "Views",
-                    systemImage: "square.grid.2x2",
+                    icon: .dashboard,
                     isCollapsed: $isViewsSectionCollapsed
                 ) {
                     Button("Vault") { model.navigate(to: .vault) }
@@ -192,7 +192,7 @@ struct ContentSidebarView: View {
 
                 SidebarDisclosureSection(
                     title: "Saved Views",
-                    systemImage: "bookmark",
+                    icon: .bookmark,
                     isCollapsed: $isSavedViewsSectionCollapsed
                 ) {
                     ForEach(model.dbViews) { view in
@@ -217,7 +217,7 @@ struct ContentSidebarView: View {
                         model.editingDbView = nil
                         model.isShowingViewEditor = true
                     } label: {
-                        Label("New View", systemImage: "plus")
+                        Label("New View", symairaIcon: .add)
                     }
                 }
             }
@@ -236,7 +236,7 @@ struct ContentSidebarView: View {
             VaultSwitcherView()
             Spacer(minLength: 8)
             Button(action: { model.isShowingNewNoteSheet = true }) {
-                Label("New Note", systemImage: "plus")
+                Label("New Note", symairaIcon: .add)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
@@ -255,11 +255,11 @@ struct ContentSidebarView: View {
     private var meetingsSidebarSection: some View {
         SidebarDisclosureSection(
             title: "Meetings",
-            systemImage: "person.wave.2",
+            icon: .team,
             isCollapsed: $isMeetingsSectionCollapsed
         ) {
             Button { model.navigate(to: .meetings) } label: {
-                Label("Meetings", systemImage: "person.wave.2")
+                Label("Meetings", symairaIcon: .team)
             }
         }
     }
@@ -286,7 +286,7 @@ struct ContentSidebarView: View {
                 },
                 label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "folder")
+                        SymairaIconView(.folder, size: 16)
                             .foregroundColor(SymairaTheme.goldPrimary)
                         Text(node.name)
                             .foregroundColor(SymairaTheme.textPrimary)
@@ -322,13 +322,13 @@ struct ContentSidebarView: View {
                         model.historyInitialNotePath = note.path
                         model.navigate(to: .history)
                     } label: {
-                        Label("Show Version History", systemImage: "clock.arrow.circlepath")
+                        Label { Text("Show Version History") } icon: { Image(symairaIcon: .history, size: 16) }
                     }
                     Divider()
                     Button(role: .destructive) {
                         model.pendingTrashNote = note
                     } label: {
-                        Label("Move to Trash", systemImage: "trash")
+                        Label { Text("Move to Trash") } icon: { Image(symairaIcon: .delete, size: 16) }
                     }
                 }
             }
@@ -340,18 +340,18 @@ struct ContentSidebarView: View {
 /// the parent's `@AppStorage` binding.
 struct SidebarDisclosureSection<Content: View>: View {
     let title: String
-    let systemImage: String
+    let icon: SymairaIcon
     @Binding var isCollapsed: Bool
     @ViewBuilder let content: () -> Content
 
     init(
         title: String,
-        systemImage: String,
+        icon: SymairaIcon,
         isCollapsed: Binding<Bool>,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.title = title
-        self.systemImage = systemImage
+        self.icon = icon
         self._isCollapsed = isCollapsed
         self.content = content
     }
@@ -366,7 +366,7 @@ struct SidebarDisclosureSection<Content: View>: View {
             ) {
                 content()
             } label: {
-                Label(title, systemImage: systemImage)
+                Label(title, symairaIcon: icon)
                     .symairaText(.subheading).fontWeight(.semibold)
                     .foregroundStyle(SymairaTheme.textPrimary)
                     .accessibilityValue(isCollapsed ? "Collapsed" : "Expanded")

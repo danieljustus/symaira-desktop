@@ -43,14 +43,14 @@ struct OnboardingView: View {
 
         var id: String { rawValue }
 
-        var icon: String {
+        var icon: SymairaIcon {
             switch self {
-            case .icloudDrive: return "icloud"
-            case .localFolder: return "internaldrive"
-            case .customFolder: return "folder"
-            case .existingVault: return "text.book.closed"
-			case .selfHostedServer: return "server.rack"
-            case .demoData: return "wand.and.stars"
+            case .icloudDrive: return .cloud
+            case .localFolder: return .storage
+            case .customFolder: return .folder
+            case .existingVault: return .library
+			case .selfHostedServer: return .server
+            case .demoData: return .magic
             }
         }
 
@@ -106,10 +106,8 @@ struct OnboardingView: View {
     private var chooseLocationStep: some View {
         VStack(spacing: 24) {
             VStack(spacing: 8) {
-                Image(systemName: "folder.badge.plus")
-                    .symairaText(.title)
+                SymairaIconView(.folderAdd, size: 24)
                     .foregroundColor(SymairaTheme.goldPrimary)
-                    .shadow(color: SymairaTheme.glowIntense, radius: 12)
                 Text("Welcome to SymDesk")
                     .symairaText(.display).bold()
                     .foregroundColor(SymairaTheme.textPrimary)
@@ -158,7 +156,7 @@ struct OnboardingView: View {
 
     private func errorBox(_ message: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            SymairaIconView(.warning, size: 16)
                 .foregroundColor(SymairaTokens.critical)
                 .padding(.top, 2)
             ScrollView {
@@ -198,8 +196,7 @@ struct OnboardingView: View {
         var body: some View {
             Button(action: action) {
                 HStack(spacing: 14) {
-                    Image(systemName: source.icon)
-                        .symairaText(.heading)
+                    SymairaIconView(source.icon, size: 20)
                         .foregroundColor(SymairaTheme.goldPrimary)
                         .frame(width: 28)
                     VStack(alignment: .leading, spacing: 2) {
@@ -211,8 +208,7 @@ struct OnboardingView: View {
                             .foregroundColor(SymairaTheme.textSecondary)
                     }
                     Spacer()
-                    Image(systemName: "chevron.right")
-                        .symairaText(.caption)
+                    SymairaIconView(.forward, size: 14)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .padding(12)
@@ -235,10 +231,8 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Image(systemName: "checkmark.circle.fill")
-                .symairaText(.display)
+            SymairaIconView(.success, size: 30)
                 .foregroundColor(SymairaTheme.goldPrimary)
-                .shadow(color: SymairaTheme.glowIntense, radius: 16)
 
             Text("You're all set!")
                 .symairaText(.display).bold()
@@ -249,13 +243,13 @@ struct OnboardingView: View {
                 .foregroundColor(SymairaTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 12) {
-                capabilityRow(icon: "folder", title: "Watch Folder", desc: "Auto-detects changes in your vault")
-                capabilityRow(icon: "terminal", title: "CLI Access", desc: "Run `symdesk` commands from Terminal")
-                capabilityRow(icon: "cpu", title: "MCP / Agents", desc: "Connect AI agents to your knowledge")
-                capabilityRow(icon: "magnifyingglass", title: "Search", desc: "Full-text search across all documents")
+                capabilityRow(icon: .folder, title: "Watch Folder", desc: "Auto-detects changes in your vault")
+                capabilityRow(icon: .terminal, title: "CLI Access", desc: "Run `symdesk` commands from Terminal")
+                capabilityRow(icon: .cpu, title: "MCP / Agents", desc: "Connect AI agents to your knowledge")
+                capabilityRow(icon: .search, title: "Search", desc: "Full-text search across all documents")
             }
             .padding(20)
-            .glassmorphicPanel()
+            .symairaCard(padding: 0)
             .frame(maxWidth: 420)
 
             if core.isDemoMode {
@@ -270,7 +264,7 @@ struct OnboardingView: View {
                 Button {
                     isShowingPaperlessImport = true
                 } label: {
-                    Label("Import from Paperless-ngx…", systemImage: "doc.badge.arrow.up")
+                    Label("Import from Paperless-ngx…", symairaIcon: .download)
                 }
                 .buttonStyle(SymairaSecondaryButtonStyle())
                 .help("Migrate an existing Paperless-ngx export into this vault")
@@ -294,9 +288,9 @@ struct OnboardingView: View {
         }
     }
 
-    private func capabilityRow(icon: String, title: String, desc: String) -> some View {
+    private func capabilityRow(icon: SymairaIcon, title: String, desc: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
+            SymairaIconView(icon, size: 16)
                 .frame(width: 20)
                 .foregroundColor(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
@@ -428,8 +422,7 @@ struct ServerConnectionSheet: View {
 	var body: some View {
 		VStack(alignment: .leading, spacing: 22) {
 			HStack(alignment: .top, spacing: 14) {
-				Image(systemName: "server.rack")
-					.symairaText(.heading)
+				SymairaIconView(.server, size: 20)
 					.foregroundStyle(SymairaTheme.goldPrimary)
 				VStack(alignment: .leading, spacing: 4) {
 					Text("Connect to SymDesk Server").symairaText(.title).bold()
@@ -451,9 +444,9 @@ struct ServerConnectionSheet: View {
 				}
 			}
 			.padding(18)
-			.glassmorphicPanel()
+			.symairaCard(padding: 0)
 
-			Label("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.", systemImage: "lock.shield")
+			Label("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.", symairaIcon: .lock)
 				.symairaText(.callout)
 				.foregroundStyle(SymairaTheme.textSecondary)
 

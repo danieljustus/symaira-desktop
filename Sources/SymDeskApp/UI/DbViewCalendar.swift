@@ -60,12 +60,12 @@ struct DbViewCalendar: View {
                                         }
                                         .padding()
                                         .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
-                                        .glassCard()
+                                        .symairaCard(padding: 0)
                                     }
                                 }
                             }
                             .padding()
-                            .glassmorphicPanel(addCorners: false)
+                            .symairaCard(padding: 0)
                         }
                     }
                     .padding()

@@ -22,14 +22,14 @@ struct DuplicatesView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack {
-                Image(systemName: "arrow.triangle.2.circlepath")
+                SymairaIconView(.copy, size: 16)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Possible Duplicates")
                     .symairaText(.title).fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 Button(action: { Task { await loadDuplicates() } }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Label("Refresh", symairaIcon: .refresh)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.textSecondary)
@@ -47,7 +47,7 @@ struct DuplicatesView: View {
 
             if let error = errorMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    SymairaIconView(.warning, size: 16)
                         .foregroundStyle(SymairaTokens.critical)
                     Text(error)
                         .symairaText(.caption)
@@ -73,7 +73,7 @@ struct DuplicatesView: View {
             } else if visibleGroups.isEmpty {
                 Spacer()
                 ContentUnavailableView {
-                    Label("No Duplicates Found", systemImage: "checkmark.seal")
+                    Label("No Duplicates Found", symairaIcon: .verified)
                 } description: {
                     Text(isLoading ? "Scanning…" : "No near-identical documents detected in this vault.")
                 }
@@ -124,7 +124,7 @@ struct DuplicatesView: View {
     private func groupCard(_ group: DeskCore.DuplicateGroup) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "doc.on.doc")
+                SymairaIconView(.copy, size: 16)
                     .foregroundColor(SymairaTheme.goldSecondary)
                 Text(group.title.isEmpty ? group.path : group.title)
                     .symairaText(.subheading)
@@ -137,7 +137,7 @@ struct DuplicatesView: View {
                 Button {
                     dismissGroup(group)
                 } label: {
-                    Label("Dismiss", systemImage: "xmark.circle")
+                    Label("Dismiss", symairaIcon: .close)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.textSecondary)
@@ -163,8 +163,7 @@ struct DuplicatesView: View {
 
     private func memberRow(path: String, title: String, similarity: Int?, isRepresentative: Bool) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: isRepresentative ? "star.fill" : "doc")
-                .symairaText(.caption)
+            SymairaIconView(isRepresentative ? .favorite : .document, size: 14)
                 .foregroundColor(isRepresentative ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title.isEmpty ? path : title)
@@ -190,12 +189,12 @@ struct DuplicatesView: View {
             Button {
                 pendingTrash = DeskCore.DuplicateGroup.Member(path: path, title: title, similarity: similarity ?? 0)
             } label: {
-                Image(systemName: "trash")
-                    .symairaText(.caption)
+                SymairaIconView(.delete, size: 14)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .buttonStyle(.plain)
             .help("Move to Trash after merging")
+            .accessibilityLabel("Move to Trash after merging")
         }
         .padding(.vertical, 2)
     }

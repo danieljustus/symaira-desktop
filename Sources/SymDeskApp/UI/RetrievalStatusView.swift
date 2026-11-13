@@ -65,28 +65,28 @@ struct RetrievalStatusView: View {
     private func stateBanner(_ status: RetrievalStatus) -> some View {
         if status.isEmpty {
             banner(
-                icon: "tray",
+                icon: .inbox,
                 tint: .orange,
                 title: "The index is empty",
                 detail: "Nothing is indexed yet, so search falls back to plain full-text matching. Run an index pass below."
             )
         } else if status.hasStoredDegradation {
             banner(
-                icon: "exclamationmark.triangle.fill",
+                icon: .warning,
                 tint: .orange,
                 title: "The stored index needs repair",
                 detail: storedDegradationDetail(status)
             )
         } else if !status.backendAvailable {
             banner(
-                icon: "bolt.horizontal.circle",
+                icon: .offline,
                 tint: .orange,
                 title: "Embedding backend unreachable",
                 detail: "The stored index is healthy, but semantic queries are temporarily unavailable. Start the embedding backend, then reload."
             )
         } else {
             banner(
-                icon: "checkmark.seal.fill",
+                icon: .verified,
                 tint: .green,
                 title: "Retrieval is healthy",
                 detail: "Indexed and embedding with \(status.embeddingModel)."
@@ -106,10 +106,9 @@ struct RetrievalStatusView: View {
             + ". Start the embedding backend, then run an index pass with re-embed to repair semantic search."
     }
 
-    private func banner(icon: String, tint: Color, title: String, detail: String) -> some View {
+    private func banner(icon: SymairaIcon, tint: Color, title: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .symairaText(.heading)
+            SymairaIconView(icon, size: 20)
                 .foregroundColor(tint)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -122,7 +121,7 @@ struct RetrievalStatusView: View {
             Spacer()
         }
         .padding(14)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     private func statsCard(_ status: RetrievalStatus) -> some View {
@@ -144,7 +143,7 @@ struct RetrievalStatusView: View {
             row("Embedding model", status.embeddingModel)
         }
         .padding(14)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     private var maintenanceControls: some View {
@@ -169,7 +168,7 @@ struct RetrievalStatusView: View {
 
     private func errorCard(_ message: String) -> some View {
         banner(
-            icon: "exclamationmark.triangle.fill",
+            icon: .warning,
             tint: .red,
             title: "The index state could not be read",
             detail: message
@@ -210,7 +209,7 @@ struct RetrievalStatusView: View {
             }
         }
         .padding(14)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     private func row(_ label: String, _ value: String) -> some View {

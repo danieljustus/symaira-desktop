@@ -45,14 +45,14 @@ struct PaperlessImportView: View {
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             .padding(18)
-            .glassmorphicPanel()
+            .symairaCard(padding: 0)
 
             // Actions
             HStack(spacing: 10) {
                 Button {
                     Task { await runImport(dryRun: true) }
                 } label: {
-                    Label("Preview (dry-run)", systemImage: "eye")
+                    Label("Preview (dry-run)", symairaIcon: .visible)
                 }
                 .buttonStyle(.bordered)
                 .disabled(exportDir == nil || isRunning || !hasVault)
@@ -65,7 +65,7 @@ struct PaperlessImportView: View {
                             .accessibilityLabel("Importing documents…")
                             .controlSize(.small)
                     } else {
-                        Label("Start Import", systemImage: "arrow.down.doc")
+                        Label("Start Import", symairaIcon: .download)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -81,7 +81,7 @@ struct PaperlessImportView: View {
 
             if let errorMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    SymairaIconView(.warning, size: 16)
                         .foregroundStyle(SymairaTokens.critical)
                     Text(errorMessage)
                         .symairaText(.caption)
@@ -94,7 +94,7 @@ struct PaperlessImportView: View {
             }
 
             if !progressMessage.isEmpty {
-                Label(progressMessage, systemImage: "shippingbox")
+                Label(progressMessage, symairaIcon: .package)
                     .symairaText(.callout)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
@@ -112,7 +112,7 @@ struct PaperlessImportView: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "doc.badge.arrow.up")
+            SymairaIconView(.download, size: 16)
                 .font(SymairaTypography.display)
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 4) {
@@ -129,7 +129,7 @@ struct PaperlessImportView: View {
     private func resultSummary(_ summary: DeskCore.PaperlessImportSummary) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: "checkmark.seal")
+                SymairaIconView(.verified, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text(summary.results.contains(where: { $0.action == "error" }) ? "Import finished with errors" : "Import complete")
                     .symairaText(.subheading)
@@ -162,7 +162,7 @@ struct PaperlessImportView: View {
             }
         }
         .padding(16)
-        .glassmorphicPanel()
+        .symairaCard(padding: 0)
     }
 
     private func summaryStat(_ label: String, _ value: Int, color: Color) -> some View {

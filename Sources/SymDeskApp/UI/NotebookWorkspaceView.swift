@@ -45,18 +45,20 @@ struct NotebookWorkspaceView: View {
     private var notebookLane: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "books.vertical")
+                SymairaIconView(.library, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("Notebooks")
                     .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 Button(action: { Task { await load() } }) {
-                    Image(systemName: "arrow.clockwise")
+                    SymairaIconView(.refresh, size: 16)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .disabled(isLoading)
+                .accessibilityLabel("Refresh Notebooks")
+                .help("Refresh Notebooks")
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -98,11 +100,13 @@ struct NotebookWorkspaceView: View {
                     .textFieldStyle(.plain)
                     .onSubmit { Task { await createNotebook() } }
                 Button(action: { Task { await createNotebook() } }) {
-                    Image(systemName: "plus.circle.fill")
+                    SymairaIconView(.add, size: 16)
                         .foregroundColor(SymairaTheme.goldPrimary)
                 }
                 .buttonStyle(.plain)
                 .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                .accessibilityLabel("Create Notebook")
+                .help("Create Notebook")
             }
             .padding(10)
         }
@@ -111,7 +115,7 @@ struct NotebookWorkspaceView: View {
 
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Image(systemName: "books.vertical")
+            SymairaIconView(.library, size: 16)
                 .font(SymairaTypography.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select or create a notebook")
@@ -229,7 +233,7 @@ private struct NotebookDetailView: View {
             }
             Spacer()
             Button(role: .destructive, action: { Task { await deleteNotebook() } }) {
-                Label("Delete", systemImage: "trash")
+                Label("Delete", symairaIcon: .delete)
             }
             .buttonStyle(.plain)
             .foregroundColor(SymairaTokens.critical)
@@ -276,11 +280,13 @@ private struct NotebookDetailView: View {
                     .textFieldStyle(.plain)
                     .onSubmit { Task { await addSource() } }
                 Button(action: { Task { await addSource() } }) {
-                    Image(systemName: "plus.circle.fill")
+                    SymairaIconView(.add, size: 16)
                         .foregroundColor(SymairaTheme.goldPrimary)
                 }
                 .buttonStyle(.plain)
                 .disabled(newSourcePath.trimmingCharacters(in: .whitespaces).isEmpty || isAddingSource)
+                .accessibilityLabel("Add Source")
+                .help("Add Source")
             }
             .padding(10)
         }
@@ -307,18 +313,20 @@ private struct NotebookDetailView: View {
             Spacer()
             if source.missing != true {
                 Button(action: { onOpenPath(source.path) }) {
-                    Image(systemName: "arrow.up.right.square")
+                    SymairaIconView(.openExternal, size: 16)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.goldSecondary)
                 .help("Open note")
+                .accessibilityLabel("Open note")
             }
             Button(action: { Task { await removeSource(source.path) } }) {
-                Image(systemName: "minus.circle")
+                SymairaIconView(.remove, size: 16)
             }
             .buttonStyle(.plain)
             .foregroundColor(SymairaTheme.textMuted)
             .help("Remove from notebook (the file itself is untouched)")
+            .accessibilityLabel("Remove from notebook (the file itself is untouched)")
         }
     }
 
@@ -327,7 +335,7 @@ private struct NotebookDetailView: View {
     private var chatPane: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "bubble.left.and.bubble.right")
+                SymairaIconView(.chat, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("Grounded Chat")
                     .symairaText(.subheading)
@@ -357,11 +365,13 @@ private struct NotebookDetailView: View {
                     .onSubmit { submitQuery() }
 
                 Button(action: submitQuery) {
-                    Image(systemName: "paperplane.fill")
+                    SymairaIconView(.send, size: 16)
                         .foregroundColor(SymairaTheme.goldPrimary)
                 }
                 .buttonStyle(.plain)
                 .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)
+                .accessibilityLabel("Send Question")
+                .help("Send Question")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -398,7 +408,7 @@ private struct NotebookDetailView: View {
     private var studioPane: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "wand.and.stars")
+                SymairaIconView(.magic, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("Studio")
                     .symairaText(.subheading)
@@ -446,7 +456,7 @@ private struct NotebookDetailView: View {
                         Divider()
                         if !artifact.dryRun {
                             Button(action: { onOpenPath(artifact.path) }) {
-                                Label("Open in Editor", systemImage: "arrow.up.right.square")
+                                Label("Open in Editor", symairaIcon: .openExternal)
                             }
                             .buttonStyle(.plain)
                             .foregroundColor(SymairaTheme.goldSecondary)

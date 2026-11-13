@@ -93,7 +93,7 @@ struct MeetingKnowledgeReviewView: View {
                     Button {
                         facts.remove(at: index)
                     } label: {
-                        Image(systemName: "trash")
+                        SymairaIconView(.delete, size: 16)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
@@ -164,10 +164,7 @@ struct MeetingKnowledgeReviewView: View {
 
     private func resultSummary(_ result: MeetingPublishOutcome) -> some View {
         let published = result.factsPublished?.count ?? 0
-        return Label(
-            "Applied: \(result.relationsCreated) relation(s), \(published) fact(s) published, \(result.factsSkipped) already published and skipped.",
-            systemImage: "checkmark.circle"
-        )
+        return Label("Applied: \(result.relationsCreated) relation(s), \(published) fact(s) published, \(result.factsSkipped) already published and skipped.", symairaIcon: .success)
         .symairaText(.caption)
         .foregroundColor(SymairaTokens.positive)
         .accessibilityLabel("Publish applied. \(result.relationsCreated) relations, \(published) new facts, \(result.factsSkipped) skipped as already published.")

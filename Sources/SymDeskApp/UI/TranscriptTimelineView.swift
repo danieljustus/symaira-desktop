@@ -89,7 +89,7 @@ struct TranscriptTimelineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if let segmentsError {
-                    Label("Time-coded segments unavailable: \(segmentsError)", systemImage: "clock.badge.exclamationmark")
+                    Label("Time-coded segments unavailable: \(segmentsError)", symairaIcon: .expired)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }

@@ -93,7 +93,7 @@ struct DbViewBoard: View {
                                     }
                                     .padding()
                                     .frame(width: 250, alignment: .leading)
-                                    .glassCard()
+                                    .symairaCard(padding: 0)
                                     .onDrag {
                                         NSItemProvider(object: item.id as NSString)
                                     }
@@ -101,7 +101,7 @@ struct DbViewBoard: View {
                             }
                             .padding()
                             .frame(width: 280, alignment: .top)
-                            .glassmorphicPanel(addCorners: false)
+                            .symairaCard(padding: 0)
                             .onDrop(of: [.plainText], isTargeted: nil) { providers in
                                 handleDrop(providers: providers, toGroup: group.key)
                             }

@@ -35,8 +35,7 @@ struct MeetingReviewView: View {
 
     private func failedState(_ message: String) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .symairaText(.title)
+            SymairaIconView(.warning, size: 24)
                 .foregroundColor(SymairaTokens.critical)
             if let path = model.selectedPath {
                 Text("Couldn't load \(fileName(for: path))")
@@ -186,12 +185,12 @@ struct MeetingReviewView: View {
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 HStack(spacing: 10) {
-                    Label(detail.frontmatter.startedAt, systemImage: "calendar")
+                    Label(detail.frontmatter.startedAt, symairaIcon: .calendar)
                     if let language = detail.frontmatter.language, !language.isEmpty {
                         Label(language, systemImage: "globe")
                     }
                     if let ms = detail.frontmatter.durationMS, ms > 0 {
-                        Label(Self.formatDuration(ms), systemImage: "clock")
+                        Label(Self.formatDuration(ms), symairaIcon: .time)
                     }
                 }
                 .symairaText(.caption)

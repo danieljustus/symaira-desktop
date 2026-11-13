@@ -35,7 +35,7 @@ struct VersionMismatchBanner: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            SymairaIconView(.warning, size: 16)
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text("CLI version mismatch")
@@ -47,11 +47,12 @@ struct VersionMismatchBanner: View {
             }
             Spacer(minLength: 12)
             Button(action: dismiss) {
-                Image(systemName: "xmark")
+                SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
             .foregroundStyle(SymairaTheme.textSecondary)
             .help("Dismiss version mismatch warning")
+            .accessibilityLabel("Dismiss version mismatch warning")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -88,11 +89,12 @@ struct NotificationDeniedBanner: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
             Button(action: dismiss) {
-                Image(systemName: "xmark")
+                SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
             .foregroundStyle(SymairaTheme.textSecondary)
             .help("Dismiss notification reminder")
+            .accessibilityLabel("Dismiss notification reminder")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -111,7 +113,7 @@ struct AppErrorBanner: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            SymairaIconView(.warning, size: 16)
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(error.message)
@@ -125,11 +127,12 @@ struct AppErrorBanner: View {
             }
             Spacer(minLength: 12)
             Button(action: dismiss) {
-                Image(systemName: "xmark")
+                SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
             .foregroundStyle(SymairaTheme.textSecondary)
             .help("Dismiss error")
+            .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -155,7 +158,7 @@ struct LoadErrorBanner: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            SymairaIconView(.warning, size: 16)
                 .foregroundStyle(SymairaTokens.critical)
             Text(message)
                 .symairaText(.caption)
@@ -170,10 +173,12 @@ struct LoadErrorBanner: View {
                     .controlSize(.small)
             }
             Button(action: onDismiss) {
-                Image(systemName: "xmark")
+                SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
             .foregroundStyle(SymairaTheme.textSecondary)
+            .accessibilityLabel("Dismiss message")
+            .help("Dismiss message")
         }
         .padding(8)
         .background(SymairaTokens.critical.opacity(0.12))

@@ -58,7 +58,7 @@ struct HistoryView: View {
     private var noteList: some View {
         VStack(spacing: 0) {
             HStack {
-                Image(systemName: "doc.text")
+                SymairaIconView(.document, size: 16)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Notes")
                     .symairaText(.subheading)
@@ -74,7 +74,7 @@ struct HistoryView: View {
             .padding(.vertical, 8)
 
             HStack {
-                Image(systemName: "magnifyingglass")
+                SymairaIconView(.search, size: 16)
                     .foregroundColor(SymairaTheme.textMuted)
                 TextField("Filter notes…", text: $searchText)
                     .textFieldStyle(.plain)
@@ -90,7 +90,7 @@ struct HistoryView: View {
             if filteredNotes.isEmpty {
                 Spacer()
                 ContentUnavailableView {
-                    Label("No Notes", systemImage: "doc.text")
+                    Label("No Notes", symairaIcon: .document)
                 } description: {
                     Text(searchText.isEmpty ? "No notes found in vault." : "No notes match your filter.")
                 }
@@ -112,8 +112,7 @@ struct HistoryView: View {
                             }
                             Spacer()
                             if selectedNote?.id == note.id {
-                                Image(systemName: "chevron.right")
-                                    .symairaText(.caption)
+                                SymairaIconView(.forward, size: 14)
                                     .foregroundColor(SymairaTheme.goldPrimary)
                             }
                         }
@@ -134,7 +133,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let note = selectedNote {
                 HStack {
-                    Image(systemName: "clock.arrow.circlepath")
+                    SymairaIconView(.history, size: 16)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Text(note.title)
                         .symairaText(.title).fontWeight(.semibold)
@@ -153,7 +152,7 @@ struct HistoryView: View {
 
                 if let error = errorMessage {
                     HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
+                        SymairaIconView(.warning, size: 16)
                             .foregroundStyle(SymairaTokens.warning)
                         Text(error)
                             .symairaText(.caption)
@@ -176,7 +175,7 @@ struct HistoryView: View {
                 } else if versions.isEmpty {
                     Spacer()
                     ContentUnavailableView {
-                        Label("No History", systemImage: "clock")
+                        Label("No History", symairaIcon: .time)
                     } description: {
                         Text("No snapshots recorded for this note.")
                     }
@@ -201,7 +200,7 @@ struct HistoryView: View {
             } else {
                 Spacer()
                 ContentUnavailableView {
-                    Label("No Note Selected", systemImage: "doc.text.magnifyingglass")
+                    Label("No Note Selected", symairaIcon: .documentSearch)
                 } description: {
                     Text("Select a note from the list to see its version history.")
                 }
@@ -298,7 +297,7 @@ struct HistoryView: View {
             if let diff = diffContent {
                 if diff.lines.isEmpty {
                     VStack(spacing: 6) {
-                        Image(systemName: "checkmark.circle")
+                        SymairaIconView(.success, size: 16)
                             .foregroundColor(SymairaTheme.goldSecondary)
                         Text("No differences — this version matches the current content.")
                             .symairaText(.caption)
@@ -319,7 +318,7 @@ struct HistoryView: View {
                 }
             } else if selectedVersion == nil {
                 VStack(spacing: 6) {
-                    Image(systemName: "doc.text.magnifyingglass")
+                    SymairaIconView(.documentSearch, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Select a version and press Diff to compare it with the current file.")
                         .symairaText(.caption)
@@ -330,7 +329,7 @@ struct HistoryView: View {
                 .padding()
             } else {
                 VStack(spacing: 6) {
-                    Image(systemName: "clock.arrow.circlepath")
+                    SymairaIconView(.history, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Loading diff…")
                         .symairaText(.caption)

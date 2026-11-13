@@ -160,7 +160,7 @@ private struct DemoBanner: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "wand.and.stars")
+            SymairaIconView(.magic, size: 16)
                 .foregroundColor(SymairaTokens.onPrimary)
             Text("Demo Mode")
                 .symairaText(.caption).bold()

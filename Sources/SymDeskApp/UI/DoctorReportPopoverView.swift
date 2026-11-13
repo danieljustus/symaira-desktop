@@ -44,9 +44,8 @@ struct DoctorReportPopoverView: View {
 
     private func statusRow(label: String, status: String?, detail: String?) -> some View {
         HStack(alignment: .top) {
-            Image(systemName: status == "ok" ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+            SymairaIconView(status == "ok" ? .success : .warning, size: 14)
                 .foregroundColor(status == "ok" ? .green : .orange)
-                .symairaText(.caption)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(label): \(status ?? "unknown")")
                     .symairaText(.caption).fontWeight(.medium)
@@ -64,8 +63,7 @@ struct DoctorReportPopoverView: View {
         let isAvail = report.tools.isAvailable(tool)
         let version = report.versions?[tool] ?? ""
         return HStack {
-            Image(systemName: isAvail ? "checkmark" : "xmark")
-                .symairaText(.caption)
+            SymairaIconView(isAvail ? .confirm : .close, size: 14)
                 .foregroundColor(isAvail ? .green : .secondary)
             Text(tool)
                 .symairaText(.caption)

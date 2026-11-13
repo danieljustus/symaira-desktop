@@ -33,7 +33,7 @@ struct ContactReferencesView: View {
             }
 
             if let loadError {
-                Label(loadError, systemImage: "exclamationmark.triangle")
+                Label(loadError, symairaIcon: .warning)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTokens.critical)
             } else if let references {
@@ -56,7 +56,7 @@ struct ContactReferencesView: View {
     private var identityLine: some View {
         if let references {
             if !references.storeAvailable {
-                Label("Contact store unavailable — identity unknown", systemImage: "questionmark.circle")
+                Label("Contact store unavailable — identity unknown", symairaIcon: .help)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             } else if let ref = references.refs.first {
@@ -67,7 +67,7 @@ struct ContactReferencesView: View {
                 .symairaText(.caption)
                 .foregroundColor(SymairaTokens.positive)
             } else {
-                Label("No contact carries this name", systemImage: "person.crop.circle")
+                Label("No contact carries this name", symairaIcon: .user)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             }

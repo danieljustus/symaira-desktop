@@ -18,7 +18,7 @@ struct TrashView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack {
-                Image(systemName: "trash")
+                SymairaIconView(.delete, size: 16)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Trash")
                     .symairaText(.title).fontWeight(.semibold)
@@ -28,14 +28,14 @@ struct TrashView: View {
                     Button(role: .destructive) {
                         showPurgeAllConfirmation = true
                     } label: {
-                        Label("Purge All", systemImage: "trash.slash")
+                        Label("Purge All", symairaIcon: .delete)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(SymairaTokens.critical)
                 }
                 Button(action: { Task { await loadTrash() } }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Label("Refresh", symairaIcon: .refresh)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.textSecondary)
@@ -53,7 +53,7 @@ struct TrashView: View {
 
             if let error = errorMessage {
                 HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    SymairaIconView(.warning, size: 16)
                         .foregroundStyle(SymairaTokens.critical)
                     Text(error)
                         .symairaText(.caption)
@@ -81,7 +81,7 @@ struct TrashView: View {
             } else if trashItems.isEmpty {
                 Spacer()
                 ContentUnavailableView {
-                    Label("Trash is Empty", systemImage: "trash.slash")
+                    Label("Trash is Empty", symairaIcon: .delete)
                 } description: {
                     Text("Deleted notes and documents will appear here so you can restore them.")
                 }
@@ -117,8 +117,7 @@ struct TrashView: View {
         let isBusy = actionInProgress.contains(item.name)
 
         return HStack(spacing: 12) {
-            Image(systemName: "doc.text")
-                .symairaText(.heading)
+            SymairaIconView(.document, size: 20)
                 .foregroundColor(SymairaTheme.textMuted)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -130,7 +129,7 @@ struct TrashView: View {
                 }
 
                 HStack(spacing: 8) {
-                    Label(item.originalPath, systemImage: "folder")
+                    Label(item.originalPath, symairaIcon: .folder)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
@@ -138,7 +137,7 @@ struct TrashView: View {
                     Text("·")
                         .foregroundColor(SymairaTheme.textMuted)
 
-                    Label(formattedDate(item.deletedAt), systemImage: "clock")
+                    Label(formattedDate(item.deletedAt), symairaIcon: .time)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
 
@@ -165,7 +164,7 @@ struct TrashView: View {
                 Button(role: .destructive) {
                     Task { await purgeItem(item) }
                 } label: {
-                    Label("Delete", systemImage: "xmark")
+                    Label("Delete", symairaIcon: .delete)
                         .labelStyle(.iconOnly)
                         .accessibilityLabel("Delete")
                 }

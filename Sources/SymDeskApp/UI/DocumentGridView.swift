@@ -166,15 +166,13 @@ struct DocumentGridView: View {
             VStack(alignment: .leading, spacing: 3) {
                 if let tag = appliedTagFilter {
                     HStack(spacing: 6) {
-                        Image(systemName: "tag.fill")
-                            .symairaText(.caption)
+                        SymairaIconView(.tag, size: 14)
                             .foregroundColor(SymairaTheme.goldSecondary)
                         Text("Tag: \(tag)")
                             .symairaText(.title).fontWeight(.semibold)
                             .foregroundStyle(SymairaTheme.textPrimary)
                         Button(action: { clearTagFilter() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .symairaText(.caption)
+                            SymairaIconView(.close, size: 14)
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                         .buttonStyle(.plain)
@@ -203,7 +201,7 @@ struct DocumentGridView: View {
 
     private var searchField: some View {
         HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
+            SymairaIconView(.search, size: 16)
                 .foregroundColor(SymairaTheme.goldPrimary)
             TextField("Search or ask…", text: $searchText)
                 .textFieldStyle(.plain)
@@ -217,10 +215,12 @@ struct DocumentGridView: View {
                 }
             if !searchText.isEmpty {
                 Button(action: { searchText = "" }) {
-                    Image(systemName: "xmark.circle.fill")
+                    SymairaIconView(.close, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Clear Search")
+                .help("Clear Search")
             }
             if selectedPaths.count > 1 {
                 HStack(spacing: 4) {
@@ -228,7 +228,7 @@ struct DocumentGridView: View {
                         .symairaText(.caption)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Button(action: { clearSelection() }) {
-                        Image(systemName: "xmark.circle")
+                        SymairaIconView(.close, size: 16)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
@@ -255,8 +255,7 @@ struct DocumentGridView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .symairaText(.display)
+            SymairaIconView(.documentSearch, size: 30)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("No documents found")
                 .symairaText(.heading)
@@ -360,7 +359,7 @@ struct DocumentGridView: View {
                 Button(action: {
                     runBatch { try await core.docSetStatus(paths: docs.map(\.path), status: status.rawValue) }
                 }) {
-                    Label(status.label, systemImage: status.systemImage)
+                    Label { Text(status.label) } icon: { Image(symairaIcon: status.symairaIcon, size: 16) }
                 }
             }
         }
@@ -444,12 +443,12 @@ struct DocumentGridView: View {
     @ViewBuilder
     private func documentContextMenu(doc: DocumentItem) -> some View {
         Button(action: { openDoc = doc }) {
-            Label("Open", systemImage: "doc.text")
+            Label { Text("Open") } icon: { Image(symairaIcon: .document, size: 16) }
         }
         .keyboardShortcut("o", modifiers: .command)
         if doc.path.lowercased().hasSuffix(".md") {
             Button(action: { onOpenInEditor?(doc) }) {
-                Label("Open in Editor", systemImage: "pencil.and.outline")
+                Label { Text("Open in Editor") } icon: { Image(symairaIcon: .edit, size: 16) }
             }
         }
         Divider()
@@ -463,14 +462,14 @@ struct DocumentGridView: View {
             }
         }
         Button(action: { findSimilar(doc: doc) }) {
-            Label("Find Similar", systemImage: "arrow.triangle.2.circlepath")
+            Label { Text("Find Similar") } icon: { Image(symairaIcon: .documentSearch, size: 16) }
         }
         Button(action: { runAgentAction(doc: doc) }) {
-            Label("Run Agent Action", systemImage: "sparkles")
+            Label { Text("Run Agent Action") } icon: { Image(symairaIcon: .ai, size: 16) }
         }
         Divider()
         Button(action: { exportDocument(doc: doc) }) {
-            Label("Reveal in Finder", systemImage: "folder")
+            Label { Text("Reveal in Finder") } icon: { Image(symairaIcon: .folder, size: 16) }
         }
         Menu("Export…") {
             Button("Export as PDF…") {
@@ -491,7 +490,7 @@ struct DocumentGridView: View {
         }
         Divider()
         Button(role: .destructive, action: { deleteDocument(doc: doc) }) {
-            Label("Move to Trash", systemImage: "trash")
+            Label { Text("Move to Trash") } icon: { Image(symairaIcon: .delete, size: 16) }
         }
     }
 
@@ -503,10 +502,10 @@ struct DocumentGridView: View {
                     Task { await setStatus(doc: doc, status: status.rawValue) }
                 }) {
                     HStack {
-                        Image(systemName: status.systemImage)
+                        Image(symairaIcon: status.symairaIcon, size: 16)
                         Text(status.label)
                         if doc.status == status.rawValue {
-                            Image(systemName: "checkmark")
+                            Image(symairaIcon: .confirm, size: 16)
                         }
                     }
                 }
@@ -801,10 +800,12 @@ struct DocumentGridView: View {
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Spacer()
                 Button(action: { showAgentSheet = false }) {
-                    Image(systemName: "xmark.circle.fill")
+                    SymairaIconView(.close, size: 16)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Close")
+                .help("Close")
             }
 
             if let target = agentTarget {
@@ -825,7 +826,7 @@ struct DocumentGridView: View {
                     .textSelection(.enabled)
             }
             .padding(10)
-            .glassmorphicPanel(addCorners: false)
+            .symairaCard(padding: 0)
 
             HStack {
                 Spacer()
@@ -895,8 +896,7 @@ struct DocumentCard: View {
 
             if let folder = Self.containingFolder(forPath: doc.path) {
                 HStack(spacing: 4) {
-                    Image(systemName: "folder")
-                        .symairaText(.caption)
+                    SymairaIconView(.folder, size: 14)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text(folder)
                         .symairaText(.caption)
@@ -908,8 +908,7 @@ struct DocumentCard: View {
 
             if !doc.documentDate.isEmpty {
                 HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .symairaText(.caption)
+                    SymairaIconView(.calendar, size: 14)
                         .foregroundColor(SymairaTheme.textSecondary)
                     Text(doc.documentDate)
                         .symairaText(.caption)
@@ -930,16 +929,14 @@ struct DocumentCard: View {
             HStack(spacing: 8) {
                 if !doc.person.isEmpty {
                     HStack(spacing: 2) {
-                        Image(systemName: "person")
-                            .symairaText(.caption)
+                        SymairaIconView(.user, size: 14)
                         Text(doc.person)
                             .symairaText(.caption)
                     }
                 }
                 if !doc.documentType.isEmpty {
                     HStack(spacing: 2) {
-                        Image(systemName: "doc")
-                            .symairaText(.caption)
+                        SymairaIconView(.document, size: 14)
                         Text(doc.documentType)
                             .symairaText(.caption)
                     }
@@ -985,8 +982,7 @@ struct DocumentCard: View {
 
             if !doc.dueDate.isEmpty {
                 HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .symairaText(.caption)
+                    SymairaIconView(.time, size: 14)
                         .foregroundColor(doc.dueDate < todayString ? .red : SymairaTheme.textSecondary)
                     Text("Due \(doc.dueDate)")
                         .symairaText(.caption)
@@ -995,7 +991,7 @@ struct DocumentCard: View {
             }
         }
         .padding(12)
-        .symDeskLiquidGlass(cornerRadius: 14, prominence: isSelected ? .elevated : .standard)
+        .symDeskLiquidGlass(cornerRadius: 14)
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(isSelected ? SymairaTheme.goldPrimary.opacity(0.82) : .clear, lineWidth: 1.5)

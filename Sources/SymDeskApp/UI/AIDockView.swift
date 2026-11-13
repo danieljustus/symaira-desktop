@@ -16,7 +16,7 @@ struct AIDockView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "sparkles")
+                SymairaIconView(.ai, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("AI Dock")
                     .symairaText(.subheading)
@@ -35,7 +35,7 @@ struct AIDockView: View {
             VStack(spacing: 8) {
                 if let context, !context.isEmpty {
                     HStack(spacing: 8) {
-                        Image(systemName: "doc.text.magnifyingglass")
+                        SymairaIconView(.documentSearch, size: 16)
                             .foregroundStyle(SymairaTheme.goldPrimary)
                         Text("Context: \(context.summary)")
                             .symairaText(.caption)
@@ -81,11 +81,13 @@ struct AIDockView: View {
                         }
 
                     Button(action: submitQuery) {
-                        Image(systemName: "paperplane.fill")
+                        SymairaIconView(.send, size: 16)
                             .foregroundColor(SymairaTheme.goldPrimary)
                     }
                     .buttonStyle(.plain)
                     .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)
+                    .accessibilityLabel("Send question")
+                    .help("Send question")
                 }
             }
             .padding(.horizontal, 12)

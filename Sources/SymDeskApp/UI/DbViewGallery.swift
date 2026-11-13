@@ -24,7 +24,7 @@ struct DbViewGallery: View {
                                 Text((row["_title"] as? String) ?? "Untitled").symairaText(.subheading).foregroundColor(SymairaTheme.textPrimary)
                                 Text((row["_path"] as? String) ?? "").symairaText(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
                             }
-                            .padding().frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading).glassCard()
+                            .padding().frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading).symairaCard(padding: 0)
                         }
                     }.padding()
                 }

@@ -109,7 +109,7 @@ struct MeetingsView: View {
             Spacer()
             recordingButton
             Button(action: { Task { await model.loadLibrary() } }) {
-                Image(systemName: "arrow.clockwise")
+                SymairaIconView(.refresh, size: 16)
             }
             .buttonStyle(SymairaSecondaryButtonStyle())
             .accessibilityLabel("Refresh meeting library")
@@ -132,7 +132,7 @@ struct MeetingsView: View {
     /// Discover's compose cards link out to symmemory/symvault/symbrowse.
     private var recordingButton: some View {
         Button(action: { requestRecording() }) {
-            Label("Request Recording", systemImage: "record.circle")
+            Label("Request Recording", symairaIcon: .record)
         }
         .buttonStyle(SymairaSecondaryButtonStyle())
         .accessibilityLabel("Request a recording")
@@ -183,7 +183,7 @@ struct MeetingsView: View {
 
     private func libraryFailureRow(_ failure: MeetingListFailure) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Could not read \(fileName(for: failure.path))", systemImage: "exclamationmark.triangle.fill")
+            Label("Could not read \(fileName(for: failure.path))", symairaIcon: .warning)
                 .symairaText(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(SymairaTokens.critical)
@@ -291,8 +291,7 @@ struct MeetingsView: View {
 
     private var noSelectionState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "person.wave.2")
-                .symairaText(.display)
+            SymairaIconView(.team, size: 30)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select a meeting to review")
                 .symairaText(.heading)

@@ -39,7 +39,7 @@ struct GraphView: View {
                 Button {
                     refitGraph()
                 } label: {
-                    Label("Fit to Window", systemImage: "arrow.up.left.and.arrow.down.right")
+                    Label("Fit to Window", symairaIcon: .fullscreen)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -49,7 +49,7 @@ struct GraphView: View {
                 Button {
                     zoomScale = min(GraphLayout.maximumZoom, zoomScale + 0.1)
                 } label: {
-                    Label("Zoom In", systemImage: "plus.magnifyingglass")
+                    Label("Zoom In", symairaIcon: .zoomIn)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -59,7 +59,7 @@ struct GraphView: View {
                 Button {
                     zoomScale = max(GraphLayout.minimumZoom, zoomScale - 0.1)
                 } label: {
-                    Label("Zoom Out", systemImage: "minus.magnifyingglass")
+                    Label("Zoom Out", symairaIcon: .zoomOut)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

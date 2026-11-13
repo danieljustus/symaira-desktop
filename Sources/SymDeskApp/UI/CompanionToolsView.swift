@@ -69,8 +69,7 @@ struct CompanionToolsView: View {
 
     private var noHomebrewWarning: some View {
         HStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .symairaText(.heading)
+            SymairaIconView(.warning, size: 20)
                 .foregroundColor(SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Homebrew not found")
@@ -82,7 +81,7 @@ struct CompanionToolsView: View {
             }
         }
         .padding(14)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     // MARK: - Tools
@@ -113,8 +112,7 @@ struct CompanionToolsView: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: isInstalled ? "checkmark.seal.fill" : (isInstalling ? "arrow.down.circle" : "questionmark.circle"))
-                    .symairaText(.heading)
+                SymairaIconView(isInstalled ? .verified : (isInstalling ? .download : .help), size: 20)
                     .foregroundColor(isInstalled ? .green : (isInstalling ? SymairaTheme.goldPrimary : SymairaTheme.textMuted))
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -139,7 +137,7 @@ struct CompanionToolsView: View {
                 Spacer()
 
                 if isInstalled {
-                    Label("Installed", systemImage: "checkmark")
+                    Label("Installed", symairaIcon: .confirm)
                         .symairaText(.caption)
                         .foregroundColor(SymairaTokens.positive)
                 } else if isInstalling {
@@ -171,7 +169,7 @@ struct CompanionToolsView: View {
             }
         }
         .padding(14)
-        .glassCard()
+        .symairaCard(padding: 0)
     }
 
     // MARK: - Homebrew check

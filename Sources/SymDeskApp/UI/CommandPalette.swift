@@ -36,8 +36,7 @@ struct CommandPalette: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass")
-                    .symairaText(.callout)
+                SymairaIconView(.search, size: 15)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 TextField("Search notes or create a new one…", text: $searchText)
                     .textFieldStyle(.plain)
@@ -52,11 +51,12 @@ struct CommandPalette: View {
                         searchResults = []
                         searchHint = nil
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
+                        SymairaIconView(.close, size: 16)
                             .foregroundStyle(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
                     .help("Clear search")
+                    .accessibilityLabel("Clear search")
                 }
                 Text("↩")
                     .symairaText(.caption).monospaced()
@@ -90,7 +90,7 @@ struct CommandPalette: View {
             }
 
             if let retrievalWarning {
-                Label(retrievalWarning, systemImage: "exclamationmark.triangle")
+                Label(retrievalWarning, symairaIcon: .warning)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTokens.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,7 +99,7 @@ struct CommandPalette: View {
             }
 
             if let hint = searchHint {
-                Label(hint, systemImage: "info.circle")
+                Label(hint, symairaIcon: .info)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTheme.goldSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

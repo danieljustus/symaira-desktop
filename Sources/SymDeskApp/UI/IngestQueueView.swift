@@ -55,7 +55,7 @@ struct IngestQueueView: View {
             Button(action: {
                 Task { await fetchJobs(offset: pageOffset) }
             }) {
-                Label("Refresh", systemImage: "arrow.clockwise")
+                Label("Refresh", symairaIcon: .refresh)
             }
             .buttonStyle(SymairaSecondaryButtonStyle())
         }
@@ -65,8 +65,7 @@ struct IngestQueueView: View {
 
     private func errorState(_ msg: String) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .symairaText(.display)
+            SymairaIconView(.warning, size: 30)
                 .foregroundColor(SymairaTokens.critical)
             Text("Connection Failed")
                 .symairaText(.heading)
@@ -87,8 +86,7 @@ struct IngestQueueView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "tray")
-                .symairaText(.display)
+            SymairaIconView(.inbox, size: 30)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Queue is empty")
                 .symairaText(.heading)
@@ -110,7 +108,7 @@ struct IngestQueueView: View {
                         onRetry: { Task { await retryJob(job) } }
                     )
                     .padding(14)
-                    .glassCard()
+                    .symairaCard(padding: 0)
                     .asyncActionAlert(retryTracker, id: job.id, title: "Retry Failed") {
                         Task { await retryJob(job) }
                     }
@@ -204,8 +202,8 @@ struct JobRow: View {
                     .truncationMode(.middle)
 
                 HStack(spacing: 12) {
-                    Label(job.kind.capitalized, systemImage: "doc.text")
-                    Label("Attempts: \(job.attempts)", systemImage: "arrow.counterclockwise")
+                    Label(job.kind.capitalized, symairaIcon: .document)
+                    Label("Attempts: \(job.attempts)", symairaIcon: .restart)
                     if !job.createdAt.isEmpty {
                         Text("Created: \(formattedDate(job.createdAt))")
                     }
@@ -244,16 +242,16 @@ struct JobRow: View {
     private var statusIcon: some View {
         switch job.status.lowercased() {
         case "completed", "success":
-            return Image(systemName: "checkmark.circle.fill")
+            return SymairaIconView(.success, size: 16)
                 .foregroundColor(SymairaTokens.positive)
         case "failed":
-            return Image(systemName: "xmark.circle.fill")
+            return SymairaIconView(.failure, size: 16)
                 .foregroundColor(SymairaTokens.critical)
         case "running":
-            return Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+            return SymairaIconView(.sync, size: 16)
                 .foregroundColor(SymairaTheme.goldPrimary)
         default:
-            return Image(systemName: "clock.fill")
+            return SymairaIconView(.time, size: 16)
                 .foregroundColor(SymairaTheme.goldSecondary)
         }
     }

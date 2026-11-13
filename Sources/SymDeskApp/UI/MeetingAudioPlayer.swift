@@ -71,8 +71,7 @@ struct MeetingAudioPlayerView: View {
         if hasSource {
             HStack(spacing: 12) {
                 Button(action: { model.togglePlayback() }) {
-                    Image(systemName: model.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .symairaText(.title)
+                    SymairaIconView(model.isPlaying ? .pause : .play, size: 24)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.goldPrimary)

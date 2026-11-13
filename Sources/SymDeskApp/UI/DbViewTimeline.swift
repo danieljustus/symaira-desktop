@@ -19,7 +19,7 @@ struct DbViewTimeline: View {
                             Text((row["_title"] as? String) ?? "Untitled").foregroundColor(SymairaTheme.textPrimary)
                             Rectangle().fill(SymairaTheme.goldPrimary).frame(height: 6).cornerRadius(3)
                         }
-                    }.padding().glassCard()
+                    }.padding().symairaCard(padding: 0)
                 }
             }.padding()
         }.task(id: viewID) { await loadData() }

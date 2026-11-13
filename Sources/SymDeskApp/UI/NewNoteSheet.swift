@@ -19,8 +19,7 @@ struct NewNoteSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "doc.badge.plus")
-                    .symairaText(.title)
+                SymairaIconView(.documentAdd, size: 24)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 TextField("Note title", text: $title)
                     .textFieldStyle(.plain)
@@ -33,11 +32,12 @@ struct NewNoteSheet: View {
                     Button {
                         title = ""
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
+                        SymairaIconView(.close, size: 16)
                             .foregroundStyle(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
                     .help("Clear")
+                    .accessibilityLabel("Clear")
                 }
             }
             .padding(.horizontal, 14)

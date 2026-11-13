@@ -37,20 +37,20 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
         }
     }
 
-    var icon: String {
+    var icon: SymairaIcon {
         switch self {
-        case .tag: return "tag"
-        case .type: return "doc.text"
-        case .status: return "flag"
-        case .indexState: return "arrow.triangle.2.circlepath"
-        case .correspondent: return "person"
-        case .folder: return "folder"
-        case .path: return "link"
-        case .filename: return "character.text.square"
-        case .filetype: return "doc"
-        case .created: return "calendar.badge.plus"
-        case .modified: return "calendar.badge.clock"
-        case .date: return "calendar"
+        case .tag: return .tag
+        case .type: return .document
+        case .status: return .checklist
+        case .indexState: return .sync
+        case .correspondent: return .user
+        case .folder: return .folder
+        case .path: return .link
+        case .filename: return .document
+        case .filetype: return .document
+        case .created: return .calendar
+        case .modified: return .history
+        case .date: return .calendar
         }
     }
 }
@@ -169,8 +169,7 @@ struct FilterChipsView: View {
 
     private func filterChipView(_ filter: SearchFilter) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: filter.field.icon)
-                .symairaText(.caption)
+            SymairaIconView(filter.field.icon, size: 14)
                 .foregroundColor(SymairaTheme.goldPrimary)
             Text(filter.field.label + ":")
                 .symairaText(.caption).fontWeight(.medium)
@@ -180,12 +179,12 @@ struct FilterChipsView: View {
                 .foregroundColor(SymairaTheme.textPrimary)
                 .lineLimit(1)
             Button(action: { removeFilter(filter) }) {
-                Image(systemName: "xmark")
-                    .symairaText(.caption)
+                SymairaIconView(.close, size: 14)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .buttonStyle(.plain)
             .help("Remove \(filter.displayLabel)")
+            .accessibilityLabel("Remove \(filter.displayLabel)")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
@@ -207,8 +206,7 @@ struct FilterChipsView: View {
             showPopover = true
         }) {
             HStack(spacing: 3) {
-                Image(systemName: "plus.circle")
-                    .symairaText(.caption)
+                SymairaIconView(.add, size: 14)
                 Text("Filter")
                     .symairaText(.caption)
             }
@@ -256,14 +254,13 @@ struct FilterChipsView: View {
                     pickerStep = .selectingValue(field)
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: field.icon)
+                        SymairaIconView(field.icon, size: 16)
                             .foregroundColor(SymairaTheme.goldPrimary)
                             .frame(width: 16)
                         Text(field.label)
                             .foregroundColor(SymairaTheme.textPrimary)
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .symairaText(.caption)
+                        SymairaIconView(.forward, size: 14)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .padding(.vertical, 6)
@@ -281,8 +278,7 @@ struct FilterChipsView: View {
             HStack {
                 Button(action: { pickerStep = .selectingField }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .symairaText(.caption)
+                        SymairaIconView(.back, size: 14)
                         Text("Back")
                             .symairaText(.caption)
                     }
@@ -365,8 +361,7 @@ struct FilterChipsView: View {
                                     .symairaText(.callout)
                                 Spacer()
                                 if filters.contains(where: { $0.value == value }) {
-                                    Image(systemName: "checkmark")
-                                        .symairaText(.caption)
+                                    SymairaIconView(.confirm, size: 14)
                                         .foregroundColor(SymairaTheme.goldPrimary)
                                 }
                             }

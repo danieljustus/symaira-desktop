@@ -114,6 +114,7 @@
 		828D7A1D7B361AE01F65600A /* DeskCorePaperless.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484D17A7AFDF08CBDCF52D76 /* DeskCorePaperless.swift */; };
 		8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A66FCAE94BEB5D93BE972B /* BlockNode.swift */; };
 		847C5EA1CFD86F897C55C0E3 /* MobileWriteLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A860CADC4C77161CF214DF1 /* MobileWriteLayer.swift */; };
+		84D429BD5ACEAEDB1A6037C6 /* DocumentStatus+Icon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BF1B5A15E01A5E498E34A8 /* DocumentStatus+Icon.swift */; };
 		85DECDD2DC5ADCC88C1E2BBC /* DbViewTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */; };
 		8857DF837949AA7EB0F632F0 /* MobileSearchFilterEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D22E4BB32C21871A819BF170 /* MobileSearchFilterEngine.swift */; };
 		888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C51F0367577777D2D842F81 /* ReviewLaneView.swift */; };
@@ -300,6 +301,7 @@
 		0D69CFD0FA830A87D9173FD3 /* ContentSheetsModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSheetsModifier.swift; sourceTree = "<group>"; };
 		0F4B91B1FDAE86F0921F94CD /* VaultEditorPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultEditorPaneView.swift; sourceTree = "<group>"; };
 		0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnection.swift; sourceTree = "<group>"; };
+		11BF1B5A15E01A5E498E34A8 /* DocumentStatus+Icon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DocumentStatus+Icon.swift"; sourceTree = "<group>"; };
 		1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTests.swift; sourceTree = "<group>"; };
 		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		17F0B1AE627258C0E2AB6A82 /* DocFilterPresetCountTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocFilterPresetCountTests.swift; sourceTree = "<group>"; };
@@ -660,6 +662,7 @@
 				15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */,
 				CD33952194AA6C43883895C4 /* DoctorReportPopoverView.swift */,
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
+				11BF1B5A15E01A5E498E34A8 /* DocumentStatus+Icon.swift */,
 				A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */,
 				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
 				1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */,
@@ -1318,6 +1321,7 @@
 				894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */,
 				B47BC351A529F0F2F065C601 /* DoctorReportPopoverView.swift in Sources */,
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
+				84D429BD5ACEAEDB1A6037C6 /* DocumentStatus+Icon.swift in Sources */,
 				C7C146956A2FA300951F787D /* DocumentThumbnailView.swift in Sources */,
 				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
 				B10322DAF0DCCA2C314DEA10 /* DuplicatesView.swift in Sources */,

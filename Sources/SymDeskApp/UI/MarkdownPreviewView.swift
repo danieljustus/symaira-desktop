@@ -278,7 +278,7 @@ private struct EmbedView: View {
                     onLinkClick: onLinkClick
                 )
             case .cycle:
-                Label("Circular embed skipped", systemImage: "arrow.triangle.2.circlepath")
+                Label("Circular embed skipped", symairaIcon: .sync)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTokens.warning)
             case .tooDeep:
@@ -312,7 +312,7 @@ private struct MermaidView: View {
             MermaidGraphView(graph: graph)
         } else {
             VStack(alignment: .leading, spacing: 4) {
-                Label("Diagram (unsupported Mermaid type)", systemImage: "flowchart")
+                Label("Diagram (unsupported Mermaid type)", symairaIcon: .workflow)
                     .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 Text(code)
@@ -479,7 +479,7 @@ private struct BaseEmbedView: View {
                     .padding(8)
             } else if let err = errorMessage {
                 HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    SymairaIconView(.warning, size: 16)
                         .foregroundColor(SymairaTokens.warning)
                     Text(err)
                         .symairaText(.caption)
@@ -488,8 +488,7 @@ private struct BaseEmbedView: View {
                 .padding(8)
             } else if let res = result {
                 HStack(spacing: 4) {
-                    Image(systemName: "tablecells")
-                        .symairaText(.caption)
+                    SymairaIconView(.table, size: 14)
                     Button(action: { onLinkClick?(res.basePath) }) {
                         Text("\(res.baseTitle) › \(res.viewName)")
                             .symairaText(.caption)

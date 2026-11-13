@@ -107,8 +107,7 @@ struct ContentView: View {
                 if let err = core.errorMessage {
                     SymairaScreen {
                         VStack(spacing: 12) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .symairaText(.title)
+                            SymairaIconView(.warning, size: 24)
                                 .foregroundColor(SymairaTheme.goldPrimary)
                             Text("Error")
                                 .symairaText(.title).bold()
@@ -120,7 +119,7 @@ struct ContentView: View {
                                 .padding(.top)
                         }
                         .padding(28)
-                        .glassmorphicPanel()
+                        .symairaCard(padding: 0)
                         .padding(40)
                     }
                 } else {
@@ -160,9 +159,8 @@ struct ContentView: View {
                                 .padding()
                             if let blErr = model.backlinksError {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
+                                    SymairaIconView(.warning, size: 14)
                                         .foregroundStyle(SymairaTokens.warning)
-                                        .symairaText(.caption)
                                     Text(blErr)
                                         .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textSecondary)
@@ -241,22 +239,24 @@ struct ContentView: View {
         ToolbarItem(placement: .navigation) {
             HStack(spacing: 0) {
                 Button(action: { model.goBack() }) {
-                    Image(systemName: "chevron.left")
+                    Image(symairaIcon: .back, size: 16)
                 }
                 .disabled(!model.canGoBack)
                 .help("Go back")
+                .accessibilityLabel("Go back")
 
                 Button(action: { model.goForward() }) {
-                    Image(systemName: "chevron.right")
+                    Image(symairaIcon: .forward, size: 16)
                 }
                 .disabled(!model.canGoForward)
                 .help("Go forward")
+                .accessibilityLabel("Go forward")
 
                 Divider()
                     .frame(height: 16)
 
                 Button(action: { model.isShowingPalette.toggle() }) {
-                    Label("Command Palette", systemImage: "magnifyingglass")
+                    Label { Text("Command Palette") } icon: { Image(symairaIcon: .search, size: 16) }
                 }
                 .keyboardShortcut("k", modifiers: .command)
 
@@ -273,7 +273,7 @@ struct ContentView: View {
         ToolbarItem(placement: .primaryAction) {
             if model.displayMode == .vault && model.selectedNote != nil {
                 Button(action: { model.isShowingPreview.toggle() }) {
-                    Label("Toggle Preview", systemImage: "sidebar.right")
+                    Label { Text("Toggle Preview") } icon: { Image(symairaIcon: .sidebar, size: 16) }
                 }
                 .help("Show or hide the Markdown preview (⌥⌘P)")
             }
@@ -281,7 +281,7 @@ struct ContentView: View {
         ToolbarItem(placement: .primaryAction) {
             if model.displayMode == .vault && model.selectedNote != nil {
                 Button(action: { model.openAIDock() }) {
-                    Label("AI Dock", systemImage: "sparkles")
+                    Label { Text("AI Dock") } icon: { Image(symairaIcon: .ai, size: 16) }
                 }
                 .help("Open the AI chat dock (⌥⌘A)")
             }
@@ -289,7 +289,7 @@ struct ContentView: View {
         ToolbarItem(placement: .primaryAction) {
             if model.displayMode == .vault && model.selectedNote != nil {
                 Button(action: { model.toggleInspector() }) {
-                    Label("Toggle Inspector", systemImage: "info.circle")
+                    Label { Text("Toggle Inspector") } icon: { Image(symairaIcon: .info, size: 16) }
                 }
                 .help("Show or hide the properties inspector (⌥⌘I)")
             }
@@ -298,7 +298,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Button(action: { model.isShowingDoctorPopover.toggle() }) {
                     HStack(spacing: 4) {
-                        Image(systemName: (model.doctorReport?.overall == "ok" || model.doctorReport == nil) ? "checkmark.shield" : "exclamationmark.triangle")
+                        Image(symairaIcon: (model.doctorReport?.overall == "ok" || model.doctorReport == nil) ? .shieldCheck : .warning, size: 16)
                             .foregroundColor(model.doctorReport?.overall == "ok" ? SymairaTheme.goldPrimary : SymairaTheme.goldSecondary)
                         Text(model.doctorSummaryText)
                             .symairaText(.caption)

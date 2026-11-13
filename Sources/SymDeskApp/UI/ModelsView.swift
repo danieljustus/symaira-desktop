@@ -68,7 +68,7 @@ struct ModelsView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Image(systemName: "shippingbox")
+                SymairaIconView(.package, size: 16)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("Local Models")
                     .symairaText(.title).bold()

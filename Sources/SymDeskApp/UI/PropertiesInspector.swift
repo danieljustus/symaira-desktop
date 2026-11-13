@@ -74,10 +74,12 @@ struct PropertiesInspector: View {
                             newValue = ""
                         }
                     } label: {
-                        Image(systemName: "plus.circle.fill")
+                        SymairaIconView(.add, size: 16)
                     }
                     .buttonStyle(.plain)
                     .disabled(newKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityLabel("Add Property")
+                    .help("Add Property")
                 }
 
                 if !inverseRelations.isEmpty {
@@ -87,7 +89,7 @@ struct PropertiesInspector: View {
                         .foregroundColor(SymairaTheme.goldPrimary)
                     ForEach(inverseRelations) { relation in
                         HStack {
-                            Image(systemName: relation.property == "_link" ? "link" : "tag")
+                            SymairaIconView(relation.property == "_link" ? .link : .tag, size: 16)
                                 .foregroundColor(SymairaTheme.textMuted)
                             VStack(alignment: .leading) {
                                 Text(relation.title.isEmpty ? relation.source : relation.title)

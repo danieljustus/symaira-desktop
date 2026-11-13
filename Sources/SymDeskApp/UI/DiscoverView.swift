@@ -9,7 +9,7 @@ struct DiscoverCard: Identifiable {
     let group: Group
     let title: String
     let description: String
-    let icon: String
+    let icon: SymairaIcon
     let actionLabel: String
     let action: CardAction
 
@@ -220,8 +220,7 @@ private struct DiscoverCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: card.icon)
-                    .symairaText(.title)
+                SymairaIconView(card.icon, size: 24)
                     .foregroundColor(isExplored ? SymairaTheme.iceSecondary : SymairaTheme.goldPrimary)
                     .frame(width: 28, height: 28)
 
@@ -238,9 +237,8 @@ private struct DiscoverCardView: View {
                 Spacer()
 
                 if isExplored {
-                    Image(systemName: "checkmark.circle.fill")
+                    SymairaIconView(.success, size: 20)
                         .foregroundColor(SymairaTheme.goldPrimary)
-                        .symairaText(.heading)
                 }
             }
 
@@ -280,7 +278,7 @@ enum DiscoverCardCatalog {
             group: .findSearch,
             title: "Document Grid",
             description: "Browse your entire vault as a visual grid of document cards. Sort by date, status, or type — like a paperless dashboard.",
-            icon: "square.grid.2x2",
+            icon: .dashboard,
             actionLabel: "Open Grid",
             action: .openPanel
         ))
@@ -290,7 +288,7 @@ enum DiscoverCardCatalog {
             group: .findSearch,
             title: "Full-Text Search",
             description: "Instantly search every note and document in your vault. Results show snippets so you can judge relevance before opening.",
-            icon: "magnifyingglass",
+            icon: .search,
             actionLabel: "Try Search",
             action: .openPanel
         ))
@@ -300,7 +298,7 @@ enum DiscoverCardCatalog {
             group: .findSearch,
             title: "Backlinks",
             description: "Every note shows which other notes reference it. Discover connections you didn't know existed across your vault.",
-            icon: "arrow.triangle.branch",
+            icon: .branch,
             actionLabel: "View Notes",
             action: .openPanel
         ))
@@ -310,7 +308,7 @@ enum DiscoverCardCatalog {
             group: .findSearch,
             title: "Link Graph",
             description: "Visualize your vault as an interactive graph. See clusters, orphan notes, and the structure of your knowledge.",
-            icon: "point.3.connected.trianglepath.dotted",
+            icon: .network,
             actionLabel: "Open Graph",
             action: .openPanel
         ))
@@ -321,7 +319,7 @@ enum DiscoverCardCatalog {
             group: .captureAutomatic,
             title: "Watch Folder",
             description: "SymDesk watches your vault and automatically detects file changes. New notes appear instantly — no manual refresh.",
-            icon: "eye.fill",
+            icon: .visible,
             actionLabel: "Reveal Vault",
             action: .revealFolder
         ))
@@ -331,7 +329,7 @@ enum DiscoverCardCatalog {
             group: .captureAutomatic,
             title: "Drag & Drop Ingest",
             description: "Drop any PDF, image, or file onto the app window. It gets copied into your inbox and indexed automatically.",
-            icon: "arrow.down.doc",
+            icon: .download,
             actionLabel: "Open Inbox",
             action: .openPanel
         ))
@@ -341,7 +339,7 @@ enum DiscoverCardCatalog {
             group: .captureAutomatic,
             title: "PDF Viewer",
             description: "View PDFs inline without leaving the app. Preview scanned documents and receipts side-by-side with your notes.",
-            icon: "doc.richtext",
+            icon: .document,
             actionLabel: "Open Docs",
             action: .openPanel
         ))
@@ -352,7 +350,7 @@ enum DiscoverCardCatalog {
             group: .automateAgents,
             title: "CLI Access",
             description: "Run `symdesk` from Terminal to index, search, create notes, or query your vault. Every feature is scriptable.",
-            icon: "terminal",
+            icon: .terminal,
             actionLabel: "Copy Command",
             action: .copyCommand("symdesk --help")
         ))
@@ -362,7 +360,7 @@ enum DiscoverCardCatalog {
             group: .automateAgents,
             title: "MCP Server",
             description: "Connect any AI agent (Claude, GPT, Codex) to your vault via the Model Context Protocol. Agents can search, read, and create notes.",
-            icon: "cpu",
+            icon: .cpu,
             actionLabel: "Copy Command",
             action: .copyCommand("symdesk mcp")
         ))
@@ -372,7 +370,7 @@ enum DiscoverCardCatalog {
             group: .automateAgents,
             title: "AI-Powered Answers",
             description: "Ask natural-language questions about your vault. SymDesk searches relevant documents and generates grounded answers using local LLMs.",
-            icon: "sparkles",
+            icon: .ai,
             actionLabel: "Copy Command",
             action: .copyCommand("symdesk ask \"your question\"")
         ))
@@ -383,7 +381,7 @@ enum DiscoverCardCatalog {
             group: .ownYourData,
             title: "Open Format",
             description: "Your vault is plain Markdown files with YAML frontmatter. No proprietary format, no lock-in — just files you can open anywhere.",
-            icon: "doc.plaintext",
+            icon: .document,
             actionLabel: "Reveal Vault",
             action: .revealFolder
         ))
@@ -393,7 +391,7 @@ enum DiscoverCardCatalog {
             group: .ownYourData,
             title: "Local-First Storage",
             description: "Everything lives on your Mac. The SQLite sidecar index, your notes, your documents — no cloud dependency required.",
-            icon: "internaldrive",
+            icon: .storage,
             actionLabel: "Reveal Vault",
             action: .revealFolder
         ))
@@ -403,7 +401,7 @@ enum DiscoverCardCatalog {
             group: .ownYourData,
             title: "iCloud Sync",
             description: "Store your vault in iCloud Drive and it syncs automatically across all your Macs. SymDesk handles conflicts gracefully.",
-            icon: "icloud",
+            icon: .cloud,
             actionLabel: "Open Docs",
             action: .openDocs(URL(string: "https://github.com/danieljustus/symaira-desktop") ?? URL(string: "https://apple.com")!)
         ))
@@ -420,7 +418,7 @@ enum DiscoverCardCatalog {
                 group: .findSearch,
                 title: "Hybrid Search",
                 description: "Keyword and vector search across your vault is built into SymDesk — nothing to install.",
-                icon: "checkmark.seal.fill",
+                icon: .verified,
                 actionLabel: "Built in",
                 action: .noop
             ))
@@ -432,7 +430,7 @@ enum DiscoverCardCatalog {
                 description: report.tools.isAvailable("symmemory")
                     ? "SymMemory is installed — vector search and knowledge graph are active."
                     : "SymMemory is not on PATH. Install it for RAG and graph capabilities.",
-                icon: report.tools.isAvailable("symmemory") ? "checkmark.seal.fill" : "exclamationmark.triangle",
+                icon: report.tools.isAvailable("symmemory") ? .verified : .warning,
                 actionLabel: report.tools.isAvailable("symmemory") ? "Installed" : "Install",
                 action: report.tools.isAvailable("symmemory") ? .noop : .openDocs(URL(string: "https://github.com/danieljustus/symaira-memory") ?? URL(string: "https://apple.com")!)
             ))

@@ -101,8 +101,7 @@ struct TagBrowserView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Filter field
             HStack(spacing: 4) {
-                Image(systemName: "magnifyingglass")
-                    .symairaText(.caption)
+                SymairaIconView(.search, size: 14)
                     .foregroundColor(SymairaTheme.textMuted)
                 TextField("Filter tags…", text: $filterText)
                     .textFieldStyle(.plain)
@@ -110,11 +109,12 @@ struct TagBrowserView: View {
                     .foregroundColor(SymairaTheme.textPrimary)
                 if !filterText.isEmpty {
                     Button(action: { filterText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .symairaText(.caption)
+                        SymairaIconView(.close, size: 14)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Clear Filter")
+                    .help("Clear Filter")
                 }
             }
             .padding(.horizontal, 8)
@@ -148,8 +148,7 @@ struct TagBrowserView: View {
             // Tag list
             if orderedRows.isEmpty {
                 VStack(spacing: 6) {
-                    Image(systemName: "tag")
-                        .symairaText(.heading)
+                    SymairaIconView(.tag, size: 20)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text(tags.isEmpty ? "No tags yet" : "No tags match")
                         .symairaText(.caption)
@@ -212,8 +211,7 @@ struct TagBrowserView: View {
     private func tagRow(_ tag: TagEntry, indent: Bool) -> some View {
         Button(action: { onTagClick(tag.name) }) {
             HStack(spacing: 6) {
-                Image(systemName: indent ? "tag" : "tag.fill")
-                    .symairaText(.caption)
+                SymairaIconView(.tag, size: 14)
                     .foregroundColor(indent ? SymairaTheme.textMuted : SymairaTheme.goldSecondary)
                 Text(tag.name)
                     .symairaText(.caption)
@@ -238,13 +236,13 @@ struct TagBrowserView: View {
             Button {
                 pendingRename = tag
             } label: {
-                Label("Rename Tag…", systemImage: "pencil")
+                Label { Text("Rename Tag…") } icon: { Image(symairaIcon: .edit, size: 16) }
             }
             if let onMergeTag, tags.count > 1 {
                 Button {
                     pendingMergeSource = tag
                 } label: {
-                    Label("Merge Into…", systemImage: "arrow.triangle.merge")
+                    Label { Text("Merge Into…") } icon: { Image(symairaIcon: .merge, size: 16) }
                 }
             }
             Divider()
@@ -252,7 +250,7 @@ struct TagBrowserView: View {
                 Button(role: .destructive) {
                     pendingDelete = tag
                 } label: {
-                    Label("Delete Tag", systemImage: "trash")
+                    Label { Text("Delete Tag") } icon: { Image(symairaIcon: .delete, size: 16) }
                 }
             }
         }
@@ -283,7 +281,7 @@ private struct RenameTagSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "pencil")
+                SymairaIconView(.edit, size: 16)
                     .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
@@ -299,7 +297,7 @@ private struct RenameTagSheet: View {
                     .frame(width: 330)
             }
             .padding(18)
-            .glassmorphicPanel()
+            .symairaCard(padding: 0)
 
             HStack {
                 Spacer()
@@ -347,7 +345,7 @@ private struct MergeTagSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "arrow.triangle.merge")
+                SymairaIconView(.merge, size: 16)
                     .font(SymairaTypography.display)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
@@ -382,7 +380,7 @@ private struct MergeTagSheet: View {
                 }
             }
             .padding(18)
-            .glassmorphicPanel()
+            .symairaCard(padding: 0)
 
             HStack {
                 Spacer()

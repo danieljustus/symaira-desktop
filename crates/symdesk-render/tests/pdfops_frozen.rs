@@ -180,10 +180,14 @@ fn trace(world: &Path) -> Value {
 }
 
 fn run(binary: &Path, world: &Path, env: &BTreeMap<String, String>, stdin: &str) -> Value {
-    let mut child = Command::new(binary)
-        .current_dir(world)
-        .env_clear()
-        .envs(env)
+    let mut command = Command::new(binary);
+    command.current_dir(world).env_clear().envs(env);
+    // Under a coverage run the instrumented probe would write
+    // `default_*.profraw` into the observed world; discard its profile.
+    if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
+        command.env("LLVM_PROFILE_FILE", "/dev/null");
+    }
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

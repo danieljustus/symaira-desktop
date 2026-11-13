@@ -159,6 +159,9 @@ class Harness:
             path = world / 'scratch' / key
             path.mkdir(parents=True, exist_ok=True, mode=0o700)
             env[key] = str(path)
+        # Under a coverage run the instrumented probe would write
+        # default_*.profraw into the observed work directory.
+        if 'LLVM_PROFILE_FILE' in os.environ: env['LLVM_PROFILE_FILE'] = os.devnull
         return env
 
     def run(self, argv, cwd, env, stdin=None, check=False):

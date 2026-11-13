@@ -1110,7 +1110,7 @@ rust-features:
 	$(CARGO) hack check --workspace --each-feature --locked
 
 rust-coverage:
-	$(CARGO) llvm-cov nextest --workspace --all-features --locked --summary-only
+	$(CARGO) llvm-cov nextest --workspace --all-features --locked --no-fail-fast --summary-only
 
 rust-security:
 	$(CARGO) audit

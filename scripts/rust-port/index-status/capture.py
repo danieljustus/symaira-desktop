@@ -268,6 +268,10 @@ def isolated_env(paths: dict[str, Path], binary: Path) -> dict[str, str]:
     if system.startswith("win"):
         system_root = os.environ.get("SystemRoot", r"C:\Windows")
         env["SystemRoot"] = system_root
+    # A coverage run starts an instrumented binary; without this it writes
+    # default_*.profraw into its working directory, the worktree.
+    if "LLVM_PROFILE_FILE" in os.environ:
+        env["LLVM_PROFILE_FILE"] = os.devnull
     env["PATH"] = os.pathsep.join(dict.fromkeys(path_entries))
     return env
 

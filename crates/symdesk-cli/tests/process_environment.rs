@@ -16,15 +16,26 @@ fn isolated_environment_drops_parent_state_but_keeps_windows_system_root() {
     assert!(variables.iter().any(|(key, value)| {
         *key == "SYMDESK_PRE_RUST_BACKUP" && *value == Some(std::ffi::OsStr::new("off"))
     }));
+    // Under a coverage run the child profile goes to /dev/null, so
+    // instrumented children do not drop `default_*.profraw` into the observed
+    // directory.
+    let coverage = std::env::var_os("LLVM_PROFILE_FILE").is_some();
+    assert_eq!(
+        variables.iter().any(|(key, value)| {
+            *key == "LLVM_PROFILE_FILE" && *value == Some(std::ffi::OsStr::new("/dev/null"))
+        }),
+        coverage
+    );
+    let forwarded = usize::from(coverage);
     #[cfg(windows)]
     {
-        assert_eq!(variables.len(), 2);
+        assert_eq!(variables.len(), 2 + forwarded);
         assert!(variables.iter().any(|(key, value)| {
             *key == "SYSTEMROOT" && *value == std::env::var_os("SYSTEMROOT").as_deref()
         }));
     }
     #[cfg(not(windows))]
-    assert_eq!(variables.len(), 1);
+    assert_eq!(variables.len(), 1 + forwarded);
 }
 
 // Keep shared-helper controls outside the frozen fixture replay binaries: an

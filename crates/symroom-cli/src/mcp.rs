@@ -2190,7 +2190,7 @@ fn artifact_list(room_dir: &Path, artifact_root: &Path) -> Result<String, String
             let file_path = join_under(artifact_root, &path);
             let status = match fs::read(&file_path) {
                 Ok(bytes) => {
-                    if format!("{:x}", Sha256::digest(&bytes)) == expected_hash {
+                    if hex::encode(Sha256::digest(&bytes)) == expected_hash {
                         "ok"
                     } else {
                         "modified"

@@ -37,7 +37,7 @@ fn over_budget(sc: &Scene) -> bool {
 }
 
 fn sha(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    hex::encode(Sha256::digest(bytes))
 }
 
 #[test]

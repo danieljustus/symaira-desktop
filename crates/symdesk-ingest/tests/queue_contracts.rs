@@ -368,7 +368,7 @@ fn migration_bytes_match_go() {
     {
         assert_eq!(name, go_name);
         assert_eq!(
-            format!("{:x}", Sha256::digest(sql.as_bytes())),
+            hex::encode(Sha256::digest(sql.as_bytes())),
             *go_digest,
             "{name}"
         );

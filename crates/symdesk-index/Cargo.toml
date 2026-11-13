@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+hex.workspace = true
 noyalib.workspace = true
 regex.workspace = true
 rusqlite.workspace = true
@@ -24,9 +25,9 @@ thiserror.workspace = true
 time.workspace = true
 toml.workspace = true
 scraper = "0.29.0"
-quick-xml = "=0.41.0"
-zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
-lopdf = { version = "=0.46.0", default-features = false }
+quick-xml = "=0.42.0"
+zip = { version = "=9.5.0", default-features = false, features = ["deflate"] }
+lopdf = { version = "=0.47.0", default-features = false }
 flate2.workspace = true
 
 [dev-dependencies]

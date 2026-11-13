@@ -124,7 +124,7 @@ fn state(path: &Path) -> State {
         chunks,
         ivf_sha256: snapshot
             .as_ref()
-            .map(|data| format!("{:x}", Sha256::digest(data))),
+            .map(|data| hex::encode(Sha256::digest(data))),
         ivf_bytes: snapshot.map(|data| i64::try_from(data.len()).expect("snapshot size")),
     }
 }

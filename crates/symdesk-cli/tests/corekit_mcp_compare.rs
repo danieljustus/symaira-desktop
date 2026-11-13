@@ -85,7 +85,6 @@ const KNOWN_DIVERGENT: &[&str] = &[
     "method-null-id-00",
     "method-null-id-17",
     "ping-id-07",
-    "ping-id-08",
     "ping-id-18",
 ];
 

@@ -187,7 +187,7 @@ mod local_hash_tests {
             digest.update(value.to_be_bytes());
             digest.update((go_simple_lowercase_char(character) as u32).to_be_bytes());
         }
-        let actual = format!("{:x}", digest.finalize());
+        let actual = hex::encode(digest.finalize());
         assert_eq!(actual, fixture.simple_lower_mapping_sha256);
     }
 

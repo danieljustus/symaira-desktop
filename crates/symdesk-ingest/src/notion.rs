@@ -146,7 +146,7 @@ fn text(path: impl AsRef<Path>) -> String {
     path.as_ref().to_string_lossy().into_owned()
 }
 fn hash(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
+    hex::encode(Sha256::digest(data))
 }
 
 pub fn sanitize_base_name(name: &str) -> String {

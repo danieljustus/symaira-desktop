@@ -76,7 +76,7 @@ fn snapshot(root: &Root) -> Value {
                         .unwrap()
                         .to_string_lossy()
                         .replace('\\', "/"),
-                    json!({"sha256":format!("{:x}",Sha256::digest(body.as_bytes())),"body":body}),
+                    json!({"sha256":hex::encode(Sha256::digest(body.as_bytes())),"body":body}),
                 );
             }
         }

@@ -81,7 +81,7 @@ fn snapshot(root: &Root) -> Value {
                 let path_bytes = relative.to_string_lossy().replace('\\', "/").into_bytes();
                 out.insert(
                     relative.to_string_lossy().replace('\\', "/"),
-                    json!({"path_sha256":format!("{:x}",Sha256::digest(path_bytes)),"body":body,"sha256":format!("{:x}",Sha256::digest(body.as_bytes()))}),
+                    json!({"path_sha256":hex::encode(Sha256::digest(path_bytes)),"body":body,"sha256":hex::encode(Sha256::digest(body.as_bytes()))}),
                 );
             }
         }

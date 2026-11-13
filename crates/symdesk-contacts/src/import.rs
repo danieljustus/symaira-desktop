@@ -159,7 +159,7 @@ pub fn identity_hash(prefix: &str, row: &ImportRow) -> String {
     );
     format!(
         "{prefix}{:.16}",
-        format!("{:x}", Sha256::digest(value.as_bytes()))
+        hex::encode(Sha256::digest(value.as_bytes()))
     )
 }
 

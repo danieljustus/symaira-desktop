@@ -72,7 +72,7 @@ fn rust_migration_bytes_match_go_oracle() {
     use sha2::{Digest, Sha256};
     let actual: Vec<(&str, String)> = MIGRATIONS
         .iter()
-        .map(|(name, sql)| (*name, format!("{:x}", Sha256::digest(sql.as_bytes()))))
+        .map(|(name, sql)| (*name, hex::encode(Sha256::digest(sql.as_bytes()))))
         .collect();
     let expected: Vec<(&str, String)> = GO_MIGRATION_SHA256
         .iter()

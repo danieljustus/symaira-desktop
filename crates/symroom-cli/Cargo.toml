@@ -25,7 +25,7 @@ tokio.workspace = true
 getrandom = "=0.4.3"
 
 [target.'cfg(unix)'.dependencies]
-libc = "=0.2.189"
+libc = "=0.2.191"
 
 [dev-dependencies]
 symaira-core-mcp.workspace = true

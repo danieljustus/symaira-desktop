@@ -8,11 +8,12 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+hex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 symdesk-vault.workspace = true
 noyalib.workspace = true
-lopdf = { version = "=0.46.0", default-features = false }
+lopdf = { version = "=0.47.0", default-features = false }
 base64.workspace = true
 time.workspace = true
 sha2.workspace = true
@@ -21,9 +22,9 @@ sha2.workspace = true
 flate2.workspace = true
 png = { version = "=0.18.1", default-features = false }
 tiff = { version = "=0.11.3", default-features = false, features = ["deflate", "lzw", "fax"] }
-fax = { version = "=0.2.7", default-features = false }
+fax = { version = "=0.3.0", default-features = false }
 regex.workspace = true
 image-webp = { version = "=0.2.4", default-features = false }
 
 [target.'cfg(unix)'.dependencies]
-libc = "=0.2.189"
+libc = "=0.2.191"

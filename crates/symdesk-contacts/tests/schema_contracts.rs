@@ -22,7 +22,7 @@ fn go_schema_and_migration_bookkeeping() {
             )
             .unwrap();
             assert_eq!(
-                format!("{:x}", Sha256::digest(&bytes)),
+                hex::encode(Sha256::digest(&bytes)),
                 expected.as_str().unwrap(),
                 "{path}"
             );

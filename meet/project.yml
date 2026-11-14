@@ -8,7 +8,7 @@ packages:
     path: "."
   symaira-corekit:
     url: https://github.com/danieljustus/symaira-corekit.git
-    exactVersion: 0.22.2
+    exactVersion: 0.22.4
 targets:
   SymMeetAgent:
     type: application

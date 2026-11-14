@@ -1502,7 +1502,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1549,7 +1549,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1631,7 +1631,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1671,7 +1671,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1718,7 +1718,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1742,7 +1742,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1851,7 +1851,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1916,7 +1916,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.13.1;
+				MARKETING_VERSION = 0.13.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -2048,7 +2048,7 @@
 			repositoryURL = "https://github.com/danieljustus/symaira-corekit.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.22.2;
+				version = 0.22.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

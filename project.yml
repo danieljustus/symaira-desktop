@@ -14,7 +14,7 @@ packages:
     url: https://github.com/danieljustus/symaira-corekit.git
     # AppKit lives in symaira-corekit (ADR 0006); since 0.21.0 the Swift
     # sources are under swift/. Product and module names are unchanged.
-    exactVersion: 0.22.2
+    exactVersion: 0.22.4
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
@@ -91,7 +91,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
-        MARKETING_VERSION: "0.13.1"
+        MARKETING_VERSION: "0.13.2"
         CURRENT_PROJECT_VERSION: "3"
 
   SymDeskCoreTests:
@@ -174,7 +174,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.13.1"
+        MARKETING_VERSION: "0.13.2"
         CURRENT_PROJECT_VERSION: "3"
 
   SymDeskMobileShare:
@@ -196,7 +196,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.13.1"
+        MARKETING_VERSION: "0.13.2"
         CURRENT_PROJECT_VERSION: "3"
 
   SymDeskWidget:
@@ -222,7 +222,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.13.1"
+        MARKETING_VERSION: "0.13.2"
         CURRENT_PROJECT_VERSION: "3"
 
   SymDeskMobileTests:

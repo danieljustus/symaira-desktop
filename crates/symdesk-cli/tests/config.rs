@@ -156,13 +156,7 @@ fn config_and_ai_config_match_real_go_process_and_filesystem() {
             assert_eq!(output.status.code(), Some(step.exit_code), "{label} exit");
             let mut files = BTreeMap::new();
             snapshot(&home, &root, &mut files);
-            let mut expected = step.files;
-            if cfg!(windows) {
-                for file in expected.values_mut() {
-                    file.mode = 0;
-                }
-            }
-            assert_eq!(files, expected, "{label} filesystem");
+            assert_eq!(files, step.files, "{label} filesystem");
             let requests = server
                 .as_ref()
                 .map(|server| std::mem::take(&mut *server.requests.lock().unwrap()))

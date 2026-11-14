@@ -586,20 +586,6 @@ pub(crate) fn tool_path(name: &str, label: &str) -> Result<PathBuf, String> {
                 Err(missing())
             };
         }
-        #[cfg(windows)]
-        for extension in std::env::var("PATHEXT")
-            .unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".into())
-            .split(';')
-        {
-            let path = directory.join(format!("{name}{extension}"));
-            if executable(&path) {
-                return if path.is_absolute() {
-                    Ok(path)
-                } else {
-                    Err(missing())
-                };
-            }
-        }
     }
     Err(missing())
 }

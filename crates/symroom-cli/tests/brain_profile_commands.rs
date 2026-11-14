@@ -98,9 +98,6 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
 
     let temp = TempDir::new();
     for case in &fixture.cases {
-        if cfg!(windows) && matches!(case.path_mode.as_str(), "helper" | "helper-fails") {
-            continue;
-        }
         let isolated = temp.path.join(&case.name);
         let home = isolated.join("home");
         let room = isolated.join("room");
@@ -124,9 +121,6 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
         let search = if case.path_mode == "dot" {
             #[cfg(unix)]
             write_fake_symbrain(&room, false);
-            #[cfg(windows)]
-            fs::copy(env!("CARGO_BIN_EXE_symroom"), room.join("symbrain.exe"))
-                .expect("plant dot executable");
             Path::new(".")
         } else {
             &path_dir
@@ -215,11 +209,7 @@ fn normalize_home(output: &[u8], home: &Path) -> Vec<u8> {
     let normalized = String::from_utf8(output.to_vec())
         .expect("symroom output is UTF-8")
         .replace(&home.to_string_lossy().to_string(), "<HOME>");
-    if cfg!(windows) && normalized.contains("<HOME>") {
-        normalized.replace('\\', "/").into_bytes()
-    } else {
-        normalized.into_bytes()
-    }
+    normalized.into_bytes()
 }
 
 fn read_profile_files(dir: &Path) -> Vec<(String, String)> {
@@ -273,8 +263,7 @@ impl TempDir {
         ));
         fs::create_dir(&path).expect("create isolated test directory");
         // Derive every child from the same physical root used by the CLI.
-        // macOS TMPDIR can traverse /var -> /private/var. Keep Windows' normal
-        // path spelling rather than introducing canonicalize's verbatim prefix.
+        // macOS TMPDIR can traverse /var -> /private/var.
         #[cfg(unix)]
         let path = fs::canonicalize(path).expect("canonical test root");
         Self { path }

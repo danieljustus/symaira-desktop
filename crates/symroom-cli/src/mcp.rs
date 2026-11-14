@@ -145,10 +145,7 @@ impl GoStdout {
     fn path_error(error: &io::Error) -> io::Error {
         io::Error::new(
             error.kind(),
-            format!(
-                "write /dev/stdout: {}",
-                goio::os_message(error, cfg!(windows))
-            ),
+            format!("write /dev/stdout: {}", goio::os_message(error)),
         )
     }
 }
@@ -2221,35 +2218,15 @@ mod go_io_tests {
     use symroom_core::goio::os_message as go_os_message;
 
     #[test]
-    fn os_messages_follow_the_go_wording_of_each_host_family() {
-        let not_found = io::Error::from_raw_os_error(2);
+    fn os_messages_follow_the_go_unix_wording() {
         assert_eq!(
-            go_os_message(&not_found, true),
-            "The system cannot find the file specified."
+            go_os_message(&io::Error::from_raw_os_error(2)),
+            "no such file or directory"
         );
         assert_eq!(
-            go_os_message(&io::Error::from_raw_os_error(3), true),
-            "The system cannot find the path specified."
+            go_os_message(&io::Error::from_raw_os_error(21)),
+            "is a directory"
         );
-        assert_eq!(
-            go_os_message(&io::Error::from_raw_os_error(5), true),
-            "Access is denied."
-        );
-        assert_eq!(
-            go_os_message(&io::Error::from_raw_os_error(1), true),
-            "Incorrect function."
-        );
-        #[cfg(unix)]
-        {
-            assert_eq!(
-                go_os_message(&not_found, false),
-                "no such file or directory"
-            );
-            assert_eq!(
-                go_os_message(&io::Error::from_raw_os_error(21), false),
-                "is a directory"
-            );
-        }
     }
 
     #[test]
@@ -2259,22 +2236,14 @@ mod go_io_tests {
         let missing = root.join("missing.txt");
         let (operation, error) = go_read_file(&missing).unwrap_err();
         assert_eq!(operation, "open");
-        let expected = if cfg!(windows) {
-            "The system cannot find the file specified."
-        } else {
-            "no such file or directory"
-        };
+        let expected = "no such file or directory";
         assert_eq!(
             go_io_error(operation, &missing, &error),
             format!("open {}: {expected}", missing.display())
         );
         let (operation, error) = go_read_file(&root).unwrap_err();
         assert_eq!(operation, "read");
-        let expected = if cfg!(windows) {
-            "Incorrect function."
-        } else {
-            "is a directory"
-        };
+        let expected = "is a directory";
         assert_eq!(
             go_io_error(operation, &root, &error),
             format!("read {}: {expected}", root.display())

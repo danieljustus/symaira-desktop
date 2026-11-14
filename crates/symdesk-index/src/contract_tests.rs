@@ -448,8 +448,6 @@ fn validated_storage_path_separates_io_path_from_storage_key() {
         assert_eq!(storage.io_path, canonical_actual.join("nested/note.md"));
         assert_ne!(storage.io_path, storage.key_path);
     }
-    #[cfg(windows)]
-    assert!(storage.io_path.ends_with(Path::new(r"nested\note.md")));
     assert!(storage_path(&root, Path::new("../escape.md")).is_err());
     let _ = fs::remove_dir_all(base);
 }
@@ -643,63 +641,6 @@ fn sidecar_storage_root_temp_boundaries_use_equivalent_spellings() {
             explicit.join("symdesk/vaults")
         );
     }
-}
-
-#[cfg(windows)]
-#[test]
-fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {
-    let ordinary_root =
-        std::env::temp_dir().join(format!("symdesk-index-long-path-{}", std::process::id()));
-    let mut long_root = ordinary_root.clone();
-    for index in 0..16 {
-        long_root = long_root.join(format!("segment-{index:02}-{}", "x".repeat(16)));
-    }
-    let root = PathBuf::from(format!(r"\\?\{}", long_root.display()));
-    let _ = fs::remove_dir_all(&root);
-    if let Err(error) = fs::create_dir_all(&root) {
-        if error.raw_os_error() == Some(206) {
-            eprintln!("skipping long-path regression: Windows long paths are disabled");
-            return;
-        }
-        panic!("create long vault root: {error}");
-    }
-    let relative = Path::new("note.md");
-    let content = b"---\ntitle: Long path\n---\nbody\n";
-    fs::write(root.join(relative), content).expect("write long-path document");
-
-    let storage = storage_path(&root, relative).expect("validated long-path storage");
-    assert_eq!(storage.key_path, long_root.join(relative));
-    assert!(storage.io_path.to_string_lossy().starts_with(r#"\\?\"#));
-    assert_eq!(
-        fs::read(&storage.io_path).expect("read verbatim path"),
-        content
-    );
-
-    let db_path = std::env::temp_dir().join(format!(
-        "symdesk-index-long-path-db-{}.db",
-        std::process::id()
-    ));
-    let _ = fs::remove_file(&db_path);
-    let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
-    let mut batch = Vec::new();
-    let vault_dir = open_vault_dir(&root).expect("open long-path vault capability");
-    sidecar
-        .refresh_path(&vault_dir, &root, relative, None, false, &mut batch)
-        .expect("refresh long-path document");
-    sidecar
-        .flush_refresh_batch(&mut batch)
-        .expect("flush long-path document");
-    let key = storage.key_path.to_string_lossy().into_owned();
-    let stored_path: String = sidecar
-        .connection
-        .query_row("SELECT path FROM files WHERE path = ?", [&key], |row| {
-            row.get(0)
-        })
-        .expect("stored ordinary path key");
-    assert_eq!(stored_path, key);
-    drop(sidecar);
-    let _ = fs::remove_file(db_path);
-    let _ = fs::remove_dir_all(root);
 }
 
 #[cfg(unix)]

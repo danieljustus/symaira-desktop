@@ -670,20 +670,10 @@ fn data_home(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarE
 }
 
 fn user_home_error() -> &'static str {
-    #[cfg(windows)]
-    {
-        "user home dir: %userprofile% is not defined"
-    }
-    #[cfg(not(windows))]
-    {
-        "user home dir: $HOME is not defined"
-    }
+    "user home dir: $HOME is not defined"
 }
 
 fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
-    #[cfg(windows)]
-    let key = "USERPROFILE";
-    #[cfg(not(windows))]
     let key = "HOME";
     nonempty_environment(environment, key)
 }
@@ -746,21 +736,15 @@ mod tests {
     fn absolute_paths_preserve_leading_spaces_and_share_vault_storage_digest() {
         let cwd = std::env::current_dir().unwrap();
         let raw = Path::new("  relative/../relative vault ");
-        let expected_name = if cfg!(windows) {
-            "relative vault"
-        } else {
-            "relative vault "
-        };
-        let expected = cwd.join(expected_name);
+        let expected = cwd.join("relative vault ");
         assert_eq!(
             super::absolute_clean(raw, &cwd).unwrap().as_os_str(),
             expected.as_os_str()
         );
         let leading = super::absolute_clean(Path::new(" leading/file "), &cwd).unwrap();
-        let expected_file = if cfg!(windows) { "file" } else { "file " };
         assert_eq!(
             leading.as_os_str(),
-            cwd.join(" leading").join(expected_file).as_os_str()
+            cwd.join(" leading").join("file ").as_os_str()
         );
         let temp = std::env::temp_dir();
         let data = temp.join("symdesk-absolute-pure-test-data");
@@ -780,41 +764,6 @@ mod tests {
                 .unwrap(),
             directory.join("retrieval.db")
         );
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn windows_absolute_paths_cover_drive_root_unc_verbatim_and_invalid_input() {
-        use std::path::{Component, PathBuf, Prefix};
-        let cwd = std::env::current_dir().unwrap();
-        if let Some(Component::Prefix(prefix)) = cwd.components().next()
-            && let Prefix::Disk(drive) = prefix.kind()
-        {
-            let relative = format!("{}:not-created.db. ", char::from(drive));
-            assert_eq!(
-                super::absolute_clean(Path::new(&relative), &cwd).unwrap(),
-                cwd.join("not-created.db")
-            );
-            assert_eq!(
-                super::absolute_clean(Path::new(r"\not-created.db. "), &cwd).unwrap(),
-                PathBuf::from(format!("{}:\\not-created.db", char::from(drive)))
-            );
-        }
-        for (input, expected) in [
-            (
-                r"\\server\share\not-created.db. ",
-                r"\\server\share\not-created.db",
-            ),
-            (r"\\?\C:\not-created.db. ", r"\\?\C:\not-created.db. "),
-        ] {
-            assert_eq!(
-                super::absolute_clean(Path::new(input), &cwd)
-                    .unwrap()
-                    .as_os_str(),
-                Path::new(expected).as_os_str()
-            );
-        }
-        assert!(super::absolute_clean(Path::new("bad\0path"), &cwd).is_err());
     }
 
     #[test]

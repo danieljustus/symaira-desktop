@@ -147,12 +147,7 @@ impl<'a> DatasetSyncService<'a> {
         )?;
         let metadata = fs::metadata(source).map_err(|error| {
             let detail = if error.kind() == io::ErrorKind::NotFound {
-                let operation = if cfg!(windows) {
-                    "GetFileAttributesEx"
-                } else {
-                    "stat"
-                };
-                go_path_error(operation, source, &error)
+                go_path_error("stat", source, &error)
             } else {
                 error.to_string()
             };

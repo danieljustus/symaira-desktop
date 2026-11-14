@@ -562,17 +562,6 @@ fn generated_go_history_lifecycle_matches_rust_bytes_and_side_effects() {
     let data = fs::read(&path).unwrap_or_else(|err| panic!("read {path:?}: {err}"));
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse fixture");
     assert_eq!(fixture.schema_version, 1, "unexpected fixture schema");
-    if cfg!(windows) {
-        assert_eq!(
-            fixture.cases.len(),
-            18,
-            "Windows must replay all 18 Go history lifecycle cases"
-        );
-        assert!(
-            fixture.cases.iter().all(|case| case.platform != "unix"),
-            "Windows history lifecycle fixture still excludes a case"
-        );
-    }
     assert!(
         fixture.oracle.commit == oracle_identity::commit(),
         "oracle commit must be pinned"

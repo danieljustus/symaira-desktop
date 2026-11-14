@@ -57,9 +57,7 @@ fn environment(root: &Path) -> BTreeMap<String, String> {
 }
 
 fn legacy_path(environment: &BTreeMap<String, String>) -> PathBuf {
-    let home = environment
-        .get(if cfg!(windows) { "USERPROFILE" } else { "HOME" })
-        .expect("test home");
+    let home = environment.get("HOME").expect("test home");
     PathBuf::from(home).join(".local/share/symaira-seek/symseek.db")
 }
 

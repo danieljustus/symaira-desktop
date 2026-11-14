@@ -180,28 +180,8 @@ pub(super) fn call(name: &str, raw: Option<&str>, ctx: &Context) -> Result<Value
 // Availability only, without executing a tool or opening a vault. The renderer
 // deliberately keeps its resolver private; actual execution uses its facade.
 fn on_path(name: &str) -> bool {
-    #[cfg(windows)]
-    let names: Vec<String> = std::env::var("PATHEXT")
-        .ok()
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".into())
-        .split(';')
-        .filter(|extension| !extension.is_empty())
-        .map(|extension| format!("{name}{extension}"))
-        .collect();
-    #[cfg(not(windows))]
     let names = [name.to_owned()];
-    #[cfg(windows)]
-    if std::env::var_os("NoDefaultCurrentDirectoryInExePath").is_none()
-        && names.iter().any(|name| executable(Path::new(name)))
-    {
-        return false; // Go exec.ErrDot: do not admit an implicit CWD tool.
-    }
     for dir in std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()) {
-        #[cfg(windows)]
-        if dir.as_os_str().is_empty() {
-            continue;
-        }
         for name in &names {
             let path = dir.join(name);
             if executable(&path) {

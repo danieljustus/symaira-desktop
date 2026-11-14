@@ -1,8 +1,8 @@
 //! Room authorization transaction ported from Go `internal/room/authorization`
 //! (#1043): approval decisions and membership mutations hold one OS file lock
 //! across replay, authorization, signing and append, shared by independent
-//! processes and root aliases. `std::fs::File::lock` uses `flock` on Unix and
-//! `LockFileEx` on Windows, so Go and Rust writers exclude each other.
+//! processes and root aliases. `std::fs::File::lock` uses `flock`, so Go
+//! and Rust writers exclude each other.
 
 use std::fs::{self, File, OpenOptions, TryLockError};
 use std::io;

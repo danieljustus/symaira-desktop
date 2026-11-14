@@ -92,7 +92,7 @@ pub fn detect_sidecar_path(path: &str, content: &str) -> Option<PathBuf> {
 /// `filepath.Ext`: the suffix from the final dot of the last path element.
 fn go_extension(path: &str) -> &str {
     for (index, byte) in path.bytes().enumerate().rev() {
-        if byte == b'/' || (cfg!(windows) && byte == b'\\') {
+        if byte == b'/' {
             break;
         }
         if byte == b'.' {

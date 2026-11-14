@@ -3,20 +3,6 @@
   "crate_roots_allowing_unsafe": [],
   "unsafe": [
     {
-      "path": "crates/symdesk-cli/src/index_status_process.rs",
-      "count": 0,
-      "scope": "src",
-      "invariant": "Only the `#[allow(unsafe_code)]` on the `#[cfg(windows)]` module declaration of index_status_process_windows.rs; it contains no unsafe token itself.",
-      "test": "crates/symdesk-cli/src/index_status_process_windows_tests.rs"
-    },
-    {
-      "path": "crates/symdesk-cli/src/index_status_process_windows.rs",
-      "count": 22,
-      "scope": "src",
-      "invariant": "Windows-only Win32 Job Object / thread-snapshot FFI behind owning RAII handle wrappers: handles are opened/created in this module, closed exactly once on drop, structs have the SDK ABI layout, and the suspended child is resumed only after Job assignment. Every call site carries a `// SAFETY:` comment. Windows is not a required port target (scope decision 2026-10-29): the focused tests compile and run only on Windows and are NOT exercised by the macOS/Linux local gate.",
-      "test": "crates/symdesk-cli/src/index_status_process_windows_tests.rs"
-    },
-    {
       "path": "crates/symdesk-cli/src/lifecycle.rs",
       "count": 7,
       "scope": "src",

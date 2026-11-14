@@ -40,9 +40,7 @@ const JOURNAL_DIR: &str = "journal";
 const JOURNAL_SUFFIX: &str = ".jsonl";
 
 fn missing_journal(error: &std::io::Error) -> bool {
-    // Go os.IsNotExist treats Windows ERROR_DIRECTORY as a missing journal.
     error.kind() == std::io::ErrorKind::NotFound
-        || cfg!(windows) && error.raw_os_error() == Some(267)
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]

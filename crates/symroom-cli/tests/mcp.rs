@@ -22,112 +22,9 @@ use std::{
 use serde_json::{Value, json};
 use sha2::Digest;
 
-/// `<repo>/testdata/port/room` joined component by component. A single
-/// `join("testdata/port/room")` leaves `/` inside a Windows path, so the
-/// `${ARTIFACT_ROOT}` placeholder would not match the `\`-separated path the
-/// server reports in its errors.
+/// `<repo>/testdata/port/room`.
 fn testdata_room_dir(root: &Path) -> PathBuf {
     root.join("testdata").join("port").join("room")
-}
-
-/// The unix-recorded fixture error suffixes and the text Go's own Windows
-/// build prints for the same failure (`syscall.Errno.Error()`): a missing file
-/// is `ERROR_FILE_NOT_FOUND`, and reading a directory handle is
-/// `ERROR_INVALID_FUNCTION`.
-const GO_WINDOWS_ERROR_SUFFIXES: [(&str, &str); 2] = [
-    (
-        ": no such file or directory",
-        ": The system cannot find the file specified.",
-    ),
-    (": is a directory", ": Incorrect function."),
-];
-
-/// Rewrites exactly the fixture's recorded unix OS errors into Go's Windows
-/// wording, and the `/` separators of the `${...}` placeholder path directly
-/// in front of each, to `\`. Any other text is returned unchanged.
-fn windows_go_error_text(text: &str) -> String {
-    let mut out = text.to_owned();
-    for (unix, windows) in GO_WINDOWS_ERROR_SUFFIXES {
-        let mut rewritten = String::with_capacity(out.len());
-        let mut rest = out.as_str();
-        while let Some(index) = rest.find(unix) {
-            let head = &rest[..index];
-            let start = head
-                .char_indices()
-                .rev()
-                .find(|(_, c)| !(c.is_ascii_alphanumeric() || "._-/${}".contains(*c)))
-                .map_or(0, |(position, c)| position + c.len_utf8());
-            let (before, token) = head.split_at(start);
-            rewritten.push_str(before);
-            if token.starts_with("${") {
-                rewritten.push_str(&token.replace('/', "\\"));
-                rewritten.push_str(windows);
-            } else {
-                rewritten.push_str(token);
-                rewritten.push_str(unix);
-            }
-            rest = &rest[index + unix.len()..];
-        }
-        rewritten.push_str(rest);
-        out = rewritten;
-    }
-    out
-}
-
-/// The response a native run is expected to produce: the recorded fixture on
-/// Unix, the same fixture with Go's Windows error wording on Windows.
-fn expected_response(recorded: &Value) -> Value {
-    if cfg!(windows) {
-        translate_strings(recorded, &windows_go_error_text)
-    } else {
-        recorded.clone()
-    }
-}
-
-fn translate_strings(value: &Value, translate: &dyn Fn(&str) -> String) -> Value {
-    match value {
-        Value::String(text) => Value::String(translate(text)),
-        Value::Array(items) => Value::Array(
-            items
-                .iter()
-                .map(|item| translate_strings(item, translate))
-                .collect(),
-        ),
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .map(|(key, item)| (key.clone(), translate_strings(item, translate)))
-                .collect(),
-        ),
-        other => other.clone(),
-    }
-}
-
-#[test]
-fn windows_wording_translation_is_narrow_and_runs_on_every_host() {
-    assert_eq!(
-        windows_go_error_text("read room.toml: open ${ROOM}/room.toml: no such file or directory"),
-        "read room.toml: open ${ROOM}\\room.toml: The system cannot find the file specified."
-    );
-    assert_eq!(
-        windows_go_error_text(
-            "compute sha256: open ${ARTIFACT_ROOT}/nonexistent.txt: no such file or directory"
-        ),
-        "compute sha256: open ${ARTIFACT_ROOT}\\nonexistent.txt: The system cannot find the file specified."
-    );
-    assert_eq!(
-        windows_go_error_text("compute sha256: read ${ARTIFACT_ROOT}: is a directory"),
-        "compute sha256: read ${ARTIFACT_ROOT}: Incorrect function."
-    );
-    // Only the known suffix after a `${...}` placeholder path changes; plain
-    // paths, unrelated slashes and other messages are left alone.
-    for untouched in [
-        "path is outside artifact root",
-        "open /tmp/x/y: no such file or directory",
-        "see ${ROOM}/a/b.txt for details",
-        "${ROOM}/room.toml",
-    ] {
-        assert_eq!(windows_go_error_text(untouched), untouched);
-    }
 }
 
 fn temporary_room(suffix: &str) -> PathBuf {
@@ -1023,26 +920,9 @@ fn identity_from_seed(seed: &[u8]) -> symroom_core::identity::Identity {
         .expect("fixed fixture identity")
 }
 
-/// A scenario that installs a fake `symdesk` is recorded from a `#!/bin/sh`
-/// script that neither Go's `exec.LookPath` nor Rust can run on Windows (a
-/// PATHEXT extension is required and there is no shell script loader), so it
-/// is replayed on Unix only. The Go oracle skips exactly the same scenarios
-/// (`skipFakeSymdesk` in internal/room/mcp/port_scenarios_test.go).
-fn needs_fake_symdesk(scenario: &Value) -> bool {
-    scenario["symdesk_script"]
-        .as_str()
-        .is_some_and(|script| !script.is_empty())
-}
-
-/// Whether this platform skips the fake-symdesk scenarios.
-fn skips_fake_symdesk() -> bool {
-    cfg!(windows)
-}
-
 /// Replays every scenario of a fixture file and returns the number of executed
 /// steps so a vacuous pass is rejected. `fixture_steps` is the step count of
-/// the whole fixture on every platform; the count executed here is that total
-/// minus the fake-symdesk steps on Windows, derived from the fixture itself.
+/// the whole fixture.
 fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
     let root = repo_root();
     let fixture: Value = serde_json::from_slice(
@@ -1059,24 +939,9 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
         total_steps, fixture_steps,
         "{fixture_name}: fixture step count"
     );
-    let fake_symdesk_steps: usize = scenarios
-        .iter()
-        .filter(|scenario| needs_fake_symdesk(scenario))
-        .map(step_count)
-        .sum();
-    // Independent of the skip decision below, so a skip that is wrongly
-    // active (or missing) on a platform changes `steps_run` away from this.
-    let expected_steps = if cfg!(windows) {
-        total_steps - fake_symdesk_steps
-    } else {
-        total_steps
-    };
     let mut steps_run = 0;
     for scenario in scenarios {
         let name = scenario["name"].as_str().expect("scenario name");
-        if skips_fake_symdesk() && needs_fake_symdesk(scenario) {
-            continue;
-        }
         let setup = &setups[scenario["setup"].as_str().expect("setup name")];
         let room = materialize(setup);
         // Every Go-signed setup line must verify under the Rust canonical form.
@@ -1167,11 +1032,7 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
                 let actual = frames
                     .first()
                     .map_or(Value::Null, |frame| context.normalize_tree(frame));
-                assert_eq!(
-                    actual,
-                    expected_response(&step["response"]),
-                    "{label}: response"
-                );
+                assert_eq!(actual, step["response"].clone(), "{label}: response");
             }
         }
         verify_scenario_journal(
@@ -1185,7 +1046,7 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
         let _ = std::fs::remove_dir_all(room);
         let _ = std::fs::remove_dir_all(path_dir);
     }
-    assert_eq!(steps_run, expected_steps, "{fixture_name}: executed steps");
+    assert_eq!(steps_run, total_steps, "{fixture_name}: executed steps");
     assert!(
         steps_run > 0,
         "{fixture_name}: scenario replay must not be vacuous"

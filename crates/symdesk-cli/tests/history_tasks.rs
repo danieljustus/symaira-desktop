@@ -75,35 +75,7 @@ fn history_tasks_matches_go_process_contract() {
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
         );
-        #[cfg(windows)]
-        let mut stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
-        #[cfg(not(windows))]
         let stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
-        #[cfg(windows)]
-        if !case.json {
-            let format = time::format_description::parse_borrowed::<2>(
-                "[year]-[month]-[day] [hour]:[minute]:[second]",
-            )
-            .expect("timestamp format");
-            for manifest in case.manifests.values() {
-                let value: serde_json::Value = serde_json::from_str(manifest).expect("checkpoint");
-                let utc = time::OffsetDateTime::parse(
-                    value["timestamp"].as_str().expect("timestamp"),
-                    &time::format_description::well_known::Rfc3339,
-                )
-                .expect("UTC timestamp");
-                let local = utc.to_offset(
-                    time::UtcOffset::local_offset_at(utc).unwrap_or(time::UtcOffset::UTC),
-                );
-                let local_text = local.format(&format).expect("local timestamp");
-                assert!(
-                    stdout.contains(&local_text),
-                    "{} local timestamp",
-                    case.name
-                );
-                stdout = stdout.replace(&local_text, &utc.format(&format).expect("UTC timestamp"));
-            }
-        }
         assert_eq!(stdout, case.stdout, "{} stdout", case.name);
         assert_eq!(
             String::from_utf8_lossy(&output.stderr),

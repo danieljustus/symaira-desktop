@@ -6,7 +6,7 @@ use process_env::IsolatedEnvironment;
 use std::process::Command;
 
 #[test]
-fn isolated_environment_drops_parent_state_but_keeps_windows_system_root() {
+fn isolated_environment_drops_parent_state() {
     let mut command = Command::new("unused");
     command.env("MUST_NOT_LEAK", "sentinel").isolated_env();
     let variables: Vec<_> = command.get_envs().collect();
@@ -27,14 +27,6 @@ fn isolated_environment_drops_parent_state_but_keeps_windows_system_root() {
         coverage
     );
     let forwarded = usize::from(coverage);
-    #[cfg(windows)]
-    {
-        assert_eq!(variables.len(), 2 + forwarded);
-        assert!(variables.iter().any(|(key, value)| {
-            *key == "SYSTEMROOT" && *value == std::env::var_os("SYSTEMROOT").as_deref()
-        }));
-    }
-    #[cfg(not(windows))]
     assert_eq!(variables.len(), 1 + forwarded);
 }
 
@@ -48,11 +40,7 @@ fn root_markers_use_native_separators_without_cleaning_literal_arguments() {
         std::fs::canonicalize(&canonical).unwrap(),
         std::fs::canonicalize(&directory).unwrap()
     );
-    let root = if cfg!(windows) {
-        r"C:\temp\case"
-    } else {
-        "/private/case"
-    };
+    let root = "/private/case";
     let expected =
         format!("{root}/vault/note conflicted copy.md").replace('/', std::path::MAIN_SEPARATOR_STR);
     assert_eq!(

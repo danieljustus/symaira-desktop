@@ -45,8 +45,6 @@ struct Case {
     post_index_files: BTreeMap<String, String>,
     #[serde(default)]
     no_vault: bool,
-    #[serde(default)]
-    unix_only: bool,
     steps: Vec<Step>,
 }
 
@@ -143,9 +141,6 @@ fn backlinks_match_go_process_contract() {
     let mut executed_cases = 0;
     let mut executed_steps = 0;
     for case in &fixture.cases {
-        if cfg!(windows) && case.unix_only {
-            continue;
-        }
         executed_cases += 1;
         let root = base.join(&case.name);
         fs::create_dir_all(&root).expect("make case root");
@@ -218,18 +213,9 @@ fn backlinks_match_go_process_contract() {
             executed_steps += 1;
         }
     }
-    let expected_steps: usize = fixture
-        .cases
-        .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
-        .map(|case| case.steps.len())
-        .sum();
+    let expected_steps: usize = fixture.cases.iter().map(|case| case.steps.len()).sum();
     assert_eq!(executed_steps, expected_steps, "every fixture step ran");
-    let expected_cases = fixture
-        .cases
-        .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
-        .count();
+    let expected_cases = fixture.cases.len();
     assert_eq!(executed_cases, expected_cases, "every fixture case ran");
     fs::remove_dir_all(base).expect("remove only this test's temporary directory");
 }

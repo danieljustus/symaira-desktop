@@ -8,11 +8,6 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
-#[cfg(windows)]
-#[allow(unsafe_code)] // Narrow Win32 Job Object and thread-handle boundary.
-#[path = "index_status_process_windows.rs"]
-mod windows_tree;
-
 static CAPTURE_NONCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug)]
@@ -98,8 +93,6 @@ pub fn run_bounded(
         CaptureFile::create("stdout").map_err(ProcessError::Spawn)?;
     let (stderr_capture, stderr_file) =
         CaptureFile::create("stderr").map_err(ProcessError::Spawn)?;
-    #[cfg(windows)]
-    let job = windows_tree::WindowsJob::create().map_err(ProcessError::Spawn)?;
     command
         .stdin(Stdio::null())
         .stdout(Stdio::from(stdout_file))
@@ -108,12 +101,6 @@ pub fn run_bounded(
 
     let deadline = timeout.and_then(|duration| Instant::now().checked_add(duration));
     let mut child = command.spawn().map_err(ProcessError::Spawn)?;
-    #[cfg(windows)]
-    if let Err(error) = job.assign_and_resume(&child) {
-        return Err(ProcessError::Spawn(cleanup_failed_start(
-            &job, &mut child, error,
-        )));
-    }
     loop {
         match child.try_wait() {
             Ok(Some(status)) => {
@@ -122,9 +109,6 @@ pub fn run_bounded(
                 // cleanup confirms that all descendants are gone.
                 #[cfg(unix)]
                 terminate_process_tree(child.id()).map_err(ProcessError::Wait)?;
-                #[cfg(windows)]
-                job.terminate_and_wait(Duration::from_secs(1))
-                    .map_err(ProcessError::Wait)?;
                 let output = read_output(status, &stdout_capture, &stderr_capture)?;
                 return Ok(output);
             }
@@ -132,8 +116,6 @@ pub fn run_bounded(
             Err(error) => {
                 #[cfg(unix)]
                 let _ = terminate_process_tree(child.id());
-                #[cfg(windows)]
-                let _ = job.terminate_and_wait(Duration::from_secs(1));
                 let _ = child.kill();
                 let _ = wait_for_exit(&mut child, Duration::from_secs(1));
                 return Err(ProcessError::Wait(error));
@@ -143,8 +125,6 @@ pub fn run_bounded(
         if deadline.is_some_and(|at| Instant::now() >= at) {
             #[cfg(unix)]
             let cleanup = terminate_process_tree(child.id());
-            #[cfg(windows)]
-            let cleanup = job.terminate_and_wait(Duration::from_secs(1));
             let _ = child.kill();
             let status =
                 wait_for_exit(&mut child, Duration::from_secs(1)).map_err(ProcessError::Wait)?;
@@ -178,64 +158,6 @@ fn read_output(
 fn prepare_process_group(command: &mut Command) {
     use std::os::unix::process::CommandExt;
     command.process_group(0);
-}
-
-#[cfg(windows)]
-fn prepare_process_group(command: &mut Command) {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
-    // Keep the primary thread suspended until WindowsJob owns the process.
-    command.creation_flags(CREATE_NEW_PROCESS_GROUP | windows_tree::CREATE_SUSPENDED_FLAG);
-}
-
-#[cfg(windows)]
-fn cleanup_failed_start(
-    job: &windows_tree::WindowsJob,
-    child: &mut Child,
-    cause: io::Error,
-) -> io::Error {
-    let job_cleanup = job.terminate_and_wait(Duration::from_secs(1));
-    // Assignment may have failed, so also terminate the direct process handle.
-    // It is still suspended and cannot have started descendants.
-    let child_reap = terminate_child_and_reap(child, Duration::from_secs(1));
-    match (job_cleanup, child_reap) {
-        (Ok(()), Ok(_)) => cause,
-        (job_result, child_result) => io::Error::other(format!(
-            "worker start/assignment failed ({cause}); job cleanup: {}; child reap: {}",
-            job_result
-                .err()
-                .map_or_else(|| "ok".to_owned(), |error| error.to_string()),
-            child_result
-                .err()
-                .map_or_else(|| "ok".to_owned(), |error| error.to_string()),
-        )),
-    }
-}
-
-#[cfg(windows)]
-fn terminate_child_and_reap(child: &mut Child, timeout: Duration) -> io::Result<ExitStatus> {
-    let deadline = Instant::now() + timeout;
-    let mut last_error = None;
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => return Ok(status),
-            Ok(None) => {}
-            Err(error) => last_error = Some(error),
-        }
-        if let Err(error) = child.kill() {
-            last_error = Some(error);
-        }
-        let now = Instant::now();
-        if now >= deadline {
-            return Err(last_error.unwrap_or_else(|| {
-                io::Error::new(
-                    io::ErrorKind::TimedOut,
-                    "could not terminate and reap suspended index-status worker",
-                )
-            }));
-        }
-        thread::sleep(Duration::from_millis(5).min(deadline.saturating_duration_since(now)));
-    }
 }
 
 #[cfg(unix)]
@@ -291,10 +213,10 @@ fn wait_for_exit(child: &mut Child, timeout: Duration) -> io::Result<ExitStatus>
     }
 }
 
-#[cfg(not(any(unix, windows)))]
+#[cfg(not(unix))]
 fn prepare_process_group(_command: &mut Command) {}
 
-#[cfg(not(any(unix, windows)))]
+#[cfg(not(unix))]
 fn terminate_process_tree(_pid: u32) -> io::Result<()> {
     Err(io::Error::new(
         io::ErrorKind::Unsupported,

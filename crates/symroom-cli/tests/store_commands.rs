@@ -396,7 +396,7 @@ fn snapshot(root: &Path, before: &BTreeMap<String, String>) -> Vec<Entry> {
                 .strip_prefix(root)
                 .expect("relative")
                 .to_string_lossy()
-                .replace(if cfg!(windows) { '\\' } else { '/' }, "/");
+                .into_owned();
             if rel == "tmp" || rel == "bin" || rel.starts_with("tmp/") {
                 continue;
             }
@@ -499,11 +499,7 @@ fn identity_store_and_index_rebuild_match_go_process_contract() {
             .output()
             .expect("run symroom");
         restore_dir_modes(&root);
-        let mut stdout = normalize(&output.stdout, &root);
-        if cfg!(windows) {
-            // `index rebuild` prints the host separator; the fixture holds `/`.
-            stdout = stdout.replace('\\', "/");
-        }
+        let stdout = normalize(&output.stdout, &root);
         let stderr = normalize(&output.stderr, &root);
         let tree = snapshot(&root, &before);
         let mut problems = Vec::new();

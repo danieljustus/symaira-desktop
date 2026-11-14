@@ -229,192 +229,98 @@ fn go_trim_space(value: &str) -> &str {
 /// Go's `vaultRel`: `filepath.Rel` with forward slashes, passing the input
 /// through unchanged when no relative path exists.
 fn vault_relative(vault_root: &Path, path: &str) -> String {
-    vault_relative_with(PathFlavor::HOST, &vault_root.to_string_lossy(), path)
+    rel(&vault_root.to_string_lossy(), path).unwrap_or_else(|| path.to_owned())
 }
 
-fn vault_relative_with(flavor: PathFlavor, vault_root: &str, path: &str) -> String {
-    match flavor.rel(vault_root, path) {
-        // `filepath.ToSlash` only rewrites the separator on Windows.
-        Some(relative) if flavor.windows => relative.replace('\\', "/"),
-        Some(relative) => relative,
-        None => path.to_owned(),
+/// Go's `filepath.Clean` for Unix paths.
+fn clean(path: &str) -> String {
+    if path.is_empty() {
+        return ".".to_owned();
     }
+    let rooted = path.starts_with('/');
+    let mut elements: Vec<&str> = Vec::new();
+    for element in path.split('/') {
+        match element {
+            "" | "." => {}
+            ".." => {
+                if elements.last().is_some_and(|last| *last != "..") {
+                    elements.pop();
+                } else if !rooted {
+                    elements.push("..");
+                }
+            }
+            other => elements.push(other),
+        }
+    }
+    let mut out = String::new();
+    if rooted {
+        out.push('/');
+    }
+    out.push_str(&elements.join("/"));
+    if !rooted && elements.is_empty() {
+        out.push('.');
+    }
+    out
 }
 
-/// The path rules `filepath.Rel` follows on one operating system. Go's
-/// `Rel` is purely lexical and decides on volume names and a leading
-/// separator rather than `IsAbs`, so a rooted path without a drive letter is
-/// *not* absolute on Windows yet still comparable with another rooted path.
-#[derive(Clone, Copy)]
-struct PathFlavor {
-    windows: bool,
-}
-
-impl PathFlavor {
-    const HOST: Self = Self {
-        windows: cfg!(windows),
-    };
-
-    const fn separator(self) -> u8 {
-        if self.windows { b'\\' } else { b'/' }
+/// Go's `filepath.Rel(base, target)`; `None` is Go's error return.
+fn rel(base_path: &str, target_path: &str) -> Option<String> {
+    let base_clean = clean(base_path);
+    let target_clean = clean(target_path);
+    if target_clean == base_clean {
+        return Some(".".to_owned());
     }
-
-    const fn is_separator(self, byte: u8) -> bool {
-        byte == b'/' || (self.windows && byte == b'\\')
+    let mut base = base_clean.as_str();
+    let target = target_clean.as_str();
+    if base == "." {
+        base = "";
     }
-
-    /// Go's `volumeNameLen` for a drive letter or a `\\host\share` prefix.
-    fn volume_len(self, path: &str) -> usize {
-        if !self.windows {
-            return 0;
-        }
-        let bytes = path.as_bytes();
-        if bytes.len() >= 2 && bytes[1] == b':' && bytes[0].is_ascii_alphabetic() {
-            return 2;
-        }
-        if bytes.len() >= 5
-            && self.is_separator(bytes[0])
-            && self.is_separator(bytes[1])
-            && !self.is_separator(bytes[2])
-            && bytes[2] != b'.'
-        {
-            let mut host_end = 3;
-            while host_end < bytes.len() && !self.is_separator(bytes[host_end]) {
-                host_end += 1;
-            }
-            if host_end + 1 < bytes.len() && self.is_separator(bytes[host_end]) {
-                let mut share_end = host_end + 1;
-                while share_end < bytes.len() && !self.is_separator(bytes[share_end]) {
-                    share_end += 1;
-                }
-                if share_end > host_end + 1 {
-                    return share_end;
-                }
-            }
-        }
-        0
+    let base_slashed = base.as_bytes().first() == Some(&b'/');
+    let target_slashed = target.as_bytes().first() == Some(&b'/');
+    if base_slashed != target_slashed {
+        return None;
     }
-
-    /// Go's `sameWord`: byte equality, case-insensitive on Windows.
-    fn same_word(self, left: &str, right: &str) -> bool {
-        if self.windows {
-            left == right || left.to_lowercase() == right.to_lowercase()
-        } else {
-            left == right
+    let (base_bytes, target_bytes) = (base.as_bytes(), target.as_bytes());
+    let (base_len, target_len) = (base_bytes.len(), target_bytes.len());
+    let (mut base_start, mut base_end, mut target_start, mut target_end) = (0, 0, 0, 0);
+    loop {
+        while base_end < base_len && base_bytes[base_end] != b'/' {
+            base_end += 1;
         }
+        while target_end < target_len && target_bytes[target_end] != b'/' {
+            target_end += 1;
+        }
+        if target[target_start..target_end] != base[base_start..base_end] {
+            break;
+        }
+        if base_end < base_len {
+            base_end += 1;
+        }
+        if target_end < target_len {
+            target_end += 1;
+        }
+        base_start = base_end;
+        target_start = target_end;
     }
-
-    /// Go's `filepath.Clean`.
-    fn clean(self, path: &str) -> String {
-        let volume_len = self.volume_len(path);
-        let volume = &path[..volume_len];
-        let rest = &path[volume_len..];
-        let separator = char::from(self.separator());
-        if rest.is_empty() {
-            if volume_len > 1 && path.as_bytes()[1] != b':' {
-                return volume.replace('/', &separator.to_string());
-            }
-            return format!("{volume}.");
-        }
-        let rooted = self.is_separator(rest.as_bytes()[0]);
-        let mut elements: Vec<&str> = Vec::new();
-        for element in rest.split(|c: char| c.is_ascii() && self.is_separator(c as u8)) {
-            match element {
-                "" | "." => {}
-                ".." => {
-                    if elements.last().is_some_and(|last| *last != "..") {
-                        elements.pop();
-                    } else if !rooted {
-                        elements.push("..");
-                    }
-                }
-                other => elements.push(other),
-            }
-        }
-        let mut out = String::from(volume);
-        if self.windows {
-            out = out.replace('/', "\\");
-        }
-        if rooted {
-            out.push(separator);
-        }
-        out.push_str(&elements.join(&separator.to_string()));
-        if !rooted && elements.is_empty() {
-            out.push('.');
-        }
-        out
+    if &base[base_start..base_end] == ".." {
+        return None;
     }
-
-    /// Go's `filepath.Rel(base, target)`; `None` is Go's error return.
-    fn rel(self, base_path: &str, target_path: &str) -> Option<String> {
-        let base_clean = self.clean(base_path);
-        let target_clean = self.clean(target_path);
-        if self.same_word(&target_clean, &base_clean) {
-            return Some(".".to_owned());
+    if base_start != base_len {
+        let separators = base_bytes[base_start..]
+            .iter()
+            .filter(|b| **b == b'/')
+            .count();
+        let mut out = String::from("..");
+        for _ in 0..separators {
+            out.push_str("/..");
         }
-        let base_volume = &base_clean[..self.volume_len(&base_clean)];
-        let target_volume = &target_clean[..self.volume_len(&target_clean)];
-        let mut base = &base_clean[base_volume.len()..];
-        let target = &target_clean[target_volume.len()..];
-        if base == "." {
-            base = "";
-        } else if base.is_empty() && self.volume_len(base_volume) > 2 {
-            // A bare UNC volume stands for its root.
-            base = "\\";
+        if target_start != target_len {
+            out.push('/');
+            out.push_str(&target[target_start..]);
         }
-        let separator = self.separator();
-        let base_slashed = base.as_bytes().first() == Some(&separator);
-        let target_slashed = target.as_bytes().first() == Some(&separator);
-        if base_slashed != target_slashed || !self.same_word(base_volume, target_volume) {
-            return None;
-        }
-        let (base_bytes, target_bytes) = (base.as_bytes(), target.as_bytes());
-        let (base_len, target_len) = (base_bytes.len(), target_bytes.len());
-        let (mut base_start, mut base_end, mut target_start, mut target_end) = (0, 0, 0, 0);
-        loop {
-            while base_end < base_len && base_bytes[base_end] != separator {
-                base_end += 1;
-            }
-            while target_end < target_len && target_bytes[target_end] != separator {
-                target_end += 1;
-            }
-            if !self.same_word(
-                &target[target_start..target_end],
-                &base[base_start..base_end],
-            ) {
-                break;
-            }
-            if base_end < base_len {
-                base_end += 1;
-            }
-            if target_end < target_len {
-                target_end += 1;
-            }
-            base_start = base_end;
-            target_start = target_end;
-        }
-        if &base[base_start..base_end] == ".." {
-            return None;
-        }
-        if base_start != base_len {
-            let separators = base_bytes[base_start..]
-                .iter()
-                .filter(|b| **b == separator)
-                .count();
-            let sep = char::from(separator);
-            let mut out = String::from("..");
-            for _ in 0..separators {
-                out.push(sep);
-                out.push_str("..");
-            }
-            if target_start != target_len {
-                out.push(sep);
-                out.push_str(&target[target_start..]);
-            }
-            return Some(out);
-        }
-        Some(target[target_start..].to_owned())
+        return Some(out);
     }
+    Some(target[target_start..].to_owned())
 }
 
 #[cfg(test)]
@@ -440,66 +346,15 @@ mod tests {
     }
 
     #[test]
-    fn relative_paths_follow_filepath_rel_per_platform() {
-        let unix = PathFlavor { windows: false };
-        let windows = PathFlavor { windows: true };
-        // A rooted path without a drive letter is relative on Windows but
-        // still compares as rooted: Go falls back to the input unchanged.
-        assert_eq!(
-            vault_relative_with(windows, "/v/root", "rel/b.md"),
-            "rel/b.md"
-        );
-        assert_eq!(vault_relative_with(unix, "/v/root", "rel/b.md"), "rel/b.md");
-        assert_eq!(
-            vault_relative_with(windows, "/v/root", "/v/root/a/b.md"),
-            "a/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", r"C:\v\root\a\b.md"),
-            "a/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", r"c:\V\ROOT\a\b.md"),
-            "a/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", r"C:\v\other\b.md"),
-            "../other/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", r"D:\v\root\a.md"),
-            r"D:\v\root\a.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", r"C:\v\root"),
-            "."
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", "rel/b.md"),
-            "rel/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"C:\v\root", "C:/v/root/a/b.md"),
-            "a/b.md"
-        );
-        assert_eq!(
-            vault_relative_with(windows, r"\\host\share\v", r"\\host\share\v\a.md"),
-            "a.md"
-        );
+    fn relative_paths_follow_filepath_rel_on_unix() {
+        let rel_of = |base: &str, target: &str| vault_relative(Path::new(base), target);
+        // A rooted base with a relative target falls back to the input.
+        assert_eq!(rel_of("/v/root", "rel/b.md"), "rel/b.md");
         // Unix keeps case and treats a backslash as an ordinary byte.
-        assert_eq!(
-            vault_relative_with(unix, "/v/root", "/V/root/a.md"),
-            "../../V/root/a.md"
-        );
-        assert_eq!(
-            vault_relative_with(unix, "/v/root", r"/v/root/a\b.md"),
-            r"a\b.md"
-        );
-        assert_eq!(
-            vault_relative_with(unix, "/v/root", "/v/root/../x/b.md"),
-            "../x/b.md"
-        );
-        assert_eq!(vault_relative_with(unix, "..", "/v"), "/v");
+        assert_eq!(rel_of("/v/root", "/V/root/a.md"), "../../V/root/a.md");
+        assert_eq!(rel_of("/v/root", r"/v/root/a\b.md"), r"a\b.md");
+        assert_eq!(rel_of("/v/root", "/v/root/../x/b.md"), "../x/b.md");
+        assert_eq!(rel_of("..", "/v"), "/v");
     }
 
     #[test]

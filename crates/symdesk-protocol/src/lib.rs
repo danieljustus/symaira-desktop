@@ -9,10 +9,8 @@
 mod go_http;
 mod go_json;
 pub mod mcp_frame;
-#[cfg(any(test, unix, target_os = "windows"))]
+#[cfg(unix)]
 mod mime;
-#[cfg(target_os = "windows")]
-mod native_mime;
 mod retrieval_embedding;
 mod retrieval_query_expansion;
 mod retrieval_search;
@@ -1698,9 +1696,7 @@ pub fn search_notebook_ask_sources(
         let Ok(document) = parse_bytes(&source_path, &contents) else {
             continue;
         };
-        // Canonical Windows paths are for I/O; exact FTS scope uses Go's storage keys.
-        let lookup_path = strip_windows_verbatim_prefix(&absolute);
-        let Some(absolute_path) = lookup_path.to_str().map(str::to_owned) else {
+        let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
             continue;
         };
         absolute_paths.push(absolute_path);
@@ -2377,9 +2373,6 @@ fn clean_ask_citation_path(path: &str) -> Option<String> {
     if path.is_empty() || path.contains(['\r', '\n']) || path.contains("://") {
         return None;
     }
-    #[cfg(windows)]
-    let path = path.replace('\\', "/");
-    #[cfg(not(windows))]
     let path = path.to_owned();
     let absolute = path.starts_with('/');
     let mut components: Vec<&str> = Vec::new();
@@ -2591,15 +2584,6 @@ fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {
         .ok()
         .map(Path::to_path_buf)
         .and_then(safe_vault_relative_path)
-        .or_else(|| {
-            let normalized_root = strip_windows_verbatim_prefix(root);
-            let normalized_path = strip_windows_verbatim_prefix(Path::new(path));
-            normalized_path
-                .strip_prefix(normalized_root)
-                .ok()
-                .map(Path::to_path_buf)
-                .and_then(safe_vault_relative_path)
-        })
 }
 
 fn safe_vault_relative_path(path: PathBuf) -> Option<PathBuf> {
@@ -2633,24 +2617,6 @@ fn notebook_source_was_matched(
     matched_native_paths: &std::collections::HashSet<String>,
 ) -> bool {
     matched_native_paths.contains(source_path)
-}
-
-fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
-    let Some(path) = path.to_str() else {
-        return path.to_path_buf();
-    };
-    #[cfg(windows)]
-    {
-        const UNC_PREFIX: &str = r"\\?\UNC\";
-        const VERBATIM_PREFIX: &str = r"\\?\";
-        if let Some(rest) = path.strip_prefix(UNC_PREFIX) {
-            return PathBuf::from(format!(r"\\{rest}"));
-        }
-        if let Some(rest) = path.strip_prefix(VERBATIM_PREFIX) {
-            return PathBuf::from(rest);
-        }
-    }
-    PathBuf::from(path)
 }
 
 fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
@@ -5923,13 +5889,7 @@ fn current_root_identity(state: &AppState) -> Option<RootIdentity> {
             metadata.ino()
         )))
     }
-    #[cfg(windows)]
-    {
-        Some(RootIdentity::Windows(
-            same_file::Handle::from_path(&state.vault_root).ok()?,
-        ))
-    }
-    #[cfg(not(any(unix, windows)))]
+    #[cfg(not(unix))]
     {
         let root = open_current_root(state).ok()?;
         let metadata = root.dir_metadata().ok()?;
@@ -5937,12 +5897,6 @@ fn current_root_identity(state: &AppState) -> Option<RootIdentity> {
     }
 }
 
-#[cfg(windows)]
-fn normalize_snapshot_path(path: &Path) -> String {
-    path.to_string_lossy().replace('\\', "/")
-}
-
-#[cfg(not(windows))]
 fn normalize_snapshot_path(path: &Path) -> String {
     path.to_str().unwrap_or_default().to_owned()
 }
@@ -6158,11 +6112,11 @@ fn parse_range(value: &str, size: u64) -> Result<Vec<(u64, u64)>, RangeError> {
 }
 
 fn content_type(path: &Path, sample: &[u8]) -> String {
-    #[cfg(any(unix, target_os = "windows"))]
+    #[cfg(unix)]
     {
         content_type_with_mime_loader(path, sample, mime::type_by_extension)
     }
-    #[cfg(not(any(unix, target_os = "windows")))]
+    #[cfg(not(unix))]
     {
         content_type_with_mime_loader(path, sample, |_| None)
     }
@@ -6365,17 +6319,6 @@ mod tests {
             vault_relative_paths(Path::new("nested/../outside.md")),
             None
         );
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn ask_path_mapping_keeps_windows_sidecar_symlink_paths() {
-        let root = Path::new(r"\\?\C:\vault");
-        assert_eq!(
-            path_relative_to_root(root, r"C:\vault\internal.md"),
-            Some(PathBuf::from("internal.md"))
-        );
-        assert_eq!(path_relative_to_root(root, r"C:\vault\..\outside.md"), None);
     }
 
     #[test]
@@ -7518,23 +7461,18 @@ mod tests {
 
     #[test]
     fn snapshot_path_normalization_matches_go_to_slash_without_corrupting_unix_names() {
-        // Go 1.26.6 filepath.ToSlash replaces each native separator. It does
-        // not clean repeated separators, dot segments, or drop components.
-        for (input, windows) in [
-            ("folder\\literal\\name.md", "folder/literal/name.md"),
-            ("folder\\\\name.md", "folder//name.md"),
-            ("folder\\.\\..\\name.md", "folder/./../name.md"),
-            ("folder/mixed\\name.md", "folder/mixed/name.md"),
-            ("folder//name.md", "folder//name.md"),
-            ("folder\\", "folder/"),
-            ("", ""),
+        // Go's filepath.ToSlash is the identity on Unix: backslashes are
+        // ordinary name bytes and nothing is cleaned or dropped.
+        for input in [
+            "folder\\literal\\name.md",
+            "folder\\\\name.md",
+            "folder\\.\\..\\name.md",
+            "folder/mixed\\name.md",
+            "folder//name.md",
+            "folder\\",
+            "",
         ] {
-            let expected = if cfg!(windows) { windows } else { input };
-            assert_eq!(
-                normalize_snapshot_path(Path::new(input)),
-                expected,
-                "{input}"
-            );
+            assert_eq!(normalize_snapshot_path(Path::new(input)), input, "{input}");
         }
     }
 
@@ -7583,17 +7521,6 @@ mod tests {
                 .len(),
             1
         );
-        #[cfg(windows)]
-        {
-            let io_path = secure_path(&root, "Hello.md").unwrap();
-            assert_ne!(io_path, key);
-            assert!(
-                sidecar
-                    .search_scoped("Body", &[io_path.to_str().unwrap().to_owned()])
-                    .unwrap()
-                    .is_empty()
-            );
-        }
 
         let (hits, scope) =
             search_notebook_ask_sources(&root, "research", "Body", &sidecar).unwrap();

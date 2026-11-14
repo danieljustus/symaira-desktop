@@ -500,9 +500,6 @@ fn clean_path(path: &Path) -> PathBuf {
 }
 
 fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
-    #[cfg(windows)]
-    let key = "USERPROFILE";
-    #[cfg(not(windows))]
     let key = "HOME";
     environment
         .get(key)
@@ -511,14 +508,7 @@ fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
 }
 
 fn home_error() -> &'static str {
-    #[cfg(windows)]
-    {
-        "%userprofile% is not defined"
-    }
-    #[cfg(not(windows))]
-    {
-        "$HOME is not defined"
-    }
+    "$HOME is not defined"
 }
 
 fn render(paths: &Paths, json: bool) -> String {
@@ -571,9 +561,6 @@ mod tests {
         let config_dir = root.join(".config").join("symingest");
         std::fs::create_dir_all(&config_dir).unwrap();
         let path = config_dir.join("config.toml");
-        #[cfg(windows)]
-        let home_key = "USERPROFILE";
-        #[cfg(not(windows))]
         let home_key = "HOME";
         let environment =
             BTreeMap::from([(home_key.to_owned(), root.to_str().unwrap().to_owned())]);

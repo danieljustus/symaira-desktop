@@ -612,9 +612,6 @@ fn sidecar_trimmed_environment<'a>(
 }
 
 fn sidecar_user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
-    #[cfg(windows)]
-    let key = "USERPROFILE";
-    #[cfg(not(windows))]
     let key = "HOME";
     environment
         .get(key)
@@ -628,22 +625,11 @@ fn sidecar_absolute_clean(path: &Path, cwd: &Path) -> io::Result<PathBuf> {
     } else {
         cwd.join(path)
     };
-    // Go's filepath.Abs uses GetFullPathNameW on Windows, even for an already
-    // absolute path. It normalizes terminal dots/spaces without trimming input.
-    #[cfg(windows)]
-    let absolute = std::path::absolute(&absolute)?;
     Ok(lexical_clean(&absolute))
 }
 
 fn sidecar_home_error() -> &'static str {
-    #[cfg(windows)]
-    {
-        "user home dir: %userprofile% is not defined"
-    }
-    #[cfg(not(windows))]
-    {
-        "user home dir: $HOME is not defined"
-    }
+    "user home dir: $HOME is not defined"
 }
 
 fn sidecar_storage_root(
@@ -2548,36 +2534,6 @@ mod source_tests {
         let _ = fs::remove_dir_all(vault);
     }
 
-    #[cfg(windows)]
-    #[test]
-    fn external_source_root_matches_unprefixed_storage_keys() {
-        let verbatim = Path::new(r"\\?\C:\sources\external");
-        let key_root = absolute_non_verbatim(verbatim).expect("normalize storage root");
-        let stored_path = Path::new(r"C:\sources\external\nested\note.md");
-
-        assert!(stored_path.starts_with(&key_root));
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn written_document_key_matches_refresh_index_verbatim_root_key() {
-        let vault = temp_dir("document-key-vault");
-        let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
-        let expected = absolute_non_verbatim(&canonical_root)
-            .expect("ordinary root")
-            .join("nested")
-            .join("note.md");
-
-        assert_eq!(
-            vault_document_path(&canonical_root, Path::new(r"nested\note.md"))
-                .expect("document key"),
-            expected
-        );
-        assert!(vault_document_path(&canonical_root, Path::new(r"nested\..\outside.md")).is_err());
-
-        let _ = fs::remove_dir_all(vault);
-    }
-
     #[cfg(unix)]
     #[test]
     fn refresh_index_skips_external_and_broken_symlinks_but_keeps_contained_links() {
@@ -2622,8 +2578,6 @@ mod source_tests {
 
         let registry = SourceRegistry::open(&vault).expect("registry");
         let first = registry.add(&source_path).expect("add canonical");
-        #[cfg(windows)]
-        assert!(!first.path.starts_with(r"\\?\"));
         #[cfg(unix)]
         assert_eq!(registry.add(&alias).expect("add alias"), first);
         assert_eq!(registry.list().expect("list"), vec![first.clone()]);
@@ -2640,44 +2594,6 @@ mod source_tests {
         }
         let _ = fs::remove_dir_all(vault);
         let _ = fs::remove_dir_all(parent);
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn registry_normalizes_legacy_verbatim_source_paths() {
-        let vault = temp_dir("legacy-source-registry-vault");
-        let source_root = temp_dir("legacy-source-registry-root");
-        let verbatim = fs::canonicalize(&source_root)
-            .expect("canonical source root")
-            .to_string_lossy()
-            .into_owned();
-        let expected = super::strip_verbatim_prefix(&verbatim);
-        let registry_dir = vault.join(".symdesk");
-        fs::create_dir_all(&registry_dir).expect("registry dir");
-        let registry_path = registry_dir.join("search-sources.json");
-        fs::write(
-            &registry_path,
-            serde_json::json!({
-                "version": 1,
-                "sources": [{"id": "legacy-id", "path": verbatim}]
-            })
-            .to_string(),
-        )
-        .expect("write legacy registry");
-
-        let registry = SourceRegistry::open(&vault).expect("open registry");
-        let listed = registry.list().expect("list legacy registry");
-        assert_eq!(listed[0].path, expected);
-        assert_eq!(
-            registry
-                .remove(&expected)
-                .expect("remove normalized path")
-                .id,
-            "legacy-id"
-        );
-
-        let _ = fs::remove_dir_all(vault);
-        let _ = fs::remove_dir_all(source_root);
     }
 
     #[test]

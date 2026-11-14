@@ -99,9 +99,6 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
     )
     .expect("derive owner identity");
     for case in &fixture.cases {
-        if cfg!(windows) && case.name == "watch-cancel" {
-            continue;
-        }
         let isolated = temp.path.join(&case.name);
         let room = isolated.join("room");
         let journal = room.join("journal");

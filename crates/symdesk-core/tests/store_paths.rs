@@ -297,22 +297,14 @@ fn contacts_and_ingest_paths_match_native_go() {
     home_only.remove("USERPROFILE");
     assert_eq!(
         config::global_path(&home_only),
-        go_config_path(if cfg!(windows) {
-            no_home
-        } else {
-            home_defaults
-        }),
+        go_config_path(home_defaults),
         "HOME-only selection matches the native Go observation"
     );
     let mut userprofile_only = different_home_profile.environment.clone();
     userprofile_only.remove("HOME");
     assert_eq!(
         config::global_path(&userprofile_only),
-        go_config_path(if cfg!(windows) {
-            different_home_profile
-        } else {
-            no_home
-        }),
+        go_config_path(no_home),
         "USERPROFILE-only selection matches the native Go observation"
     );
     assert_eq!(
@@ -394,8 +386,6 @@ fn contacts_and_ingest_paths_match_native_go() {
     let link = control.join("fresh");
     #[cfg(unix)]
     std::os::unix::fs::symlink(capture.join("fresh"), &link).expect("root-link control");
-    #[cfg(windows)]
-    std::os::windows::fs::symlink_dir(capture.join("fresh"), &link).expect("root-link control");
     assert!(!private_case_root(&control, "fresh", &link));
     let mut seen = BTreeSet::new();
     // ponytail: this integration binary has one test; use a child process

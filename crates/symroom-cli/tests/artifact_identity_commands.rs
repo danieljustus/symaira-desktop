@@ -245,14 +245,6 @@ fn run_symroom(
                 .expect("fixture case")
                 .join("symdesk-args.txt"),
         );
-    #[cfg(windows)]
-    command.env("PATHEXT", ".COM;.EXE;.BAT;.CMD");
-    #[cfg(windows)]
-    for name in ["SYSTEMROOT", "WINDIR", "COMSPEC"] {
-        if let Some(value) = std::env::var_os(name) {
-            command.env(name, value);
-        }
-    }
     if !case.default_identity_env.is_empty() {
         command.env("SYMROOM_DEFAULT_IDENTITY", &case.default_identity_env);
     }
@@ -301,11 +293,7 @@ fn install_fake_symdesk(binary: &Path, path: &Path) {
 }
 
 fn symdesk_binary_name() -> &'static str {
-    if cfg!(windows) {
-        "symdesk.exe"
-    } else {
-        "symdesk"
-    }
+    "symdesk"
 }
 
 fn normalize_stdout(output: &[u8], dynamic_event: bool) -> Vec<u8> {

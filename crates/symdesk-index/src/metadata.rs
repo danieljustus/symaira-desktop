@@ -83,23 +83,8 @@ pub fn record_sidecar_metadata(
     Ok(())
 }
 
-#[cfg(not(windows))]
 fn replace_metadata_file(source: &Path, target: &Path) -> std::io::Result<()> {
     fs::rename(source, target)
-}
-
-#[cfg(windows)]
-fn replace_metadata_file(source: &Path, target: &Path) -> std::io::Result<()> {
-    // Match Go's bounded retry for transient Windows sharing conflicts.
-    for attempt in 0..10 {
-        match fs::rename(source, target) {
-            Err(error) if attempt < 9 && matches!(error.raw_os_error(), Some(5 | 32 | 33)) => {
-                std::thread::sleep(std::time::Duration::from_millis(10));
-            }
-            result => return result,
-        }
-    }
-    unreachable!("the final attempt returns its result")
 }
 
 fn temporary_suffix(last_used: SystemTime) -> u128 {

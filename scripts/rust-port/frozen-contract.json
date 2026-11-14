@@ -331,7 +331,7 @@
     },
     "cargo test -p symdesk-cli --locked --test index_retry": {
       "ignored": 0,
-      "passed": 2
+      "passed": 1
     },
     "cargo test -p symdesk-cli --locked --test index_status_frozen": {
       "ignored": 0,
@@ -339,7 +339,7 @@
     },
     "cargo test -p symdesk-cli --locked --test index_symlink": {
       "ignored": 0,
-      "passed": 3
+      "passed": 2
     },
     "cargo test -p symdesk-cli --locked --test mcp_ask_offline": {
       "ignored": 0,
@@ -448,14 +448,6 @@
       "ignored": 0,
       "passed": 4
     },
-    "cargo test -p symdesk-cli --test pre_rust_backup --locked": {
-      "ignored": 0,
-      "passed": 11
-    },
-    "cargo test -p symroom-cli --test cutover_state --locked": {
-      "ignored": 0,
-      "passed": 3
-    },
     "cargo test -p symdesk-cli --test docs_read --locked": {
       "ignored": 0,
       "passed": 1
@@ -508,6 +500,10 @@
     "cargo test -p symdesk-cli --test notebook_write --locked": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-cli --test pre_rust_backup --locked": {
+      "ignored": 0,
+      "passed": 11
     },
     "cargo test -p symdesk-cli --test relations_inverse --locked": {
       "ignored": 0,
@@ -571,7 +567,7 @@
     },
     "cargo test -p symdesk-core --all-features --locked": {
       "ignored": 0,
-      "passed": 50
+      "passed": 49
     },
     "cargo test -p symdesk-core --locked --test ai_providers": {
       "ignored": 0,
@@ -858,7 +854,7 @@
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 2,
-      "passed": 119
+      "passed": 118
     },
     "cargo test -p symdesk-vault --locked --test dataset_contracts": {
       "ignored": 0,
@@ -970,7 +966,7 @@
     },
     "cargo test -p symroom-cli --locked --test io_error_commands": {
       "ignored": 0,
-      "passed": 2
+      "passed": 1
     },
     "cargo test -p symroom-cli --locked --test log_commands": {
       "ignored": 0,
@@ -978,7 +974,7 @@
     },
     "cargo test -p symroom-cli --locked --test mcp": {
       "ignored": 0,
-      "passed": 26
+      "passed": 25
     },
     "cargo test -p symroom-cli --locked --test member_commands": {
       "ignored": 0,
@@ -1016,6 +1012,10 @@
       "ignored": 0,
       "passed": 1,
       "retries": 4
+    },
+    "cargo test -p symroom-cli --test cutover_state --locked": {
+      "ignored": 0,
+      "passed": 3
     },
     "cargo test -p symroom-core --locked --test index_contracts": {
       "ignored": 0,

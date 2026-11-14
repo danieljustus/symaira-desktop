@@ -41,32 +41,22 @@ struct Case {
     stderr: String,
     exit_code: i32,
     files: Vec<String>,
-    /// Vectors that need Unix errno, chmod or symlink semantics; Windows counts
-    /// them as SKIP instead of replaying them.
+    /// Vectors that need Unix errno, chmod or symlink semantics.
     #[serde(default)]
     unix_only: bool,
     #[serde(default)]
     rooms: Vec<String>,
 }
 
-/// Go's wording of the four OS errors the fixture provokes, per host family.
-/// These are literals recorded from Go, not derived from the code under test.
+/// Go's wording of the four OS errors the fixture provokes. These are
+/// literals recorded from Go, not derived from the code under test.
 const fn host_errors() -> [(&'static str, &'static str); 4] {
-    if cfg!(windows) {
-        [
-            ("<ENOENT>", "The system cannot find the file specified."),
-            ("<ENOTDIR>", "The system cannot find the path specified."),
-            ("<EISDIR>", "Incorrect function."),
-            ("<EACCES>", "Access is denied."),
-        ]
-    } else {
-        [
-            ("<ENOENT>", "no such file or directory"),
-            ("<ENOTDIR>", "not a directory"),
-            ("<EISDIR>", "is a directory"),
-            ("<EACCES>", "permission denied"),
-        ]
-    }
+    [
+        ("<ENOENT>", "no such file or directory"),
+        ("<ENOTDIR>", "not a directory"),
+        ("<EISDIR>", "is a directory"),
+        ("<EACCES>", "permission denied"),
+    ]
 }
 
 /// Expands the fixture's host-neutral text: a path `/` becomes the host
@@ -239,12 +229,7 @@ fn flag_grammar_matches_go_process_contract() {
     assert_eq!(unix_only, UNIX_ONLY_COUNT, "Unix-only marking changed");
 
     let mut mismatches = Vec::new();
-    let mut skipped = Vec::new();
     for case in &fixture.cases {
-        if cfg!(windows) && case.unix_only {
-            skipped.push(format!("{} (Unix-only vector: errno semantics)", case.name));
-            continue;
-        }
         let temp = TempDir::new();
         let work = temp.path.join("work");
         for dir in ["work", "home", "data", "tmp"] {
@@ -280,11 +265,6 @@ fn flag_grammar_matches_go_process_contract() {
             // Go's exec sets PWD to cmd.Dir; the Go oracle ran the same way.
             .env("PWD", &work)
             .env("SYMROOM_IDENTITY_KEY", &fixture.identity_key);
-        #[cfg(windows)]
-        command.env(
-            "SYSTEMROOT",
-            std::env::var_os("SYSTEMROOT").unwrap_or_default(),
-        );
         let output = run_with_deadline(&mut command);
         let stdout = mask_ids(
             &String::from_utf8(output.stdout).expect("stdout is UTF-8"),
@@ -316,23 +296,7 @@ fn flag_grammar_matches_go_process_contract() {
             ));
         }
     }
-    let replayed = fixture.cases.len() - skipped.len();
-    eprintln!(
-        "flag grammar cases: {} total, {replayed} replayed, {} SKIPPED",
-        fixture.cases.len(),
-        skipped.len()
-    );
-    for reason in &skipped {
-        eprintln!("SKIP {reason}");
-    }
-    assert!(replayed > 0, "every flag grammar case was skipped");
-    if cfg!(windows) {
-        assert_eq!(
-            skipped.len(),
-            unix_only,
-            "Windows skips exactly the Unix-only vectors"
-        );
-    }
+    eprintln!("flag grammar cases: {} replayed", fixture.cases.len());
     assert!(
         mismatches.is_empty(),
         "{} of {} flag grammar cases differ from Go:\n{}",

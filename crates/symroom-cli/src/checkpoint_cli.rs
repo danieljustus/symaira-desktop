@@ -332,9 +332,6 @@ fn default_identity() -> Result<String, String> {
 }
 
 fn home_dir() -> Result<PathBuf, String> {
-    #[cfg(windows)]
-    let home = std::env::var_os("USERPROFILE");
-    #[cfg(not(windows))]
     let home = std::env::var_os("HOME");
     home.filter(|path| !path.is_empty())
         .map(PathBuf::from)

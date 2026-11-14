@@ -5,7 +5,7 @@
 //!
 //! * a plain `/` is a host path separator produced by Go's `filepath`
 //!   functions (`open nope/room.toml`, `.symroom/index.sqlite` after
-//!   `index rebuild`); Windows prints it as `\`;
+//!   `index rebuild`);
 //! * a `/` inside a Go source string literal (doctor's `create/select`,
 //!   `rebuild .symroom/index.sqlite`) is printed unchanged on every host. The
 //!   Go generator records it as [`SLASH_TOKEN`] (`ioErrorSlashLiterals` in
@@ -15,7 +15,7 @@
 pub const SLASH_TOKEN: &str = "<slash>";
 
 /// The separator Go's `filepath` prints on this host.
-pub const HOST_SEPARATOR: &str = if cfg!(windows) { "\\" } else { "/" };
+pub const HOST_SEPARATOR: &str = "/";
 
 /// Rewrites host path separators to `separator` and restores literal slashes.
 ///

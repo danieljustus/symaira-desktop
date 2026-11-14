@@ -20,18 +20,17 @@ pub fn run(args: &[OsString]) -> ExitCode {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
     match index::rebuild(&PathBuf::from(DB_PATH), &room) {
-        Ok(()) => write(io::stdout(), &rebuilt_message(std::path::MAIN_SEPARATOR), 0),
+        Ok(()) => write(
+            io::stdout(),
+            "Rebuilt derived index at .symroom/index.sqlite\n",
+            0,
+        ),
         Err(error) => write(
             io::stderr(),
             &format!("Error rebuilding index: {error}\n"),
             1,
         ),
     }
-}
-
-/// Go prints `filepath.Join(".symroom", "index.sqlite")`: the host separator.
-fn rebuilt_message(separator: char) -> String {
-    format!("Rebuilt derived index at .symroom{separator}index.sqlite\n")
 }
 
 fn write(mut output: impl Write, message: &str, code: u8) -> ExitCode {
@@ -42,21 +41,4 @@ fn write(mut output: impl Write, message: &str, code: u8) -> ExitCode {
         return ExitCode::from(1);
     }
     ExitCode::from(code)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::rebuilt_message;
-
-    #[test]
-    fn success_message_uses_the_host_separator_of_each_family() {
-        assert_eq!(
-            rebuilt_message('/'),
-            "Rebuilt derived index at .symroom/index.sqlite\n"
-        );
-        assert_eq!(
-            rebuilt_message('\\'),
-            "Rebuilt derived index at .symroom\\index.sqlite\n"
-        );
-    }
 }

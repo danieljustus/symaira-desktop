@@ -33,9 +33,5 @@ rustls.workspace = true
 rustls-pki-types.workspace = true
 tower.workspace = true
 
-[target.'cfg(windows)'.dependencies]
-same-file = "=1.0.6"
-winreg = "=0.56.0"
-
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.191"

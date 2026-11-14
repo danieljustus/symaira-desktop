@@ -1,6 +1,6 @@
 #![deny(unsafe_code)]
 
-//! Go `os/exec.LookPath` (go1.26 `lp_unix.go` / `lp_windows.go`) for the
+//! Go `os/exec.LookPath` (go1.26 `lp_unix.go`) for the
 //! provider executables `identity::load` shells out to.
 //!
 //! `std::process::Command::new("symvault")` resolves the name with the child's
@@ -29,25 +29,12 @@ pub fn look_path(file: &str) -> Option<PathBuf> {
     look_path_in(file, &env::var_os("PATH").unwrap_or_default())
 }
 
-/// Resolve against an explicitly supplied PATH, retaining the process PATHEXT
-/// and Windows implicit-current-directory policy.
+/// Resolve against an explicitly supplied PATH.
 pub fn look_path_in(file: &str, path: &OsStr) -> Option<PathBuf> {
     if matches!(file, "" | "." | "..") {
         return None;
     }
-    if cfg!(windows) {
-        let pathext = env::var_os("PATHEXT");
-        let no_default_cwd = env::var_os("NoDefaultCurrentDirectoryInExePath").is_some();
-        look_path_windows(
-            Path::new("."),
-            file,
-            path,
-            pathext.as_deref(),
-            no_default_cwd,
-        )
-    } else {
-        look_path_unix(Path::new("."), file, path)
-    }
+    look_path_unix(Path::new("."), file, path)
 }
 
 /// A candidate as the filesystem sees it: relative paths resolve against `cwd`
@@ -77,7 +64,6 @@ fn split_list(path: &OsStr) -> Vec<PathBuf> {
 /// Go checks `X_OK` with `faccessat`; without `unsafe` the executable bit of
 /// the resolved file stands in for it, which only differs for a file that is
 /// executable for another user than the current one.
-#[cfg_attr(windows, allow(dead_code))]
 fn look_path_unix(cwd: &Path, file: &str, path: &OsStr) -> Option<PathBuf> {
     if file.contains('/') {
         return None;
@@ -96,7 +82,6 @@ fn look_path_unix(cwd: &Path, file: &str, path: &OsStr) -> Option<PathBuf> {
     None
 }
 
-#[cfg_attr(windows, allow(dead_code))]
 fn is_unix_executable(path: &Path) -> bool {
     let Ok(metadata) = fs::metadata(path) else {
         return false;
@@ -113,137 +98,6 @@ fn is_unix_executable(path: &Path) -> bool {
     {
         true
     }
-}
-
-/// Go `lp_windows.go` `lookPathExts` for a name without a separator, including
-/// the implicit current-directory lookup (skipped when
-/// `NoDefaultCurrentDirectoryInExePath` is set) and PATHEXT.
-#[cfg_attr(not(windows), allow(dead_code))]
-fn look_path_windows(
-    cwd: &Path,
-    file: &str,
-    path: &OsStr,
-    pathext: Option<&OsStr>,
-    no_default_cwd: bool,
-) -> Option<PathBuf> {
-    let exts = path_ext(pathext);
-    // The first relative hit; once set, Go ends in `ErrDot` unless an absolute
-    // PATH entry resolves to the very same file.
-    let mut dot_hit: Option<PathBuf> = None;
-    if !no_default_cwd {
-        dot_hit = windows_find_executable(cwd, Path::new(file), &exts);
-    }
-    for dir in split_list(path) {
-        if dir.as_os_str().is_empty() {
-            // Windows skips empty entries, like PowerShell.
-            continue;
-        }
-        let Some(found) = windows_find_executable(cwd, &dir.join(file), &exts) else {
-            continue;
-        };
-        if let Some(dot) = &dot_hit
-            && !same_file(&at(cwd, dot), &at(cwd, &found))
-        {
-            return None;
-        }
-        if !found.is_absolute() {
-            if dot_hit.is_none() {
-                dot_hit = Some(found);
-            }
-            continue;
-        }
-        return Some(found);
-    }
-    None
-}
-
-#[cfg_attr(not(windows), allow(dead_code))]
-fn same_file(left: &Path, right: &Path) -> bool {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::MetadataExt;
-        match (fs::symlink_metadata(left), fs::symlink_metadata(right)) {
-            (Ok(left), Ok(right)) => left.dev() == right.dev() && left.ino() == right.ino(),
-            _ => false,
-        }
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::fs::OpenOptionsExt;
-        // Go Lstat + os.SameFile compares the reparse point itself, not its
-        // target. Handle equality compares volume serial + file index.
-        let handle = |path| {
-            fs::OpenOptions::new()
-                .read(true)
-                .custom_flags(0x0020_0000 | 0x0200_0000) // OPEN_REPARSE_POINT | BACKUP_SEMANTICS
-                .open(path)
-                .and_then(same_file::Handle::from_file)
-        };
-        match (handle(left), handle(right)) {
-            (Ok(left), Ok(right)) => left == right,
-            _ => false,
-        }
-    }
-    #[cfg(not(any(unix, windows)))]
-    {
-        let _ = (left, right);
-        false
-    }
-}
-
-/// Go `pathExt`: lower-cased PATHEXT entries with a leading dot, or the default
-/// list.
-#[cfg_attr(not(windows), allow(dead_code))]
-fn path_ext(pathext: Option<&OsStr>) -> Vec<String> {
-    match pathext.map(|value| value.to_string_lossy().to_lowercase()) {
-        Some(value) if !value.is_empty() => value
-            .split(';')
-            .filter(|entry| !entry.is_empty())
-            .map(|entry| {
-                if entry.starts_with('.') {
-                    entry.to_owned()
-                } else {
-                    format!(".{entry}")
-                }
-            })
-            .collect(),
-        _ => [".com", ".exe", ".bat", ".cmd"]
-            .into_iter()
-            .map(str::to_owned)
-            .collect(),
-    }
-}
-
-/// Go `lp_windows.go` `findExecutable`.
-#[cfg_attr(not(windows), allow(dead_code))]
-fn windows_find_executable(cwd: &Path, file: &Path, exts: &[String]) -> Option<PathBuf> {
-    if exts.is_empty() {
-        return windows_stat_ok(&at(cwd, file)).then(|| file.to_path_buf());
-    }
-    let text = file.to_string_lossy();
-    if has_ext(&text) && windows_stat_ok(&at(cwd, file)) {
-        return Some(file.to_path_buf());
-    }
-    // Keep checking extensions so names like "foo.bat.exe" still resolve.
-    exts.iter().find_map(|ext| {
-        let candidate = PathBuf::from(format!("{text}{ext}"));
-        windows_stat_ok(&at(cwd, &candidate)).then_some(candidate)
-    })
-}
-
-#[cfg_attr(not(windows), allow(dead_code))]
-fn windows_stat_ok(path: &Path) -> bool {
-    fs::metadata(path).is_ok_and(|metadata| !metadata.is_dir())
-}
-
-/// Go `hasExt`: a dot after the last separator.
-#[cfg_attr(not(windows), allow(dead_code))]
-fn has_ext(file: &str) -> bool {
-    let Some(dot) = file.rfind('.') else {
-        return false;
-    };
-    file.rfind([':', '\\', '/'])
-        .is_none_or(|separator| separator < dot)
 }
 
 #[cfg(test)]
@@ -379,95 +233,5 @@ mod tests {
         for name in ["", ".", ".."] {
             assert_eq!(look_path(name), None);
         }
-    }
-
-    #[test]
-    fn windows_relative_and_absolute_hits_compare_file_identity() {
-        let scratch = Scratch::new();
-        let original = scratch.file("cwd/symvault.exe", 0o755);
-        let alias = scratch.abs("alias");
-        fs::create_dir(&alias).expect("alias dir");
-        fs::hard_link(&original, alias.join("symvault.exe")).expect("hardlink");
-        assert!(same_file(&original, &alias.join("symvault.exe")));
-        let path = join(&[Path::new("."), &alias]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &path, None, true),
-            Some(alias.join("symvault.exe"))
-        );
-        #[cfg(unix)]
-        {
-            let link = scratch.abs("symlink");
-            fs::create_dir(&link).expect("symlink dir");
-            std::os::unix::fs::symlink(&original, link.join("symvault.exe")).expect("symlink");
-            assert!(!same_file(&original, &link.join("symvault.exe")));
-            assert_eq!(
-                look_path_windows(
-                    &scratch.cwd,
-                    "symvault",
-                    &join(&[Path::new("."), &link]),
-                    None,
-                    true
-                ),
-                None
-            );
-        }
-    }
-
-    #[test]
-    fn windows_default_extensions_and_pathext_normalisation() {
-        let defaults = [".com", ".exe", ".bat", ".cmd"];
-        assert_eq!(path_ext(None), defaults);
-        assert_eq!(path_ext(Some(OsStr::new(""))), defaults);
-        assert_eq!(path_ext(Some(OsStr::new(".EXE;;CMD"))), [".exe", ".cmd"]);
-        assert!(has_ext("dir.d\\prog.exe"));
-        assert!(!has_ext("dir.d\\prog"));
-        assert!(!has_ext("prog"));
-    }
-
-    #[test]
-    fn windows_absolute_path_entry_resolves_with_an_extension() {
-        let scratch = Scratch::new();
-        let exe = scratch.file("tools/symvault.exe", 0o755);
-        let path = join(&[&scratch.abs("tools")]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &path, None, true),
-            Some(exe)
-        );
-        scratch.file("other/symvault.txt", 0o755);
-        let path = join(&[&scratch.abs("other")]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &path, None, true),
-            None
-        );
-    }
-
-    #[test]
-    fn windows_rejects_relative_hits_and_the_implicit_working_directory() {
-        let scratch = Scratch::new();
-        scratch.file("cwd/bin/symvault.exe", 0o755);
-        let abs = scratch.file("abs/symvault.exe", 0o755);
-        // A relative PATH entry is a dot hit: rejected, and so is a later
-        // absolute entry that is not the very same file.
-        let relative = join(&[Path::new("bin")]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &relative, None, true),
-            None
-        );
-        let shadowed = join(&[Path::new("bin"), &scratch.abs("abs")]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &shadowed, None, true),
-            None
-        );
-        // The working directory is searched implicitly unless opted out.
-        scratch.file("cwd/symvault.exe", 0o755);
-        let only_abs = join(&[&scratch.abs("abs")]);
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &only_abs, None, false),
-            None
-        );
-        assert_eq!(
-            look_path_windows(&scratch.cwd, "symvault", &only_abs, None, true),
-            Some(abs)
-        );
     }
 }

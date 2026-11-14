@@ -486,16 +486,9 @@ fn run_retry(vault: Option<&str>, json_output: bool) -> ExitCode {
     for row in failed {
         let path = String::from_utf8_lossy(&row.path).into_owned();
         if let Err(error) = fs::symlink_metadata(&path) {
-            // Go's stat wraps a missing file in the GetFileAttributesEx
-            // operation on Windows and lstat elsewhere.
-            let operation = if cfg!(windows) {
-                "GetFileAttributesEx"
-            } else {
-                "lstat"
-            };
             let reason = format!(
                 "lstat vault file {path}: {}",
-                symdesk_vault::go_path_error(operation, Path::new(&path), &error)
+                symdesk_vault::go_path_error("lstat", Path::new(&path), &error)
             );
             record_index_status(&sidecar, &path, "failed", &reason);
             failures.push((path, reason));
@@ -757,11 +750,7 @@ pub(crate) fn canonical_local_source(path: &str) -> String {
     });
     resolved.map_or_else(
         || path.to_string_lossy().into_owned(),
-        |resolved| {
-            super::strip_windows_verbatim_prefix(&resolved)
-                .to_string_lossy()
-                .into_owned()
-        },
+        |resolved| resolved.to_string_lossy().into_owned(),
     )
 }
 
@@ -1129,13 +1118,9 @@ async fn embed_with_retries(
 }
 
 pub(crate) fn index_vault_error(requested: Option<&str>, error: &str) -> String {
-    let code = if cfg!(windows) && error.ends_with("(os error 3)") {
-        3
-    } else if error.contains("No such file or directory") || error.ends_with("(os error 2)") {
-        2
-    } else {
+    if !(error.contains("No such file or directory") || error.ends_with("(os error 2)")) {
         return error.to_owned();
-    };
+    }
     let raw = requested
         .filter(|value| !value.is_empty())
         .map(str::to_owned)
@@ -1152,15 +1137,10 @@ pub(crate) fn index_vault_error(requested: Option<&str>, error: &str) -> String 
     } else {
         path
     };
-    let operation = if cfg!(windows) {
-        "GetFileAttributesEx"
-    } else {
-        "stat"
-    };
     let detail = symdesk_vault::go_path_error(
-        operation,
+        "stat",
         &super::lexical_clean(&absolute),
-        &std::io::Error::from_raw_os_error(code),
+        &std::io::Error::from_raw_os_error(2),
     );
     format!("vault path does not exist: {detail}")
 }
@@ -1231,22 +1211,13 @@ fn emit_result(result: serde_json::Value, json_output: bool) -> ExitCode {
 mod vault_error_tests {
     #[test]
     fn missing_vault_diagnostics_preserve_native_go_errors() {
-        let path = if cfg!(windows) {
-            r"C:\fixture\missing-vault"
-        } else {
-            "/fixture/missing-vault"
-        };
+        let path = "/fixture/missing-vault";
         for code in [2, 3] {
             let error = format!(
                 "vault path does not exist: {}",
                 std::io::Error::from_raw_os_error(code)
             );
-            let expected = if cfg!(windows) {
-                let kind = if code == 3 { "path" } else { "file" };
-                format!(
-                    "vault path does not exist: GetFileAttributesEx {path}: The system cannot find the {kind} specified."
-                )
-            } else if code == 2 {
+            let expected = if code == 2 {
                 format!("vault path does not exist: stat {path}: no such file or directory")
             } else {
                 error.clone()

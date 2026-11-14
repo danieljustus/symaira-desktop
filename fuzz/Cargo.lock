@@ -2718,7 +2718,6 @@ dependencies = [
  "rusqlite",
  "rustls",
  "rustls-pki-types",
- "same-file",
  "serde",
  "serde_json",
  "symaira-core-sqlite",
@@ -2730,7 +2729,6 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower",
- "winreg",
 ]
 
 [[package]]
@@ -2794,7 +2792,6 @@ dependencies = [
  "getrandom 0.4.3",
  "hex",
  "rusqlite",
- "same-file",
  "serde",
  "serde_json",
  "sha2",
@@ -3672,16 +3669,6 @@ name = "winnow"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
-
-[[package]]
-name = "winreg"
-version = "0.56.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6f32a0ff4a9f6f01231eb2059cc85479330739333e0e58cadf03b6af2cca10"
-dependencies = [
- "cfg-if",
- "windows-sys 0.61.2",
-]
 
 [[package]]
 name = "winx"

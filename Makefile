@@ -203,9 +203,6 @@ VERSION ?= $(shell git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null 
 CARGO ?= cargo
 # Keep differential artifacts in the candidate's isolated Cargo target tree.
 RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
-# Native differential recipes compare freshly built binaries, so they need the
-# platform's executable suffix rather than a Unix-only path.
-EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
 # Command-line make variables are not inherited by recipes. When callers
 # select an isolated Cargo target tree, pass it through to Cargo as well as
 # using it for the differential binary path below.
@@ -225,7 +222,7 @@ build:
 	SYMDESK_VERSION="$(if $(VERSION),$(VERSION),devel)" SYMROOM_VERSION="$(if $(VERSION),$(VERSION),dev)" \
 		$(CARGO) build --release --locked -p symdesk-cli -p symroom-cli --bin symdesk --bin symroom
 	@mkdir -p bin
-	cp "$(RUST_TARGET_DIR)/release/symdesk$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/release/symroom$(EXE_SUFFIX)" bin/
+	cp "$(RUST_TARGET_DIR)/release/symdesk" "$(RUST_TARGET_DIR)/release/symroom" bin/
 
 test: rust-test
 
@@ -345,8 +342,8 @@ template-path-differential:
 	$(CARGO) test -p symdesk-core --locked --test template_path_contracts
 
 .PHONY: config-verbatim-differential
-# Native Windows only: retain the recorded AMD64 bytes and compare fresh Go
-# observations on either architecture. Foreign hosts must not imply native PASS.
+# Replays the frozen Windows-recorded verbatim-path capture as a pure string
+# contract; no Windows host is required (Windows is out of scope, #1364).
 
 config-verbatim-differential:
 	$(CARGO) test -p symdesk-core --all-features --locked
@@ -1147,8 +1144,8 @@ rust-version-contract:
 	$(CARGO) test -p symdesk-cli --locked --test version
 	$(CARGO) test -p symroom-cli --locked --test version
 	SYMDESK_VERSION=0.12.2 SYMROOM_VERSION=0.12.2 $(CARGO) build --release --workspace --locked
-	test "$$("$(RUST_TARGET_DIR)/release/symdesk$(EXE_SUFFIX)" version --json)" = '{"tool":"symdesk","version":"0.12.2","schema_version":1}'
-	test "$$("$(RUST_TARGET_DIR)/release/symroom$(EXE_SUFFIX)" version --json)" = '{"tool":"symroom","version":"0.12.2","schema_version":1}'
+	test "$$("$(RUST_TARGET_DIR)/release/symdesk" version --json)" = '{"tool":"symdesk","version":"0.12.2","schema_version":1}'
+	test "$$("$(RUST_TARGET_DIR)/release/symroom" version --json)" = '{"tool":"symroom","version":"0.12.2","schema_version":1}'
 
 rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536

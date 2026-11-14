@@ -10,14 +10,6 @@ use std::{
 pub fn read(path: &Path) -> Result<Vec<u8>, (&'static str, io::Error)> {
     let mut options = OpenOptions::new();
     options.read(true);
-    #[cfg(windows)]
-    {
-        use std::os::windows::fs::OpenOptionsExt;
-        // Go can open a directory, then reports its ReadFile error, rather than
-        // treating every access-denied open as a directory-read failure.
-        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
-        options.custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
-    }
     let mut file = options.open(path).map_err(|error| ("open", error))?;
     let mut contents = Vec::new();
     file.read_to_end(&mut contents)
@@ -55,34 +47,16 @@ pub fn path_error(operation: &str, path: &Path, error: &std::io::Error) -> Strin
 
 fn io_error(error: &std::io::Error) -> String {
     match error.kind() {
-        std::io::ErrorKind::NotFound => {
-            if cfg!(windows) {
-                if error.raw_os_error() == Some(3) {
-                    "The system cannot find the path specified.".to_owned()
-                } else {
-                    "The system cannot find the file specified.".to_owned()
-                }
-            } else {
-                "no such file or directory".to_owned()
-            }
-        }
-        std::io::ErrorKind::PermissionDenied => {
-            if cfg!(windows) {
-                "Access is denied.".to_owned()
-            } else {
-                "permission denied".to_owned()
-            }
-        }
+        std::io::ErrorKind::NotFound => "no such file or directory".to_owned(),
+        std::io::ErrorKind::PermissionDenied => "permission denied".to_owned(),
         _ => {
             let mut message = error.to_string();
             if let Some(index) = message.rfind(" (os error ") {
                 message.truncate(index);
             }
-            if !cfg!(windows) {
-                let mut chars = message.chars();
-                if let Some(first) = chars.next() {
-                    message = first.to_lowercase().collect::<String>() + chars.as_str();
-                }
+            let mut chars = message.chars();
+            if let Some(first) = chars.next() {
+                message = first.to_lowercase().collect::<String>() + chars.as_str();
             }
             message
         }
@@ -118,20 +92,6 @@ mod tests {
         assert_eq!(error.kind(), io::ErrorKind::InvalidData);
         let (operation, error) = read(&root).unwrap_err();
         assert_eq!(operation, "read");
-        #[cfg(windows)]
-        {
-            assert_eq!(error.raw_os_error(), Some(1));
-            assert_eq!(
-                path_error(operation, &root, &error),
-                format!("read {}: Incorrect function.", root.display())
-            );
-            // Synthetic access-denied control, separate from the real directory read.
-            assert_eq!(
-                path_error("open", &regular, &io::Error::from_raw_os_error(5)),
-                format!("open {}: Access is denied.", regular.display())
-            );
-        }
-        #[cfg(not(windows))]
         assert!(path_error(operation, &root, &error).ends_with(": is a directory"));
         fs::remove_dir_all(root).unwrap();
     }

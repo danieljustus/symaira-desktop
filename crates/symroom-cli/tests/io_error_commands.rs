@@ -42,32 +42,22 @@ struct Case {
     stderr: String,
     exit_code: i32,
     files: Vec<String>,
-    /// Vectors that need Unix errno, chmod or symlink semantics; Windows counts
-    /// them as SKIP instead of replaying them.
+    /// Vectors that need Unix errno, chmod or symlink semantics.
     #[serde(default)]
     unix_only: bool,
     #[serde(default)]
     rooms: Vec<String>,
 }
 
-/// Go's wording of the four OS errors the fixture provokes, per host family.
-/// These are literals recorded from Go, not derived from the code under test.
+/// Go's wording of the four OS errors the fixture provokes. These are
+/// literals recorded from Go, not derived from the code under test.
 const fn host_errors() -> [(&'static str, &'static str); 4] {
-    if cfg!(windows) {
-        [
-            ("<ENOENT>", "The system cannot find the file specified."),
-            ("<ENOTDIR>", "The system cannot find the path specified."),
-            ("<EISDIR>", "Incorrect function."),
-            ("<EACCES>", "Access is denied."),
-        ]
-    } else {
-        [
-            ("<ENOENT>", "no such file or directory"),
-            ("<ENOTDIR>", "not a directory"),
-            ("<EISDIR>", "is a directory"),
-            ("<EACCES>", "permission denied"),
-        ]
-    }
+    [
+        ("<ENOENT>", "no such file or directory"),
+        ("<ENOTDIR>", "not a directory"),
+        ("<EISDIR>", "is a directory"),
+        ("<EACCES>", "permission denied"),
+    ]
 }
 
 /// Expands the fixture's host-neutral text: a path `/` becomes the host
@@ -238,20 +228,13 @@ fn io_errors_match_go_process_contract() {
     );
 
     let mut mismatches = Vec::new();
-    let mut skipped = Vec::new();
+    let mut skipped: Vec<String> = Vec::new();
     for case in &fixture.cases {
         let temp = TempDir::new();
         let work = temp.path.join("work");
         let link = temp.path.join("link");
         for dir in ["work", "home", "data", "tmp"] {
             create_private_dir(&temp.path.join(dir));
-        }
-        if cfg!(windows) && case.unix_only {
-            skipped.push(format!(
-                "{} (Unix-only vector: errno, chmod or symlink semantics)",
-                case.name
-            ));
-            continue;
         }
         let mut room_dir_env: Option<PathBuf> = None;
         let mut cwd = work.clone();
@@ -328,11 +311,6 @@ fn io_errors_match_go_process_contract() {
             // kernel's name for the directory; the Go oracle ran the same way.
             .env("PWD", &cwd)
             .env("SYMROOM_IDENTITY_KEY", &fixture.identity_key);
-        #[cfg(windows)]
-        command.env(
-            "SYSTEMROOT",
-            std::env::var_os("SYSTEMROOT").unwrap_or_default(),
-        );
         if let Some(room) = &room_dir_env {
             command.env("SYMROOM_ROOM_DIR", room);
         }
@@ -368,57 +346,12 @@ fn io_errors_match_go_process_contract() {
         eprintln!("SKIP {reason}");
     }
     assert!(replayed > 0, "every I/O error case was skipped");
-    if cfg!(windows) {
-        assert_eq!(
-            skipped.len(),
-            unix_only,
-            "Windows skips exactly the Unix-only vectors"
-        );
-    }
     assert!(
         mismatches.is_empty(),
         "{} of {} I/O error cases differ from Go:\n{}",
         mismatches.len(),
         fixture.cases.len(),
         mismatches.join("\n")
-    );
-}
-
-/// Doctor's Go literals keep their `/` for the Windows separator too, while the
-/// `filepath` paths of the failing opens take it (the `<work>`-relative ones
-/// are Unix-only vectors today, so only this check covers them off Unix).
-#[test]
-fn recorded_literal_slashes_survive_the_windows_separator() {
-    let path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/room/io-error-cli.json");
-    let fixture: Fixture = serde_json::from_slice(&fs::read(&path).expect("read fixture"))
-        .expect("parse io error fixture");
-    let mut literal_cases = 0;
-    for case in &fixture.cases {
-        for text in [&case.stdout, &case.stderr] {
-            let windows = expand_separators(text, "\\");
-            if text.contains("<slash>") {
-                literal_cases += 1;
-                assert!(
-                    windows.contains("create/select")
-                        && windows.contains("rebuild .symroom/index.sqlite")
-                        && !windows.contains("<slash>"),
-                    "{}: literal slash lost",
-                    case.name
-                );
-            }
-            // Every raw `/` left is a path separator and must have become `\`.
-            assert!(
-                !windows.contains('/') || text.contains("<slash>"),
-                "{}: a path separator survived: {windows:?}",
-                case.name
-            );
-        }
-    }
-    assert_eq!(literal_cases, 3, "doctor literal streams changed");
-    assert_eq!(
-        expand_separators("open nope/room.toml: <ENOENT>", "\\"),
-        "open nope\\room.toml: <ENOENT>"
     );
 }
 

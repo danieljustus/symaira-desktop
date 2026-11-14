@@ -43,8 +43,6 @@ struct Case {
     post_index_files: BTreeMap<String, String>,
     #[serde(default)]
     no_vault: bool,
-    #[serde(default)]
-    unix_only: bool,
     /// `insensitive`/`sensitive`: the case only applies to a file system of
     /// that case-folding class (each recorded natively by Go).
     #[serde(default)]
@@ -117,48 +115,11 @@ fn normalize(text: &str, raw_root: &Path, canonical_root: &Path) -> String {
         text = text.replace(&root.replace('\\', "\\\\"), "$ROOT");
     }
     // Go Base.Path uses filepath.Join, including outside $ROOT tokens.
-    #[cfg(windows)]
-    let text = text
-        .replace(r"bases\\", "bases/")
-        .replace(r"bases\", "bases/");
     normalize_pointers(&slash_root_paths(&text))
 }
 
-#[cfg(not(windows))]
 fn slash_root_paths(text: &str) -> String {
     text.to_owned()
-}
-
-/// Rewrites the separators of every `$ROOT` path token to `/`; a doubled
-/// backslash inside a token is one separator (Go `slashRootPaths`).
-#[cfg(windows)]
-fn slash_root_paths(text: &str) -> String {
-    let mut out = String::new();
-    let mut rest = text;
-    while let Some(index) = rest.find("$ROOT") {
-        out.push_str(&rest[..index + "$ROOT".len()]);
-        rest = &rest[index + "$ROOT".len()..];
-        let bytes = rest.as_bytes();
-        let mut consumed = 0;
-        while consumed < bytes.len() {
-            let c = bytes[consumed];
-            if c == b'\\' || c == b'/' {
-                out.push('/');
-                consumed += 1;
-                if consumed < bytes.len() && bytes[consumed] == b'\\' {
-                    consumed += 1;
-                }
-            } else if c == b'.' || c == b'_' || c == b'-' || c.is_ascii_alphanumeric() {
-                out.push(char::from(c));
-                consumed += 1;
-            } else {
-                break;
-            }
-        }
-        rest = &rest[consumed..];
-    }
-    out.push_str(rest);
-    out
 }
 
 #[test]
@@ -294,7 +255,7 @@ fn normalize_pointers(text: &str) -> String {
 }
 
 fn skipped(case: &Case, fs_class: &str) -> bool {
-    (cfg!(windows) && case.unix_only) || (!case.fs_case.is_empty() && case.fs_case != fs_class)
+    !case.fs_case.is_empty() && case.fs_case != fs_class
 }
 
 /// Mirrors Go's `viewsFSCaseClass`: does the test file system fold case?

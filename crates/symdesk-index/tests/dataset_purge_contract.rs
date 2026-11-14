@@ -12,9 +12,6 @@ use symdesk_index::{
 use symdesk_vault::{HistoryStore, Provenance, retention_state::retention_state};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
-#[cfg(windows)]
-const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge-windows.json");
-#[cfg(not(windows))]
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge.json");
 
 struct Sandbox {
@@ -248,13 +245,7 @@ fn dataset_purge_matches_go_service_fixture() {
                     .map(|error| error.to_string())
                     .unwrap_or_default();
                 let after = snapshot(&sandbox);
-                // Go's Windows oracle checks this branch as "was replaced":
-                // its stored fixture records the Unix error fragment here.
-                let expected_error = if cfg!(windows) {
-                    "was replaced"
-                } else {
-                    case["error"].as_str().expect("retry error fragment")
-                };
+                let expected_error = case["error"].as_str().expect("retry error fragment");
                 assert!(
                     retry_error.contains(expected_error),
                     "case {id}: unexpected retry error {retry_error:?}"
@@ -312,11 +303,6 @@ fn dataset_purge_matches_go_service_fixture() {
 #[cfg(unix)]
 fn create_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(target, link)
-}
-
-#[cfg(windows)]
-fn create_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
-    std::os::windows::fs::symlink_file(target, link)
 }
 
 fn snapshot(sandbox: &Sandbox) -> Value {

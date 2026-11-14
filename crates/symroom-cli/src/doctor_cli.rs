@@ -547,19 +547,8 @@ fn permissions_mode(metadata: &fs::Metadata) -> u32 {
     }
     #[cfg(not(unix))]
     {
-        #[cfg(windows)]
-        {
-            if metadata.permissions().readonly() {
-                0o444
-            } else {
-                0o666
-            }
-        }
-        #[cfg(not(windows))]
-        {
-            let _ = metadata;
-            0
-        }
+        let _ = metadata;
+        0
     }
 }
 
@@ -569,9 +558,6 @@ fn parse_flags(args: &[OsString]) -> Result<bool, ExitCode> {
 }
 
 fn home_dir() -> Option<PathBuf> {
-    #[cfg(windows)]
-    let home = std::env::var_os("USERPROFILE");
-    #[cfg(not(windows))]
     let home = std::env::var_os("HOME");
     home.filter(|value| !value.is_empty()).map(PathBuf::from)
 }

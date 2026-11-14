@@ -363,18 +363,9 @@ fn volume(path: &Path) -> String {
     }
 }
 
-/// Go `filepath.sameWord`: exact on Unix, `strings.EqualFold` on Windows.
-// ponytail: char::to_lowercase approximates Go's simple case folding; they
-// differ only for a handful of special code points (e.g. U+0130). Port
-// unicode.SimpleFold if a Windows fixture ever exercises one.
+/// Go `filepath.sameWord`: exact on Unix.
 fn same_word(left: &str, right: &str) -> bool {
-    if cfg!(windows) {
-        left.chars()
-            .flat_map(char::to_lowercase)
-            .eq(right.chars().flat_map(char::to_lowercase))
-    } else {
-        left == right
-    }
+    left == right
 }
 
 /// Lexically clean path components, `filepath.Clean` style: `.` dropped,
@@ -423,22 +414,11 @@ mod tests {
     #[test]
     fn go_rel_follows_filepath_rel() {
         let rel = |a: &str, b: &str| go_rel(Path::new(a), Path::new(b));
-        if cfg!(unix) {
-            assert_eq!(rel("/v", "/v/a.md").as_deref(), Some("a.md"));
-            assert_eq!(rel("/v", "/v").as_deref(), Some("."));
-            assert_eq!(rel("/v/x", "/v/a.md").as_deref(), Some("../a.md"));
-            assert_eq!(rel("/v", "/o/s.md").as_deref(), Some("../o/s.md"));
-            assert_eq!(rel("/v", "/v/sub/../b.md").as_deref(), Some("b.md"));
-        }
-        if cfg!(windows) {
-            // Expected values follow Go 1.26 path/filepath.Rel on Windows.
-            assert_eq!(rel(r"C:\v", r"C:\v\a.md").as_deref(), Some("a.md"));
-            assert_eq!(rel(r"C:\v", r"c:\V\a.md").as_deref(), Some("a.md"));
-            assert_eq!(rel(r"C:\v\x", r"C:\v\a.md").as_deref(), Some(r"..\a.md"));
-            assert_eq!(rel(r"\v", r"\v\a.md").as_deref(), Some("a.md"));
-            assert_eq!(rel(r"C:\v", r"D:\v\a.md"), None);
-            assert_eq!(rel(r"C:\v", r"\v\a.md"), None);
-        }
+        assert_eq!(rel("/v", "/v/a.md").as_deref(), Some("a.md"));
+        assert_eq!(rel("/v", "/v").as_deref(), Some("."));
+        assert_eq!(rel("/v/x", "/v/a.md").as_deref(), Some("../a.md"));
+        assert_eq!(rel("/v", "/o/s.md").as_deref(), Some("../o/s.md"));
+        assert_eq!(rel("/v", "/v/sub/../b.md").as_deref(), Some("b.md"));
         assert_eq!(rel("v", "/v/a.md"), None);
     }
 }

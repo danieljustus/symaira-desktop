@@ -9,8 +9,7 @@
 //! streams, image dictionaries and decoded pixel data. Reals compare to five
 //! decimals (Go on arm64 fuses multiply-adds).
 //!
-//! Needs python3 and qpdf. Windows validates the stored oracle only (no qpdf);
-//! any other platform fails without them.
+//! Needs python3 and qpdf; the test fails without them.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -125,7 +124,7 @@ fn fixture() -> Fixture {
     fixture
 }
 
-/// True when the measurement tools exist. Only Windows may lack them.
+/// True when the measurement tools exist; missing tools fail the test.
 fn tools() -> bool {
     let present = ["python3", "qpdf", "pdftoppm"]
         .iter()
@@ -133,11 +132,7 @@ fn tools() -> bool {
     if present {
         return true;
     }
-    if !cfg!(windows) {
-        panic!("python3, qpdf and pdftoppm are required on PATH for the archive PDF contract");
-    }
-    eprintln!("note: python3/qpdf missing on Windows, skipping the PDF measurements");
-    false
+    panic!("python3, qpdf and pdftoppm are required on PATH for the archive PDF contract");
 }
 
 fn canon(pdf: &Path) -> Value {
@@ -265,9 +260,6 @@ fn close(a: &Value, b: &Value) -> bool {
 /// Render the PDF Go wrote and the PDF Rust wrote with the same Poppler and
 /// require identical pixels on every page (first four pages, 40 dpi).
 fn pixels_equal(id: &str, dir: &Path, rust_pdf: &Path, go_bytes: &[u8]) -> Result<(), String> {
-    if cfg!(windows) {
-        return Ok(());
-    }
     let go_pdf = dir.join("go.pdf");
     std::fs::write(&go_pdf, go_bytes).expect("write Go PDF");
     let render = |pdf: &Path, prefix: &str| -> Result<Vec<Vec<u8>>, String> {

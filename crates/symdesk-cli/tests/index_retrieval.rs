@@ -324,9 +324,6 @@ fn normalize(text: &str, root: &Path) -> String {
             .replace(&root.replace('\\', "\\\\"), "$ROOT")
             .replace(&root, "$ROOT");
     }
-    if cfg!(windows) {
-        value = value.replace("\\\\", "/").replace('\\', "/");
-    }
     value
 }
 

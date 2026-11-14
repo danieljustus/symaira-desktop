@@ -83,8 +83,7 @@ struct Case {
     security: Option<Stub>,
     #[serde(default)]
     darwin_only: bool,
-    /// Outcome depends on Unix lookup rules (Go searches the working directory
-    /// implicitly on Windows).
+    /// Outcome depends on Unix lookup rules.
     #[serde(default)]
     unix_only: bool,
     /// PATH directories in order; `$TOOLS` is the provider directory and `""`
@@ -139,11 +138,6 @@ fn identity_provider_chain_matches_go_process_contract() {
     for case in &fixture.cases {
         if case.darwin_only && !cfg!(target_os = "macos") {
             println!("SKIP {}: macOS Keychain chain", case.name);
-            skipped += 1;
-            continue;
-        }
-        if case.unix_only && cfg!(windows) {
-            println!("SKIP {}: Unix lookup rules", case.name);
             skipped += 1;
             continue;
         }
@@ -223,11 +217,6 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
         // Coverage builds write profiles into the cwd by default, which would
         // show up in the compared file listing; `trace` is not snapshotted.
         .env("LLVM_PROFILE_FILE", trace.join("symroom-%p.profraw"));
-    if cfg!(windows)
-        && let Some(system_root) = std::env::var_os("SystemRoot")
-    {
-        command.env("SystemRoot", system_root);
-    }
     if let Some(key) = &case.env_key {
         command.env("SYMROOM_IDENTITY_KEY", key);
     }

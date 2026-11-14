@@ -14,8 +14,6 @@ use sha2::{Digest, Sha256};
 use crate::retrieval_vector::{
     INDEX_BUILD_THRESHOLD, IndexChunk, ScanRow, VectorIndex, score_rows,
 };
-#[cfg(windows)]
-use crate::strip_verbatim_prefix;
 use crate::{SidecarError, absolute_non_verbatim};
 
 const CHUNK_SIZE: usize = 1000;
@@ -554,14 +552,6 @@ impl SourceRegistry {
                 state.version
             )));
         }
-        #[cfg(windows)]
-        let state = {
-            let mut state = state;
-            for source in &mut state.sources {
-                source.path = strip_verbatim_prefix(&source.path);
-            }
-            state
-        };
         Ok(state)
     }
 

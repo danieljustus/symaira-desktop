@@ -45,10 +45,6 @@ fn collect_environment(
         let Some(name) = name.to_str() else {
             continue;
         };
-        #[cfg(windows)]
-        let normalized_name = name.to_ascii_uppercase();
-        #[cfg(windows)]
-        let name = normalized_name.as_str();
         match value.into_string() {
             Ok(value) => {
                 environment.insert(name.to_owned(), value);
@@ -560,9 +556,8 @@ pub fn save(path: &str, config: &Config) -> Result<(), String> {
         _ => Path::new("."),
     };
     // Go applies the directory mode to every directory it creates, so the set
-    // of missing ancestors is captured before `create_dir_all`. On Windows Go
-    // ignores the mode entirely, which is why both the binding and its use are
-    // unix-only.
+    // of missing ancestors is captured before `create_dir_all`. The mode
+    // handling is unix-only.
     #[cfg(unix)]
     let created: Vec<&Path> = missing_ancestors(parent);
     fs::create_dir_all(parent)
@@ -725,9 +720,6 @@ fn trimmed<'a>(environment: &'a BTreeMap<String, String>, key: &str) -> Option<&
 }
 
 fn user_home(environment: &BTreeMap<String, String>) -> Result<&str, &'static str> {
-    #[cfg(windows)]
-    let (key, error) = ("USERPROFILE", "user home dir: %userprofile% is not defined");
-    #[cfg(not(windows))]
     let (key, error) = ("HOME", "user home dir: $HOME is not defined");
     nonempty(environment, key).ok_or(error)
 }
@@ -749,10 +741,6 @@ fn legacy_fallback(primary: String, legacy: String) -> String {
 }
 
 fn store_join(left: &str, right: &str) -> String {
-    #[cfg(windows)]
-    if is_windows_verbatim(left) {
-        return join_windows_verbatim(left, right);
-    }
     clean_store_path(&Path::new(left).join(right))
         .to_string_lossy()
         .into_owned()
@@ -831,15 +819,12 @@ pub fn global_path(environment: &BTreeMap<String, String>) -> String {
 /// Go `configkit.DefaultPath(app_name)`: `$XDG_CONFIG_HOME/<app>/config.toml`
 /// for an absolute XDG root, else `<home>/.config/<app>/config.toml`.
 ///
-/// CoreKit selects the path. The product keeps its OS-native home choice
-/// (HOME on Unix, USERPROFILE on Windows, `.` when unset) and Go's lexical
-/// `filepath.Clean` / Windows verbatim handling.
+/// CoreKit selects the path. The product selects HOME (`.` when unset) and
+/// keeps Go's lexical `filepath.Clean` handling.
 #[must_use]
 pub fn default_config_file(app_name: &str, environment: &BTreeMap<String, String>) -> String {
     let xdg = nonempty(environment, "XDG_CONFIG_HOME").map(PathBuf::from);
-    // The product selects only HOME on Unix and only USERPROFILE on Windows.
-    // Do not forward both roots: CoreKit's Windows fallback accepts HOME when
-    // USERPROFILE is missing, unlike the Go caller.
+    // The product selects only HOME; no other root is forwarded to CoreKit.
     let home = PathBuf::from(user_home(environment).unwrap_or("."));
     let path = symaira_core_config::default_path_for_roots(app_name, xdg, Some(home), None);
     store_join(&path.to_string_lossy(), "")
@@ -889,7 +874,7 @@ fn join(left: &str, right: &str) -> String {
     store_join(left, right)
 }
 
-#[cfg(any(windows, test))]
+#[cfg(test)]
 fn is_windows_verbatim(value: &str) -> bool {
     matches!(
         value.as_bytes(),
@@ -900,7 +885,7 @@ fn is_windows_verbatim(value: &str) -> bool {
 // Go 1.26 treats the first component after `\\?\` as the device volume,
 // including `UNC`, not Rust's indivisible UNC host/share prefix. Clean the
 // remaining rooted components without stripping the verbatim I/O prefix.
-#[cfg(any(windows, test))]
+#[cfg(test)]
 fn join_windows_verbatim(left: &str, right: &str) -> String {
     let joined = format!(r"{}\{}", left.trim_end_matches(['/', '\\']), right).replace('/', r"\");
     let volume_end = joined[4..]
@@ -981,14 +966,9 @@ mod environment_key_case_tests {
         ] {
             let environment = collect_environment([(OsString::from(name), OsString::from(value))])
                 .expect("Unicode environment value");
-            let expected_key = if cfg!(windows) { canonical } else { name };
             assert_eq!(environment.len(), 1);
-            assert_eq!(
-                environment.get(expected_key).map(String::as_str),
-                Some(value)
-            );
-            let absent_key = if cfg!(windows) { name } else { canonical };
-            assert!(!environment.contains_key(absent_key));
+            assert_eq!(environment.get(name).map(String::as_str), Some(value));
+            assert!(!environment.contains_key(canonical));
         }
     }
 }

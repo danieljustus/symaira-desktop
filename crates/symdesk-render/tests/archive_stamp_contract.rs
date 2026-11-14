@@ -8,10 +8,8 @@
 //! print a syntax error. Structure is asserted on top: the stamp font, the
 //! original `/Contents` streams and resources, and untouched pages.
 //!
-//! Poppler is required. Where it is missing (only Windows CI has none) the
-//! `pdftotext`/`pdftoppm` measurements are skipped with a note and the
-//! structural checks still run; any other platform fails with a clear
-//! message instead of passing without measuring.
+//! Poppler is required; the test fails with a clear message instead of
+//! passing without measuring.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -69,8 +67,7 @@ struct WantPage {
 
 // ---- Poppler ---------------------------------------------------------------
 
-/// True when Poppler is on PATH. Missing Poppler is a failure everywhere but
-/// Windows, where CI installs none and the measurement is skipped.
+/// True when Poppler is on PATH; missing Poppler fails the test.
 fn poppler() -> bool {
     let present = ["pdftotext", "pdftoppm"]
         .iter()
@@ -78,14 +75,10 @@ fn poppler() -> bool {
     if present {
         return true;
     }
-    if !cfg!(windows) {
-        panic!(
-            "pdftotext/pdftoppm (Poppler) are required on PATH for the archive stamp \
-             contract; install poppler-utils (Linux) or poppler (Homebrew)"
-        );
-    }
-    eprintln!("note: Poppler missing on Windows, skipping pdftotext/pdftoppm measurements");
-    false
+    panic!(
+        "pdftotext/pdftoppm (Poppler) are required on PATH for the archive stamp \
+         contract; install poppler-utils (Linux) or poppler (Homebrew)"
+    );
 }
 
 struct TempDir(PathBuf);

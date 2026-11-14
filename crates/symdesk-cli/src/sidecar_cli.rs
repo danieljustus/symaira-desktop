@@ -108,17 +108,11 @@ fn sidecar_root() -> Result<PathBuf, String> {
         .map(PathBuf::from)
         .or_else(|| {
             environment
-                .get(if cfg!(windows) { "USERPROFILE" } else { "HOME" })
+                .get("HOME")
                 .filter(|value| !value.is_empty())
                 .map(|home| Path::new(home).join(".local/share"))
         })
-        .ok_or_else(|| {
-            if cfg!(windows) {
-                "user home dir: %userprofile% is not defined".to_owned()
-            } else {
-                "user home dir: $HOME is not defined".to_owned()
-            }
-        })?;
+        .ok_or_else(|| "user home dir: $HOME is not defined".to_owned())?;
     Ok(data_home.join("symdesk").join("vaults"))
 }
 

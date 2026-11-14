@@ -213,15 +213,7 @@ fn read_regular(root: &Dir, rel_path: &str) -> Result<Vec<u8>, RetentionStateErr
 }
 
 fn normalize_rel_path(path: &str) -> String {
-    let trimmed = path.trim();
-    #[cfg(windows)]
-    {
-        trimmed.replace('\\', "/")
-    }
-    #[cfg(not(windows))]
-    {
-        trimmed.to_owned()
-    }
+    path.trim().to_owned()
 }
 
 fn clean_relative(path: &Path) -> PathBuf {

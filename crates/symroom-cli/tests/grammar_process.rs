@@ -52,14 +52,7 @@ fn grammar_process_matches_go_usage_help_and_flag_contract() {
         for dir in ["work", "home", "data", "config", "tmp"] {
             create_private_dir(&temp.path.join(dir));
         }
-        // Windows resolves the home directory from USERPROFILE, so both home
-        // variables point at the disposable root on every platform.
         let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
-        #[cfg(windows)]
-        command.env(
-            "SYSTEMROOT",
-            std::env::var_os("SYSTEMROOT").unwrap_or_default(),
-        );
         let output = command
             .args(&case.args)
             .current_dir(&work)

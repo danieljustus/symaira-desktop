@@ -358,14 +358,6 @@ fn expected_observations(case: &Value) -> Value {
 }
 
 fn normalize_windows_permissions(state: &mut Value) {
-    #[cfg(windows)]
-    for entry in state["vault"].as_array_mut().expect("vault") {
-        for field in ["mode", "perm"] {
-            assert!(entry[field].is_string(), "missing fixture {field}");
-            entry[field] = Value::String(String::new());
-        }
-    }
-    #[cfg(not(windows))]
     let _ = state;
 }
 
@@ -375,20 +367,6 @@ fn windows_permission_normalization_preserves_other_vault_fields() {
         json!({"vault":[{"mode":"-rw-------","perm":"0600","content":"payload","sha256":"hash"}]});
     let mut normalized = original.clone();
     normalize_windows_permissions(&mut normalized);
-    #[cfg(windows)]
-    {
-        assert_eq!(normalized["vault"][0]["mode"], "");
-        assert_eq!(normalized["vault"][0]["perm"], "");
-        assert_eq!(
-            normalized["vault"][0]["content"],
-            original["vault"][0]["content"]
-        );
-        assert_eq!(
-            normalized["vault"][0]["sha256"],
-            original["vault"][0]["sha256"]
-        );
-    }
-    #[cfg(not(windows))]
     assert_eq!(normalized, original);
 }
 

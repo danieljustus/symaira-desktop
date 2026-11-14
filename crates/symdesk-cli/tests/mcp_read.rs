@@ -241,18 +241,8 @@ fn replay(case: &Case) {
     fs::remove_dir_all(root).unwrap();
     assert_eq!(after, case.after_files, "{} authoritative files", case.id);
     assert_eq!(status.code(), Some(case.exit_code), "{}", case.id);
-    assert_eq!(
-        stderr,
-        mcp_read_paths::platform_expectation(&case.stderr, cfg!(windows)),
-        "{} stderr",
-        case.id
-    );
-    assert_eq!(
-        stdout,
-        mcp_read_paths::platform_expectation(&case.stdout, cfg!(windows)),
-        "{} raw protocol bytes",
-        case.id
-    );
+    assert_eq!(stderr, case.stderr, "{} stderr", case.id);
+    assert_eq!(stdout, case.stdout, "{} raw protocol bytes", case.id);
 }
 
 fn collect_files(

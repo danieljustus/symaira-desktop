@@ -190,31 +190,3 @@ pub fn watch_stdin_closed() -> std::sync::mpsc::Receiver<()> {
     });
     receiver
 }
-
-// Windows keeps the pre-existing behaviour (no signal handling, Rust's own
-// broken-pipe errors); signal semantics are POSIX-only (CLI-007).
-#[cfg(not(unix))]
-pub fn install_shutdown_handlers() -> io::Result<()> {
-    Ok(())
-}
-
-#[cfg(not(unix))]
-pub fn shutdown_requested() -> bool {
-    false
-}
-
-#[cfg(not(unix))]
-pub fn wait_for_shutdown(timeout: Duration) -> bool {
-    std::thread::sleep(timeout);
-    false
-}
-
-#[cfg(not(unix))]
-pub fn die_by_sigpipe() -> ! {
-    std::process::exit(1)
-}
-
-#[cfg(not(unix))]
-pub fn hostname() -> String {
-    std::env::var("COMPUTERNAME").unwrap_or_default()
-}

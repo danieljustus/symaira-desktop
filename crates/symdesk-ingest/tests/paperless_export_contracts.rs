@@ -68,11 +68,6 @@ fn snapshot(root: &Root) -> Value {
                 walk(root, &p, out)
             } else {
                 let raw = String::from_utf8(fs::read(&p).unwrap()).unwrap();
-                let raw = if cfg!(windows) {
-                    raw.replace(r"\\", r"\")
-                } else {
-                    raw
-                };
                 let body = root.norm(&raw);
                 let relative = p.strip_prefix(root.path("vault")).unwrap();
                 #[cfg(unix)]
@@ -161,12 +156,6 @@ fn unicode_fixture() -> Option<Value> {
     let f = named_fixture("paperless-export-unicode.json");
     let os = match std::env::consts::OS {
         "macos" => "darwin",
-        "windows" => {
-            let reason = f["not_covered"]["windows"].as_str().unwrap();
-            assert!(reason.contains("not covered"));
-            eprintln!("SKIP: {reason}");
-            return None;
-        }
         os => os,
     };
     let entry = f["platforms"]

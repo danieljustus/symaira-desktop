@@ -245,31 +245,8 @@ fn serve(mut stream: TcpStream, requests: &Mutex<Vec<Request>>) {
 fn fixture() -> Fixture {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../testdata/port/cli/index-retry-process.json");
-    let mut fixture: Fixture =
-        serde_json::from_slice(&fs::read(path).expect("Go-generated index retry fixture"))
-            .expect("valid fixture");
-    if cfg!(windows) {
-        // The frozen fixture records Unix stat wording. The native Windows Go
-        // oracle reports the same missing file through GetFileAttributesEx.
-        for step in &mut fixture.steps {
-            for reason in step
-                .state
-                .lifecycle_reasons
-                .values_mut()
-                .chain(std::iter::once(&mut step.result.stdout))
-            {
-                for name in ["gone.md", "missing.txt"] {
-                    *reason = reason.replace(
-                        &format!("lstat $ROOT/vault/{name}: no such file or directory"),
-                        &format!(
-                            "GetFileAttributesEx $ROOT/vault/{name}: The system cannot find the file specified."
-                        ),
-                    );
-                }
-            }
-        }
-    }
-    fixture
+    serde_json::from_slice(&fs::read(path).expect("Go-generated index retry fixture"))
+        .expect("valid fixture")
 }
 
 fn normalize(text: &str, root: &Path) -> String {
@@ -291,43 +268,7 @@ fn normalize(text: &str, root: &Path) -> String {
             .replace(&root.replace('\\', "\\\\"), "$ROOT")
             .replace(&root, "$ROOT");
     }
-    if cfg!(windows) {
-        value = slash_root_paths(&value);
-    }
     value
-}
-
-/// Rewrites the separators of every `$ROOT` path token to `/`, as Go's
-/// process normalizer does on Windows. Only path tokens are touched, so JSON
-/// escapes such as `\n` elsewhere in the text keep their meaning.
-fn slash_root_paths(text: &str) -> String {
-    let mut output = String::with_capacity(text.len());
-    let mut rest = text;
-    while let Some(index) = rest.find("$ROOT") {
-        output.push_str(&rest[..index + "$ROOT".len()]);
-        rest = &rest[index + "$ROOT".len()..];
-        let bytes = rest.as_bytes();
-        let mut consumed = 0;
-        while consumed < bytes.len() {
-            match bytes[consumed] {
-                b'\\' | b'/' => {
-                    output.push('/');
-                    consumed += 1;
-                    if consumed < bytes.len() && bytes[consumed] == b'\\' {
-                        consumed += 1;
-                    }
-                }
-                byte if byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-') => {
-                    output.push(char::from(byte));
-                    consumed += 1;
-                }
-                _ => break,
-            }
-        }
-        rest = &rest[consumed..];
-    }
-    output.push_str(rest);
-    output
 }
 
 fn run(root: &TempRoot, args: &[String]) -> ProcessResult {
@@ -541,16 +482,4 @@ fn index_retry_replays_go_process_fixture() {
         assert_eq!(provider.take(), step.requests, "step {} requests", step.id);
         assert_eq!(read_state(&root), step.state, "step {} state", step.id);
     }
-}
-
-#[test]
-fn root_path_separators_normalize_without_touching_json_escapes() {
-    assert_eq!(
-        slash_root_paths(r#"failed to parse $ROOT\vault\bad.md: x\n"#),
-        "failed to parse $ROOT/vault/bad.md: x\\n"
-    );
-    assert_eq!(
-        slash_root_paths(r#"{"path":"$ROOT\\vault\\bad.md","reason":"a\nb"}"#),
-        r#"{"path":"$ROOT/vault/bad.md","reason":"a\nb"}"#
-    );
 }

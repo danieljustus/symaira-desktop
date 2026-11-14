@@ -278,9 +278,7 @@ fn run_case(case: &Case, key: &str, root: &Path) -> Outcome {
         }
         "readonly" => {
             // A descriptor opened for reading: every write fails with EBADF.
-            command.stdout(Stdio::from(
-                fs::File::open(if cfg!(windows) { "NUL" } else { "/dev/null" }).expect("null"),
-            ));
+            command.stdout(Stdio::from(fs::File::open("/dev/null").expect("null")));
         }
         "broken-pipe" => {
             let (reader, writer) = std::io::pipe().expect("pipe");

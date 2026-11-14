@@ -56,8 +56,7 @@ struct Case {
 
 #[test]
 fn frozen_write_transcript_checksums_are_unchanged() {
-    // Always check both platform-limited write captures, even on Windows
-    // where their Unix process replays are explicitly ignored.
+    // Always check both Unix-recorded write captures.
     assert_eq!(
         symdesk_vault::sha256_hex(include_bytes!(
             "../../../testdata/port/cli/notebook-write-process.json"
@@ -76,10 +75,6 @@ fn frozen_write_transcript_checksums_are_unchanged() {
 }
 
 #[test]
-#[cfg_attr(
-    windows,
-    ignore = "Unix MCP write transcript has no native Windows syscall/path observations; frozen checksum remains checked"
-)]
 fn write_tools_match_go_stdio_calls_and_authoritative_files() {
     let fixture: Fixture = serde_json::from_slice(
         &fs::read(

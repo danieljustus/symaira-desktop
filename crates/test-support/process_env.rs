@@ -1,6 +1,4 @@
-//! Hermetic process environments still need Windows' operating-system root.
-//! Go os/exec adds SYSTEMROOT when absent; Rust std::process does not. Without
-//! it Winsock can fail to load its provider (WSAEPROVIDERFAILEDINIT / 10106).
+//! Hermetic process environments for the Go-recorded replay tests.
 use std::process::Command;
 
 pub trait IsolatedEnvironment {
@@ -23,11 +21,6 @@ impl IsolatedEnvironment for Command {
         if std::env::var_os("LLVM_PROFILE_FILE").is_some() {
             self.env("LLVM_PROFILE_FILE", "/dev/null");
         }
-        #[cfg(windows)]
-        self.env(
-            "SYSTEMROOT",
-            std::env::var_os("SYSTEMROOT").expect("Windows process requires SYSTEMROOT"),
-        );
         self
     }
 }

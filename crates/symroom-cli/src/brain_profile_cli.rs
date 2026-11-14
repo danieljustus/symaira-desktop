@@ -220,10 +220,6 @@ fn set_mode(path: &Path, mode: u32) -> io::Result<()> {
 }
 
 fn home_dir() -> Option<PathBuf> {
-    #[cfg(windows)]
-    if let Some(home) = std::env::var_os("USERPROFILE").filter(|value| !value.is_empty()) {
-        return Some(PathBuf::from(home));
-    }
     std::env::var_os("HOME")
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)

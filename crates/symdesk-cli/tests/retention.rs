@@ -394,22 +394,6 @@ fn reject_persists_and_diff_reads_back_the_proposal() {
     );
 }
 
-#[cfg(windows)]
-#[test]
-fn reject_persists_on_windows_without_directory_sync() {
-    let root = TempRoot::new("reject-windows");
-    let proposal_path = write_proposal(&root);
-    let output = run(&root, ["retention", "reject", "ret-safe", "--json"]);
-    assert_ok(
-        &output,
-        b"{\"run_id\":\"ret-safe\",\"status\":\"rejected\"}\n",
-    );
-    let persisted: serde_json::Value =
-        serde_json::from_slice(&fs::read(proposal_path).expect("read rejected proposal"))
-            .expect("persisted proposal JSON");
-    assert_eq!(persisted["status"], "rejected");
-}
-
 #[test]
 fn reject_reports_missing_proposals_with_the_go_error_envelope() {
     let root = TempRoot::new("reject-missing");
@@ -456,7 +440,6 @@ fn mismatched_stored_run_id_cannot_change_a_different_proposal() {
 }
 
 // Go's retention writer cannot sync a directory on Windows (issue #967).
-#[cfg(not(windows))]
 #[test]
 fn go_nil_items_survive_rejection_and_render_as_null() {
     for items_field in [",\"items\":null", ""] {
@@ -569,23 +552,7 @@ fn history_distinguishes_missing_empty_and_nonempty_logs() {
     );
 
     let output = run(&root, ["retention", "history"]);
-    #[cfg(not(windows))]
     let expected_time = "2026-01-02 03:04:05".to_owned();
-    #[cfg(windows)]
-    let expected_time = {
-        let utc = time::OffsetDateTime::parse(
-            "2026-01-02T03:04:05Z",
-            &time::format_description::well_known::Rfc3339,
-        )
-        .expect("history timestamp");
-        let local =
-            utc.to_offset(time::UtcOffset::local_offset_at(utc).unwrap_or(time::UtcOffset::UTC));
-        let format = time::format_description::parse_borrowed::<2>(
-            "[year]-[month]-[day] [hour]:[minute]:[second]",
-        )
-        .expect("history timestamp format");
-        local.format(&format).expect("local history timestamp")
-    };
     assert_ok(
         &output,
         format!("{expected_time}  rule<{}  doc<&.md → trash\n", '\u{2028}').as_bytes(),
@@ -732,9 +699,5 @@ fn eval_fails_closed_without_staging_when_authoritative_state_is_invalid() {
 }
 
 fn missing_path_message() -> &'static str {
-    if cfg!(windows) {
-        "The system cannot find the path specified."
-    } else {
-        "no such file or directory"
-    }
+    "no such file or directory"
 }

@@ -144,14 +144,9 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
         }
         let output = command.output().expect("run Rust doctor process");
 
-        let expected_exit = if cfg!(windows) && !case.identity_files.is_empty() {
-            1
-        } else {
-            case.exit_code
-        };
         assert_eq!(
             output.status.code(),
-            Some(expected_exit),
+            Some(case.exit_code),
             "{} exit\nstdout: {}\nstderr: {}",
             case.name,
             String::from_utf8_lossy(&output.stdout),
@@ -313,25 +308,9 @@ fn normalize(
     has_identity_file: bool,
 ) -> Vec<u8> {
     let mut text = String::from_utf8_lossy(bytes).into_owned();
-    let json = text.starts_with('{');
     for (path, token) in [(home, "$HOME"), (data, "$DATA"), (tools, "$TOOLS")] {
         let path = path.to_string_lossy();
-        let path = if cfg!(windows) && json {
-            path.replace('\\', "\\\\")
-        } else {
-            path.into_owned()
-        };
-        text = text.replace(&path, token);
-    }
-    if cfg!(windows) {
-        if json {
-            text = text.replace("\\\\", "/");
-        } else {
-            text = text.replace('\\', "/");
-        }
-        for name in ["symdesk", "symbrain", "symvault"] {
-            text = text.replace(&format!("$TOOLS/{name}.exe"), &format!("$TOOLS/{name}"));
-        }
+        text = text.replace(&*path, token);
     }
     if has_identity_file {
         text = normalize_identity_mode_output(&text);
@@ -445,30 +424,6 @@ impl TempDir {
 
 impl Drop for TempDir {
     fn drop(&mut self) {
-        #[cfg(windows)]
-        clear_readonly_files(&self.path);
         fs::remove_dir_all(&self.path).expect("remove temporary directory");
-    }
-}
-
-#[cfg(windows)]
-#[expect(
-    clippy::permissions_set_readonly_false,
-    reason = "Windows test cleanup clears only the read-only attribute"
-)]
-fn clear_readonly_files(root: &Path) {
-    for entry in fs::read_dir(root).expect("read temporary directory") {
-        let path = entry.expect("temporary entry").path();
-        if path.is_dir() {
-            clear_readonly_files(&path);
-        } else {
-            let mut permissions = fs::metadata(&path)
-                .expect("temporary metadata")
-                .permissions();
-            if permissions.readonly() {
-                permissions.set_readonly(false);
-                fs::set_permissions(path, permissions).expect("make temporary file writable");
-            }
-        }
     }
 }

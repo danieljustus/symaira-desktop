@@ -268,7 +268,7 @@ fn extract_h1_title(body: &str) -> Option<String> {
 }
 
 /// Go `deriveCreatedTime`: a `YYYY-MM-DD` file name, else the birth time on
-/// macOS and Windows, else the modification time (UTC, whole seconds).
+/// macOS, else the modification time (UTC, whole seconds).
 fn derive_created_time(path: &Path) -> String {
     let stem = path
         .file_name()
@@ -280,7 +280,7 @@ fn derive_created_time(path: &Path) -> String {
     }
     let metadata = fs::metadata(path).ok();
     let moment = metadata.as_ref().and_then(|metadata| {
-        #[cfg(any(target_os = "macos", windows))]
+        #[cfg(target_os = "macos")]
         if let Ok(created) = metadata.created()
             && created > UNIX_EPOCH
         {

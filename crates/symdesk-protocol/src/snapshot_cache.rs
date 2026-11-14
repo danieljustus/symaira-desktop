@@ -34,11 +34,7 @@ pub(super) struct SnapshotCache {
 
 #[derive(Debug, PartialEq, Eq)]
 pub(super) enum RootIdentity {
-    #[cfg(not(windows))]
     Stable(String),
-    #[cfg(windows)]
-    // Keep the Windows identity handle open while start/end IDs are compared.
-    Windows(same_file::Handle),
     #[cfg(test)]
     Test(String),
 }

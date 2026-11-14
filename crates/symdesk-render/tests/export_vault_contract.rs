@@ -7,8 +7,7 @@
 //! Every case builds its own vault under a private directory, runs the port,
 //! normalizes the temp paths like the Go oracle and compares the exact output
 //! and error text. Error texts carry Unix syscall wording, so the replay is
-//! Unix-only (the Go side validates the stored oracle on Windows without
-//! re-executing it).
+//! Unix-only.
 #![cfg(unix)]
 
 use std::{

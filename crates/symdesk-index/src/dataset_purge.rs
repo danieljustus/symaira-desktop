@@ -504,28 +504,7 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
         use cap_std::fs::MetadataExt;
         format!("{}:{}", meta.dev(), meta.ino())
     }
-    #[cfg(windows)]
-    {
-        // Go's Windows FileInfo.Sys has no Dev/Ino fields, so its purge
-        // journal falls back to mode, size, and modification time.
-        let mode = match (meta.is_dir(), meta.permissions().readonly()) {
-            (true, true) => "dr-xr-xr-x",
-            (true, false) => "drwxrwxrwx",
-            (false, true) => "-r--r--r--",
-            (false, false) => "-rw-rw-rw-",
-        };
-        let modified = meta
-            .modified()
-            .map(
-                |time| match time.duration_since(cap_std::time::SystemClock::UNIX_EPOCH) {
-                    Ok(duration) => duration.as_nanos() as i128,
-                    Err(error) => -(error.duration().as_nanos() as i128),
-                },
-            )
-            .unwrap_or(0);
-        format!("{mode}:{}:{modified}", meta.len())
-    }
-    #[cfg(all(not(unix), not(windows)))]
+    #[cfg(not(unix))]
     {
         format!(
             "{}:{}:{}",
@@ -677,19 +656,6 @@ mod tests {
     use super::{DatasetPurgeService, preflight, write_journal};
 
     static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-    #[cfg(windows)]
-    #[test]
-    fn file_identity_tracks_content_rewrite_on_windows() {
-        let sandbox = Sandbox::new();
-        let path = sandbox.root.join("payload");
-        fs::write(&path, b"original").expect("write payload");
-        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
-        let before = super::identity(&root.symlink_metadata("payload").expect("before"));
-        fs::write(&path, b"replacement payload").expect("rewrite payload");
-        let after = super::identity(&root.symlink_metadata("payload").expect("after"));
-        assert_ne!(before, after);
-    }
 
     #[test]
     fn replacement_after_journal_is_never_removed_on_retry() {

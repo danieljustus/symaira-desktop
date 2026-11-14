@@ -32,8 +32,6 @@ struct Case {
     skip_index: bool,
     #[serde(default)]
     no_vault: bool,
-    #[serde(default)]
-    unix_only: bool,
     steps: Vec<Step>,
 }
 #[derive(Deserialize)]
@@ -102,9 +100,6 @@ fn docs_read_matches_go_process_contract() {
     fs::create_dir_all(&base).unwrap();
     let mut executed = 0;
     for case in &fixture.cases {
-        if cfg!(windows) && case.unix_only {
-            continue;
-        }
         let root = base.join(&case.name);
         fs::create_dir_all(&root).unwrap();
         let root = process_root::canonical_root(&root);
@@ -183,12 +178,7 @@ fn docs_read_matches_go_process_contract() {
             executed += 1;
         }
     }
-    let expected = fixture
-        .cases
-        .iter()
-        .filter(|c| !(cfg!(windows) && c.unix_only))
-        .map(|c| c.steps.len())
-        .sum::<usize>();
+    let expected = fixture.cases.iter().map(|c| c.steps.len()).sum::<usize>();
     assert_eq!(executed, expected);
     assert!(executed > 0);
     fs::remove_dir_all(base).unwrap();

@@ -1,5 +1,4 @@
 #![deny(unsafe_code)]
-#![cfg(not(windows))]
 
 use std::{
     fs,

@@ -53,9 +53,10 @@ page; the near-term roadmap is in [docs/PLAN.md](docs/PLAN.md).
 | CLI, self-hosted server and CI | Linux amd64 / arm64 |
 | Browser access | Web, within the documented implementation status above |
 
-Windows and Intel macOS are unsupported and receive no CI or release artifacts.
-Existing Windows-specific source and fixtures remain for now; their removal is
-follow-up work, not part of this support change (see [#1364](https://github.com/danieljustus/symaira-desktop/issues/1364)).
+Windows and Intel macOS are unsupported and receive no CI or release artifacts
+(see [#1364](https://github.com/danieljustus/symaira-desktop/issues/1364)).
+Windows-only source was removed in [#1366](https://github.com/danieljustus/symaira-desktop/issues/1366);
+Go-recorded fixtures with Windows observations remain frozen as historical contract evidence.
 
 ## Installation
 

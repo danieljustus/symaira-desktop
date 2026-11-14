@@ -40,8 +40,6 @@ struct Case {
     post_index_files: BTreeMap<String, String>,
     #[serde(default)]
     no_vault: bool,
-    #[serde(default)]
-    unix_only: bool,
     steps: Vec<Step>,
 }
 
@@ -111,41 +109,8 @@ fn normalize(text: &str, raw_root: &Path, canonical_root: &Path) -> String {
     slash_root_paths(&text)
 }
 
-#[cfg(not(windows))]
 fn slash_root_paths(text: &str) -> String {
     text.to_owned()
-}
-
-/// Rewrites the separators of every `$ROOT` path token to `/`; a doubled
-/// backslash inside a token is one separator (Go `slashRootPaths`).
-#[cfg(windows)]
-fn slash_root_paths(text: &str) -> String {
-    let mut out = String::new();
-    let mut rest = text;
-    while let Some(index) = rest.find("$ROOT") {
-        out.push_str(&rest[..index + "$ROOT".len()]);
-        rest = &rest[index + "$ROOT".len()..];
-        let bytes = rest.as_bytes();
-        let mut consumed = 0;
-        while consumed < bytes.len() {
-            let c = bytes[consumed];
-            if c == b'\\' || c == b'/' {
-                out.push('/');
-                consumed += 1;
-                if consumed < bytes.len() && bytes[consumed] == b'\\' {
-                    consumed += 1;
-                }
-            } else if c == b'.' || c == b'_' || c == b'-' || c.is_ascii_alphanumeric() {
-                out.push(char::from(c));
-                consumed += 1;
-            } else {
-                break;
-            }
-        }
-        rest = &rest[consumed..];
-    }
-    out.push_str(rest);
-    out
 }
 
 #[test]
@@ -174,9 +139,6 @@ fn duplicates_and_similar_match_go_process_contract() {
     let mut executed_cases = 0;
     let mut executed_steps = 0;
     for case in &fixture.cases {
-        if cfg!(windows) && case.unix_only {
-            continue;
-        }
         executed_cases += 1;
         let root = base.join(&case.name);
         fs::create_dir_all(&root).expect("make case root");
@@ -235,18 +197,9 @@ fn duplicates_and_similar_match_go_process_contract() {
             executed_steps += 1;
         }
     }
-    let expected_steps: usize = fixture
-        .cases
-        .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
-        .map(|case| case.steps.len())
-        .sum();
+    let expected_steps: usize = fixture.cases.iter().map(|case| case.steps.len()).sum();
     assert_eq!(executed_steps, expected_steps, "every fixture step ran");
-    let expected_cases = fixture
-        .cases
-        .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
-        .count();
+    let expected_cases = fixture.cases.len();
     assert_eq!(executed_cases, expected_cases, "every fixture case ran");
     fs::remove_dir_all(base).expect("remove only this test's temporary directory");
 }

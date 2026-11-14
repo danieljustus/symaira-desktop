@@ -154,14 +154,11 @@ fn every_recorded_service_rejection_replays_frozen_go_observations() {
                 sandbox.parent.to_str().expect("fixture-owned root"),
                 "<tmp>",
             );
-        // Mirror the Go gate: the missing-source OS text differs on Windows.
-        if !(cfg!(windows) && name == "missing-source-file") {
-            assert_eq!(
-                actual,
-                case["error"].as_str().expect("recorded error"),
-                "case {name}"
-            );
-        }
+        assert_eq!(
+            actual,
+            case["error"].as_str().expect("recorded error"),
+            "case {name}"
+        );
         assert_eq!(
             fs::read_dir(&sandbox.root)
                 .expect("vault remains readable")

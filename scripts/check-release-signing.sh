@@ -38,8 +38,11 @@ if grep -Eq -- "COSIGN_KEY|COSIGN_PASSWORD|--key(=|[[:space:]]|$)" "$WORKFLOW"; 
   exit 1
 fi
 require_fixed "$WORKFLOW" "cosign-release: v2.4.3" "separate signature and certificate support"
-require_fixed_count "$WORKFLOW" "- name: Select Xcode 26" 2 "Xcode 26 selected for both macOS and iOS release jobs"
-require_fixed_count "$WORKFLOW" "xcode-version: '26.0'" 2 "Xcode 26 version pinned for both Apple release jobs"
+# Both Apple signing jobs run on the image whose default Xcode 26.x builds the
+# Icon Composer app icon (macos-15 with Xcode 26.0 crashed in actool, v0.13.0)
+# and fail closed on any other Xcode major version.
+require_fixed_count "$WORKFLOW" "runs-on: macos-26" 2 "macos-26 image for both macOS and iOS release jobs"
+require_fixed_count "$WORKFLOW" "Expected Xcode 26.x, got:" 2 "Xcode 26.x check in both Apple release jobs"
 require_fixed "$WORKFLOW" 'codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"' "Developer ID signature on the DMG container"
 require_fixed "$WORKFLOW" 'xcrun stapler validate "$DMG_PATH"' "DMG stapling validation"
 require_fixed "$WORKFLOW" 'spctl --assess --type open --context context:primary-signature' "DMG Gatekeeper assessment"

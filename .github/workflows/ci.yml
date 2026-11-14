@@ -771,6 +771,11 @@ jobs:
       - name: Run Room Module Tests
         run: swift test --package-path room/client
 
+      # The signed release archive builds Release (whole-module) on this image.
+      # v0.13.0 and v0.13.1 failed only there, so main checks it before a tag (#1391).
+      - name: Build App (Release, unsigned)
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/SymDesk-macos-release-derived-data" -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
   app-ios:
     # Native iOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'

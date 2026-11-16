@@ -25,7 +25,7 @@ serde_json = { version = "=1.0.154", features = ["preserve_order"] }
 thiserror = "=2.0.20"
 time = { version = "=0.3.55", features = ["formatting", "large-dates", "local-offset", "macros", "parsing"] }
 toml = "=1.1.5"
-noyalib = "=0.0.59"
+noyalib = "=0.0.60"
 rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled"] }
 unicode-general-category = "=1.1.0"
 symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
@@ -56,7 +56,7 @@ tower = { version = "=0.5.3", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.21", default-features = false, features = ["client-legacy", "service", "tokio"] }
 hyper = { version = "=1.12.0", default-features = false, features = ["client", "http1", "server"] }
 rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
-rustls-pki-types = { version = "=1.15.1", features = ["std"] }
+rustls-pki-types = { version = "=1.16.0", features = ["std"] }
 tokio-rustls = { version = "=0.26.6", default-features = false, features = ["ring", "tls12"] }
 
 # The layered Mermaid layout is quadratic-heavy; unoptimized it is ~100x

@@ -54,6 +54,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check symaira-corekit pins match project.yml
+        run: bash scripts/check-corekit-pins.sh
+
   port-contract:
     # Go-free: fixture provenance checksums plus the frozen replay of every
     # Go-recorded fixture (make port-contract). Retained on main, weekly and

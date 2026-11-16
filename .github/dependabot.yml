@@ -5,10 +5,22 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    # Own library: report a CoreKit release at once instead of after the
+    # default 3-day cooldown; third-party crates keep the cooldown.
+    cooldown:
+      exclude:
+        - "symaira-core-*"
     groups:
+      # CoreKit crates share one Git tag; bump them together. Dependabot only
+      # bumps CoreKit pins written as `tag = "vX.Y.Z"`, never `rev = "<sha>"`.
+      symaira-corekit:
+        patterns:
+          - "symaira-core-*"
       rust-dependencies:
         patterns:
           - "*"
+        exclude-patterns:
+          - "symaira-core-*"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
@@ -22,15 +34,21 @@ updates:
           - "*"
     open-pull-requests-limit: 10
 
-  # Swift packages embedded in the app targets (the app's own exact-pinned
-  # AppKit dependency is managed through project.yml).
+  # Swift packages plus SymDesk.xcodeproj ("/": project.pbxproj and
+  # Package.resolved). Dependabot never edits project.yml, so a CoreKit bump
+  # must also update its exactVersion (scripts/check-corekit-pins.sh enforces
+  # it). ingest/client has no tracked Xcode project and stays manual.
   - package-ecosystem: "swift"
     directories:
+      - "/"
       - "/meet"
       - "/room/client"
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      exclude:
+        - "*symaira-corekit*"
     groups:
       swift-dependencies:
         patterns:

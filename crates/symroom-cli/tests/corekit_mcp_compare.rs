@@ -60,21 +60,13 @@ const KNOWN_DIVERGENT: &[&str] = &[
     "mcp-parity.json:protocol_streams/error_negative_content_length",
     "mcp-parity.json:protocol_streams/error_truncated_body",
     "mcp-parity.json:protocol_streams/error_truncated_body_after_valid_frame",
+    "mcp-parity.json:protocol_streams/fatal_read_error_cancels_inflight_wait",
     "mcp-parity.json:protocol_streams/invalid_request_waits_for_inflight_tool",
     "mcp-parity.json:protocol_streams/parse_error_waits_for_inflight_tool",
     "mcp-parity.json:protocol_streams/parse_errors_framed",
     "mcp-parity.json:protocol_streams/parse_errors_line_mode",
     "mcp-parity.json:protocol_streams/request_ids_preserved",
 ];
-
-/// Cases whose outcome depends on thread timing in CoreKit's queued
-/// dispatcher, so the tripwire neither requires nor forbids a divergence. On a
-/// fatal read error the queued `room_run_wait` call is dropped (no frame) when
-/// cancellation wins, and answered like Go when the worker started it first.
-/// Measured at v0.23.0: dropped in 20 of 20 isolated runs, answered once while
-/// the concurrency test ran in parallel.
-const TIMING_DEPENDENT: &[&str] =
-    &["mcp-parity.json:protocol_streams/fatal_read_error_cancels_inflight_wait"];
 
 #[derive(Clone, Default)]
 struct Sink(Arc<Mutex<Vec<u8>>>);
@@ -126,6 +118,21 @@ fn canned(expected: &str) -> Option<(String, bool)> {
     })
 }
 
+/// The Go `room_run_wait` handler blocks for `timeout_seconds` (or until the
+/// call is cancelled) before it answers. Replaying that delay keeps the frame
+/// order of the in-flight scenarios independent of thread scheduling; an
+/// instant stub let the tool result race the following `ping` on slow hosts.
+fn wait_like_go(token: &symaira_core_mcp::CancellationToken, arguments: &Value) {
+    let seconds = arguments["timeout_seconds"].as_f64().unwrap_or(0.0);
+    if !seconds.is_finite() || seconds <= 0.0 {
+        return;
+    }
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs_f64(seconds.min(5.0));
+    while !token.is_cancelled() && std::time::Instant::now() < deadline {
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+}
+
 fn symroom_server(answer: Option<(String, bool)>) -> Server {
     let tools: Value = serde_json::from_slice(
         &fs::read(root().join("testdata/port/mcp/symroom-tools.json")).expect("tools fixture"),
@@ -136,6 +143,7 @@ fn symroom_server(answer: Option<(String, bool)>) -> Server {
     let answer = Arc::new(answer);
     for tool in tools["tools"].as_array().expect("tools") {
         let answer = Arc::clone(&answer);
+        let waits = tool["name"] == "room_run_wait";
         server
             .register_tool(
                 Tool::new(
@@ -143,10 +151,15 @@ fn symroom_server(answer: Option<(String, bool)>) -> Server {
                     tool["description"].as_str().expect("description"),
                 )
                 .schema(tool["input_schema"].clone())
-                .handler(move |_, _| match answer.as_ref() {
-                    Some((text, true)) => Err(Box::new(ToolError::new(text.clone()))),
-                    Some((text, false)) => Ok(ToolOutput::from(text.clone())),
-                    None => Ok(ToolOutput::from("stub")),
+                .handler(move |token, arguments| {
+                    if waits {
+                        wait_like_go(&token, &arguments);
+                    }
+                    match answer.as_ref() {
+                        Some((text, true)) => Err(Box::new(ToolError::new(text.clone()))),
+                        Some((text, false)) => Ok(ToolOutput::from(text.clone())),
+                        None => Ok(ToolOutput::from("stub")),
+                    }
                 }),
             )
             .expect("register");
@@ -303,7 +316,6 @@ fn core_mcp_symroom_scenarios_vs_go() {
     let mut divergent: Vec<String> = diffs
         .iter()
         .map(|diff| diff["case"].as_str().expect("case").to_owned())
-        .filter(|case| !TIMING_DEPENDENT.contains(&case.as_str()))
         .collect();
     divergent.sort();
     assert_eq!(divergent, KNOWN_DIVERGENT, "divergence set changed");

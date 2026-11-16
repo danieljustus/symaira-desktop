@@ -12,7 +12,7 @@ evaluation unless the section "Re-evaluation at v0.23.0" says otherwise.
 
 | Site | Crate | Verdict |
 |---|---|---|
-| `symroom mcp` (`crates/symroom-cli/src/mcp.rs`) | `symaira-core-mcp` | **Not adopted.** 42 of 341 replayed Go-recorded steps differ, one more depending on thread timing, plus the 16-handler cap (at `592bebb`: 49). |
+| `symroom mcp` (`crates/symroom-cli/src/mcp.rs`) | `symaira-core-mcp` | **Not adopted.** 43 of 341 replayed Go-recorded steps differ, plus the 16-handler cap (at `592bebb`: 49). |
 | `symdesk mcp` (`crates/symdesk-cli/src/mcp.rs`, `mcp/`, `symdesk-protocol::mcp_frame`) | `symaira-core-mcp` | **Not adopted.** 26 of 334 recorded raw transcripts differ; 0 of 4 `tools/list` recordings (at `592bebb`: 62 and 4). |
 | MCP client-config discovery or installation | `symaira-core-mcpcfg` | **No use site** in the Rust tree, none in the Go tree at `36aad3d4`. |
 | Self-update | `symaira-core-update` | **No use site** in the Rust tree, none in the Go tree at `36aad3d4`. |
@@ -36,7 +36,7 @@ Same method and tripwire tests as below, run with the workspace feature set
 |---|---|---|---|
 | `mcp/protocol-process.json` | 334 | 62 | 26 |
 | `mcp/tools-process.json` | 4 | 4 | 0 |
-| `room/mcp-parity.json`, `room/mcp-mutations.json` | 341 (5 skipped) | 49 | 42, plus 1 timing dependent |
+| `room/mcp-parity.json`, `room/mcp-mutations.json` | 341 (5 skipped) | 49 | 43 |
 | 160 concurrent 300 ms waits | 1 | 3.6 s, ping answered 144th | 3.6 s, ping answered first |
 
 * **Upstream gap 2 (key order) is closed.** The crate no longer depends on
@@ -58,14 +58,16 @@ Same method and tripwire tests as below, run with the workspace feature set
   `protocol_streams` steps `eof_lets_inflight_wait_finish`,
   `initialize_ping_list_framed`, `line_mode`,
   `sync_response_not_blocked_by_inflight_tool`.
-  `fatal_read_error_cancels_inflight_wait` became timing dependent: the queued
-  wait is dropped without a frame when cancellation wins (20 of 20 isolated
-  runs) and answered with Go's `context canceled` result when the worker
-  started it first (seen once while the concurrency test ran in parallel). The
-  tripwire lists it in `TIMING_DEPENDENT` and accepts both. The remaining 42
+  The stub for `room_run_wait` now blocks for the requested `timeout_seconds`
+  (or until cancellation) like the Go handler, so the in-flight scenarios no
+  longer depend on thread scheduling; with an instant stub the tool result
+  could overtake the following `ping` on a slow host. Under that stub
+  `fatal_read_error_cancels_inflight_wait` still differs: CoreKit drops the
+  cancelled call's result, Go writes `context canceled`. The remaining 43
   are the case-insensitive keys, U+FFFD replacement, nesting limit, Go error
   text, `tools/call` type error text, transport error text and the
-  parse/invalid-request ordering behind in-flight calls described in B.
+  parse/invalid-request ordering and the fate of in-flight calls described
+  in B.
 * Gaps 1, 4 and 5 are unchanged, so the verdict stays: neither server adopts
   the crate. The tripwire tests assert the new sets.
 

@@ -18,7 +18,7 @@ use serde_json::{Value, json};
 use symaira_core_mcp::{Server, Tool, ToolError, ToolOutput};
 
 /// Fixture cases whose frames, stderr or exit status differ between CoreKit's
-/// `symaira-core-mcp` (rev 592bebb) and the Go-recorded fixture, in this
+/// `symaira-core-mcp` (tag v0.23.0) and the Go-recorded fixture, in this
 /// workspace's `serde_json` feature set (`preserve_order`, no
 /// `arbitrary_precision`). The list is a tripwire: when CoreKit closes a gap
 /// this test fails, and `docs/rust-port/corekit/mcp.md` must be re-evaluated.
@@ -38,7 +38,6 @@ const KNOWN_DIVERGENT: &[&str] = &[
     "mcp-parity.json:json_layer_streams/invalid_utf8_tool_argument_ignored",
     "mcp-parity.json:json_layer_streams/invalid_utf8_tool_name",
     "mcp-parity.json:json_layer_streams/invalid_utf8_truncated_sequence_method",
-    "mcp-parity.json:json_layer_streams/limit_overflowing_float",
     "mcp-parity.json:json_layer_streams/lone_high_surrogate_id",
     "mcp-parity.json:json_layer_streams/lone_low_surrogate_id",
     "mcp-parity.json:json_layer_streams/lone_surrogate_method",
@@ -51,28 +50,31 @@ const KNOWN_DIVERGENT: &[&str] = &[
     "mcp-parity.json:json_layer_streams/nesting_exactly_at_limit_10000",
     "mcp-parity.json:json_layer_streams/nesting_over_limit_10001",
     "mcp-parity.json:json_layer_streams/nesting_over_limit_line_mode",
-    "mcp-parity.json:json_layer_streams/timeout_seconds_overflowing_float",
     "mcp-parity.json:protocol_requests/call_meta_string",
     "mcp-parity.json:protocol_requests/call_name_null",
     "mcp-parity.json:protocol_requests/call_name_object",
     "mcp-parity.json:protocol_requests/call_name_upper_key",
     "mcp-parity.json:protocol_requests/mixed_case_keys",
     "mcp-parity.json:protocol_requests/uppercase_keys",
-    "mcp-parity.json:protocol_streams/eof_lets_inflight_wait_finish",
     "mcp-parity.json:protocol_streams/error_empty_body_eof",
     "mcp-parity.json:protocol_streams/error_negative_content_length",
     "mcp-parity.json:protocol_streams/error_truncated_body",
     "mcp-parity.json:protocol_streams/error_truncated_body_after_valid_frame",
-    "mcp-parity.json:protocol_streams/fatal_read_error_cancels_inflight_wait",
-    "mcp-parity.json:protocol_streams/initialize_ping_list_framed",
     "mcp-parity.json:protocol_streams/invalid_request_waits_for_inflight_tool",
-    "mcp-parity.json:protocol_streams/line_mode",
     "mcp-parity.json:protocol_streams/parse_error_waits_for_inflight_tool",
     "mcp-parity.json:protocol_streams/parse_errors_framed",
     "mcp-parity.json:protocol_streams/parse_errors_line_mode",
     "mcp-parity.json:protocol_streams/request_ids_preserved",
-    "mcp-parity.json:protocol_streams/sync_response_not_blocked_by_inflight_tool",
 ];
+
+/// Cases whose outcome depends on thread timing in CoreKit's queued
+/// dispatcher, so the tripwire neither requires nor forbids a divergence. On a
+/// fatal read error the queued `room_run_wait` call is dropped (no frame) when
+/// cancellation wins, and answered like Go when the worker started it first.
+/// Measured at v0.23.0: dropped in 20 of 20 isolated runs, answered once while
+/// the concurrency test ran in parallel.
+const TIMING_DEPENDENT: &[&str] =
+    &["mcp-parity.json:protocol_streams/fatal_read_error_cancels_inflight_wait"];
 
 #[derive(Clone, Default)]
 struct Sink(Arc<Mutex<Vec<u8>>>);
@@ -301,6 +303,7 @@ fn core_mcp_symroom_scenarios_vs_go() {
     let mut divergent: Vec<String> = diffs
         .iter()
         .map(|diff| diff["case"].as_str().expect("case").to_owned())
+        .filter(|case| !TIMING_DEPENDENT.contains(&case.as_str()))
         .collect();
     divergent.sort();
     assert_eq!(divergent, KNOWN_DIVERGENT, "divergence set changed");
@@ -309,7 +312,8 @@ fn core_mcp_symroom_scenarios_vs_go() {
 /// Go starts one goroutine per `tools/call`, so N concurrent waits finish in
 /// about one wait period (frozen: `six-hundred-concurrent-waits-answer-ping-first`
 /// takes 2.9 to 5 s for 600 waits of 3 s). CoreKit's crate caps concurrent
-/// handlers at 16 and blocks the reader while the cap is full.
+/// handlers at 16. Since v0.23.0 further calls wait in a bounded queue (1024)
+/// instead of blocking the reader, so the ping is answered first.
 #[test]
 fn core_mcp_concurrency_cap_vs_go_unbounded_waits() {
     const CALLS: usize = 160;
@@ -355,8 +359,8 @@ fn core_mcp_concurrency_cap_vs_go_unbounded_waits() {
     );
     assert_eq!(ids.len(), CALLS + 1, "every request is answered");
     // Go answers the ping first and finishes all waits in about one period.
-    // The capped CoreKit dispatcher needs at least CALLS / 16 periods and
-    // answers the ping only after the reader got past the cap.
+    // The capped CoreKit dispatcher still needs at least CALLS / 16 periods,
+    // but its reader keeps serving, so the ping beats the first wave of waits.
     assert!(elapsed >= wait * 8, "cap not observed: {elapsed:?}");
-    assert!(ping_position.expect("ping answered") > CALLS / 2);
+    assert!(ping_position.expect("ping answered") < 16, "reader blocked");
 }

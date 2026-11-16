@@ -1,15 +1,19 @@
 # CK-MCP: `symaira-core-mcp`, `symaira-core-mcpcfg`, `symaira-core-update`
 
-Decision record for the three CoreKit MCP-adjacent crates. Base `f24377a4`,
-CoreKit revision `592bebb54080d6b37372e47c461cfa3aeca7d2af` (the revision every
-CoreKit crate in this workspace is pinned to).
+Decision record for the three CoreKit MCP-adjacent crates. Original base
+`f24377a4`, CoreKit revision `592bebb54080d6b37372e47c461cfa3aeca7d2af`.
+Re-evaluated on 2026-11-16 at CoreKit tag `v0.23.0` (`a5b0c631`), which every
+CoreKit crate in this workspace is now pinned to (`tag = "v0.23.0"` in the root
+`Cargo.toml`, so Dependabot can bump it). The counts below are for `v0.23.0`;
+the analysis of the remaining differences is unchanged from the first
+evaluation unless the section "Re-evaluation at v0.23.0" says otherwise.
 
 ## Verdict
 
 | Site | Crate | Verdict |
 |---|---|---|
-| `symroom mcp` (`crates/symroom-cli/src/mcp.rs`) | `symaira-core-mcp` | **Not adopted.** 49 of 341 replayed Go-recorded steps differ (43 still differ with CoreKit's own `serde_json` features), plus the in-flight cap. |
-| `symdesk mcp` (`crates/symdesk-cli/src/mcp.rs`, `mcp/`, `symdesk-protocol::mcp_frame`) | `symaira-core-mcp` | **Not adopted.** 62 of 334 recorded raw transcripts and 4 of 4 `tools/list` recordings differ in this workspace; 28 still differ with CoreKit's own `serde_json` features. |
+| `symroom mcp` (`crates/symroom-cli/src/mcp.rs`) | `symaira-core-mcp` | **Not adopted.** 42 of 341 replayed Go-recorded steps differ, one more depending on thread timing, plus the 16-handler cap (at `592bebb`: 49). |
+| `symdesk mcp` (`crates/symdesk-cli/src/mcp.rs`, `mcp/`, `symdesk-protocol::mcp_frame`) | `symaira-core-mcp` | **Not adopted.** 26 of 334 recorded raw transcripts differ; 0 of 4 `tools/list` recordings (at `592bebb`: 62 and 4). |
 | MCP client-config discovery or installation | `symaira-core-mcpcfg` | **No use site** in the Rust tree, none in the Go tree at `36aad3d4`. |
 | Self-update | `symaira-core-update` | **No use site** in the Rust tree, none in the Go tree at `36aad3d4`. |
 
@@ -22,6 +26,48 @@ tests, `crates/symdesk-cli/tests/corekit_mcp_compare.rs` and
 `Server::serve_io` with the raw bytes of the frozen fixtures and asserts the
 exact set of diverging cases, so a CoreKit fix makes the test fail and forces a
 re-evaluation of this page.
+
+## Re-evaluation at v0.23.0
+
+Same method and tripwire tests as below, run with the workspace feature set
+(`serde_json` with `preserve_order`):
+
+| Fixture | Cases | Differ at `592bebb` | Differ at `v0.23.0` |
+|---|---|---|---|
+| `mcp/protocol-process.json` | 334 | 62 | 26 |
+| `mcp/tools-process.json` | 4 | 4 | 0 |
+| `room/mcp-parity.json`, `room/mcp-mutations.json` | 341 (5 skipped) | 49 | 42, plus 1 timing dependent |
+| 160 concurrent 300 ms waits | 1 | 3.6 s, ping answered 144th | 3.6 s, ping answered first |
+
+* **Upstream gap 2 (key order) is closed.** The crate no longer depends on
+  `Value` insertion order: all 4 `tools/list` recordings are byte-identical and
+  none of the 26 remaining symdesk transcripts is a cause-A (key order) case.
+  35 transcripts now match: `frame-initialize`,
+  `frame-three-notifications-then-init`, `frame-two`, `init-id-00`..`06`, `08`,
+  `09`, `16`, `17`, `19`, `20`, `init-params-00`, `02`, `03`, `07`..`13`,
+  `init-read-write`, `init-read-write-framed`, `invalid-26`, `line-five-mixed`,
+  `line-two-requests`, `method-id-00`, `method-id-17`, `method-null-id-00`,
+  `method-null-id-17`. No case started to differ. `init-id-08` (`-0`) is among
+  them, so of the raw id cases only `1e3` and `1E2` still differ.
+* **Upstream gap 3 is half closed.** The cap of 16 concurrent handlers stays
+  (`MAX_CONCURRENT_TOOL_CALLS`), but further calls wait in a bounded queue of
+  1024 instead of blocking the reader: `ping` is now answered before the first
+  wave of waits, the total time is still about CALLS / 16 periods.
+* **symroom: 6 steps now match**: `json_layer_streams/limit_overflowing_float`,
+  `json_layer_streams/timeout_seconds_overflowing_float`, and the
+  `protocol_streams` steps `eof_lets_inflight_wait_finish`,
+  `initialize_ping_list_framed`, `line_mode`,
+  `sync_response_not_blocked_by_inflight_tool`.
+  `fatal_read_error_cancels_inflight_wait` became timing dependent: the queued
+  wait is dropped without a frame when cancellation wins (20 of 20 isolated
+  runs) and answered with Go's `context canceled` result when the worker
+  started it first (seen once while the concurrency test ran in parallel). The
+  tripwire lists it in `TIMING_DEPENDENT` and accepts both. The remaining 42
+  are the case-insensitive keys, U+FFFD replacement, nesting limit, Go error
+  text, `tools/call` type error text, transport error text and the
+  parse/invalid-request ordering behind in-flight calls described in B.
+* Gaps 1, 4 and 5 are unchanged, so the verdict stays: neither server adopts
+  the crate. The tripwire tests assert the new sets.
 
 ## The question the earlier finding left open
 

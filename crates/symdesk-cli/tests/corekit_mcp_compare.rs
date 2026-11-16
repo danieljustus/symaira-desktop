@@ -20,7 +20,7 @@ use serde_json::{Value, json};
 use symaira_core_mcp::{Server, Tool, ToolAnnotations, ToolOutput};
 
 /// Fixture cases whose frames, stderr or exit status differ between CoreKit's
-/// `symaira-core-mcp` (rev 592bebb) and the Go-recorded fixture, in this
+/// `symaira-core-mcp` (tag v0.23.0) and the Go-recorded fixture, in this
 /// workspace's `serde_json` feature set (`preserve_order`, no
 /// `arbitrary_precision`). The list is a tripwire: when CoreKit closes a gap
 /// this test fails, and `docs/rust-port/corekit/mcp.md` must be re-evaluated.
@@ -34,56 +34,21 @@ const KNOWN_DIVERGENT: &[&str] = &[
     "frame-body-short",
     "frame-claim-limit-short-body",
     "frame-header-then-eof-after-blank",
-    "frame-initialize",
     "frame-invalid-utf8-body",
     "frame-invalid-utf8-header",
     "frame-length-01",
     "frame-length-13",
     "frame-length-14",
-    "frame-three-notifications-then-init",
-    "frame-two",
-    "init-id-00",
-    "init-id-01",
-    "init-id-02",
-    "init-id-03",
-    "init-id-04",
-    "init-id-05",
-    "init-id-06",
     "init-id-07",
-    "init-id-08",
-    "init-id-09",
-    "init-id-16",
-    "init-id-17",
     "init-id-18",
-    "init-id-19",
-    "init-id-20",
     "init-jsonrpc-05",
-    "init-params-00",
-    "init-params-02",
-    "init-params-03",
-    "init-params-07",
-    "init-params-08",
-    "init-params-09",
-    "init-params-10",
-    "init-params-11",
-    "init-params-12",
-    "init-params-13",
-    "init-read-write",
-    "init-read-write-framed",
     "invalid-20",
     "invalid-22",
-    "invalid-26",
     "invalid-28",
     "invalid-31",
     "invalid-32",
     "invalid-33",
-    "line-five-mixed",
     "line-nul",
-    "line-two-requests",
-    "method-id-00",
-    "method-id-17",
-    "method-null-id-00",
-    "method-null-id-17",
     "ping-id-07",
     "ping-id-18",
 ];
@@ -292,9 +257,9 @@ fn core_mcp_tools_list_vs_go() {
     }
     eprintln!("tools executed={executed} diffs={}", diffs.len());
     assert_eq!(executed, 4);
-    // Object keys come out in insertion order under `preserve_order`, Go sorts
-    // them: every recorded tools/list differs at the first nested schema.
-    assert_eq!(diffs.len(), 4);
+    // Since v0.22.0 the crate no longer depends on `preserve_order` insertion
+    // order, so every recorded tools/list matches the Go bytes.
+    assert_eq!(diffs.len(), 0, "{diffs:#?}");
     if let Ok(path) = std::env::var("CK_MCP_REPORT_TOOLS") {
         fs::write(
             path,

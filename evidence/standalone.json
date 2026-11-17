@@ -4,13 +4,13 @@
   "artifact": "evidence/artifact/symdesk",
   "artifact_sha256": "6303a3b9f490c9c4e0d18f97c071c76b07e089ad98b9e7f3dbff8565285f0048",
   "observed": {
-    "command": "env -i PATH=/usr/bin:/bin HOME=/var/folders/7v/7bpq0fjn44lflpxdylsx8qs40000gn/T/ev-home-standalone-z5ha6sd_ ./evidence/artifact/symdesk version",
+    "command": "env -i PATH=/usr/bin:/bin HOME=/var/folders/7v/7bpq0fjn44lflpxdylsx8qs40000gn/T/ev-home-standalone-umtvc2do ./evidence/artifact/symdesk version",
     "exit_code": 0,
     "stdout": "symdesk 0.13.3\n",
     "stderr": ""
   },
   "rust_build": {
-    "source_commit": "89bf5dba0de55d3871438bb78119b73a5d0c9b0f",
+    "source_commit": "016e259fe4a978a1f01a6acfb6cff9063792536c",
     "cargo_version": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
     "rustc_version": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
     "target": "aarch64-apple-darwin",
@@ -32,7 +32,7 @@
       ],
       "exit_code": 0,
       "stdout": "",
-      "stderr": "    Finished `release` profile [optimized] target(s) in 0.90s\n"
+      "stderr": "    Finished `release` profile [optimized] target(s) in 1.09s\n"
     }
   }
 }

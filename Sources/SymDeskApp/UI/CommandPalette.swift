@@ -37,11 +37,10 @@ struct CommandPalette: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 SymairaIconView(.search, size: 15)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 TextField("Search notes or create a new one…", text: $searchText)
                     .textFieldStyle(.plain)
                     .symairaText(.title)
-                    .foregroundColor(SymairaTheme.textPrimary)
                     .onSubmit {
                         performSearch()
                     }
@@ -52,15 +51,15 @@ struct CommandPalette: View {
                         searchHint = nil
                     } label: {
                         SymairaIconView(.close, size: 16)
-                            .foregroundStyle(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.plain)
                     .help("Clear search")
                     .accessibilityLabel("Clear search")
                 }
                 Text("↩")
-                    .symairaText(.caption).monospaced()
-                    .foregroundStyle(SymairaTheme.textMuted)
+                    .symairaText(.monoSmall)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -73,26 +72,25 @@ struct CommandPalette: View {
 
             Text("Filters compile to query syntax. Supported: filename:name, filetype:pdf,epub, created:YYYY-MM-DD..YYYY-MM-DD, modified:last week. Type raw queries or use the Filter button above; filters combine with AND and support -negation.")
                 .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
 
             if isSearching {
-                ProgressView()
-                    .accessibilityLabel("Searching…")
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Searching…")
                     .padding()
             }
             
             if let err = errorMessage {
-                Text(err).foregroundColor(SymairaTokens.critical).padding()
+                SymairaNotice(message: err, tone: .critical, onDismiss: { errorMessage = nil })
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
             }
 
             if let retrievalWarning {
                 Label(retrievalWarning, symairaIcon: .warning)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.warning)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.warning)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
                     .padding(.bottom, 8)
@@ -100,8 +98,7 @@ struct CommandPalette: View {
 
             if let hint = searchHint {
                 Label(hint, symairaIcon: .info)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .symairaText(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
                     .padding(.bottom, 8)
@@ -137,10 +134,8 @@ struct CommandPalette: View {
                                 VStack(alignment: .leading) {
                                     Text(res.title)
                                         .symairaText(.subheading)
-                                        .foregroundColor(SymairaTheme.textPrimary)
                                     Text(res.snippet)
-                                        .symairaText(.caption)
-                                        .foregroundColor(SymairaTheme.textSecondary)
+                                        .symairaText(.secondary)
                                 }
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -155,6 +150,7 @@ struct CommandPalette: View {
                             onSelectNote(note)
                         }) {
                             Text(note.title)
+                                .symairaText(.body)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }

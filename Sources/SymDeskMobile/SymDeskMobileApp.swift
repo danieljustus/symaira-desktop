@@ -1,17 +1,19 @@
 import SwiftUI
+import SymairaTheme
 import UIKit
 
 @main
 struct SymDeskMobileApp: App {
     @UIApplicationDelegateAdaptor(MobileAppDelegate.self) private var appDelegate
     @StateObject private var vault = MobileVaultStore()
+    @AppStorage("appearance") private var appearance: SymairaAppearance = .system
 
     var body: some Scene {
         WindowGroup {
             MobileRootView()
                 .environmentObject(vault)
-                .preferredColorScheme(.dark)
-                .tint(MobileTheme.gold)
+                .preferredColorScheme(appearance.colorScheme)
+                .tint(SymairaTokens.selected)
                 .onOpenURL { url in
                     // Spotlight deep link or manual symdesk://open/<path>.
                     vault.openDeepLink(url)

@@ -46,16 +46,15 @@ struct NotebookWorkspaceView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 SymairaIconView(.library, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Notebooks")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 Button(action: { Task { await load() } }) {
                     SymairaIconView(.refresh, size: 16)
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .foregroundStyle(SymairaTokens.ink2)
                 .disabled(isLoading)
                 .accessibilityLabel("Refresh Notebooks")
                 .help("Refresh Notebooks")
@@ -66,9 +65,7 @@ struct NotebookWorkspaceView: View {
             Divider()
 
             if let errorMessage {
-                Text(errorMessage)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                SymairaNotice(message: errorMessage, tone: .critical)
                     .padding(8)
             }
 
@@ -76,16 +73,13 @@ struct NotebookWorkspaceView: View {
                 if notebooks.isEmpty && !isLoading {
                     Text("No notebooks yet.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 ForEach(notebooks) { notebook in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(notebook.title)
                             .symairaText(.body)
-                            .foregroundColor(SymairaTheme.textPrimary)
                         Text("\(notebook.sources.count) source\(notebook.sources.count == 1 ? "" : "s")")
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     }
                     .tag(notebook.id)
                 }
@@ -97,11 +91,11 @@ struct NotebookWorkspaceView: View {
 
             HStack(spacing: 8) {
                 TextField("New notebook title…", text: $newTitle)
-                    .textFieldStyle(.plain)
+                    .textFieldStyle(.symaira)
                     .onSubmit { Task { await createNotebook() } }
                 Button(action: { Task { await createNotebook() } }) {
                     SymairaIconView(.add, size: 16)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink)
                 }
                 .buttonStyle(.plain)
                 .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
@@ -114,19 +108,11 @@ struct NotebookWorkspaceView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            SymairaIconView(.library, size: 16)
-                .font(SymairaTypography.display)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("Select or create a notebook")
-                .symairaText(.body)
-                .foregroundColor(SymairaTheme.textSecondary)
-            Text("A notebook is a bounded set of sources — questions and generated artifacts stay grounded in exactly what you add to it.")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 320)
-        }
+        SymairaEmptyState(
+            icon: .library,
+            title: "Select or Create a Notebook",
+            message: "A notebook is a bounded set of sources — questions and generated artifacts stay grounded in exactly what you add to it."
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -223,12 +209,10 @@ private struct NotebookDetailView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(detail?.title ?? notebookID)
-                    .symairaText(.title).fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.title)
                 if let description = detail?.description, !description.isEmpty {
                     Text(description)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
             }
             Spacer()
@@ -236,7 +220,7 @@ private struct NotebookDetailView: View {
                 Label("Delete", symairaIcon: .delete)
             }
             .buttonStyle(.plain)
-            .foregroundColor(SymairaTokens.critical)
+            .foregroundStyle(SymairaTokens.critical)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -248,14 +232,11 @@ private struct NotebookDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Sources")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textPrimary)
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
 
             if let errorMessage {
-                Text(errorMessage)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                SymairaNotice(message: errorMessage, tone: .critical)
                     .padding(.horizontal, 12)
             }
 
@@ -267,7 +248,6 @@ private struct NotebookDetailView: View {
                 } else {
                     Text("No sources yet — add a vault-relative path below.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -277,11 +257,11 @@ private struct NotebookDetailView: View {
 
             HStack(spacing: 6) {
                 TextField("path/to/note.md", text: $newSourcePath)
-                    .textFieldStyle(.plain)
+                    .textFieldStyle(.symaira)
                     .onSubmit { Task { await addSource() } }
                 Button(action: { Task { await addSource() } }) {
                     SymairaIconView(.add, size: 16)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink)
                 }
                 .buttonStyle(.plain)
                 .disabled(newSourcePath.trimmingCharacters(in: .whitespaces).isEmpty || isAddingSource)
@@ -296,16 +276,14 @@ private struct NotebookDetailView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(source.title?.isEmpty == false ? source.title! : source.path)
-                    .symairaText(.caption).bold()
-                    .foregroundColor(source.missing == true ? SymairaTheme.textMuted : SymairaTheme.textPrimary)
+                    .symairaText(source.missing == true ? SymairaTextRole.caption : SymairaTextRole.bodyEmphasized)
                 if source.missing == true {
                     Text("Missing")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.warning)
+                        .symairaText(.caption, respectsForeground: false)
+                        .foregroundStyle(SymairaTokens.warning)
                 } else {
                     Text(source.path)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -316,7 +294,7 @@ private struct NotebookDetailView: View {
                     SymairaIconView(.openExternal, size: 16)
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.goldSecondary)
+                .foregroundStyle(SymairaTokens.ink2)
                 .help("Open note")
                 .accessibilityLabel("Open note")
             }
@@ -324,7 +302,7 @@ private struct NotebookDetailView: View {
                 SymairaIconView(.remove, size: 16)
             }
             .buttonStyle(.plain)
-            .foregroundColor(SymairaTheme.textMuted)
+            .foregroundStyle(SymairaTokens.ink3)
             .help("Remove from notebook (the file itself is untouched)")
             .accessibilityLabel("Remove from notebook (the file itself is untouched)")
         }
@@ -336,10 +314,9 @@ private struct NotebookDetailView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 SymairaIconView(.chat, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Grounded Chat")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
             }
             .padding(.horizontal, 14)
@@ -354,19 +331,19 @@ private struct NotebookDetailView: View {
             HStack(spacing: 8) {
                 Toggle(isOn: $agentMode) {
                     Text("Agent")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
-                .toggleStyle(.switch)
+                .toggleStyle(.symairaSwitch)
                 .controlSize(.small)
 
                 TextField("Ask about this notebook…", text: $query)
                     .textFieldStyle(.plain)
+                    .symairaText(.body)
                     .onSubmit { submitQuery() }
 
                 Button(action: submitQuery) {
                     SymairaIconView(.send, size: 16)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink)
                 }
                 .buttonStyle(.plain)
                 .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)
@@ -409,10 +386,9 @@ private struct NotebookDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 SymairaIconView(.magic, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Studio")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
             }
             .padding(.horizontal, 14)
@@ -443,13 +419,11 @@ private struct NotebookDetailView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .symairaButtonStyle(.primary)
                     .disabled(isGenerating || (detail?.sources.isEmpty ?? true))
 
                     if let generateError {
-                        Text(generateError)
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTokens.critical)
+                        SymairaNotice(message: generateError, tone: .critical)
                     }
 
                     if let artifact {
@@ -458,26 +432,23 @@ private struct NotebookDetailView: View {
                             Button(action: { onOpenPath(artifact.path) }) {
                                 Label("Open in Editor", symairaIcon: .openExternal)
                             }
-                            .buttonStyle(.plain)
-                            .foregroundColor(SymairaTheme.goldSecondary)
+                            .symairaButtonStyle(.secondary)
 
                             audioOverviewSection(for: artifact)
                         }
                         if let warnings = artifact.citationWarnings, !warnings.isEmpty {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Unverified citations")
-                                    .symairaText(.caption).bold()
-                                    .foregroundColor(SymairaTokens.warning)
+                                    .symairaText(.bodyEmphasized, respectsForeground: false)
+                                    .foregroundStyle(SymairaTokens.warning)
                                 ForEach(warnings, id: \.path) { warning in
                                     Text(warning.path)
                                         .symairaText(.caption)
-                                        .foregroundColor(SymairaTheme.textMuted)
                                 }
                             }
                         }
                         Text(artifact.content)
                             .symairaText(.callout)
-                            .foregroundColor(SymairaTheme.textPrimary)
                             .textSelection(.enabled)
                     }
                 }
@@ -535,14 +506,12 @@ private struct NotebookDetailView: View {
     private func audioOverviewSection(for artifact: NotebookArtifact) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Audio Overview")
-                .symairaText(.caption).bold()
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.bodyEmphasized)
 
             if let audioPath {
                 MeetingAudioPlayerView(model: audioPlayerModel, hasSource: true)
                 Text(audioPath)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
             } else {
@@ -554,13 +523,11 @@ private struct NotebookDetailView: View {
                         Text(isGeneratingAudio ? "Narrating…" : "Generate Audio Overview")
                     }
                 }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
                 .disabled(isGeneratingAudio)
             }
             if let audioError {
-                Text(audioError)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                SymairaNotice(message: audioError, tone: .critical)
             }
         }
         .padding(.top, 4)

@@ -10,8 +10,10 @@ struct DbViewGallery: View {
 
     var body: some View {
         Group {
-            if isLoading { ProgressView().tint(SymairaTheme.goldPrimary) }
-            else if rows.isEmpty { Text("No items found.").foregroundColor(SymairaTheme.textMuted) }
+            if isLoading { SymairaLoadingState("Loading items…") }
+            else if rows.isEmpty {
+                SymairaEmptyState(icon: .library, title: "No Items Found", message: "This view has no matching documents yet.")
+            }
             else {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 16)], spacing: 16) {
@@ -19,10 +21,10 @@ struct DbViewGallery: View {
                             let row = rows[index]
                             VStack(alignment: .leading, spacing: 8) {
                                 if let cover = (row["cover"] ?? row["image"] ?? row["asset"]) as? String, !cover.isEmpty {
-                                    Text(cover).symairaText(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
+                                    Text(cover).symairaText(.caption).lineLimit(1)
                                 }
-                                Text((row["_title"] as? String) ?? "Untitled").symairaText(.subheading).foregroundColor(SymairaTheme.textPrimary)
-                                Text((row["_path"] as? String) ?? "").symairaText(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
+                                Text((row["_title"] as? String) ?? "Untitled").symairaText(.subheading)
+                                Text((row["_path"] as? String) ?? "").symairaText(.caption).lineLimit(1)
                             }
                             .padding().frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading).symairaCard(padding: 0)
                         }

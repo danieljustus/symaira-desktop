@@ -23,16 +23,14 @@ struct DuplicatesView: View {
             // Header
             HStack {
                 SymairaIconView(.copy, size: 16)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Possible Duplicates")
-                    .symairaText(.title).fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.title)
                 Spacer()
                 Button(action: { Task { await loadDuplicates() } }) {
                     Label("Refresh", symairaIcon: .refresh)
                 }
-                .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaButtonStyle(.secondary)
                 .disabled(isLoading)
             }
             .padding(.horizontal, 20)
@@ -40,45 +38,29 @@ struct DuplicatesView: View {
             .padding(.bottom, 12)
 
             Text("Documents whose content looks near-identical, detected by SimHash while indexing. Merge the content you want to keep, then trash the rest.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
 
             if let error = errorMessage {
                 HStack(spacing: 8) {
-                    SymairaIconView(.warning, size: 16)
-                        .foregroundStyle(SymairaTokens.critical)
-                    Text(error)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
-                    Spacer()
+                    SymairaNotice(message: error, tone: .critical)
                     Button("Retry") { Task { await loadDuplicates() } }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                 }
-                .padding(10)
-                .background(SymairaTokens.critical.opacity(0.12))
-                .cornerRadius(6)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
             }
 
             if isLoading && groups.isEmpty {
-                Spacer()
-                ProgressView("Scanning for duplicates…")
-                    .tint(SymairaTheme.goldPrimary)
-                    .foregroundColor(SymairaTheme.textSecondary)
-                Spacer()
+                SymairaLoadingState("Scanning for duplicates…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if visibleGroups.isEmpty {
-                Spacer()
-                ContentUnavailableView {
-                    Label("No Duplicates Found", symairaIcon: .verified)
-                } description: {
-                    Text(isLoading ? "Scanning…" : "No near-identical documents detected in this vault.")
-                }
-                .foregroundColor(SymairaTheme.textMuted)
-                Spacer()
+                SymairaEmptyState(
+                    icon: .verified,
+                    title: "No Duplicates Found",
+                    message: isLoading ? "Scanning…" : "No near-identical documents detected in this vault."
+                )
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
@@ -90,7 +72,7 @@ struct DuplicatesView: View {
                 }
             }
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
         .task { await loadDuplicates() }
         .confirmationDialog(
             "Move “\(pendingTrash?.title ?? "")” to Trash?",
@@ -125,22 +107,20 @@ struct DuplicatesView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 SymairaIconView(.copy, size: 16)
-                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text(group.title.isEmpty ? group.path : group.title)
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text("+\(group.members.count) more")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
+                    .monospacedDigit()
                 Spacer()
                 Button {
                     dismissGroup(group)
                 } label: {
                     Label("Dismiss", symairaIcon: .close)
                 }
-                .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaButtonStyle(.secondary)
                 .help("Hide this group for now")
             }
 
@@ -152,45 +132,36 @@ struct DuplicatesView: View {
                 memberRow(path: member.path, title: member.title, similarity: member.similarity, isRepresentative: false)
             }
         }
-        .padding(12)
-        .background(SymairaTheme.bgDark.opacity(0.3))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(SymairaTheme.borderGlassHover, lineWidth: 0.5)
-        )
+        .symairaCard(padding: SymairaSpacing.medium)
     }
 
     private func memberRow(path: String, title: String, similarity: Int?, isRepresentative: Bool) -> some View {
         HStack(spacing: 8) {
             SymairaIconView(isRepresentative ? .favorite : .document, size: 14)
-                .foregroundColor(isRepresentative ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
+                .foregroundStyle(isRepresentative ? SymairaTokens.ink : SymairaTokens.ink3)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title.isEmpty ? path : title)
                     .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text(path)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
             Spacer()
             if let similarity {
                 Text("\(similarity)% similar")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
+                    .monospacedDigit()
             } else {
                 Text("Reference")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .symairaText(.secondary)
             }
             Button {
                 pendingTrash = DeskCore.DuplicateGroup.Member(path: path, title: title, similarity: similarity ?? 0)
             } label: {
                 SymairaIconView(.delete, size: 14)
-                    .foregroundColor(SymairaTheme.textMuted)
+                    .foregroundStyle(SymairaTokens.ink3)
             }
             .buttonStyle(.plain)
             .help("Move to Trash after merging")

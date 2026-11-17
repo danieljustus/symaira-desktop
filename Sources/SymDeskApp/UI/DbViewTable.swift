@@ -29,30 +29,28 @@ struct DbViewTable: View {
     var body: some View {
         VStack {
             if isLoading {
-                ProgressView()
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading view…")
             } else if columns.isEmpty {
-                Text("View is empty or not found.")
-                    .foregroundColor(SymairaTheme.textMuted)
+                SymairaEmptyState(icon: .table, title: "View Is Empty", message: "This view has no columns or could not be found.")
             } else {
                 ScrollView([.horizontal, .vertical]) {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                         GridRow {
                             ForEach(columns, id: \.self) { col in
                                 Text(col.uppercased())
-                                    .symairaText(.subheading)
-                                    .bold()
-                                    .foregroundColor(SymairaTheme.goldPrimary)
+                                    .symairaText(.sectionLabel)
                             }
                         }
                         Divider()
-                            .overlay(SymairaTheme.borderGlass)
+                            .overlay(SymairaTokens.line)
                         
                         ForEach(sortedRows) { row in
                             GridRow {
                                 ForEach(columns, id: \.self) { col in
                                     if col == "_path" || col == "_title" {
                                         Text("\(row.data[col] ?? "")")
+                                            .monospacedDigit()
+                                            .symairaText(.body)
                                             .lineLimit(1)
                                             .truncationMode(.tail)
                                     } else {
@@ -69,6 +67,8 @@ struct DbViewTable: View {
                                                 .textFieldStyle(.symaira)
                                         } else {
                                             Text("\(row.data[col] ?? "")")
+                                                .monospacedDigit()
+                                                .symairaText(.body)
                                                 .lineLimit(1)
                                                 .truncationMode(.tail)
                                                 .onTapGesture(count: 2) {

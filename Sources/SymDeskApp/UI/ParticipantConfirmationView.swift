@@ -47,8 +47,8 @@ struct ParticipantConfirmationView: View {
 
             if let error = model.participantActionError {
                 Text(error)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.critical)
             }
 
             Spacer()
@@ -61,15 +61,13 @@ struct ParticipantConfirmationView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Confirm Participant")
-                .symairaText(.heading).fontWeight(.bold)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.heading)
             Text("\(participant.label.isEmpty ? "Unlabeled speaker" : participant.label) (\(participant.speakerIDs.joined(separator: ", ")))")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
             if isConfirmed {
                 Text("Currently linked to a confirmed person.")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.positive)
             }
         }
         .accessibilityElement(children: .combine)
@@ -79,20 +77,21 @@ struct ParticipantConfirmationView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Matching people in Memory")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textSecondary)
 
             switch candidatesState {
             case .loading:
-                ProgressView().controlSize(.small)
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Loading matching people…")
+                        .symairaText(.caption)
+                }
             case .failed(let message):
                 Text(message)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             case .loaded:
                 if candidates.isEmpty {
                     Text("No exact or alias matches. Create a new person below, or keep the speaker anonymous.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 } else {
                     ForEach(candidates) { candidate in
                         candidateRow(candidate)
@@ -107,10 +106,8 @@ struct ParticipantConfirmationView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(candidate.name)
                     .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Text(candidate.matchReason)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()
             Button("Confirm") {
@@ -119,21 +116,17 @@ struct ParticipantConfirmationView: View {
                     if model.participantActionError == nil { dismiss() }
                 }
             }
-            .buttonStyle(SymairaSecondaryButtonStyle())
-            .controlSize(.small)
+            .symairaButtonStyle(.secondary)
             .disabled(model.isConfirmingParticipant)
             .accessibilityLabel("Confirm \(candidate.name), matched by \(candidate.matchReason)")
         }
-        .padding(8)
-        .background(SymairaTheme.goldPrimary.opacity(0.06))
-        .cornerRadius(6)
+        .symairaCard(padding: SymairaSpacing.small)
     }
 
     private var createSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Create a new person")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textSecondary)
             HStack {
                 TextField("Full name", text: $newPersonName)
                     .textFieldStyle(.symaira)
@@ -146,8 +139,7 @@ struct ParticipantConfirmationView: View {
                         if model.participantActionError == nil { dismiss() }
                     }
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(newPersonName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.isConfirmingParticipant)
             }
         }
@@ -158,10 +150,8 @@ struct ParticipantConfirmationView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Keep anonymous")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textSecondary)
                 Text("Anonymous speakers stay fully usable in the transcript, search, and export.")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()
             Button(isConfirmed ? "Unlink" : "Keep Anonymous") {
@@ -174,8 +164,7 @@ struct ParticipantConfirmationView: View {
                     }
                 }
             }
-            .buttonStyle(SymairaSecondaryButtonStyle())
-            .controlSize(.small)
+            .symairaButtonStyle(.secondary)
             .disabled(model.isConfirmingParticipant)
             .accessibilityLabel(isConfirmed ? "Unlink this participant from the confirmed person" : "Keep this speaker anonymous")
         }

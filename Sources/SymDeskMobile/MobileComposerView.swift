@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 
 /// Fast note composer: one tap from the workspace to a cursor in an empty
 /// note, autosave to a persistent draft (survives backgrounding and
@@ -41,30 +42,33 @@ struct MobileComposerView: View {
                 VStack(spacing: 0) {
                     if editingNote == nil {
                         TextField("Title", text: $title)
-                            .font(.headline)
+                            .font(SymairaTypography.subheading)
                             .textFieldStyle(.plain)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
-                            .background(.ultraThinMaterial)
+                            .background(SymairaTokens.surface)
 
                         if !folder.isEmpty {
                             HStack(spacing: 6) {
-                                Image(systemName: "folder")
+                                SymairaIconView(.folder, size: 14)
                                 Text(folder)
                                 Button { folder = "" } label: {
-                                    Image(systemName: "xmark.circle.fill")
+                                    SymairaIconView(.close, size: 14)
+                                        .frame(minWidth: SymairaMetrics.minimumControlHeight, minHeight: SymairaMetrics.minimumControlHeight)
+                                        .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Clear folder")
                             }
-                            .font(.caption)
-                            .foregroundStyle(MobileTheme.textSecondary)
+                            .font(SymairaTypography.caption)
+                            .foregroundStyle(SymairaTokens.ink2)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 8)
                         }
                     }
 
                     TextEditor(text: $noteBody)
-                        .font(.body)
+                        .symairaText(.body)
                         .scrollContentBackground(.hidden)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -76,7 +80,8 @@ struct MobileComposerView: View {
                                 Text(editingNote == nil
                                      ? "Write your note…"
                                      : "Edit Markdown… (raw source is preserved)")
-                                    .foregroundStyle(MobileTheme.textMuted)
+                                    .font(SymairaTypography.body)
+                                    .foregroundStyle(SymairaTokens.ink3)
                                     .padding(.top, 22)
                                     .padding(.leading, 16)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -85,9 +90,7 @@ struct MobileComposerView: View {
                         }
 
                     if let errorMessage {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                        SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                     }
@@ -109,6 +112,7 @@ struct MobileComposerView: View {
                     } label: {
                         if isSaving {
                             ProgressView()
+                                .accessibilityLabel("Saving")
                         } else {
                             Text(editingNote == nil ? "Save" : "Update")
                                 .fontWeight(.semibold)
@@ -126,8 +130,12 @@ struct MobileComposerView: View {
                                 }
                             }
                         } label: {
-                            Label(folder.isEmpty ? "Folder" : folder, systemImage: "folder")
-                                .font(.caption)
+                            Label {
+                                Text(folder.isEmpty ? "Folder" : folder)
+                            } icon: {
+                                Image(symairaIcon: .folder, size: 16)
+                            }
+                            .font(SymairaTypography.label)
                         }
                     }
                 }

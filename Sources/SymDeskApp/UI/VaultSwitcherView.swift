@@ -108,18 +108,15 @@ struct VaultSwitcherView: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: SymairaSpacing.small) {
                 Image(symairaIcon: core.isRemote ? .server : .storage, size: 14)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text(activeName)
-                    .symairaText(.subheading).bold()
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.subheading)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Image(symairaIcon: .expand, size: 14)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .foregroundStyle(SymairaTokens.ink3)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
@@ -168,12 +165,7 @@ struct VaultSwitcherView: View {
         }
         .overlay(alignment: .bottomLeading) {
             if let errorMessage {
-                Text(errorMessage)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTokens.critical)
-                    .padding(6)
-                    .background(SymairaTokens.critical.opacity(0.12))
-                    .cornerRadius(6)
+                SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
             }
         }
     }
@@ -279,60 +271,45 @@ private struct CreateVaultSheet: View {
     @State private var isPicking = false
     let onCreate: (String, URL) async -> Void
 
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespaces) }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack(alignment: .top, spacing: 14) {
-                SymairaIconView(.folderAdd, size: 16)
-                    .font(SymairaTypography.display)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Create New Vault").symairaText(.title).bold()
-                    Text("A new empty vault is scaffolded with the contract layout and indexed immediately.")
-                        .foregroundStyle(SymairaTheme.textSecondary)
+        SymairaSheetScaffold(
+            title: "Create New Vault",
+            dismiss: { dismiss() },
+            primaryTitle: "Create Vault",
+            primaryDisabled: trimmedName.isEmpty || pickedURL == nil || isPicking,
+            primary: {
+                if let pickedURL {
+                    let target = pickedURL.appendingPathComponent(trimmedName, isDirectory: true)
+                    Task { await onCreate(trimmedName, target) }
                 }
             }
+        ) {
+            Text("A new empty vault is scaffolded with the contract layout and indexed immediately.")
+                .symairaText(.secondary)
 
-            VStack(alignment: .leading, spacing: 14) {
-                LabeledContent("Name") {
+            SymairaFormSection {
+                SymairaFormRow("Name") {
                     TextField("My Vault", text: $name)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 330)
+                        .textFieldStyle(.symaira)
+                        .frame(width: 280)
                 }
-                LabeledContent("Location") {
-                    HStack(spacing: 8) {
+                SymairaFormDivider()
+                SymairaFormRow("Location") {
+                    HStack(spacing: SymairaSpacing.small) {
                         Text(pickedURL?.path ?? "Choose a folder…")
-                            .symairaText(.callout)
-                            .foregroundStyle(pickedURL == nil ? SymairaTheme.textSecondary : SymairaTheme.textPrimary)
+                            .symairaText(pickedURL == nil ? .secondary : .callout)
                             .lineLimit(1)
                             .truncationMode(.middle)
-                            .frame(width: 220, alignment: .leading)
-                        Button("Choose…") { pickFolder() }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .frame(width: 180, alignment: .trailing)
+                        Button("Choose Folder…") { pickFolder() }
+                            .symairaButtonStyle(.secondary)
                     }
                 }
-            }
-            .padding(18)
-            .symairaCard(padding: 0)
-
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .buttonStyle(.bordered)
-                Button("Create") {
-                    if let pickedURL {
-                        let target = pickedURL.appendingPathComponent(name.trimmingCharacters(in: .whitespaces), isDirectory: true)
-                        Task { await onCreate(name.trimmingCharacters(in: .whitespaces), target) }
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || pickedURL == nil || isPicking)
             }
         }
-        .padding(28)
-        .frame(width: 590)
-        .background(SymairaTheme.bgDark)
+        .frame(width: 590, height: 360)
     }
 
     private func pickFolder() {

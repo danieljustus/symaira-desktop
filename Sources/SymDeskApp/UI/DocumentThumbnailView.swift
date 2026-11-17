@@ -31,7 +31,6 @@ struct DocumentThumbnailView: View {
                     ProgressView()
                         .accessibilityLabel("Loading thumbnail…")
                         .controlSize(.small)
-                        .tint(SymairaTheme.goldSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else if let text = previewText, !text.isEmpty {
                     thumbnailContent(text: text)
@@ -52,8 +51,7 @@ struct DocumentThumbnailView: View {
     private func thumbnailContent(text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(text)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary.opacity(0.85))
+                .symairaText(.secondary)
                 .lineLimit(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
@@ -62,19 +60,19 @@ struct DocumentThumbnailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(SymairaTheme.bgDarker.opacity(0.5))
+                .fill(SymairaTokens.raised)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .stroke(SymairaTheme.borderGlass.opacity(0.4), lineWidth: 1)
+                .stroke(SymairaTokens.line, lineWidth: 1)
         )
     }
 
     /// Original type-based SF Symbol icon used when thumbnails are off.
     private var iconView: some View {
-        Image(systemName: docTypeIcon)
-            .symairaText(.heading)
-            .foregroundColor(SymairaTheme.goldPrimary)
+        SymairaIconView(docTypeIcon, size: 20)
+            .foregroundStyle(SymairaTokens.ink2)
+            .accessibilityHidden(true)
     }
 
     // MARK: - Preview Loading
@@ -171,15 +169,15 @@ struct DocumentThumbnailView: View {
 
     // MARK: - Icon helper
 
-    private var docTypeIcon: String {
+    private var docTypeIcon: SymairaIcon {
         switch doc.documentType.lowercased() {
-        case "invoice": return "dollarsign.circle"
-        case "receipt": return "receipt"
-        case "contract": return "doc.plaintext"
-        case "letter": return "envelope"
-        case "tax": return "chart.bar.docpath"
-        case "insurance": return "shield"
-        default: return "doc.text"
+        case "invoice": return .invoice
+        case "receipt": return .receipt
+        case "contract": return .document
+        case "letter": return .mail
+        case "tax": return .chart
+        case "insurance": return .shield
+        default: return .note
         }
     }
 }

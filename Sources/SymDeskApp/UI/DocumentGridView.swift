@@ -54,6 +54,7 @@ struct DocumentGridView: View {
     /// #516).
     @State private var contactName: ContactNameSelection?
     @State private var tagFilteredPaths: Set<String>? = nil
+    @State private var loadError: String?
 
 
     private var selectedDocs: [DocumentItem] {
@@ -95,11 +96,13 @@ struct DocumentGridView: View {
                 .padding(.bottom, 4)
             searchField
             Divider()
+            if let loadError {
+                SymairaNotice(message: loadError, tone: .critical, onDismiss: { self.loadError = nil })
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
             if isLoading {
-                ProgressView("Loading documents…")
-                    .tint(SymairaTheme.goldPrimary)
-                    .foregroundColor(SymairaTheme.textSecondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                SymairaLoadingState("Loading documents…")
             } else if visibleDocuments.isEmpty {
                 emptyState
             } else {
@@ -167,31 +170,30 @@ struct DocumentGridView: View {
                 if let tag = appliedTagFilter {
                     HStack(spacing: 6) {
                         SymairaIconView(.tag, size: 14)
-                            .foregroundColor(SymairaTheme.goldSecondary)
+                            .foregroundStyle(SymairaTokens.ink2)
                         Text("Tag: \(tag)")
-                            .symairaText(.title).fontWeight(.semibold)
-                            .foregroundStyle(SymairaTheme.textPrimary)
+                            .symairaText(.title)
                         Button(action: { clearTagFilter() }) {
                             SymairaIconView(.close, size: 14)
-                                .foregroundColor(SymairaTheme.textMuted)
+                                .foregroundStyle(SymairaTokens.ink3)
                         }
                         .buttonStyle(.plain)
                         .help("Clear tag filter")
+                        .accessibilityLabel("Clear tag filter")
                     }
                 } else {
                     Text(statusFilter.flatMap { DocumentStatus(rawValue: $0)?.label } ?? "All Documents")
-                        .symairaText(.title).fontWeight(.semibold)
-                        .foregroundStyle(SymairaTheme.textPrimary)
+                        .symairaText(.title)
                 }
-                Text("\(visibleDocuments.count) \(visibleDocuments.count == 1 ? "document" : "documents")")
-                    .symairaText(.callout)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                Text(isLoading ? "Loading…" : "\(visibleDocuments.count) \(visibleDocuments.count == 1 ? "document" : "documents")")
+                    .monospacedDigit()
+                    .symairaText(.secondary)
             }
             Spacer()
             if !selectedPaths.isEmpty {
                 Text("\(selectedPaths.count) selected")
-                    .symairaText(.callout).fontWeight(.medium)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .monospacedDigit()
+                    .symairaText(.callout)
             }
         }
         .padding(.horizontal, 20)
@@ -202,10 +204,10 @@ struct DocumentGridView: View {
     private var searchField: some View {
         HStack(spacing: 8) {
             SymairaIconView(.search, size: 16)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.ink2)
             TextField("Search or ask…", text: $searchText)
                 .textFieldStyle(.plain)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.body)
                 .onSubmit {
                     if !searchText.isEmpty {
                         agentTarget = nil
@@ -216,7 +218,7 @@ struct DocumentGridView: View {
             if !searchText.isEmpty {
                 Button(action: { searchText = "" }) {
                     SymairaIconView(.close, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear Search")
@@ -225,21 +227,22 @@ struct DocumentGridView: View {
             if selectedPaths.count > 1 {
                 HStack(spacing: 4) {
                     Text("\(selectedPaths.count) selected")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .monospacedDigit()
+                        .symairaText(.secondary)
                     Button(action: { clearSelection() }) {
                         SymairaIconView(.close, size: 16)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.plain)
                     .help("Clear selection")
+                    .accessibilityLabel("Clear selection")
                 }
             }
             Button(action: { sortByASN.toggle() }) {
-                Label(sortByASN ? "Default order" : "Sort by ASN", systemImage: "number")
+                Label(sortByASN ? "Default order" : "Sort by ASN", symairaIcon: .number)
                     .labelStyle(.iconOnly)
                     .accessibilityLabel(sortByASN ? "Default order" : "Sort by ASN")
-                    .foregroundColor(sortByASN ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
+                    .foregroundStyle(sortByASN ? SymairaTokens.ink : SymairaTokens.ink3)
             }
             .buttonStyle(.plain)
             .help(sortByASN ? "Use default order" : "Sort by archive serial number")
@@ -254,19 +257,13 @@ struct DocumentGridView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.documentSearch, size: 30)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("No documents found")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
-            if !searchText.isEmpty {
-                Text("Try a different search term or press Enter to ask the AI")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .documentSearch,
+            title: "No Documents Found",
+            message: searchText.isEmpty
+                ? "Documents appear here once they are ingested into the vault."
+                : "Try a different search term or press Enter to ask the AI."
+        )
     }
 
     // MARK: - Grid
@@ -428,7 +425,7 @@ struct DocumentGridView: View {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Apply")
         alert.addButton(withTitle: "Cancel")
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         alert.accessoryView = field
@@ -458,7 +455,7 @@ struct DocumentGridView: View {
         Divider()
         if !doc.correspondent.isEmpty {
             Button(action: { contactName = ContactNameSelection(name: doc.correspondent) }) {
-                Label("Contact References…", systemImage: "person.crop.circle.badge.questionmark")
+                Label { Text("Contact References…") } icon: { Image(symairaIcon: .userUnknown, size: 16) }
             }
         }
         Button(action: { findSimilar(doc: doc) }) {
@@ -522,7 +519,6 @@ struct DocumentGridView: View {
             Divider()
             Text("Edit via properties in the inspector")
                 .symairaText(.caption)
-                .foregroundColor(.secondary)
         }
     }
 
@@ -534,6 +530,7 @@ struct DocumentGridView: View {
         defer { if showProgress { isLoading = false } }
         do {
             self.documents = try await core.docsList()
+            loadError = nil
             applyFilters()
             selectedPaths.formIntersection(Set(documents.map(\.path)))
             if let path = deepLinkPath, !path.isEmpty,
@@ -542,6 +539,7 @@ struct DocumentGridView: View {
             }
         } catch {
             print("docsList failed: \(error)")
+            loadError = "Could not load documents: \(error.localizedDescription). Check the vault connection and reload."
         }
     }
 
@@ -797,11 +795,10 @@ struct DocumentGridView: View {
             HStack {
                 Text("Agent Action")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.goldPrimary)
                 Spacer()
                 Button(action: { showAgentSheet = false }) {
                     SymairaIconView(.close, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close")
@@ -810,8 +807,7 @@ struct DocumentGridView: View {
 
             if let target = agentTarget {
                 Text("Document: \(target.title)")
-                    .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
 
             TextField("Ask about this document…", text: $agentQuery)
@@ -820,8 +816,8 @@ struct DocumentGridView: View {
 
             ScrollView {
                 Text(agentResult.isEmpty ? "Press Enter to run…" : agentResult)
-                    .symairaText(.mono)
-                    .foregroundColor(agentResult.isEmpty ? SymairaTheme.textMuted : SymairaTheme.textPrimary)
+                    .symairaText(.mono, respectsForeground: false)
+                    .foregroundStyle(agentResult.isEmpty ? SymairaTokens.ink3 : SymairaTokens.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
@@ -834,16 +830,15 @@ struct DocumentGridView: View {
                     ProgressView()
                         .accessibilityLabel("Loading documents…")
                         .controlSize(.small)
-                        .tint(SymairaTheme.goldPrimary)
                 }
-                Button("Run") { executeAgent() }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
+                Button("Run Action") { executeAgent() }
+                    .symairaButtonStyle(.primary)
                     .disabled(agentQuery.trimmingCharacters(in: .whitespaces).isEmpty || isAgentRunning)
             }
         }
         .padding(20)
         .frame(width: 500, height: 400)
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
     }
 
     private func executeAgent() {
@@ -889,18 +884,16 @@ struct DocumentCard: View {
             }
 
             Text(doc.title)
-                .symairaText(.body).fontWeight(.semibold)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.bodyEmphasized)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if let folder = Self.containingFolder(forPath: doc.path) {
                 HStack(spacing: 4) {
                     SymairaIconView(.folder, size: 14)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                     Text(folder)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -909,21 +902,20 @@ struct DocumentCard: View {
             if !doc.documentDate.isEmpty {
                 HStack(spacing: 4) {
                     SymairaIconView(.calendar, size: 14)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text(doc.documentDate)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .monospacedDigit()
+                        .symairaText(.secondary)
                 }
             }
 
             if doc.asn > 0 {
                 HStack(spacing: 4) {
-                    Image(systemName: "number")
-                        .symairaText(.caption)
+                    SymairaIconView(.number, size: 14)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text("ASN \(doc.asn)")
-                        .symairaText(.caption).monospacedDigit()
+                        .monospacedDigit().symairaText(.secondary)
                 }
-                .foregroundColor(SymairaTheme.goldSecondary)
             }
 
             HStack(spacing: 8) {
@@ -931,23 +923,22 @@ struct DocumentCard: View {
                     HStack(spacing: 2) {
                         SymairaIconView(.user, size: 14)
                         Text(doc.person)
-                            .symairaText(.caption)
+                            .symairaText(.secondary)
                     }
                 }
                 if !doc.documentType.isEmpty {
                     HStack(spacing: 2) {
                         SymairaIconView(.document, size: 14)
                         Text(doc.documentType)
-                            .symairaText(.caption)
+                            .symairaText(.secondary)
                     }
                 }
             }
-            .foregroundColor(SymairaTheme.textSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
 
             if !doc.correspondent.isEmpty {
                 Text(doc.correspondent)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                     .lineLimit(1)
             }
 
@@ -958,11 +949,10 @@ struct DocumentCard: View {
                             onTagClick?(tag)
                         } label: {
                             Text(tag)
-                                .symairaText(.caption)
+                                .symairaText(.callout)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
-                                .background(SymairaTheme.goldPrimary.opacity(0.14))
-                                .foregroundColor(SymairaTheme.textPrimary)
+                                .background(SymairaTokens.raised)
                                 .cornerRadius(3)
                         }
                         .buttonStyle(.plain)
@@ -970,8 +960,8 @@ struct DocumentCard: View {
                     }
                     if doc.tags.count > 4 {
                         Text("+\(doc.tags.count - 4)")
+                            .monospacedDigit()
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     }
                 }
             }
@@ -982,11 +972,12 @@ struct DocumentCard: View {
 
             if !doc.dueDate.isEmpty {
                 HStack(spacing: 4) {
-                    SymairaIconView(.time, size: 14)
-                        .foregroundColor(doc.dueDate < todayString ? .red : SymairaTheme.textSecondary)
-                    Text("Due \(doc.dueDate)")
-                        .symairaText(.caption)
-                        .foregroundColor(doc.dueDate < todayString ? .red : SymairaTheme.textSecondary)
+                    SymairaIconView(doc.dueDate < todayString ? .warning : .time, size: 14)
+                        .foregroundStyle(doc.dueDate < todayString ? SymairaTokens.critical : SymairaTokens.ink2)
+                    Text(doc.dueDate < todayString ? "Overdue · due \(doc.dueDate)" : "Due \(doc.dueDate)")
+                        .monospacedDigit()
+                        .symairaText(.secondary, respectsForeground: false)
+                        .foregroundStyle(doc.dueDate < todayString ? SymairaTokens.critical : SymairaTokens.ink2)
                 }
             }
         }
@@ -994,17 +985,17 @@ struct DocumentCard: View {
         .symDeskLiquidGlass(cornerRadius: 14)
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(isSelected ? SymairaTheme.goldPrimary.opacity(0.82) : .clear, lineWidth: 1.5)
+                .stroke(isSelected ? SymairaTokens.focus : Color.clear, lineWidth: 1.5)
         }
     }
 
     private var statusBadge: some View {
         Text(statusLabel)
-            .symairaText(.caption).fontWeight(.medium)
+            .symairaText(.caption, respectsForeground: false)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(statusColor.opacity(0.15))
-            .foregroundColor(statusColor)
+            .foregroundStyle(statusColor)
             .cornerRadius(4)
     }
 
@@ -1012,7 +1003,8 @@ struct DocumentCard: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(SymairaTokens.ink.opacity(0.08))
+                    .fill(SymairaBarColors.track)
+                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(SymairaBarColors.trackOutline, lineWidth: 1))
                     .frame(height: 4)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(confidenceColor)
@@ -1022,8 +1014,8 @@ struct DocumentCard: View {
         .frame(height: 4)
         .overlay(
             Text("\(doc.confidence)%")
+                .monospacedDigit()
                 .symairaText(.monoSmall)
-                .foregroundColor(SymairaTheme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         )
     }
@@ -1037,9 +1029,9 @@ struct DocumentCard: View {
     }
 
     private var confidenceColor: Color {
-        if doc.confidence >= 80 { return .green }
-        if doc.confidence >= 50 { return .orange }
-        return .red
+        if doc.confidence >= 80 { return SymairaTokens.positive }
+        if doc.confidence >= 50 { return SymairaTokens.warning }
+        return SymairaTokens.critical
     }
 
     /// Vault-relative containing folder for `path` (e.g. `"Invoices/2024"`

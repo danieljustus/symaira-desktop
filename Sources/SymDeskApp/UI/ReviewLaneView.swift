@@ -22,9 +22,7 @@ struct ReviewLaneView: View {
                 Divider()
 
                 if isLoading && reviewDocs.isEmpty {
-                    ProgressView("Finding documents for review…")
-                        .tint(SymairaTheme.goldPrimary)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                    SymairaLoadingState("Finding documents for review…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if reviewDocs.isEmpty {
                     emptyState
@@ -53,11 +51,8 @@ struct ReviewLaneView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Review Lane")
                     .symairaText(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Text("Approve low-confidence or metadata-missing files")
-                    .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer()
             Button(action: {
@@ -65,7 +60,7 @@ struct ReviewLaneView: View {
             }) {
                 SymairaIconView(.refresh, size: 16)
             }
-            .buttonStyle(SymairaSecondaryButtonStyle())
+            .symairaButtonStyle(.secondary)
             .accessibilityLabel("Refresh")
             .help("Refresh")
         }
@@ -74,18 +69,11 @@ struct ReviewLaneView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.shieldCheck, size: 30)
-                .foregroundColor(SymairaTheme.goldPrimary)
-            Text("All caught up!")
-                .symairaText(.heading)
-                .fontWeight(.medium)
-                .foregroundColor(SymairaTheme.textPrimary)
-            Text("No documents require manual metadata review.")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .shieldCheck,
+            title: "Nothing to Review",
+            message: "No documents require manual metadata review."
+        )
     }
 
     private var docsList: some View {
@@ -98,7 +86,6 @@ struct ReviewLaneView: View {
                         HStack {
                             Text(doc.title)
                                 .symairaText(.subheading)
-                                .foregroundColor(SymairaTheme.textPrimary)
                                 .lineLimit(1)
                             Spacer()
                             confidenceBadge(doc.confidence)
@@ -106,16 +93,14 @@ struct ReviewLaneView: View {
 
                         Text(doc.path)
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                             .lineLimit(1)
 
                         ForEach(doc.reasons, id: \.self) { reason in
                             HStack(spacing: 4) {
                                 SymairaIconView(.warning, size: 14)
-                                    .foregroundColor(SymairaTheme.goldSecondary)
+                                    .foregroundStyle(SymairaTokens.warning)
                                 Text(reason)
-                                    .symairaText(.caption)
-                                    .foregroundColor(SymairaTheme.textSecondary)
+                                    .symairaText(.secondary)
                             }
                         }
                     }
@@ -127,31 +112,28 @@ struct ReviewLaneView: View {
                     Task { await ignoreDoc(doc) }
                 }) {
                     SymairaIconView(.hidden, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
                 .buttonStyle(.plain)
                 .help("Not a document — ignore, and don't show again")
                 .padding(.top, 8)
                 .accessibilityLabel("Not a document — ignore, and don't show again")
             }
-            .background(selectedDoc?.id == doc.id ? SymairaTheme.goldPrimary.opacity(0.12) : Color.clear)
+            .background(selectedDoc?.id == doc.id ? SymairaTokens.selection : Color.clear)
             .cornerRadius(8)
             Divider()
-                .overlay(SymairaTheme.borderGlass)
+                .overlay(SymairaTokens.line)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
     }
 
     private var noSelectionState: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.documentSearch, size: 30)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("Select a document to review")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .documentSearch,
+            title: "No Document Selected",
+            message: "Select a document from the list to review its metadata."
+        )
     }
 
     private func editInspector(for doc: ReviewDoc) -> some View {
@@ -159,34 +141,26 @@ struct ReviewLaneView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Document Metadata Review")
                     .symairaText(.heading)
-                    .fontWeight(.bold)
-                    .foregroundColor(SymairaTheme.goldPrimary)
 
                 Text(doc.title)
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
 
                 Text(doc.path)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
 
                 Divider()
-                    .overlay(SymairaTheme.borderGlass)
+                    .overlay(SymairaTokens.line)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Document Type")
-                        .symairaText(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                     TextField("Invoice, Contract, Tax, Insurance, etc.", text: $documentType)
                         .textFieldStyle(.symaira)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Status")
-                        .symairaText(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                     Picker("Status", selection: $docStatus) {
                         ForEach(DocumentStatus.allCases) { status in
                             Text(status.label).tag(status.rawValue)
@@ -198,28 +172,25 @@ struct ReviewLaneView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Due Date")
-                        .symairaText(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                     TextField("YYYY-MM-DD", text: $dueDateString)
                         .textFieldStyle(.symaira)
                 }
 
                 Divider()
-                    .overlay(SymairaTheme.borderGlass)
+                    .overlay(SymairaTokens.line)
 
                 HStack {
                     if isSaving {
                         ProgressView()
                             .accessibilityLabel("Loading review items…")
                             .controlSize(.small)
-                            .tint(SymairaTheme.goldPrimary)
                     }
                     Spacer()
                     Button("Approve & Resolve") {
                         Task { await saveChanges(for: doc) }
                     }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
+                    .symairaButtonStyle(.primary)
                     .disabled(isSaving)
                 }
             }
@@ -228,15 +199,9 @@ struct ReviewLaneView: View {
     }
 
     private func confidenceBadge(_ confidence: Int) -> some View {
-        let color: Color = confidence >= 80 ? SymairaTheme.goldPrimary : (confidence >= 50 ? .orange : .red)
-        return Text("\(confidence)%")
-            .symairaText(.monoSmall)
-            .fontWeight(.bold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(4)
+        let tone: SymairaTone = confidence >= 80 ? .positive : (confidence >= 50 ? .warning : .critical)
+        return SymairaBadge("\(confidence)%", tone: tone)
+            .accessibilityLabel("Confidence \(confidence) percent")
     }
 
     private func fetchReviewDocs() async {

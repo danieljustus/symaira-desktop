@@ -194,7 +194,7 @@ struct DocumentViewerView: View {
                     .symDeskLiquidGlass(cornerRadius: 0)
             }
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
         .navigationTitle(document.title)
         .safeAreaInset(edge: .top, spacing: 0) {
             viewerHeader
@@ -221,37 +221,39 @@ struct DocumentViewerView: View {
 
     private var viewerHeader: some View {
         HStack(spacing: 10) {
-            Image(systemName: docTypeIcon)
-                .foregroundStyle(SymairaTheme.goldPrimary)
-                .symairaText(.heading)
+            SymairaIconView(docTypeIcon, size: 20)
+                .foregroundStyle(SymairaTokens.ink2)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(document.title)
                     .symairaText(.subheading)
-                    .foregroundStyle(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text(viewerSubtitle)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer(minLength: 16)
 
             Button(action: { isPDFMode.toggle() }) {
                 Label(isPDFMode ? "Text" : "Preview", symairaIcon: isPDFMode ? .document : .document)
             }
+            .symairaButtonStyle(.toolbar)
             .help("Toggle PDF/Text view (Space)")
 
             if !searchHits.isEmpty {
                 viewerDivider
-                Button(action: goToPreviousHit) { Image(systemName: "arrow.up.to.line") }
+                Button(action: goToPreviousHit) { SymairaIconView(.previousMatch, size: 16) }
+                    .symairaButtonStyle(.toolbar)
                     .disabled(currentHitIndex == nil || currentHitIndex == 0)
                     .help("Previous search hit")
-                Button(action: goToNextHit) { Image(systemName: "arrow.down.to.line") }
+                    .accessibilityLabel("Previous search hit")
+                Button(action: goToNextHit) { SymairaIconView(.nextMatch, size: 16) }
+                    .symairaButtonStyle(.toolbar)
                     .disabled(currentHitIndex == nil || currentHitIndex == searchHits.count - 1)
                     .help("Next search hit")
+                    .accessibilityLabel("Next search hit")
                 if let currentHitIndex {
                     Text("Hit \(currentHitIndex + 1) / \(searchHits.count)")
-                        .symairaText(.caption).monospacedDigit()
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .monospacedDigit().symairaText(.secondary)
                 }
             }
 
@@ -260,27 +262,33 @@ struct DocumentViewerView: View {
                 Button(action: { goToPreviousPage() }) {
                     SymairaIconView(.back, size: 16)
                 }
+                .symairaButtonStyle(.toolbar)
                 .disabled(currentPageIndex <= 0)
                 .help("Previous page")
+                .accessibilityLabel("Previous page")
                 Text("\(currentPageIndex + 1) / \(pageCount)")
-                    .symairaText(.caption).monospacedDigit()
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .monospacedDigit().symairaText(.secondary)
                 Button(action: { goToNextPage() }) {
                     SymairaIconView(.forward, size: 16)
                 }
+                .symairaButtonStyle(.toolbar)
                 .disabled(currentPageIndex >= pageCount - 1)
                 .help("Next page")
+                .accessibilityLabel("Next page")
             }
 
             if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf" {
                 viewerDivider
                 Button(action: { zoomOut() }) { SymairaIconView(.zoomOut, size: 16) }
+                    .symairaButtonStyle(.toolbar)
                     .help("Zoom out")
                     .accessibilityLabel("Zoom out")
                 Button(action: { zoomFit() }) { SymairaIconView(.fullscreen, size: 16) }
+                    .symairaButtonStyle(.toolbar)
                     .help("Zoom to fit")
                     .accessibilityLabel("Zoom to fit")
                 Button(action: { zoomIn() }) { SymairaIconView(.zoomIn, size: 16) }
+                    .symairaButtonStyle(.toolbar)
                     .help("Zoom in")
                     .accessibilityLabel("Zoom in")
             }
@@ -289,6 +297,7 @@ struct DocumentViewerView: View {
             Button(action: { showInspector.toggle() }) {
                 Label("Inspector", symairaIcon: .sidebar)
             }
+            .symairaButtonStyle(.toolbar)
             .help("Toggle inspector (Cmd+I)")
 
             if document.path.lowercased().hasSuffix(".md") {
@@ -298,6 +307,7 @@ struct DocumentViewerView: View {
                 }) {
                     Label("Open in Editor", symairaIcon: .edit)
                 }
+                .symairaButtonStyle(.toolbar)
                 .help("Edit this note in the vault editor")
             }
 
@@ -312,6 +322,7 @@ struct DocumentViewerView: View {
                         Label("Re-run OCR", symairaIcon: .scan)
                     }
                 }
+                .symairaButtonStyle(.toolbar)
                 .disabled(isReOCRRunning)
                 .help("Re-run OCR on the archived original")
             }
@@ -319,7 +330,7 @@ struct DocumentViewerView: View {
             Button(action: { dismiss() }) {
                 SymairaIconView(.close, size: 16)
             }
-            .buttonStyle(.bordered)
+            .symairaButtonStyle(.toolbar)
             .help("Close document")
             .accessibilityLabel("Close document")
         }
@@ -331,7 +342,7 @@ struct DocumentViewerView: View {
 
     private var viewerDivider: some View {
         Rectangle()
-            .fill(SymairaTheme.borderGlassHover)
+            .fill(SymairaTokens.line)
             .frame(width: 1, height: 20)
     }
 
@@ -339,10 +350,7 @@ struct DocumentViewerView: View {
     private var mainContent: some View {
         VStack(spacing: 0) {
             if isLoadingDocument {
-                ProgressView("Loading preview…")
-                    .tint(SymairaTheme.goldPrimary)
-                    .foregroundStyle(SymairaTheme.textSecondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                SymairaLoadingState("Loading preview…")
             } else if isPDFMode {
                 if let url = fileURL, url.pathExtension.lowercased() == "pdf" {
                     PDFKitView(
@@ -356,13 +364,9 @@ struct DocumentViewerView: View {
                 } else if !noteContent.isEmpty {
                     VStack(spacing: 0) {
                         if let loadMessage {
-                            Label(loadMessage, symairaIcon: .warning)
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.goldSecondary)
+                            SymairaNotice(message: loadMessage, tone: .warning)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(SymairaTheme.goldPrimary.opacity(0.08))
                         }
                         MarkdownPreviewView(
                             text: noteContent,
@@ -387,19 +391,11 @@ struct DocumentViewerView: View {
     }
 
     private var noContentView: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.documentSearch, size: 30)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("No preview available")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
-            Text(loadMessage ?? "The original file and its Markdown note could not be read.")
-                .symairaText(.callout)
-                .foregroundStyle(SymairaTheme.textMuted)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .documentSearch,
+            title: "No Preview Available",
+            message: loadMessage ?? "The original file and its Markdown note could not be read."
+        )
     }
 
     // MARK: - Inspector
@@ -439,7 +435,7 @@ struct DocumentViewerView: View {
                         .controlSize(.small)
                 }
                 Button("Save Changes") { saveChanges() }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
+                    .symairaButtonStyle(.primary)
                     .disabled(isSaving || !hasChanges)
                     .keyboardShortcut("s", modifiers: .command)
             }
@@ -459,7 +455,6 @@ struct DocumentViewerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Tags")
                     .symairaText(.caption)
-                    .foregroundColor(.secondary)
                 TextField("Tags (comma-separated)", text: $editTags)
                     .textFieldStyle(.symaira)
             }
@@ -467,7 +462,6 @@ struct DocumentViewerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Note")
                     .symairaText(.caption)
-                    .foregroundColor(.secondary)
                 Toggle("Visible in note", isOn: $editNoteVisible)
                     .toggleStyle(.checkbox)
             }
@@ -476,12 +470,10 @@ struct DocumentViewerView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Classification Confidence")
                         .symairaText(.caption)
-                        .foregroundColor(.secondary)
                     HStack {
                         confidenceBar
                         Text("\(document.confidence)%")
-                            .symairaText(.caption).monospacedDigit()
-                            .foregroundColor(.secondary)
+                            .monospacedDigit().symairaText(.caption)
                     }
                 }
             }
@@ -493,7 +485,6 @@ struct DocumentViewerView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Status")
                     .symairaText(.caption)
-                    .foregroundColor(.secondary)
                 FlowLayout(spacing: 6) {
                     ForEach(DocumentStatus.allCases) { status in
                         statusChip(status: status)
@@ -504,7 +495,6 @@ struct DocumentViewerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Due Date")
                     .symairaText(.caption)
-                    .foregroundColor(.secondary)
                 TextField("YYYY-MM-DD", text: $editDueDate)
                     .textFieldStyle(.symaira)
             }
@@ -520,12 +510,12 @@ struct DocumentViewerView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(editStatus == status.rawValue ? statusColor(for: status).opacity(0.2) : Color.white.opacity(0.05))
-            .foregroundColor(editStatus == status.rawValue ? statusColor(for: status) : SymairaTheme.textSecondary)
+            .background(editStatus == status.rawValue ? statusColor(for: status).opacity(0.2) : SymairaTokens.raised)
+            .foregroundStyle(editStatus == status.rawValue ? statusColor(for: status) : SymairaTokens.ink2)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(editStatus == status.rawValue ? statusColor(for: status) : Color.clear, lineWidth: 1)
+                    .stroke(editStatus == status.rawValue ? statusColor(for: status) : SymairaTokens.line, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -552,7 +542,6 @@ struct DocumentViewerView: View {
                 Divider()
                 Text("Properties")
                     .symairaText(.caption)
-                    .foregroundColor(.secondary)
                 ForEach(props.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
                     inspectorRow(label: key, value: value, isMonospaced: true)
                 }
@@ -562,10 +551,9 @@ struct DocumentViewerView: View {
                 Divider()
                 HStack(alignment: .top, spacing: 4) {
                     SymairaIconView(.scan, size: 16)
-                        .foregroundColor(SymairaTheme.goldSecondary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text(status)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                         .lineLimit(nil)
                 }
             }
@@ -578,14 +566,12 @@ struct DocumentViewerView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .symairaText(.caption)
-                .foregroundColor(.secondary)
             if value.isEmpty {
                 Text("—")
-                    .symairaText(isMonospaced ? .monoSmall : .body).monospacedDigit()
-                    .foregroundColor(.secondary)
+                    .monospacedDigit().symairaText(isMonospaced ? .monoSmall : .secondary)
             } else {
                 Text(value)
-                    .symairaText(isMonospaced ? .monoSmall : .body).monospacedDigit()
+                    .monospacedDigit().symairaText(isMonospaced ? .monoSmall : .body)
                     .textSelection(.enabled)
             }
         }
@@ -595,7 +581,6 @@ struct DocumentViewerView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .symairaText(.caption)
-                .foregroundColor(.secondary)
             TextField(placeholder, text: text)
                 .textFieldStyle(.symaira)
                 .symairaText(monospaced ? .mono : .body)
@@ -606,7 +591,8 @@ struct DocumentViewerView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(SymairaTokens.ink.opacity(0.08))
+                    .fill(SymairaBarColors.track)
+                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(SymairaBarColors.trackOutline, lineWidth: 1))
                     .frame(height: 6)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(confidenceColor)
@@ -617,20 +603,20 @@ struct DocumentViewerView: View {
     }
 
     private var confidenceColor: Color {
-        if document.confidence >= 80 { return SymairaTheme.goldPrimary }
-        if document.confidence >= 50 { return .orange }
-        return .red
+        if document.confidence >= 80 { return SymairaTokens.positive }
+        if document.confidence >= 50 { return SymairaTokens.warning }
+        return SymairaTokens.critical
     }
 
-    private var docTypeIcon: String {
+    private var docTypeIcon: SymairaIcon {
         switch document.documentType.lowercased() {
-        case "invoice": return "dollarsign.circle"
-        case "receipt": return "receipt"
-        case "contract": return "doc.plaintext"
-        case "letter": return "envelope"
-        case "tax": return "chart.bar.docpath"
-        case "insurance": return "shield"
-        default: return "doc.text"
+        case "invoice": return .invoice
+        case "receipt": return .receipt
+        case "contract": return .document
+        case "letter": return .mail
+        case "tax": return .chart
+        case "insurance": return .shield
+        default: return .note
         }
     }
 

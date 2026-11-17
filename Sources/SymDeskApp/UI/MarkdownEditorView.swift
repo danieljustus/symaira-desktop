@@ -227,7 +227,7 @@ struct MarkdownEditorView: NSViewRepresentable {
                         result += chunk
                     }
                 } catch {
-                    result = "\n⚠️ AI-Aktion fehlgeschlagen: \(error.localizedDescription)\n"
+                    result = "\n⚠️ AI action failed: \(error.localizedDescription)\n"
                 }
                 guard !result.isEmpty else { return }
                 let insertion = replace ? result : "\n" + result

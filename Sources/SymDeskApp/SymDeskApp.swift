@@ -13,6 +13,8 @@ struct SymDeskApp: App {
     @State private var vaultConfigured = VaultConfig.hasConfiguredVault
         && VaultConfig.missingLocalVaultPath == nil
     @State private var showDemoBanner = VaultConfig.isDemoMode
+    @AppStorage(DeskPreferenceKey.appearance) private var appearance: SymairaAppearance = .system
+    @FocusedValue(\.deskDestination) private var destination
 
     var body: some Scene {
         WindowGroup {
@@ -31,9 +33,8 @@ struct SymDeskApp: App {
             .environmentObject(core)
             .environmentObject(watcher)
             .environmentObject(notificationManager)
-            .preferredColorScheme(.dark)
-            .tint(SymairaTheme.goldPrimary)
-            .background(SymairaTheme.bgDark)
+            .onAppear { appearance.apply() }
+            .onChange(of: appearance) { _, value in value.apply() }
             .task {
                 await core.initialize()
                 // Skipped when the configured folder is gone: loading it would
@@ -79,7 +80,13 @@ struct SymDeskApp: App {
                 showDemoBanner = false
             }
         }
+        .symairaWorkspaceWindow()
+        .defaultSize(width: 1280, height: 820)
         .commands {
+            // Navigate menu: ⌘1 to ⌘7 for the sidebar destinations (SHELL-9).
+            if let destination {
+                SymairaCommands(destinations: DeskDestination.commandEntries, selection: destination)
+            }
             // No custom app-settings entry: the `Settings` scene below already
             // contributes the standard "Settings…" item on Cmd+,. Declaring
             // both put two settings entries in the app menu (issue #446). The
@@ -120,10 +127,6 @@ struct SymDeskApp: App {
                     NotificationCenter.default.post(name: .openCommandPalette, object: nil)
                 }
                 .keyboardShortcut("k", modifiers: .command)
-                Divider()
-                Button("Dashboard") {
-                    NotificationCenter.default.post(name: .openDashboard, object: nil)
-                }
             }
             // View-menu commands for the editor surfaces so preview,
             // inspector and AI dock stay reachable when the toolbar is
@@ -146,37 +149,36 @@ struct SymDeskApp: App {
             }
         }
 
-        Settings {
-            RulesSettingsView()
+        SymairaSettingsScene {
+            DeskSettingsView()
                 .environmentObject(core)
                 .environmentObject(watcher)
-                .frame(minWidth: 520, minHeight: 400)
+                .onAppear { appearance.apply() }
         }
     }
 }
 
+/// Demo-mode notice with the way out (STATE-5 style inline notice instead
+/// of a champagne bar, NN-3).
 private struct DemoBanner: View {
     @EnvironmentObject var core: DeskCore
 
     var body: some View {
-        HStack {
-            SymairaIconView(.magic, size: 16)
-                .foregroundColor(SymairaTokens.onPrimary)
-            Text("Demo Mode")
-                .symairaText(.caption).bold()
-                .foregroundColor(SymairaTokens.onPrimary)
-            Spacer()
+        HStack(spacing: SymairaSpacing.medium) {
+            SymairaStatusLabel("Demo Mode", tone: .informative)
+            Spacer(minLength: SymairaSpacing.small)
             Button("Leave Demo Mode") {
                 VaultConfig.reset()
                 core.vaultPath = nil
                 NotificationCenter.default.post(name: .vaultReset, object: nil)
             }
-            .buttonStyle(.plain)
-            .symairaText(.caption).fontWeight(.semibold)
-            .foregroundColor(SymairaTokens.onPrimary.opacity(0.75))
+            .symairaButtonStyle(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(SymairaTokens.primary)
+        .padding(.horizontal, SymairaSpacing.medium)
+        .padding(.vertical, SymairaSpacing.small)
+        .symairaCard(padding: 0)
+        .padding(.horizontal, SymairaSpacing.xLarge)
+        .padding(.top, SymairaSpacing.small)
+        .frame(maxWidth: 720)
     }
 }

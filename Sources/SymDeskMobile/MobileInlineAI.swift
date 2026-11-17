@@ -29,14 +29,6 @@ enum MobileInlineAIIntent: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    var systemImage: String {
-        switch self {
-        case .summarize: return "text.quote"
-        case .rewrite: return "arrow.triangle.2.circlepath"
-        case .continue: return "text.append"
-        }
-    }
-
     /// Instruction for the on-device provider (small model, concise).
     var onDeviceInstruction: String {
         switch self {

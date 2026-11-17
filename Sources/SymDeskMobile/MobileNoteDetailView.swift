@@ -1,5 +1,6 @@
 import QuickLook
 import SwiftUI
+import SymairaTheme
 
 struct MobileNoteDetailView: View {
     @EnvironmentObject private var vault: MobileVaultStore
@@ -26,14 +27,14 @@ struct MobileNoteDetailView: View {
 			if let note {
 				detail(for: note)
             } else {
-                ContentUnavailableView(
-                    "Note unavailable",
-                    systemImage: "doc.questionmark",
-                    description: Text("Refresh the vault and try again.")
+                SymairaEmptyState(
+                    icon: .document,
+                    title: "Note unavailable",
+                    message: "Refresh the vault and try again."
                 )
             }
         }
-        .background(MobileTheme.background)
+        .background(SymairaTokens.canvas)
         .navigationTitle(note?.title ?? "Note")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isEditing) {
@@ -65,26 +66,24 @@ struct MobileNoteDetailView: View {
         MobileBackdrop {
             VStack(spacing: 0) {
                 if attachmentURL != nil {
-                    Picker("Content", selection: $mode) {
-                        ForEach(DetailMode.allCases, id: \.self) { mode in
-                            Text(mode.rawValue).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                    SymairaSegmentedControl(
+                        "Content",
+                        selection: $mode,
+                        options: DetailMode.allCases.map { (value: $0, label: $0.rawValue) }
+                    )
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                 }
 
 				if isLoadingAttachment && mode == .preview {
-					ProgressView("Loading original…")
-						.frame(maxWidth: .infinity, maxHeight: .infinity)
+					SymairaLoadingState("Loading original…")
 				} else if mode == .preview, let attachmentURL {
                     MobileQuickLookPreview(url: attachmentURL)
-                        .background(Color.black.opacity(0.2))
+                        .background(SymairaTokens.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay {
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(MobileTheme.border, lineWidth: 1)
+                                .stroke(SymairaTokens.line, lineWidth: 1)
                                 .allowsHitTesting(false)
                         }
                         .padding(.horizontal, 12)
@@ -107,11 +106,11 @@ struct MobileNoteDetailView: View {
 				Button {
 					isEditing = true
 				} label: {
-					Image(systemName: "pencil")
+					Image(symairaIcon: .edit, size: 20)
 				}
 				.accessibilityLabel("Edit note")
                 Button { isChatPresented = true } label: {
-                    Image(systemName: "bubble.left.and.bubble.right")
+                    Image(symairaIcon: .chat, size: 20)
                 }
                 .accessibilityLabel("Ask AI about this note")
             }
@@ -120,17 +119,17 @@ struct MobileNoteDetailView: View {
                     Button {
                         isAIPresented = true
                     } label: {
-                        Image(systemName: "sparkles")
+                        Image(symairaIcon: .ai, size: 20)
                     }
                     .accessibilityLabel("AI actions")
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
 				if let root = vault.vaultURL {
-					ShareLink(item: note.fileURL(in: root)) { Image(systemName: "square.and.arrow.up") }
+					ShareLink(item: note.fileURL(in: root)) { Image(symairaIcon: .share, size: 20) }
 						.accessibilityLabel("Share note")
 				} else if let attachmentURL {
-					ShareLink(item: attachmentURL) { Image(systemName: "square.and.arrow.up") }
+					ShareLink(item: attachmentURL) { Image(symairaIcon: .share, size: 20) }
 						.accessibilityLabel("Share original")
 				}
             }
@@ -145,19 +144,17 @@ struct MobileNoteDetailView: View {
     private func metadata(for note: MobileNote, attachmentURL: URL?) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: note.isDocument ? "doc.text.image" : "note.text")
-                    .font(.title3)
-                    .foregroundStyle(MobileTheme.gold)
+                SymairaIconView(note.isDocument ? .document : .note, size: 20)
+                    .foregroundStyle(SymairaTokens.ink2)
                     .frame(width: 42, height: 42)
-                    .background(MobileTheme.gold.opacity(0.1), in: RoundedRectangle(cornerRadius: 13))
+                    .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.md, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(note.title)
-                        .font(.title3.bold())
-                        .foregroundStyle(MobileTheme.textPrimary)
+                        .symairaText(.heading)
                     Text(note.path)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(MobileTheme.textMuted)
+                        .font(SymairaTypography.monoSmall)
+                        .foregroundStyle(SymairaTokens.ink3)
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)
@@ -200,28 +197,27 @@ struct MobileNoteDetailView: View {
                     HStack(spacing: 7) {
                         ForEach(note.tags, id: \.self) { tag in
                             Text(tag)
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(MobileTheme.goldSoft)
+                                .font(SymairaTypography.label)
+                                .foregroundStyle(SymairaTokens.ink)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(MobileTheme.gold.opacity(0.1), in: Capsule())
+                                .background(SymairaTokens.raised, in: Capsule())
                         }
                     }
                 }
             }
         }
         .padding(18)
-        .mobileLiquidGlass(elevated: true)
+        .symairaCard(padding: 0)
     }
 
     private func metadataRow(_ label: String, _ value: String) -> some View {
         GridRow {
             Text(label)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(MobileTheme.textMuted)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink3)
             Text(value)
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.textPrimary)
+                .symairaText(.callout)
                 .textSelection(.enabled)
         }
     }
@@ -240,13 +236,12 @@ private struct MobileMarkdownView: View {
 
     var body: some View {
         Text(rendered)
-            .font(.body)
-            .foregroundStyle(MobileTheme.textPrimary)
+            .symairaText(.body)
             .lineSpacing(4)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18)
-            .mobileLiquidGlass(cornerRadius: 20)
+            .symairaCard(padding: 0)
     }
 
     private func normalizedObsidianMarkdown(_ source: String) -> String {

@@ -178,6 +178,12 @@ final class ContentViewModel: ObservableObject {
         deepLinkAnchor: SearchAnchor? = nil,
         viewID: String? = nil
     ) {
+        // Configuration screens live in the Settings window, not in the
+        // workspace (GUIDELINES SHELL-3/SHELL-7): hand them to the view.
+        if let tab = mode.settingsTab {
+            settingsRequest = tab
+            return
+        }
         navBackStack.append(makeNavEntry())
         navForwardStack.removeAll()
         displayMode = mode
@@ -222,6 +228,34 @@ final class ContentViewModel: ObservableObject {
     func openDocumentInEditor(_ doc: DocumentItem) {
         guard let found = notes.first(where: { $0.path == doc.path }) else { return }
         navigate(to: .vault, note: found)
+    }
+
+    // MARK: - Workspace Destinations
+
+    /// Set when navigation targets a Settings-hosted screen; the view opens
+    /// the Settings window on that tab and clears it.
+    @Published var settingsRequest: DeskSettingsTab? = nil
+
+    /// The last mode shown per destination, so returning to a destination
+    /// restores its section instead of resetting to the first one.
+    private var lastModeByDestination: [DeskDestination: ContentDisplayMode] = [:]
+
+    /// The sidebar destination owning the current mode (Overview for modes
+    /// without a workspace destination).
+    var destination: DeskDestination {
+        DeskDestination.owning(displayMode) ?? .overview
+    }
+
+    /// Selection binding target for the sidebar and `SymairaCommands`.
+    func select(_ destination: DeskDestination) {
+        guard destination != self.destination else { return }
+        lastModeByDestination[self.destination] = displayMode
+        let mode = lastModeByDestination[destination] ?? destination.modes[0]
+        if mode == .dbView, selectedViewID == nil, let first = dbViews.first {
+            navigate(to: mode, viewID: first.id)
+        } else {
+            navigate(to: mode)
+        }
     }
 
     func openDiscover() { navigate(to: .discover) }
@@ -352,7 +386,7 @@ final class ContentViewModel: ObservableObject {
 
     var doctorSummaryText: String {
         guard let report = doctorReport else {
-            return "Vault check unavailable — run `symdesk doctor`"
+            return "Vault check unavailable. Run symdesk doctor in Terminal."
         }
         var issues: [String] = []
         if let v = report.vault, v.status != "ok" { issues.append("Vault") }

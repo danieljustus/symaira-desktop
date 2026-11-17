@@ -17,10 +17,9 @@ struct AIDockView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 SymairaIconView(.ai, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("AI Dock")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
             }
             .padding(.horizontal, 14)
@@ -36,28 +35,26 @@ struct AIDockView: View {
                 if let context, !context.isEmpty {
                     HStack(spacing: 8) {
                         SymairaIconView(.documentSearch, size: 16)
-                            .foregroundStyle(SymairaTheme.goldPrimary)
+                            .foregroundStyle(SymairaTokens.ink2)
                         Text("Context: \(context.summary)")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                             .lineLimit(1)
                         if context.selectionText != nil {
                             Text("Selection")
-                                .symairaText(.caption)
-                                .foregroundColor(SymairaTheme.goldSecondary)
+                                .symairaText(.secondary)
                         }
                         Spacer(minLength: 4)
                         Toggle("Send", isOn: $includeContext)
-                            .toggleStyle(.switch)
+                            .toggleStyle(.symairaSwitch)
                             .controlSize(.small)
                             .help("Include the active document context in the next AI request")
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
-                    .background(SymairaTheme.bgCardHover.opacity(0.72))
+                    .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                            .stroke(SymairaTokens.line, lineWidth: 1)
                     )
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("Context \(context.summary)")
@@ -67,22 +64,22 @@ struct AIDockView: View {
                 HStack(spacing: 8) {
                     Toggle(isOn: $agentMode) {
                         Text("Agent")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                     }
-                    .toggleStyle(.switch)
+                    .toggleStyle(.symairaSwitch)
                     .controlSize(.small)
                     .help("Run the bounded agentic tool loop (read-only tools) instead of a one-shot answer")
 
                     TextField("Ask about your vault…", text: $query)
                         .textFieldStyle(.plain)
+                        .symairaText(.body)
                         .onSubmit {
                             submitQuery()
                         }
 
                     Button(action: submitQuery) {
                         SymairaIconView(.send, size: 16)
-                            .foregroundColor(SymairaTheme.goldPrimary)
+                            .foregroundStyle(SymairaTokens.ink)
                     }
                     .buttonStyle(.plain)
                     .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)

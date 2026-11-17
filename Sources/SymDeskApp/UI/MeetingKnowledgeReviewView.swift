@@ -36,8 +36,7 @@ struct MeetingKnowledgeReviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Publish to Memory")
-                .symairaText(.heading).fontWeight(.bold)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.heading)
 
             factEditor
 
@@ -47,8 +46,8 @@ struct MeetingKnowledgeReviewView: View {
 
             if let error = model.publishError {
                 Text(error)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.critical)
             }
             if let result = model.lastPublish {
                 resultSummary(result)
@@ -58,7 +57,7 @@ struct MeetingKnowledgeReviewView: View {
 
             HStack {
                 Button("Close") { dismiss() }
-                    .buttonStyle(SymairaSecondaryButtonStyle())
+                    .symairaButtonStyle(.secondary)
                 Spacer()
                 if model.isPublishing {
                     ProgressView().controlSize(.small)
@@ -67,7 +66,7 @@ struct MeetingKnowledgeReviewView: View {
                     Button("Apply to Memory") {
                         Task { await model.publish(facts: facts) }
                     }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
+                    .symairaButtonStyle(.primary)
                     .disabled(facts.isEmpty && confirmedParticipants.isEmpty)
                     .accessibilityLabel("Apply the reviewed proposal to Memory")
                     .accessibilityHint("Writes exactly the previewed relations and facts; nothing else")
@@ -82,26 +81,23 @@ struct MeetingKnowledgeReviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Reviewed facts, decisions, and action items")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textSecondary)
 
             ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
                 HStack {
                     Text(fact)
                         .symairaText(.callout)
-                        .foregroundColor(SymairaTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Button {
                         facts.remove(at: index)
                     } label: {
                         SymairaIconView(.delete, size: 16)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.plain)
+                    .help("Remove fact")
                     .accessibilityLabel("Remove fact")
                 }
-                .padding(6)
-                .background(SymairaTheme.goldPrimary.opacity(0.06))
-                .cornerRadius(6)
+                .symairaCard(padding: SymairaSpacing.small)
             }
 
             HStack {
@@ -110,8 +106,7 @@ struct MeetingKnowledgeReviewView: View {
                     .onSubmit { addFact() }
                     .accessibilityLabel("New fact to publish")
                 Button("Add") { addFact() }
-                    .buttonStyle(SymairaSecondaryButtonStyle())
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
                     .disabled(newFact.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
 
@@ -120,9 +115,7 @@ struct MeetingKnowledgeReviewView: View {
                 Button("Insert evidence timestamp (\(TranscriptTimelineView.formatTimestamp(segment.startMS)))") {
                     newFact += " [evidence: \(TranscriptTimelineView.formatTimestamp(segment.startMS))]"
                 }
-                .buttonStyle(.plain)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.goldSecondary)
+                .symairaButtonStyle(.secondary)
                 .accessibilityLabel("Insert the selected segment's timestamp as evidence")
             }
         }
@@ -132,12 +125,10 @@ struct MeetingKnowledgeReviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Exact Memory writes on apply")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textSecondary)
 
             if confirmedParticipants.isEmpty && facts.isEmpty {
                 Text("Nothing selected yet — confirm participants or add facts above. Applying an empty proposal writes nothing.")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
@@ -156,17 +147,18 @@ struct MeetingKnowledgeReviewView: View {
 
     private func previewLine(_ text: String) -> some View {
         Text(text)
-            .symairaText(.caption).monospaced()
-            .foregroundColor(SymairaTheme.textPrimary)
+            .symairaText(.monoSmall, respectsForeground: false)
+            .foregroundStyle(SymairaTokens.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
     }
 
     private func resultSummary(_ result: MeetingPublishOutcome) -> some View {
         let published = result.factsPublished?.count ?? 0
-        return Label("Applied: \(result.relationsCreated) relation(s), \(published) fact(s) published, \(result.factsSkipped) already published and skipped.", symairaIcon: .success)
-        .symairaText(.caption)
-        .foregroundColor(SymairaTokens.positive)
+        return SymairaNotice(
+            message: "Applied: \(result.relationsCreated) relation(s), \(published) fact(s) published, \(result.factsSkipped) already published and skipped.",
+            tone: .positive
+        )
         .accessibilityLabel("Publish applied. \(result.relationsCreated) relations, \(published) new facts, \(result.factsSkipped) skipped as already published.")
     }
 

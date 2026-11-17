@@ -75,17 +75,19 @@ private struct MarkdownBlocksView: View {
         case .heading(let level, let text):
             Text(inline(text))
                 .font(headingFont(level))
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.ink)
         case .paragraph(let text):
             Text(inline(text))
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.body)
                 .textSelection(.enabled)
         case .quote(let lines):
             HStack(alignment: .top, spacing: 8) {
-                Rectangle().fill(SymairaTheme.goldShadow).frame(width: 3)
+                Rectangle().fill(SymairaTokens.line).frame(width: 3)
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                        Text(inline(line)).italic().foregroundColor(SymairaTheme.textSecondary)
+                        Text(inline(line)).italic()
+                            .symairaText(.body, respectsForeground: false)
+                            .foregroundStyle(SymairaTokens.ink2)
                     }
                 }
             }
@@ -109,7 +111,7 @@ private struct MarkdownBlocksView: View {
             // follows the body text style instead of a fixed point size.
             Text(MathTypesetter.render(tex))
                 .font(.system(.body, design: .serif).italic())
-                .foregroundColor(SymairaTheme.textPrimary)
+                .foregroundStyle(SymairaTokens.ink)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, 6)
         case .codeBlock(let language, let code):
@@ -117,21 +119,21 @@ private struct MarkdownBlocksView: View {
                 if !language.isEmpty {
                     Text(language)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 Text(code)
                     .symairaText(.mono)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(8)
-                    .background(SymairaTokens.ink.opacity(0.05))
+                    .background(SymairaTokens.raised)
                     .cornerRadius(6)
             }
         case .listItem(let indent, let ordered, let text):
             HStack(alignment: .top, spacing: 6) {
                 Text(ordered ? "•" : "•")
-                    .foregroundColor(SymairaTheme.goldSecondary)
-                Text(inline(text)).foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.body, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.ink2)
+                Text(inline(text)).symairaText(.body)
             }
             .padding(.leading, CGFloat(indent) * 6)
         case .table(let rows):
@@ -197,46 +199,46 @@ private struct CalloutView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: iconName)
-                Text(title).bold()
+                SymairaIconView(icon, size: 14)
+                Text(title).symairaText(.bodyEmphasized, respectsForeground: false)
             }
-            .foregroundColor(tint)
+            .foregroundStyle(tint)
             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                Text(line).foregroundColor(SymairaTheme.textPrimary)
+                Text(line).symairaText(.body)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.10))
+        .background(SymairaTokens.raised)
         .overlay(
             RoundedRectangle(cornerRadius: 6).stroke(tint.opacity(0.4), lineWidth: 1)
         )
         .cornerRadius(6)
     }
 
-    private var iconName: String {
+    private var icon: SymairaIcon {
         switch type {
-        case "warning", "caution", "attention": return "exclamationmark.triangle"
-        case "danger", "error", "bug": return "xmark.octagon"
-        case "tip", "hint", "important": return "lightbulb"
-        case "question", "help", "faq": return "questionmark.circle"
-        case "success", "check", "done": return "checkmark.circle"
-        case "example": return "list.bullet.rectangle"
-        case "quote", "cite": return "quote.opening"
-        case "abstract", "summary", "tldr": return "doc.text"
-        case "info", "todo": return "info.circle"
-        default: return "pencil"
+        case "warning", "caution", "attention": return .warning
+        case "danger", "error", "bug": return .error
+        case "tip", "hint", "important": return .tip
+        case "question", "help", "faq": return .help
+        case "success", "check", "done": return .success
+        case "example": return .list
+        case "quote", "cite": return .quote
+        case "abstract", "summary", "tldr": return .document
+        case "info", "todo": return .info
+        default: return .edit
         }
     }
 
     private var tint: Color {
         switch type {
-        case "warning", "caution", "attention": return .orange
-        case "danger", "error", "bug": return .red
-        case "tip", "hint", "important": return .teal
-        case "success", "check", "done": return .green
-        case "question", "help", "faq": return .yellow
-        default: return SymairaTheme.goldPrimary
+        case "warning", "caution", "attention": return SymairaTokens.warning
+        case "danger", "error", "bug": return SymairaTokens.critical
+        case "tip", "hint", "important": return SymairaTokens.ink
+        case "success", "check", "done": return SymairaTokens.positive
+        case "question", "help", "faq": return SymairaTokens.warning
+        default: return SymairaTokens.ink2
         }
     }
 }
@@ -259,15 +261,14 @@ private struct EmbedView: View {
         )
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
-                Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                    .symairaText(.caption)
+                SymairaIconView(.embed, size: 12)
                 Button(action: { onLinkClick?(target) }) {
                     Text(heading.map { "\(target) › \($0)" } ?? target)
                         .symairaText(.caption)
                 }
                 .buttonStyle(.plain)
             }
-            .foregroundColor(SymairaTheme.textMuted)
+            .foregroundStyle(SymairaTokens.ink3)
 
             switch result {
             case .resolved(let content):
@@ -279,24 +280,23 @@ private struct EmbedView: View {
                 )
             case .cycle:
                 Label("Circular embed skipped", symairaIcon: .sync)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.warning)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.warning)
             case .tooDeep:
-                Label("Embed nesting too deep", systemImage: "square.stack.3d.up.slash")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.warning)
+                Label("Embed nesting too deep", symairaIcon: .stack)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.warning)
             case .notFound:
-                Label("Note \u{201C}\(target)\u{201D} not found", systemImage: "questionmark.square.dashed")
+                Label("Note \u{201C}\(target)\u{201D} not found", symairaIcon: .help)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SymairaTokens.ink.opacity(0.03))
+        .background(SymairaTokens.raised)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                .stroke(SymairaTokens.line, lineWidth: 1)
         )
         .cornerRadius(6)
     }
@@ -314,13 +314,11 @@ private struct MermaidView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Label("Diagram (unsupported Mermaid type)", symairaIcon: .workflow)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                 Text(code)
                     .symairaText(.monoSmall)
-                    .foregroundColor(SymairaTheme.textSecondary)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(SymairaTokens.ink.opacity(0.04))
+                    .background(SymairaTokens.raised)
                     .cornerRadius(6)
             }
         }
@@ -348,7 +346,7 @@ private struct MermaidGraphView: View {
                         var path = Path()
                         path.move(to: from)
                         path.addLine(to: to)
-                        ctx.stroke(path, with: .color(SymairaTheme.textMuted), lineWidth: 1)
+                        ctx.stroke(path, with: .color(SymairaTokens.ink3), lineWidth: 1)
                         // Arrowhead
                         let angle = atan2(to.y - from.y, to.x - from.x)
                         let tip = CGPoint(
@@ -360,7 +358,7 @@ private struct MermaidGraphView: View {
                         arrow.addLine(to: CGPoint(x: tip.x - 8 * cos(angle - 0.4), y: tip.y - 8 * sin(angle - 0.4)))
                         arrow.addLine(to: CGPoint(x: tip.x - 8 * cos(angle + 0.4), y: tip.y - 8 * sin(angle + 0.4)))
                         arrow.closeSubpath()
-                        ctx.fill(arrow, with: .color(SymairaTheme.textMuted))
+                        ctx.fill(arrow, with: .color(SymairaTokens.ink3))
                         if let label = edge.label {
                             let mid = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 8)
                             // Edge labels are canvas symbols: a font role is
@@ -376,7 +374,6 @@ private struct MermaidGraphView: View {
                         if let label = edge.label {
                             Text(label)
                                 .symairaText(.caption)
-                                .foregroundColor(SymairaTheme.textMuted)
                                 .tag(index)
                         }
                     }
@@ -387,15 +384,14 @@ private struct MermaidGraphView: View {
                 ForEach(graph.nodes, id: \.id) { node in
                     if let pos = positions[node.id] {
                         Text(node.label)
-                            .symairaText(.caption)
+                            .symairaText(.callout)
                             .lineLimit(2)
                             .multilineTextAlignment(.center)
-                            .foregroundColor(SymairaTheme.textPrimary)
                             .frame(width: nodeSize.width, height: nodeSize.height)
-                            .background(SymairaTokens.ink.opacity(0.06))
+                            .background(SymairaTokens.raised)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(SymairaTheme.goldShadow, lineWidth: 1)
+                                    .stroke(SymairaTokens.ink3, lineWidth: 1)
                             )
                             .cornerRadius(6)
                             .position(pos)
@@ -444,8 +440,7 @@ private struct PreviewTableView: View {
                 GridRow {
                     ForEach(0..<columns, id: \.self) { col in
                         Text(col < row.count ? row[col] : "")
-                            .bold(rowIdx == 0)
-                            .foregroundColor(rowIdx == 0 ? SymairaTheme.goldSecondary : SymairaTheme.textPrimary)
+                            .symairaText(rowIdx == 0 ? SymairaTextRole.bodyEmphasized : SymairaTextRole.body)
                     }
                 }
                 if rowIdx == 0 {
@@ -454,7 +449,7 @@ private struct PreviewTableView: View {
             }
         }
         .padding(8)
-        .background(SymairaTokens.ink.opacity(0.03))
+        .background(SymairaTokens.raised)
         .cornerRadius(6)
     }
 }
@@ -473,19 +468,11 @@ private struct BaseEmbedView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if isLoading {
-                ProgressView()
-                    .accessibilityLabel("Rendering preview…")
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Rendering preview…")
                     .padding(8)
             } else if let err = errorMessage {
-                HStack(spacing: 6) {
-                    SymairaIconView(.warning, size: 16)
-                        .foregroundColor(SymairaTokens.warning)
-                    Text(err)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.warning)
-                }
-                .padding(8)
+                SymairaNotice(message: err, tone: .warning)
+                    .padding(8)
             } else if let res = result {
                 HStack(spacing: 4) {
                     SymairaIconView(.table, size: 14)
@@ -495,7 +482,7 @@ private struct BaseEmbedView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .foregroundColor(SymairaTheme.textMuted)
+                .foregroundStyle(SymairaTokens.ink3)
 
                 // Parse and render inert markdown table
                 MarkdownBlocksView(
@@ -508,10 +495,10 @@ private struct BaseEmbedView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SymairaTokens.ink.opacity(0.03))
+        .background(SymairaTokens.raised)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                .stroke(SymairaTokens.line, lineWidth: 1)
         )
         .cornerRadius(6)
         .task(id: spec) {

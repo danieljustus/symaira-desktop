@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import VisionKit
 
 /// Scan surface: capture via the system document camera (multi-page),
@@ -36,16 +37,12 @@ struct MobileScanView: View {
                     }
 
                     if let errorMessage {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                        SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                     }
                     if let statusMessage {
-                        Label(statusMessage, systemImage: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundStyle(MobileTheme.goldSoft)
+                        SymairaNotice(message: statusMessage, tone: .positive)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                     }
@@ -62,7 +59,7 @@ struct MobileScanView: View {
                         isScanning = true
                         presentScanner()
                     } label: {
-                        Image(systemName: "camera")
+                        Image(symairaIcon: .camera, size: 20)
                     }
                     .accessibilityLabel("Scan another page")
                 }
@@ -90,28 +87,24 @@ struct MobileScanView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "doc.viewfinder")
-                .font(.system(size: 44))
-                .foregroundStyle(MobileTheme.gold)
-            Text("Scan a paper document")
-                .font(.title3.bold())
-                .foregroundStyle(MobileTheme.textPrimary)
-            Text("Multi-page scans become one PDF handed to the ingest pipeline — OCR, classification and archiving run on the server or desktop.")
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+        SymairaEmptyState(
+            icon: .scan,
+            title: "Scan a paper document",
+            message: "Multi-page scans become one PDF handed to the ingest pipeline — OCR, classification and archiving run on the server or desktop."
+        ) {
+            Button("Start scanning") {
+                isScanning = true
+                presentScanner()
+            }
+            .symairaButtonStyle(.primary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var reviewGrid: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("\(pages.count) page\(pages.count == 1 ? "" : "s")")
-                    .font(.headline)
-                    .foregroundStyle(MobileTheme.textPrimary)
+                    .symairaText(.subheading)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
                     ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
@@ -142,15 +135,17 @@ struct MobileScanView: View {
                         Task { await submit() }
                     } label: {
                         if isSubmitting {
-                            ProgressView().frame(maxWidth: .infinity)
+                            HStack(spacing: SymairaSpacing.small) {
+                                ProgressView()
+                                Text("Uploading…")
+                            }
+                            .frame(maxWidth: .infinity)
                         } else {
-                            Label("Submit", systemImage: "arrow.up.circle.fill")
+                            Label("Upload scan", symairaIcon: .upload)
                                 .frame(maxWidth: .infinity)
                         }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(MobileTheme.gold)
-                    .foregroundStyle(.black)
+                    .symairaButtonStyle(.primary)
                     .disabled(isSubmitting)
                 }
                 .padding(.top, 6)
@@ -264,25 +259,30 @@ private struct ThumbnailCell: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(alignment: .topLeading) {
                     Text("\(index + 1)")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.black)
+                        .font(SymairaTypography.label)
+                        .foregroundStyle(SymairaTokens.onSelected)
                         .padding(5)
-                        .background(MobileTheme.gold, in: Circle())
+                        .background(SymairaTokens.selected, in: Circle())
                         .padding(5)
                 }
             HStack(spacing: 10) {
                 Button(action: onMoveLeft) {
-                    Image(systemName: "arrow.left")
+                    Image(symairaIcon: .back, size: 16)
+                        .frame(minWidth: SymairaMetrics.minimumControlHeight, minHeight: SymairaMetrics.minimumControlHeight)
                 }
                 .disabled(!canMoveLeft)
+                .accessibilityLabel("Move page left")
                 Button(action: onMoveRight) {
-                    Image(systemName: "arrow.right")
+                    Image(symairaIcon: .forward, size: 16)
+                        .frame(minWidth: SymairaMetrics.minimumControlHeight, minHeight: SymairaMetrics.minimumControlHeight)
                 }
                 .disabled(!canMoveRight)
+                .accessibilityLabel("Move page right")
                 Button("Rescan", action: onRescan)
-                    .font(.caption)
+                    .font(SymairaTypography.label)
+                    .frame(minHeight: SymairaMetrics.minimumControlHeight)
             }
-            .font(.caption)
+            .font(SymairaTypography.caption)
             .buttonStyle(.borderless)
         }
     }

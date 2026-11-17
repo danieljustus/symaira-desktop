@@ -102,15 +102,14 @@ struct TagBrowserView: View {
             // Filter field
             HStack(spacing: 4) {
                 SymairaIconView(.search, size: 14)
-                    .foregroundColor(SymairaTheme.textMuted)
+                    .foregroundStyle(SymairaTokens.ink3)
                 TextField("Filter tags…", text: $filterText)
                     .textFieldStyle(.plain)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.callout)
                 if !filterText.isEmpty {
                     Button(action: { filterText = "" }) {
                         SymairaIconView(.close, size: 14)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Clear Filter")
@@ -124,23 +123,24 @@ struct TagBrowserView: View {
             HStack(spacing: 4) {
                 Button(action: { sortByCount = true }) {
                     Text("Count")
-                        .symairaText(.caption)
-                        .foregroundColor(sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
+                        .underline(sortByCount)
+                        .symairaText(.caption, respectsForeground: false)
+                        .foregroundStyle(sortByCount ? SymairaTokens.ink : SymairaTokens.ink3)
                 }
                 .buttonStyle(.plain)
                 Text("·")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                 Button(action: { sortByCount = false }) {
                     Text("A–Z")
-                        .symairaText(.caption)
-                        .foregroundColor(!sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
+                        .underline(!sortByCount)
+                        .symairaText(.caption, respectsForeground: false)
+                        .foregroundStyle(!sortByCount ? SymairaTokens.ink : SymairaTokens.ink3)
                 }
                 .buttonStyle(.plain)
                 Spacer()
                 Text("\(filteredTags.count) tag\(filteredTags.count == 1 ? "" : "s")")
+                    .monospacedDigit()
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             .padding(.horizontal, 8)
             .padding(.bottom, 4)
@@ -149,10 +149,10 @@ struct TagBrowserView: View {
             if orderedRows.isEmpty {
                 VStack(spacing: 6) {
                     SymairaIconView(.tag, size: 20)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
+                        .accessibilityHidden(true)
                     Text(tags.isEmpty ? "No tags yet" : "No tags match")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -212,19 +212,18 @@ struct TagBrowserView: View {
         Button(action: { onTagClick(tag.name) }) {
             HStack(spacing: 6) {
                 SymairaIconView(.tag, size: 14)
-                    .foregroundColor(indent ? SymairaTheme.textMuted : SymairaTheme.goldSecondary)
+                    .foregroundStyle(indent ? SymairaTokens.ink3 : SymairaTokens.ink2)
                 Text(tag.name)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.callout)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
                 Text("\(tag.count)")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .monospacedDigit()
+                    .symairaText(.secondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(SymairaTokens.ink.opacity(0.06))
+                    .background(SymairaTokens.raised)
                     .cornerRadius(3)
             }
             .padding(.horizontal, indent ? 16 : 8)
@@ -282,18 +281,17 @@ private struct RenameTagSheet: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
                 SymairaIconView(.edit, size: 16)
-                    .font(SymairaTypography.display)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Rename Tag").symairaText(.title).bold()
+                    Text("Rename Tag").symairaText(.title)
                     Text("“\(currentName)” is renamed in every file that carries it and re-indexed.")
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
             }
 
             LabeledContent("New name") {
                 TextField("new-tag-name", text: $newName)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.symaira)
                     .frame(width: 330)
             }
             .padding(18)
@@ -302,8 +300,9 @@ private struct RenameTagSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                    .buttonStyle(.bordered)
-                Button("Rename") {
+                    .symairaButtonStyle(.secondary)
+                    .keyboardShortcut(.cancelAction)
+                Button("Rename Tag") {
                     let trimmed = newName.trimmingCharacters(in: .whitespaces)
                     guard !trimmed.isEmpty, trimmed != currentName else { return }
                     isWorking = true
@@ -312,14 +311,14 @@ private struct RenameTagSheet: View {
                         dismiss()
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.primary)
+                .keyboardShortcut(.defaultAction)
                 .disabled(isWorking || newName.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
         .padding(28)
         .frame(width: 590)
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
     }
 }
 
@@ -346,19 +345,18 @@ private struct MergeTagSheet: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 14) {
                 SymairaIconView(.merge, size: 16)
-                    .font(SymairaTypography.display)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Merge Tag").symairaText(.title).bold()
+                    Text("Merge Tag").symairaText(.title)
                     Text("“\(sourceName)” is merged into the target tag across the whole vault and re-indexed.")
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 LabeledContent("Into") {
                     TextField("target tag", text: $target)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.symaira)
                         .frame(width: 330)
                 }
                 if !matchingTargets.isEmpty {
@@ -368,10 +366,11 @@ private struct MergeTagSheet: View {
                                 target = candidate
                             } label: {
                                 Text(candidate)
-                                    .symairaText(.caption)
+                                    .symairaText(.caption, respectsForeground: false)
+                                    .foregroundStyle(target == candidate ? SymairaTokens.onSelected : SymairaTokens.ink2)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(target == candidate ? SymairaTheme.goldPrimary.opacity(0.25) : Color.white.opacity(0.08))
+                                    .background(target == candidate ? SymairaTokens.selected : SymairaTokens.raised)
                                     .cornerRadius(4)
                             }
                             .buttonStyle(.plain)
@@ -385,8 +384,9 @@ private struct MergeTagSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                    .buttonStyle(.bordered)
-                Button("Merge") {
+                    .symairaButtonStyle(.secondary)
+                    .keyboardShortcut(.cancelAction)
+                Button("Merge Tag") {
                     let trimmed = target.trimmingCharacters(in: .whitespaces)
                     guard !trimmed.isEmpty, trimmed != sourceName else { return }
                     isWorking = true
@@ -395,13 +395,13 @@ private struct MergeTagSheet: View {
                         dismiss()
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.primary)
+                .keyboardShortcut(.defaultAction)
                 .disabled(isWorking || target.trimmingCharacters(in: .whitespaces).isEmpty || target.trimmingCharacters(in: .whitespaces) == sourceName)
             }
         }
         .padding(28)
         .frame(width: 590)
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
     }
 }

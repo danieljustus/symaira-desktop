@@ -3,46 +3,41 @@ import AppKit
 import SymairaTheme
 import SymDeskCore
 
-/// Full-bleed, low-noise backdrop used behind each main workspace. The grid
-/// remains a brand cue, but is deliberately quiet so it never competes with
-/// documents or text.
+/// Former full-bleed backdrop. The shared `SymairaWorkspace` now paints the
+/// canvas (or the topography on the overview), so this only passes content
+/// through; existing call sites keep compiling (GUIDELINES MOTION-6: no
+/// blueprint grid or ambient glows).
 struct SymairaScreen<Content: View>: View {
     @ViewBuilder var content: Content
 
-    var body: some View {
-        ZStack {
-            SymairaTokens.canvas
-                .ignoresSafeArea()
-            BlueprintGrid()
-                .opacity(0.35)
-                .ignoresSafeArea()
-            AmbientGlows()
-                .opacity(0.5)
-            content
-        }
-    }
+    var body: some View { content }
 }
 
-/// AppKit-side equivalents of the SymairaTheme tokens for the
-/// NSViewRepresentable editors (NSTextView, PDFView) that can't take
-/// SwiftUI colors.
+/// AppKit-side equivalents of the Symaira roles for the NSViewRepresentable
+/// editors (NSTextView, PDFView). `NSColor(Color)` keeps the adaptive token
+/// dynamic, so light and dark appearance both resolve correctly. The legacy
+/// member names stay so the editors need no call-site changes.
 @MainActor
 enum SymairaNSColors {
-    static let bgDark = NSColor(srgbRed: 0x0D / 255, green: 0x0C / 255, blue: 0x0A / 255, alpha: 1)
-    static let textPrimary = NSColor(srgbRed: 0xF5 / 255, green: 0xF4 / 255, blue: 0xF0 / 255, alpha: 1)
-    static let gold = NSColor(srgbRed: 0xE5 / 255, green: 0xC3 / 255, blue: 0x97 / 255, alpha: 1)
-    static let goldSecondary = NSColor(srgbRed: 0xF8 / 255, green: 0xE6 / 255, blue: 0xCD / 255, alpha: 1)
+    /// Opaque reading surface behind editors and viewers (NN-7).
+    static var bgDark: NSColor { NSColor(SymairaTokens.surface) }
+    static var textPrimary: NSColor { NSColor(SymairaTokens.ink) }
+    /// Headings and the insertion point: full-contrast ink, never champagne text (NN-3).
+    static var gold: NSColor { NSColor(SymairaTokens.ink) }
+    /// Wiki links: secondary ink, underlined by the caller.
+    static var goldSecondary: NSColor { NSColor(SymairaTokens.ink2) }
 }
 
-/// Brand color for document workflow states: gold for active work,
-/// semantic colors only where meaning demands it.
+/// Tone color for document workflow states. Always shown next to the status
+/// text or icon (NN-6): neutral ink for ordinary states, semantic roles only
+/// where the meaning demands it.
 func symairaStatusColor(_ status: DocumentStatus?) -> Color {
     switch status {
-    case .open: return SymairaTheme.goldPrimary
-    case .paid, .done: return .green
-    case .submitted: return SymairaTheme.iceSecondary
-    case .needsReview: return .orange
-    case .waitingForReply: return SymairaTheme.goldSecondary
-    case .none: return SymairaTheme.textMuted
+    case .open: return SymairaTokens.ink
+    case .paid, .done: return SymairaTokens.positive
+    case .submitted: return SymairaTokens.ink2
+    case .needsReview: return SymairaTokens.warning
+    case .waitingForReply: return SymairaTokens.ink2
+    case .none: return SymairaTokens.ink3
     }
 }

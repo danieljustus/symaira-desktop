@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import UniformTypeIdentifiers
 
 struct MobileRootView: View {
@@ -12,7 +13,7 @@ struct MobileRootView: View {
                 MobileWorkspaceView()
             }
         }
-        .background(MobileTheme.background)
+        .background(SymairaTokens.canvas)
         .task {
 			if vault.isConfigured, vault.notes.isEmpty {
                 await vault.reload()
@@ -34,7 +35,7 @@ struct MobileRootView: View {
             }
         }
         .alert("Vault unavailable", isPresented: errorIsPresented) {
-            Button("OK", role: .cancel) { vault.errorMessage = nil }
+            Button("Dismiss", role: .cancel) { vault.errorMessage = nil }
         } message: {
             Text(vault.errorMessage ?? "Please try again.")
         }
@@ -67,75 +68,62 @@ private struct MobileOnboardingView: View {
                     Spacer(minLength: 34)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Image(systemName: "square.grid.2x2.fill")
-                            .font(.system(size: 34, weight: .medium))
-                            .foregroundStyle(MobileTheme.gold)
+                        SymairaIconView(.productDesk, size: 34)
+                            .foregroundStyle(SymairaTokens.ink2)
                             .accessibilityHidden(true)
 
                         Text("SymDesk")
-                            .font(.system(size: 44, weight: .bold, design: .rounded))
-                            .foregroundStyle(MobileTheme.textPrimary)
+                            .symairaText(.display)
 
                         Text("Your vault. Wherever you are.")
-                            .font(.title2.weight(.medium))
-                            .foregroundStyle(MobileTheme.goldSoft)
+                            .symairaText(.heading)
 
 						Text("Open a local Markdown vault from Files or connect to your self-hosted SymDesk Server.")
-                            .font(.body)
-                            .foregroundStyle(MobileTheme.textSecondary)
+                            .font(SymairaTypography.body)
+                            .foregroundStyle(SymairaTokens.ink2)
                             .lineSpacing(4)
                     }
 
                     VStack(spacing: 0) {
                         OnboardingFeature(
-                            icon: "icloud",
+                            icon: .cloud,
                             title: "Native iCloud access",
                             detail: "The Files app handles syncing. There is no proprietary cloud database."
                         )
-                        Divider().overlay(MobileTheme.border).padding(.leading, 52)
+                        Divider().overlay(SymairaTokens.line).padding(.leading, 52)
                         OnboardingFeature(
-                            icon: "bolt.horizontal.circle",
+                            icon: .energy,
                             title: "Fast and offline-ready",
                             detail: "Changed notes are re-read; everything else comes from the local cache."
                         )
-                        Divider().overlay(MobileTheme.border).padding(.leading, 52)
+                        Divider().overlay(SymairaTokens.line).padding(.leading, 52)
                         OnboardingFeature(
-                            icon: "doc.richtext",
+                            icon: .document,
                             title: "Real document previews",
                             detail: "PDFs, images and Office files open with the native Quick Look viewer."
                         )
                     }
                     .padding(.horizontal, 16)
-                    .mobileLiquidGlass(elevated: true)
+                    .symairaCard(padding: 0)
 
                     Button {
                         isImporterPresented = true
                     } label: {
-                        Label("Choose vault in Files", systemImage: "folder.badge.plus")
-                            .font(.headline)
+                        Label("Choose vault in Files", symairaIcon: .folderAdd)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 7)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .tint(MobileTheme.gold)
-                    .foregroundStyle(.black)
+                    .symairaButtonStyle(.primary)
 
-					Button {
-						isServerSheetPresented = true
+                    Button {
+                        isServerSheetPresented = true
 					} label: {
-						Label("Connect to SymDesk Server", systemImage: "server.rack")
-							.font(.headline)
-							.frame(maxWidth: .infinity)
-							.padding(.vertical, 7)
+						Label("Connect to SymDesk Server", symairaIcon: .server)
+						    .frame(maxWidth: .infinity)
 					}
-					.buttonStyle(.bordered)
-					.controlSize(.large)
-					.tint(MobileTheme.gold)
+					.symairaButtonStyle(.secondary)
 
                     Text("Choose the vault folder itself, not an individual note. SymDesk never uploads your files.")
-                        .font(.footnote)
-                        .foregroundStyle(MobileTheme.textMuted)
+                        .symairaText(.caption)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
 
@@ -167,26 +155,23 @@ private struct MobileOnboardingView: View {
 }
 
 private struct OnboardingFeature: View {
-    let icon: String
+    let icon: SymairaIcon
     let title: String
     let detail: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(MobileTheme.gold)
+            SymairaIconView(icon, size: 20)
+                .foregroundStyle(SymairaTokens.ink2)
                 .frame(width: 38, height: 38)
-                .background(MobileTheme.gold.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.md, style: .continuous))
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.headline)
-                    .foregroundStyle(MobileTheme.textPrimary)
+                    .symairaText(.subheading)
                 Text(detail)
-                    .font(.subheadline)
-                    .foregroundStyle(MobileTheme.textSecondary)
+                    .symairaText(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -206,19 +191,19 @@ private struct MobileWorkspaceView: View {
     var body: some View {
         TabView {
             MobileOverviewView(isComposerPresented: $isComposerPresented, resumeDraft: $resumeDraft, isScannerPresented: $isScannerPresented)
-                .tabItem { Label("Overview", systemImage: "sparkles.rectangle.stack") }
+                .tabItem { Label { Text("Overview") } icon: { Image(symairaIcon: .home, size: 20) } }
 
             MobileLibraryView(documentsOnly: false, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
-                .tabItem { Label("Notes", systemImage: "note.text") }
+                .tabItem { Label { Text("Notes") } icon: { Image(symairaIcon: .note, size: 20) } }
 
             MobileLibraryView(documentsOnly: true, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
-                .tabItem { Label("Documents", systemImage: "doc.text.image") }
+                .tabItem { Label { Text("Documents") } icon: { Image(symairaIcon: .document, size: 20) } }
 
             MobileChatView()
-                .tabItem { Label("Ask", systemImage: "bubble.left.and.bubble.right") }
+                .tabItem { Label { Text("Ask") } icon: { Image(symairaIcon: .chat, size: 20) } }
 
             MobileSettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tabItem { Label { Text("Settings") } icon: { Image(symairaIcon: .settings, size: 20) } }
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
@@ -277,6 +262,7 @@ private struct MobileOverviewView: View {
     @Binding var resumeDraft: MobileDraftStore.Draft?
     @Binding var isScannerPresented: Bool
     @State private var recoveredDrafts: [MobileDraftStore.Draft] = []
+    @State private var topography = SymairaTopoModel()
     private let draftStore = try? MobileDraftStore()
 
     private var recentNotes: [MobileNote] {
@@ -294,7 +280,7 @@ private struct MobileOverviewView: View {
 
     var body: some View {
         NavigationStack {
-            MobileBackdrop {
+            Group {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 22) {
                         overviewHeader
@@ -309,25 +295,20 @@ private struct MobileOverviewView: View {
                         }
 
                         if !vault.recentlyOpened.isEmpty {
-                            section(title: "Recently opened", systemImage: "clock.fill", notes: vault.recentlyOpened)
+                            section(title: "Recently opened", icon: .time, notes: vault.recentlyOpened)
                         }
 
                         if !upcomingDocuments.isEmpty {
-                            section(title: "Due next", systemImage: "calendar.badge.clock", notes: upcomingDocuments)
+                            section(title: "Due next", icon: .calendar, notes: upcomingDocuments)
                         }
 
-                        section(title: "Recently changed", systemImage: "clock.arrow.circlepath", notes: recentNotes)
+                        section(title: "Recently changed", icon: .history, notes: recentNotes)
 
                         if vault.skippedFiles > 0 {
-                            Label(
-                                "\(vault.skippedFiles) note\(vault.skippedFiles == 1 ? "" : "s") could not be read. Pull to refresh after iCloud finishes downloading.",
-                                systemImage: "icloud.and.arrow.down"
+                            SymairaNotice(
+                                message: "\(vault.skippedFiles) note\(vault.skippedFiles == 1 ? "" : "s") could not be read. Pull to refresh after iCloud finishes downloading.",
+                                tone: .warning
                             )
-                            .font(.footnote)
-                            .foregroundStyle(MobileTheme.textSecondary)
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .mobileLiquidGlass(cornerRadius: 16)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -339,30 +320,29 @@ private struct MobileOverviewView: View {
                 .refreshable { await vault.reload() }
                 .overlay {
                     if vault.isLoading && vault.notes.isEmpty {
-                        ProgressView("Reading vault…")
-                            .padding(20)
-                            .mobileLiquidGlass(cornerRadius: 18, elevated: true)
+                        SymairaLoadingState("Reading vault…")
                     }
                 }
             }
-            .navigationTitle("Overview")
+            .symairaTopography(topography)
+                .navigationTitle("Overview")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { Task { await vault.reload() } } label: {
-                        Image(systemName: "arrow.clockwise")
+                        Image(symairaIcon: .refresh, size: 20)
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { isComposerPresented = true } label: {
-                        Image(systemName: "square.and.pencil")
+                        Image(symairaIcon: .compose, size: 20)
                     }
                     .accessibilityLabel("New note")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { isScannerPresented = true } label: {
-                        Image(systemName: "doc.viewfinder")
+                        Image(symairaIcon: .scan, size: 20)
                     }
                     .accessibilityLabel("Scan document")
                 }
@@ -376,9 +356,8 @@ private struct MobileOverviewView: View {
     /// ever lost.
     private var draftRecovery: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Unfinished notes", systemImage: "pencil.and.outline")
-                .font(.headline)
-                .foregroundStyle(MobileTheme.textPrimary)
+            Label("Unfinished notes", symairaIcon: .edit)
+                .symairaText(.subheading)
 
             ForEach(recoveredDrafts) { draft in
                 Button {
@@ -387,16 +366,15 @@ private struct MobileOverviewView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(draft.title.isEmpty ? "Untitled note" : draft.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MobileTheme.textPrimary)
+                            .symairaText(.subheading)
                         Text(String(draft.body.replacingOccurrences(of: "\n", with: " ").prefix(120)))
-                            .font(.caption)
-                            .foregroundStyle(MobileTheme.textSecondary)
+                            .font(SymairaTypography.caption)
+                            .foregroundStyle(SymairaTokens.ink2)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(14)
-                    .mobileLiquidGlass(cornerRadius: 16)
+                    .symairaCard(padding: 0)
                 }
                 .buttonStyle(.plain)
             }
@@ -413,36 +391,34 @@ private struct MobileOverviewView: View {
     private var overviewHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Good to see your work again.")
-                .font(.title2.bold())
-                .foregroundStyle(MobileTheme.textPrimary)
+                .symairaText(.heading)
 			Text(vault.serverURL?.host ?? vault.vaultURL?.lastPathComponent ?? "Vault")
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.gold)
+                .symairaText(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .topoProtected()
     }
 
     private var metrics: some View {
         HStack(spacing: 12) {
-            MetricCard(value: vault.notes.count, label: "Notes", icon: "note.text")
-            MetricCard(value: vault.documents.count, label: "Documents", icon: "doc.text.image")
+            MetricCard(value: vault.notes.count, label: "Notes", icon: .note)
+            MetricCard(value: vault.documents.count, label: "Documents", icon: .document)
         }
     }
 
     @ViewBuilder
-    private func section(title: String, systemImage: String, notes: [MobileNote]) -> some View {
+    private func section(title: String, icon: SymairaIcon, notes: [MobileNote]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(title, systemImage: systemImage)
-                .font(.headline)
-                .foregroundStyle(MobileTheme.textPrimary)
+            Label(title, symairaIcon: icon)
+                .topoProtected()
+                .symairaText(.subheading)
 
             if notes.isEmpty {
                 Text("Nothing here yet.")
-                    .font(.subheadline)
-                    .foregroundStyle(MobileTheme.textMuted)
+                    .symairaText(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(18)
-                    .mobileLiquidGlass(cornerRadius: 18)
+                    .symairaCard(padding: 0)
             } else {
                 ForEach(notes) { note in
                     NavigationLink {
@@ -460,24 +436,24 @@ private struct MobileOverviewView: View {
 private struct MetricCard: View {
     let value: Int
     let label: String
-    let icon: String
+    let icon: SymairaIcon
 
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Image(systemName: icon)
-                .foregroundStyle(MobileTheme.gold)
-                .font(.title3)
+            SymairaIconView(icon, size: 20)
+                .foregroundStyle(SymairaTokens.ink2)
             Text(value, format: .number)
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundStyle(MobileTheme.textPrimary)
+                .font(SymairaTypography.stat)
+                .foregroundStyle(SymairaTokens.ink)
+                .monospacedDigit()
                 .contentTransition(.numericText())
             Text(label)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(MobileTheme.textSecondary)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink2)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .mobileLiquidGlass(cornerRadius: 20)
+        .symairaCard(padding: 0)
     }
 }
 
@@ -488,17 +464,9 @@ private struct MobileOutboxBanner: View {
     @EnvironmentObject private var vault: MobileVaultStore
 
     var body: some View {
-        Label {
-            Text("\(vault.pendingWriteCount) change\(vault.pendingWriteCount == 1 ? "" : "s") waiting to sync")
-        } icon: {
-            Image(systemName: "arrow.up.circle.fill")
-        }
-        .font(.callout.weight(.medium))
-        .foregroundStyle(MobileTheme.textPrimary)
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .mobileLiquidGlass(cornerRadius: 16)
-        .accessibilityLabel("\(vault.pendingWriteCount) changes waiting to sync")
+        SymairaNotice(
+            message: "\(vault.pendingWriteCount) change\(vault.pendingWriteCount == 1 ? "" : "s") waiting to sync"
+        )
     }
 }
 
@@ -598,14 +566,18 @@ private struct MobileLibraryView: View {
                     .refreshable { await vault.reload() }
                     .overlay {
                         if displayedNotes.isEmpty && !vault.isLoading {
-                            ContentUnavailableView(
-                                query.isEmpty ? (documentsOnly ? "No documents" : "No notes") : "No results",
-                                systemImage: query.isEmpty ? "tray" : "magnifyingglass",
-                                description: Text(query.isEmpty ? "Pull to refresh the selected vault." : "Try a different title, tag or phrase.")
-                            )
-                            .foregroundStyle(MobileTheme.textSecondary)
+                            SymairaEmptyState(
+                                icon: query.isEmpty ? .inbox : .search,
+                                title: query.isEmpty ? (documentsOnly ? "No documents" : "No notes") : "No results",
+                                message: query.isEmpty ? "Pull to refresh the selected vault." : "Try a different title, tag or phrase."
+                            ) {
+                                if query.isEmpty {
+                                    Button("Refresh vault") { Task { await vault.reload() } }
+                                        .symairaButtonStyle(.secondary)
+                                }
+                            }
                         } else if vault.isLoading && displayedNotes.isEmpty {
-                            ProgressView("Reading vault…")
+                            SymairaLoadingState("Reading vault…")
                         }
                     }
                 }
@@ -615,14 +587,14 @@ private struct MobileLibraryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { Task { await vault.reload() } } label: {
-                        Image(systemName: "arrow.clockwise")
+                        Image(symairaIcon: .refresh, size: 20)
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { isScannerPresented = true } label: {
-                        Image(systemName: "doc.viewfinder")
+                        Image(symairaIcon: .scan, size: 20)
                     }
                     .accessibilityLabel("Scan document")
                 }
@@ -660,8 +632,10 @@ private struct MobileLibraryView: View {
                             activeFilters = MobileActiveFilters()
                         } label: {
                             Text("Clear all")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(MobileTheme.gold)
+                                .font(SymairaTypography.label)
+                                .foregroundStyle(SymairaTokens.ink2)
+                                .frame(minHeight: SymairaMetrics.minimumControlHeight)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .padding(.trailing, 6)
@@ -669,7 +643,7 @@ private struct MobileLibraryView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                 }
-                .background(.ultraThinMaterial)
+                .background(SymairaTokens.canvas)
             }
 
             if documentsOnly, availableStatuses.count > 1 {
@@ -681,21 +655,21 @@ private struct MobileLibraryView: View {
     }
 
     private func chip(_ label: String, onRemove: @escaping () -> Void) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 0) {
             Text(label)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MobileTheme.textPrimary)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink)
             Button(action: onRemove) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(MobileTheme.textMuted)
+                SymairaIconView(.close, size: 14)
+                    .foregroundStyle(SymairaTokens.ink3)
+                    .frame(minWidth: SymairaMetrics.minimumControlHeight, minHeight: SymairaMetrics.minimumControlHeight)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Remove \(label)")
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 7)
-        .background(MobileTheme.card, in: Capsule())
+        .padding(.leading, 12)
+        .background(SymairaTokens.surface, in: Capsule())
     }
 
     /// Value pickers for tag / correspondent / document type / date range,
@@ -703,22 +677,22 @@ private struct MobileLibraryView: View {
     private var filterSurface: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
-                filterMenu("Tag", options: facets.tags, selection: $activeFilters.tags, icon: "tag")
-                filterMenu("From", options: facets.correspondents, selection: $activeFilters.correspondents, icon: "person.crop.circle")
-                filterMenu("Type", options: facets.documentTypes, selection: $activeFilters.documentTypes, icon: "doc.text.image")
+                filterMenu("Tag", options: facets.tags, selection: $activeFilters.tags, icon: .tag)
+                filterMenu("From", options: facets.correspondents, selection: $activeFilters.correspondents, icon: .user)
+                filterMenu("Type", options: facets.documentTypes, selection: $activeFilters.documentTypes, icon: .document)
                 dateRangeMenu
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
-        .background(.ultraThinMaterial)
+        .background(SymairaTokens.canvas)
     }
 
     private func filterMenu(
         _ title: String,
         options: [String],
         selection: Binding<[String]>,
-        icon: String
+        icon: SymairaIcon
     ) -> some View {
         Menu {
             ForEach(options, id: \.self) { option in
@@ -730,7 +704,7 @@ private struct MobileLibraryView: View {
                     }
                 } label: {
                     if selection.wrappedValue.contains(option) {
-                        Label(option, systemImage: "checkmark")
+                        Label { Text(option) } icon: { Image(symairaIcon: .confirm, size: 16) }
                     } else {
                         Text(option)
                     }
@@ -738,19 +712,18 @@ private struct MobileLibraryView: View {
             }
             if options.isEmpty {
                 Text("No values in vault")
-                    .font(.caption)
-                    .foregroundStyle(MobileTheme.textMuted)
             }
         } label: {
-            Label(
-                selection.wrappedValue.isEmpty ? title : title + " (\(selection.wrappedValue.count))",
-                systemImage: icon
-            )
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(MobileTheme.textPrimary)
+            Label {
+                Text(selection.wrappedValue.isEmpty ? title : title + " (\(selection.wrappedValue.count))")
+            } icon: {
+                Image(symairaIcon: icon, size: 16)
+            }
+            .font(SymairaTypography.label)
+            .foregroundStyle(SymairaTokens.ink)
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(MobileTheme.card, in: Capsule())
+            .frame(minHeight: SymairaMetrics.minimumControlHeight)
+            .background(SymairaTokens.surface, in: Capsule())
         }
     }
 
@@ -769,12 +742,16 @@ private struct MobileLibraryView: View {
                 activeFilters.dateTo = ""
             }
         } label: {
-            Label(activeFilters.dateFrom.isEmpty ? "Date" : "Date: \(activeFilters.dateFrom)…", systemImage: "calendar")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MobileTheme.textPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(MobileTheme.card, in: Capsule())
+            Label {
+                Text(activeFilters.dateFrom.isEmpty ? "Date" : "Date: \(activeFilters.dateFrom)…")
+            } icon: {
+                Image(symairaIcon: .calendar, size: 16)
+            }
+            .font(SymairaTypography.label)
+            .foregroundStyle(SymairaTokens.ink)
+            .padding(.horizontal, 12)
+            .frame(minHeight: SymairaMetrics.minimumControlHeight)
+            .background(SymairaTokens.surface, in: Capsule())
         }
     }
 
@@ -798,22 +775,23 @@ private struct MobileLibraryView: View {
                         statusFilter = status
                     } label: {
                         Text(status == "All" ? status : status.replacingOccurrences(of: "_", with: " ").capitalized)
-                            .font(.caption.weight(.semibold))
+                            .font(SymairaTypography.label)
                             .padding(.horizontal, 13)
-                            .padding(.vertical, 8)
-                            .foregroundStyle(statusFilter == status ? .black : MobileTheme.textSecondary)
+                            .frame(minHeight: SymairaMetrics.minimumControlHeight)
+                            .foregroundStyle(statusFilter == status ? SymairaTokens.onSelected : SymairaTokens.ink2)
                             .background(
-                                statusFilter == status ? MobileTheme.gold : MobileTheme.card,
+                                statusFilter == status ? SymairaTokens.selected : SymairaTokens.surface,
                                 in: Capsule()
                             )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(statusFilter == status ? .isSelected : [])
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .background(.ultraThinMaterial)
+        .background(SymairaTokens.canvas)
     }
 
     private func updateResults(for request: LibraryRequest) async {
@@ -902,23 +880,20 @@ struct MobileNoteRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 13) {
-            Image(systemName: note.isDocument ? "doc.text.image" : "note.text")
-                .font(.headline)
-                .foregroundStyle(note.isDocument ? MobileTheme.gold : MobileTheme.ice)
+            SymairaIconView(note.isDocument ? .document : .note, size: 18)
+                .foregroundStyle(SymairaTokens.ink2)
                 .frame(width: 38, height: 38)
-                .background((note.isDocument ? MobileTheme.gold : MobileTheme.ice).opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.md, style: .continuous))
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(note.title)
-                    .font(.headline)
-                    .foregroundStyle(MobileTheme.textPrimary)
+                    .symairaText(.subheading)
                     .lineLimit(2)
 
                 if let snippet, !snippet.isEmpty {
                     Text(snippet)
-                        .font(.subheadline)
-                        .foregroundStyle(MobileTheme.textSecondary)
+                        .symairaText(.secondary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                 }
@@ -936,31 +911,32 @@ struct MobileNoteRow: View {
                             .foregroundStyle(mobileStatusColor(note.status))
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(MobileTheme.textSecondary)
+                .font(SymairaTypography.caption)
+                .foregroundStyle(SymairaTokens.ink2)
 
                 if !note.dueDate.isEmpty {
-                    Label(note.dueDate, systemImage: "calendar")
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(MobileTheme.goldSoft)
+                    Label(note.dueDate, symairaIcon: .calendar)
+                        .font(SymairaTypography.label)
+                        .foregroundStyle(SymairaTokens.ink)
                 }
             }
 
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
-                .font(.caption.bold())
-                .foregroundStyle(MobileTheme.textMuted)
+            SymairaIconView(.forward, size: 14)
+                .foregroundStyle(SymairaTokens.ink3)
                 .padding(.top, 11)
                 .accessibilityHidden(true)
         }
         .padding(14)
-        .mobileLiquidGlass(cornerRadius: 18)
+        .symairaCard(padding: 0)
         .contentShape(Rectangle())
     }
 }
 
 private struct MobileSettingsView: View {
     @EnvironmentObject private var vault: MobileVaultStore
+    @AppStorage("appearance") private var appearance: SymairaAppearance = .system
+    @State private var isDisconnectConfirmationPresented = false
     @State private var isImporterPresented = false
 	@State private var isServerSheetPresented = false
 
@@ -968,61 +944,54 @@ private struct MobileSettingsView: View {
         NavigationStack {
             MobileBackdrop {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        VStack(alignment: .leading, spacing: 12) {
-							Label(vault.isRemote ? "Connected server" : "Current vault", systemImage: vault.isRemote ? "server.rack" : "folder.fill")
-                                .font(.headline)
-                                .foregroundStyle(MobileTheme.textPrimary)
-							Text(vault.serverURL?.host ?? vault.vaultURL?.lastPathComponent ?? "No vault")
-                                .font(.title3.bold())
-                                .foregroundStyle(MobileTheme.goldSoft)
-							Text(vault.displayLocation)
-                                .font(.caption.monospaced())
-                                .foregroundStyle(MobileTheme.textMuted)
-                                .textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
+                        SymairaFormSection(vault.isRemote ? "Connected server" : "Current vault") {
+                            VStack(alignment: .leading, spacing: SymairaSpacing.small) {
+                                Text(vault.serverURL?.host ?? vault.vaultURL?.lastPathComponent ?? "No vault")
+                                    .symairaText(.heading)
+                                Text(vault.displayLocation)
+                                    .symairaText(.monoSmall)
+                                    .textSelection(.enabled)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(18)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .mobileLiquidGlass(elevated: true)
+
+                        SymairaFormSection("Appearance") {
+                            SymairaAppearancePicker(selection: $appearance)
+                        }
 
                         Button {
                             isImporterPresented = true
                         } label: {
-                            Label("Choose another vault", systemImage: "folder.badge.gearshape")
+                            Label("Choose another vault", symairaIcon: .folder)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        .symairaButtonStyle(.secondary)
 
 						Button {
 							isServerSheetPresented = true
 						} label: {
-							Label(vault.isRemote ? "Change server" : "Connect to server", systemImage: "server.rack")
-								.frame(maxWidth: .infinity, alignment: .leading)
+							Label(vault.isRemote ? "Change server" : "Connect to server", symairaIcon: .server)
+							    .frame(maxWidth: .infinity, alignment: .leading)
 						}
-						.buttonStyle(.bordered)
-						.controlSize(.large)
+						.symairaButtonStyle(.secondary)
 
                         Button(role: .destructive) {
-                            vault.resetVault()
+                            isDisconnectConfirmationPresented = true
                         } label: {
-                            Label("Disconnect vault", systemImage: "rectangle.portrait.and.arrow.right")
+                            Label("Disconnect vault", symairaIcon: .logout)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        .symairaButtonStyle(.secondary)
+                        .confirmationDialog("Disconnect this vault?", isPresented: $isDisconnectConfirmationPresented, titleVisibility: .visible) {
+                            Button("Disconnect vault", role: .destructive) { vault.resetVault() }
+                        }
 
-                        VStack(alignment: .leading, spacing: 8) {
-							Text(vault.isRemote ? "Self-hosted by design" : "Local-first by design")
-                                .font(.headline)
-                                .foregroundStyle(MobileTheme.textPrimary)
+                        SymairaFormSection(vault.isRemote ? "Self-hosted by design" : "Local-first by design") {
 							Text(vault.isRemote ? "The server owns originals, Markdown, index and the OCR queue. This iPhone downloads a compact snapshot for fast local search and previews originals on demand." : "The iOS app reads Markdown and attachments through the Files permission you grant. Search stays on this device; syncing remains the job of iCloud Drive or your selected file provider.")
-                                .font(.subheadline)
-                                .foregroundStyle(MobileTheme.textSecondary)
+                                .symairaText(.body)
                                 .lineSpacing(3)
                         }
-                        .padding(18)
-                        .mobileLiquidGlass(cornerRadius: 18)
 
                         if !vault.failedWrites.isEmpty {
                             MobileFailedWritesSection()
@@ -1060,47 +1029,43 @@ private struct MobileFailedWritesSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Failed writes", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
-                .foregroundStyle(MobileTheme.textPrimary)
+            Label("Failed writes", symairaIcon: .warning)
+                .symairaText(.subheading)
 
             ForEach(vault.failedWrites) { entry in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 8) {
-                        Image(systemName: "doc.badge.ellipsis")
-                            .foregroundStyle(.red)
+                        SymairaIconView(.document, size: 16)
+                            .foregroundStyle(SymairaTokens.critical)
                         Text(entry.originalFilename ?? URL(fileURLWithPath: entry.path).lastPathComponent)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(MobileTheme.textPrimary)
+                            .symairaText(.subheading)
                             .lineLimit(1)
                         Spacer()
                     }
                     Text(entry.lastError ?? "Unknown error")
-                        .font(.caption)
-                        .foregroundStyle(MobileTheme.textSecondary)
+                        .font(SymairaTypography.caption)
+                        .foregroundStyle(SymairaTokens.ink2)
                         .fixedSize(horizontal: false, vertical: true)
 
                     HStack(spacing: 10) {
                         Button {
                             Task { await vault.retryWrite(id: entry.id) }
                         } label: {
-                            Label("Retry", systemImage: "arrow.clockwise")
+                            Label("Retry", symairaIcon: .refresh)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
 
                         Button(role: .destructive) {
                             Task { await vault.removeWrite(id: entry.id) }
                         } label: {
-                            Label("Remove", systemImage: "trash")
+                            Label("Remove", symairaIcon: .delete)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                     }
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .mobileLiquidGlass(cornerRadius: 16)
+                .symairaCard(padding: 0)
             }
         }
     }
@@ -1120,47 +1085,45 @@ private struct MobileServerConnectionView: View {
 			MobileBackdrop {
 				ScrollView {
 					VStack(alignment: .leading, spacing: 20) {
-						Label("Your server, native on iPhone", systemImage: "server.rack")
-							.font(.title2.bold())
-							.foregroundStyle(MobileTheme.textPrimary)
+						Label("Your server, native on iPhone", symairaIcon: .server)
+						    .symairaText(.heading)
 						Text("Connect to the SymDesk container on your Mac mini, Raspberry Pi, NAS or Home Assistant host.")
-							.foregroundStyle(MobileTheme.textSecondary)
+						    .symairaText(.secondary)
 
 						VStack(alignment: .leading, spacing: 14) {
 							TextField("https://symdesk.example.net", text: $serverURL)
 								.textInputAutocapitalization(.never)
 								.keyboardType(.URL)
-								.textFieldStyle(.roundedBorder)
+								.textFieldStyle(.symaira)
 							SecureField("Access token (32+ characters)", text: $token)
 								.textInputAutocapitalization(.never)
-								.textFieldStyle(.roundedBorder)
+								.textFieldStyle(.symaira)
 						}
 						.padding(18)
-						.mobileLiquidGlass(elevated: true)
+						.symairaCard(padding: 0)
 
 						if let errorMessage {
-							Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-								.font(.callout)
-								.foregroundStyle(.red)
+							SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
 						}
 
 						Button {
 							Task { await connect() }
 						} label: {
 							if isConnecting {
-								ProgressView().frame(maxWidth: .infinity)
+							    HStack(spacing: SymairaSpacing.small) {
+							        ProgressView()
+							        Text("Connecting…")
+							    }
+							    .frame(maxWidth: .infinity)
 							} else {
-								Label("Connect securely", systemImage: "lock.shield").frame(maxWidth: .infinity)
+							    Label("Connect securely", symairaIcon: .shieldCheck).frame(maxWidth: .infinity)
 							}
 						}
-						.buttonStyle(.borderedProminent)
-						.tint(MobileTheme.gold)
-						.foregroundStyle(.black)
+						.symairaButtonStyle(.primary)
 						.disabled(MobileServerConfig.normalizedURL(serverURL) == nil || token.count < 32 || isConnecting)
 
 						Text("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.")
-							.font(.footnote)
-							.foregroundStyle(MobileTheme.textMuted)
+							.symairaText(.caption)
 					}
 					.padding(20)
 				}

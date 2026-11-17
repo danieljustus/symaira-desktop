@@ -104,6 +104,8 @@ class PackageTests(unittest.TestCase):
             self.assertIn(f"/releases/download/v1.2.3/{name}", formula)
         self.assertNotIn("darwin_amd64", formula)
         self.assertIn('bin.install "symroom"', formula)
+        # brew audit --strict: the version comes from the URLs only.
+        self.assertNotRegex(formula, r'(?m)^\s*version "')
 
 
 if __name__ == "__main__":

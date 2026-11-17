@@ -157,7 +157,8 @@ def render_formula(version: str, checksums: Path) -> str:
             "class Symdesk < Formula\n"
             '  desc "Local-first markdown vault workspace: CLI and MCP server"\n'
             f'  homepage "{REPO_URL}"\n'
-            f'  version "{version}"\n'
+            # No `version` line: brew audit --strict rejects it as redundant
+            # with the version scanned from the release URLs.
             '  license "Apache-2.0"\n\n'
             "  on_macos do\n"
             "    if Hardware::CPU.arm?\n" + block("darwin", "arm64") + "    end\n"

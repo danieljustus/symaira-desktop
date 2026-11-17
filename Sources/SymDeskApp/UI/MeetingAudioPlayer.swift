@@ -74,8 +74,9 @@ struct MeetingAudioPlayerView: View {
                     SymairaIconView(model.isPlaying ? .pause : .play, size: 24)
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.ink)
                 .keyboardShortcut(.space, modifiers: [])
+                .help(model.isPlaying ? "Pause" : "Play")
                 .accessibilityLabel(model.isPlaying ? "Pause" : "Play")
 
                 Slider(
@@ -88,16 +89,15 @@ struct MeetingAudioPlayerView: View {
                 .accessibilityLabel("Playback position")
 
                 Text(Self.format(model.currentTime) + " / " + Self.format(model.duration))
-                    .symairaText(.caption).monospacedDigit()
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary).monospacedDigit()
             }
         } else {
             HStack(spacing: 8) {
-                Image(systemName: "waveform.slash")
-                    .foregroundColor(SymairaTheme.textMuted)
+                SymairaIconView(.audioOff, size: 16)
+                    .foregroundStyle(SymairaTokens.ink3)
+                    .accessibilityHidden(true)
                 Text("Audio unavailable for this meeting")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             .accessibilityElement(children: .combine)
         }

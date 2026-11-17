@@ -58,23 +58,20 @@ struct TranscriptTimelineView: View {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(Self.formatTimestamp(segment.startMS))
                     .symairaText(.caption).monospacedDigit()
-                    .foregroundColor(SymairaTheme.textMuted)
                     .frame(width: 56, alignment: .trailing)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(speaker)
-                        .symairaText(.caption).fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.goldSecondary)
+                        .symairaText(.secondary)
                     Text(segment.displayText)
                         .symairaText(.body)
-                        .foregroundColor(SymairaTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
             .background(
-                isPlaying ? SymairaTheme.goldPrimary.opacity(0.18)
-                    : isSelected ? SymairaTheme.goldPrimary.opacity(0.10)
+                isPlaying ? SymairaTokens.selection
+                    : isSelected ? SymairaTokens.raised
                     : Color.clear
             )
             .cornerRadius(6)
@@ -91,22 +88,19 @@ struct TranscriptTimelineView: View {
                 if let segmentsError {
                     Label("Time-coded segments unavailable: \(segmentsError)", symairaIcon: .expired)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 if let transcript, !transcript.isEmpty {
                     Text(transcript)
                         .symairaText(.mono)
-                        .foregroundColor(SymairaTheme.textPrimary)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     VStack(spacing: 8) {
-                        Image(systemName: "text.badge.xmark")
-                            .symairaText(.title)
-                            .foregroundColor(SymairaTheme.textMuted)
+                        SymairaIconView(.document, size: 24)
+                            .foregroundStyle(SymairaTokens.ink3)
+                            .accessibilityHidden(true)
                         Text("Transcript unavailable")
-                            .symairaText(.callout)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .symairaText(.secondary)
                     }
                     .frame(maxWidth: .infinity, minHeight: 160)
                 }

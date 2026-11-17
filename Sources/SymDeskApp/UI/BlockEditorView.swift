@@ -49,18 +49,17 @@ struct BlockRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Frontmatter")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                     TextField("Frontmatter", text: $block.content, axis: .vertical)
                         .symairaText(.mono)
                         .padding(8)
-                        .background(SymairaTokens.ink.opacity(0.04))
+                        .background(SymairaTokens.raised)
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }
             case .heading(let level):
                 HStack {
                     Text(String(repeating: "#", count: level))
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink3)
                         .font(headingFont(for: level))
                     TextField("Heading", text: $block.content, axis: .vertical)
                         .font(headingFont(for: level))
@@ -80,7 +79,7 @@ struct BlockRow: View {
             case .quote:
                 HStack(alignment: .top) {
                     Rectangle()
-                        .fill(SymairaTheme.goldShadow)
+                        .fill(SymairaTokens.line)
                         .frame(width: 4)
                     TextField("Quote", text: $block.content, axis: .vertical)
                         .symairaText(.body)
@@ -93,11 +92,10 @@ struct BlockRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(lang.isEmpty ? "Code" : "Code (\(lang))")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                     TextField("Code", text: $block.content, axis: .vertical)
                         .symairaText(.mono)
                         .padding(8)
-                        .background(SymairaTokens.ink.opacity(0.04))
+                        .background(SymairaTokens.raised)
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }

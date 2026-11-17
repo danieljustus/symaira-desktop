@@ -17,8 +17,17 @@ struct ModelsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
                 header
+
+                if let pendingError {
+                    SymairaNotice(
+                        title: "Model Download",
+                        message: pendingError,
+                        tone: .critical,
+                        onDismiss: { self.pendingError = nil }
+                    )
+                }
 
                 if ModelCatalog.all.isEmpty {
                     emptyState
@@ -26,13 +35,13 @@ struct ModelsView: View {
                     ForEach(ModelCatalog.all) { model in
                         modelRow(model)
                     }
-                    Divider().overlay(SymairaTheme.borderGlass)
+                    Divider().overlay(SymairaTokens.line)
                     storageNote
                 }
             }
-            .padding(20)
+            .padding(SymairaSpacing.xLarge)
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
         .sheet(item: $pendingModel) { model in
             licenseSheet(model)
         }
@@ -55,87 +64,75 @@ struct ModelsView: View {
                 Text("The downloaded files for \(model.displayName) will be deleted. The app itself is never modified.")
             }
         }
-        .alert("Model Download", isPresented: Binding(
-            get: { pendingError != nil },
-            set: { if !$0 { pendingError = nil } }
-        )) {
-            Button("Close", role: .cancel) {}
-        } message: {
-            Text(pendingError ?? "")
-        }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
+            HStack(spacing: SymairaSpacing.small) {
                 SymairaIconView(.package, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Local Models")
-                    .symairaText(.title).bold()
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.title)
             }
             Text("On-device models are downloaded on demand into your Application Support folder — never into the app bundle, so the app stays signature-valid.")
-                .symairaText(.subheading)
-                .foregroundStyle(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
         }
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             Text("No models available yet")
                 .symairaText(.subheading)
-                .foregroundStyle(SymairaTheme.textPrimary)
             Text("The download mechanism is ready — pinned revision, checksum verification, license confirmation, progress, cancel/resume and removal. Concrete models will be published here as their selection issues land.")
-                .symairaText(.subheading)
-                .foregroundStyle(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
             Text("Models are stored in: \(manager.modelsDirectory.path)")
                 .symairaText(.caption)
-                .foregroundStyle(SymairaTheme.textSecondary)
                 .textSelection(.enabled)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(SymairaTheme.bgCard))
+        .symairaCard()
     }
 
     private var storageNote: some View {
         Text("Model storage: \(manager.modelsDirectory.path) · Downloads never modify the app bundle.")
             .symairaText(.caption)
-            .foregroundStyle(SymairaTheme.textSecondary)
             .textSelection(.enabled)
     }
 
     private func modelRow(_ model: ModelDescriptor) -> some View {
         let state = manager.state(for: model)
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             HStack(alignment: .firstTextBaseline) {
                 Text(model.displayName)
                     .symairaText(.subheading)
-                    .foregroundStyle(SymairaTheme.textPrimary)
                 Spacer()
                 Text(ByteCountFormatter.string(fromByteCount: model.sizeBytes, countStyle: .file))
                     .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .monospacedDigit()
             }
-            HStack(spacing: 6) {
+            HStack(spacing: SymairaSpacing.small) {
                 Text(model.licenseName)
+                    .symairaText(.secondary)
                 Link("License", destination: model.licenseURL)
-                    .symairaText(.subheading)
+                    .symairaText(.callout)
                 Spacer()
                 stateControls(model, state: state)
             }
             if case .downloading(let progress) = state {
                 ProgressView(value: progress)
-                    .tint(SymairaTheme.goldPrimary)
+                    .progressViewStyle(SymairaProgressStyle())
+                    .accessibilityLabel("Download progress for \(model.displayName)")
             }
             if case .failed(let message) = state {
-                Text(message)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTokens.critical)
+                HStack(alignment: .firstTextBaseline, spacing: SymairaSpacing.xSmall) {
+                    SymairaIconView(.error, size: 14)
+                    Text(message)
+                        .symairaText(.caption, respectsForeground: false)
+                }
+                .foregroundStyle(SymairaTokens.critical)
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 10).fill(SymairaTheme.bgCard))
+        .symairaCard()
     }
 
     @ViewBuilder
@@ -143,61 +140,49 @@ struct ModelsView: View {
         switch state {
         case .notInstalled:
             Button("Download") { pendingModel = model }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.secondary)
         case .downloading:
             Button("Cancel") { manager.cancel(model) }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
         case .paused:
             Button("Resume") {
                 try? manager.install(model, licenseAccepted: true)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(SymairaTheme.goldPrimary)
+            .symairaButtonStyle(.secondary)
             Button("Remove") { pendingRemoval = model }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
         case .installed:
             Button("Remove") { pendingRemoval = model }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
         case .failed:
             Button("Retry") { pendingModel = model }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.secondary)
             Button("Remove") { pendingRemoval = model }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
         }
     }
 
     private func licenseSheet(_ model: ModelDescriptor) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("License required")
-                .symairaText(.subheading)
-                .foregroundStyle(SymairaTheme.textPrimary)
-            Text("Before downloading \(model.displayName) (\(model.licenseName)), please review the model's license.")
-                .symairaText(.subheading)
-                .foregroundStyle(SymairaTheme.textSecondary)
-            Link("Open license: \(model.licenseName)", destination: model.licenseURL)
-                .symairaText(.subheading)
-            HStack {
-                Button("Cancel") { pendingModel = nil }
-                    .buttonStyle(.bordered)
-                Spacer()
-                Button("Accept & Download") {
-                    let descriptor = model
-                    pendingModel = nil
-                    do {
-                        try manager.install(descriptor, licenseAccepted: true)
-                    } catch {
-                        pendingError = (error as? ModelInstallError)?.errorDescription ?? error.localizedDescription
-                    }
+        SymairaSheetScaffold(
+            title: "License Required",
+            dismiss: { pendingModel = nil },
+            primaryTitle: "Accept & Download",
+            primary: {
+                let descriptor = model
+                pendingModel = nil
+                do {
+                    try manager.install(descriptor, licenseAccepted: true)
+                } catch {
+                    pendingError = (error as? ModelInstallError)?.errorDescription ?? error.localizedDescription
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
             }
+        ) {
+            Text("Before downloading \(model.displayName) (\(model.licenseName)), please review the model's license.")
+                .symairaText(.secondary)
+            Link("Open license: \(model.licenseName)", destination: model.licenseURL)
+                .symairaText(.callout)
         }
-        .padding(20)
-        .frame(width: 420)
-        .background(SymairaTheme.bgCard)
+        .frame(width: 420, height: 260)
     }
 
     private func remove(_ model: ModelDescriptor) {

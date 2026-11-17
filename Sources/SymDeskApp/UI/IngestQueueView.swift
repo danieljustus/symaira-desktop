@@ -19,9 +19,7 @@ struct IngestQueueView: View {
             Divider()
 
             if isLoading && jobs.isEmpty {
-                ProgressView("Loading ingestion jobs…")
-                    .tint(SymairaTheme.goldPrimary)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                SymairaLoadingState("Loading ingestion jobs…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let err = errorMessage {
                 errorState(err)
@@ -45,11 +43,8 @@ struct IngestQueueView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Ingest Queue")
                     .symairaText(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Text("Monitor active and historical document ingestion tasks")
-                    .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer()
             Button(action: {
@@ -57,7 +52,7 @@ struct IngestQueueView: View {
             }) {
                 Label("Refresh", symairaIcon: .refresh)
             }
-            .buttonStyle(SymairaSecondaryButtonStyle())
+            .symairaButtonStyle(.secondary)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
@@ -65,37 +60,23 @@ struct IngestQueueView: View {
 
     private func errorState(_ msg: String) -> some View {
         VStack(spacing: 12) {
-            SymairaIconView(.warning, size: 30)
-                .foregroundColor(SymairaTokens.critical)
-            Text("Connection Failed")
-                .symairaText(.heading)
-                .fontWeight(.semibold)
-                .foregroundColor(SymairaTheme.textPrimary)
-            Text(msg)
-                .symairaText(.body)
-                .foregroundColor(SymairaTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+            SymairaNotice(title: "Connection Failed", message: msg, tone: .critical)
             Button("Retry Connection") {
                 Task { await fetchJobs(offset: pageOffset) }
             }
-            .buttonStyle(SymairaPrimaryButtonStyle())
+            .symairaButtonStyle(.primary)
         }
+        .frame(maxWidth: 520)
+        .padding(.horizontal, 40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.inbox, size: 30)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("Queue is empty")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
-            Text("Drop PDF or image files to start ingestion.")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .inbox,
+            title: "Queue Is Empty",
+            message: "Drop PDF or image files to start ingestion."
+        )
     }
 
     private var jobsList: some View {
@@ -123,16 +104,18 @@ struct IngestQueueView: View {
     private var paginationFooter: some View {
         HStack {
             Text("Jobs \(totalJobs == 0 ? 0 : pageOffset + 1)-\(min(pageOffset + jobs.count, totalJobs)) of \(totalJobs)")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
+                .monospacedDigit()
             Spacer()
             Button("Previous") {
                 Task { await fetchJobs(offset: max(0, pageOffset - pageSize)) }
             }
+            .symairaButtonStyle(.secondary)
             .disabled(pageOffset == 0 || isLoading)
             Button("Next") {
                 Task { await fetchJobs(offset: pageOffset + pageSize) }
             }
+            .symairaButtonStyle(.secondary)
             .disabled(pageOffset + jobs.count >= totalJobs || isLoading)
         }
         .padding(.top, 6)
@@ -181,23 +164,19 @@ struct JobRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             statusIcon
-                .symairaText(.title)
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(displayFilename)
                         .symairaText(.subheading)
-                        .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                     Spacer()
                     Text("Job #\(job.id)")
                         .symairaText(.monoSmall)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 Text(job.sourcePath)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
 
@@ -208,15 +187,14 @@ struct JobRow: View {
                         Text("Created: \(formattedDate(job.createdAt))")
                     }
                 }
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
 
                 if let err = job.lastError {
                     Text(err)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.critical)
+                        .symairaText(.caption, respectsForeground: false)
+                        .foregroundStyle(SymairaTokens.critical)
                         .padding(8)
-                        .background(SymairaTokens.critical.opacity(0.1))
+                        .background(SymairaTokens.criticalSoft)
                         .cornerRadius(6)
                         .padding(.top, 4)
                 }
@@ -233,7 +211,7 @@ struct JobRow: View {
                         Text("Retry")
                     }
                 }
-                .buttonStyle(SymairaPrimaryButtonStyle())
+                .symairaButtonStyle(.secondary)
                 .disabled(isRetrying)
             }
         }
@@ -243,16 +221,16 @@ struct JobRow: View {
         switch job.status.lowercased() {
         case "completed", "success":
             return SymairaIconView(.success, size: 16)
-                .foregroundColor(SymairaTokens.positive)
+                .foregroundStyle(SymairaTokens.positive)
         case "failed":
             return SymairaIconView(.failure, size: 16)
-                .foregroundColor(SymairaTokens.critical)
+                .foregroundStyle(SymairaTokens.critical)
         case "running":
             return SymairaIconView(.sync, size: 16)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.ink)
         default:
             return SymairaIconView(.time, size: 16)
-                .foregroundColor(SymairaTheme.goldSecondary)
+                .foregroundStyle(SymairaTokens.ink2)
         }
     }
 

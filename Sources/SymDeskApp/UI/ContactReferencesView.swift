@@ -24,24 +24,21 @@ struct ContactReferencesView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(name)
-                        .symairaText(.title).bold()
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.title)
                     identityLine
                 }
                 Spacer()
                 Button("Done") { dismiss() }
+                    .symairaButtonStyle(.secondary)
+                    .keyboardShortcut(.cancelAction)
             }
 
             if let loadError {
-                Label(loadError, symairaIcon: .warning)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                SymairaNotice(message: loadError, tone: .critical)
             } else if let references {
                 content(references)
             } else {
-                ProgressView()
-                    .accessibilityLabel("Loading contacts…")
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading contacts…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
@@ -58,18 +55,16 @@ struct ContactReferencesView: View {
             if !references.storeAvailable {
                 Label("Contact store unavailable — identity unknown", symairaIcon: .help)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             } else if let ref = references.refs.first {
                 Label(
                     "Linked contact: \(ref.displayName ?? ref.id) (\(ref.kind))",
-                    systemImage: "person.crop.circle.badge.checkmark"
+                    symairaIcon: .userVerified
                 )
-                .symairaText(.caption)
-                .foregroundColor(SymairaTokens.positive)
+                .symairaText(.caption, respectsForeground: false)
+                .foregroundStyle(SymairaTokens.positive)
             } else {
                 Label("No contact carries this name", symairaIcon: .user)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
     }
@@ -81,7 +76,6 @@ struct ContactReferencesView: View {
                 if references.documents.isEmpty {
                     Text("No documents are filed under this correspondent.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 ForEach(references.documents) { doc in
                     Button {
@@ -90,7 +84,7 @@ struct ContactReferencesView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(doc.title).symairaText(.body)
-                            Text(doc.path).symairaText(.caption).foregroundColor(SymairaTheme.textMuted)
+                            Text(doc.path).symairaText(.caption)
                         }
                     }
                     .buttonStyle(.plain)
@@ -103,7 +97,6 @@ struct ContactReferencesView: View {
                          ? "Meetings are matched by linked contact, and no contact carries this name yet."
                          : "No meeting links this contact.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 ForEach(references.meetings) { meeting in
                     Button {
@@ -115,7 +108,6 @@ struct ContactReferencesView: View {
                             if let participant = meeting.participant, !participant.isEmpty {
                                 Text("as \(participant)")
                                     .symairaText(.caption)
-                                    .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
                     }

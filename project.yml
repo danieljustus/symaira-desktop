@@ -158,6 +158,8 @@ targets:
       - Sources/SymDeskMobile/PrivacyInfo.xcprivacy
     dependencies:
       - package: symaira-corekit
+        product: SymairaTheme
+      - package: symaira-corekit
         product: SymairaKeychain
       - target: SymDeskMobileShare
       - target: SymDeskWidget

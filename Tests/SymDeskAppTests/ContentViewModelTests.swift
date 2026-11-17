@@ -171,7 +171,7 @@ final class ContentViewModelTests: XCTestCase {
 
     func testDoctorSummaryText() {
         let model = ContentViewModel()
-        XCTAssertEqual(model.doctorSummaryText, "Vault check unavailable — run `symdesk doctor`")
+        XCTAssertEqual(model.doctorSummaryText, "Vault check unavailable. Run symdesk doctor in Terminal.")
 
         let healthyReport = DoctorReport(
             overall: "ok",

@@ -20,9 +20,7 @@ struct SpeakerReviewPanel: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Speakers")
-                    .symairaText(.callout)
-                    .fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                 Spacer()
                 if model.isCorrectingSpeaker {
                     ProgressView().controlSize(.mini)
@@ -31,19 +29,16 @@ struct SpeakerReviewPanel: View {
                     Button("Reset Edits") { confirmingReset = true }
                         .buttonStyle(.plain)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                         .accessibilityLabel("Reset all speaker edits")
                 }
             }
 
             if let error = model.speakersError {
-                Label(error, systemImage: "person.crop.circle.badge.questionmark")
+                Label(error, symairaIcon: .userUnknown)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             } else if model.speakers.isEmpty {
                 Text("No speakers recorded for this meeting.")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ForEach(model.speakers) { speaker in
                     speakerRow(speaker)
@@ -52,8 +47,8 @@ struct SpeakerReviewPanel: View {
 
             if let actionError = model.speakerActionError {
                 Text(actionError)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.critical)
             }
 
             participantsSection
@@ -74,7 +69,7 @@ struct SpeakerReviewPanel: View {
     private func speakerRow(_ speaker: MeetingSpeaker) -> some View {
         HStack(spacing: 8) {
             SymairaIconView(.user, size: 16)
-                .foregroundColor(SymairaTheme.goldSecondary)
+                .foregroundStyle(SymairaTokens.ink2)
 
             if renamingSpeakerID == speaker.speakerID {
                 TextField("Speaker name", text: $renameText)
@@ -83,19 +78,15 @@ struct SpeakerReviewPanel: View {
                     .onSubmit { commitRename(speaker) }
                     .accessibilityLabel("New name for \(speaker.label)")
                 Button("Save") { commitRename(speaker) }
-                    .buttonStyle(.plain)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .symairaButtonStyle(.secondary)
                     .keyboardShortcut(.defaultAction)
             } else {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(speaker.label)
                         .symairaText(.callout)
-                        .foregroundColor(SymairaTheme.textPrimary)
                     if speaker.label != speaker.speakerID {
                         Text(speaker.speakerID)
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     }
                 }
                 Spacer()
@@ -121,7 +112,7 @@ struct SpeakerReviewPanel: View {
                     }
                 } label: {
                     Image(symairaIcon: .more, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 28)
@@ -147,26 +138,20 @@ struct SpeakerReviewPanel: View {
             if !participants.isEmpty {
                 Divider()
                 Text("Participants")
-                    .symairaText(.callout)
-                    .fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                 ForEach(Array(participants.enumerated()), id: \.offset) { _, participant in
                     HStack(spacing: 8) {
-                        Image(systemName: participant.entityID == nil || participant.entityID?.isEmpty == true ? "person.crop.circle" : "person.crop.circle.badge.checkmark")
-                            .foregroundColor(participant.entityID == nil || participant.entityID?.isEmpty == true ? SymairaTheme.textMuted : SymairaTheme.goldPrimary)
+                        SymairaIconView(participant.entityID == nil || participant.entityID?.isEmpty == true ? .user : .userVerified, size: 16)
+                            .foregroundStyle(participant.entityID == nil || participant.entityID?.isEmpty == true ? SymairaTokens.ink3 : SymairaTokens.ink)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(participant.label.isEmpty ? "Unlabeled speaker" : participant.label)
                                 .symairaText(.callout)
-                                .foregroundColor(SymairaTheme.textPrimary)
                             Text(participant.speakerIDs.joined(separator: ", "))
                                 .symairaText(.caption)
-                                .foregroundColor(SymairaTheme.textMuted)
                         }
                         Spacer()
                         Button("Confirm…") { confirmingParticipant = participant }
-                            .buttonStyle(.plain)
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.goldPrimary)
+                            .symairaButtonStyle(.secondary)
                             .accessibilityLabel("Confirm the person for \(participant.label.isEmpty ? "this unlabeled speaker" : participant.label)")
                     }
                     .accessibilityElement(children: .combine)

@@ -69,27 +69,23 @@ struct DbViewBoard: View {
     var body: some View {
         VStack {
             if isLoading {
-                ProgressView()
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading items…")
             } else if items.isEmpty {
-                Text("No items found.")
-                    .foregroundColor(SymairaTheme.textMuted)
+                SymairaEmptyState(icon: .stack, title: "No Items Found", message: "This view has no matching documents yet.")
             } else {
                 ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 20) {
                         ForEach(groupedItems, id: \.key) { group in
                             VStack(alignment: .leading) {
                                 Text(group.key.uppercased())
-                                    .symairaText(.subheading)
-                                    .foregroundColor(SymairaTheme.goldPrimary)
+                                    .symairaText(.sectionLabel)
                                     .padding(.bottom, 8)
 
                                 ForEach(group.value) { item in
                                     let title = (item.data["_title"] as? String) ?? "Untitled"
                                     VStack(alignment: .leading) {
-                                        Text(title).bold()
-                                            .foregroundColor(SymairaTheme.textPrimary)
-                                        Text(item.id).symairaText(.caption).foregroundColor(SymairaTheme.textMuted)
+                                        Text(title).symairaText(.bodyEmphasized)
+                                        Text(item.id).symairaText(.caption)
                                     }
                                     .padding()
                                     .frame(width: 250, alignment: .leading)

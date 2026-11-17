@@ -11,8 +11,8 @@ struct DbViewList: View {
         List(rows.indices, id: \.self) { index in
             let row = rows[index]
             VStack(alignment: .leading) {
-                Text((row["_title"] as? String) ?? "Untitled").foregroundColor(SymairaTheme.textPrimary)
-                Text((row["_path"] as? String) ?? "").symairaText(.caption).foregroundColor(SymairaTheme.textMuted)
+                Text((row["_title"] as? String) ?? "Untitled").symairaText(.body)
+                Text((row["_path"] as? String) ?? "").symairaText(.caption)
             }
         }
         .scrollContentBackground(.hidden)

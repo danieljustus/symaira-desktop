@@ -105,6 +105,7 @@ struct DbViewEditor: View {
                     SymairaFormSection("Filters (All Must Match)") {
                         filterRows($filters)
                         Button("Add Filter") { filters.append(EditableFilter()) }
+                            .symairaButtonStyle(.secondary)
                             .padding(.vertical, SymairaSpacing.small)
                     }
 
@@ -120,12 +121,12 @@ struct DbViewEditor: View {
                         SymairaFormDivider()
                         filterRows($groupFilters)
                         Button("Add Condition") { groupFilters.append(EditableFilter()) }
+                            .symairaButtonStyle(.secondary)
                             .padding(.vertical, SymairaSpacing.small)
                     }
 
                     if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(SymairaTokens.critical)
+                        SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
                     }
                 }
                 .padding()
@@ -137,12 +138,16 @@ struct DbViewEditor: View {
                     Button("Delete View", role: .destructive) {
                         Task { await deleteView() }
                     }
+                    .symairaButtonStyle(.secondary)
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }
+                    .symairaButtonStyle(.secondary)
+                    .keyboardShortcut(.cancelAction)
                 Button(existing == nil ? "Create View" : "Save View") {
                     Task { await save() }
                 }
+                .symairaButtonStyle(.primary)
                 .keyboardShortcut(.defaultAction)
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
             }
@@ -176,6 +181,7 @@ struct DbViewEditor: View {
                     SymairaIconView(.remove, size: 16)
                 }
                 .buttonStyle(.plain)
+                .foregroundStyle(SymairaTokens.ink2)
                 .accessibilityLabel("Remove filter")
                 .help("Remove filter")
             }

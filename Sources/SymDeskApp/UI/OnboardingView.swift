@@ -104,16 +104,15 @@ struct OnboardingView: View {
     // MARK: - Step 1: Choose Location
 
     private var chooseLocationStep: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 8) {
+        VStack(spacing: SymairaSpacing.xLarge) {
+            VStack(spacing: SymairaSpacing.small) {
                 SymairaIconView(.folderAdd, size: 24)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Welcome to SymDesk")
-                    .symairaText(.display).bold()
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.display)
                 Text("Where should your documents and notes live?")
-                    .symairaText(.heading)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.heading, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.ink2)
                     .multilineTextAlignment(.center)
             }
             .padding(.top, 32)
@@ -122,17 +121,10 @@ struct OnboardingView: View {
             missingVaultNotice
 
             if isLoading {
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .controlSize(.large)
-                        .tint(SymairaTheme.goldPrimary)
-                    Text(progressMessage)
-                        .foregroundColor(SymairaTheme.textSecondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                SymairaLoadingState(progressMessage)
             } else {
                 ScrollView {
-                    VStack(spacing: 10) {
+                    VStack(spacing: SymairaSpacing.medium) {
                         ForEach(VaultSource.allCases) { source in
                             sourceButton(source)
                         }
@@ -155,28 +147,7 @@ struct OnboardingView: View {
     }
 
     private func errorBox(_ message: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            SymairaIconView(.warning, size: 16)
-                .foregroundColor(SymairaTokens.critical)
-                .padding(.top, 2)
-            ScrollView {
-                Text(message)
-                    .foregroundColor(SymairaTokens.critical)
-                    .symairaText(.callout)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxHeight: 96)
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(SymairaTokens.critical.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
-                )
-        )
+        SymairaNotice(message: message, tone: .critical, onDismiss: { errorMessage = nil })
     }
 
     private func sourceButton(_ source: VaultSource) -> some View {
@@ -195,27 +166,28 @@ struct OnboardingView: View {
 
         var body: some View {
             Button(action: action) {
-                HStack(spacing: 14) {
+                HStack(spacing: SymairaSpacing.large) {
                     SymairaIconView(source.icon, size: 20)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink2)
                         .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: SymairaSpacing.xSmall) {
                         Text(source.rawValue)
-                            .symairaText(.body).fontWeight(.medium)
-                            .foregroundColor(SymairaTheme.textPrimary)
+                            .symairaText(.bodyEmphasized)
                         Text(source.description)
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                     }
                     Spacer()
                     SymairaIconView(.forward, size: 14)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
-                .padding(12)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .glassCard(isHovered: isHovering)
+            .symairaCard(padding: SymairaSpacing.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: SymairaTokens.Radius.lg, style: .continuous)
+                    .stroke(isHovering ? SymairaTokens.focus : Color.clear, lineWidth: 1)
+            )
             .onHover { hovering in
                 withAnimation(SymairaTheme.transitionFast) {
                     isHovering = hovering
@@ -228,34 +200,31 @@ struct OnboardingView: View {
     // MARK: - Step 2: Ready
 
     private var readyStep: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: SymairaSpacing.xLarge) {
             Spacer()
 
             SymairaIconView(.success, size: 30)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.positive)
 
             Text("You're all set!")
-                .symairaText(.display).bold()
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.display)
 
             Text("SymDesk is ready to explore your vault.")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.heading, respectsForeground: false)
+                .foregroundStyle(SymairaTokens.ink2)
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
                 capabilityRow(icon: .folder, title: "Watch Folder", desc: "Auto-detects changes in your vault")
                 capabilityRow(icon: .terminal, title: "CLI Access", desc: "Run `symdesk` commands from Terminal")
                 capabilityRow(icon: .cpu, title: "MCP / Agents", desc: "Connect AI agents to your knowledge")
                 capabilityRow(icon: .search, title: "Search", desc: "Full-text search across all documents")
             }
-            .padding(20)
-            .symairaCard(padding: 0)
+            .symairaCard(padding: SymairaSpacing.xLarge)
             .frame(maxWidth: 420)
 
             if core.isDemoMode {
                 Text("Demo mode — sample data loaded.")
-                    .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
 
             // Migration path for Paperless-ngx users: discoverable during
@@ -266,40 +235,38 @@ struct OnboardingView: View {
                 } label: {
                     Label("Import from Paperless-ngx…", symairaIcon: .download)
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
+                .symairaButtonStyle(.secondary)
                 .help("Migrate an existing Paperless-ngx export into this vault")
             }
 
             Spacer()
 
-            HStack(spacing: 12) {
+            HStack(spacing: SymairaSpacing.medium) {
                 Button("Explore Capabilities") {
                     NotificationCenter.default.post(name: .openDiscover, object: nil)
                     dismissOnboarding()
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
+                .symairaButtonStyle(.secondary)
 
                 Button("Get Started") {
                     dismissOnboarding()
                 }
-                .buttonStyle(SymairaPrimaryButtonStyle())
+                .symairaButtonStyle(.primary)
             }
             .padding(.bottom, 32)
         }
     }
 
     private func capabilityRow(icon: SymairaIcon, title: String, desc: String) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: SymairaSpacing.medium) {
             SymairaIconView(icon, size: 16)
                 .frame(width: 20)
-                .foregroundColor(SymairaTheme.goldPrimary)
-            VStack(alignment: .leading, spacing: 1) {
+                .foregroundStyle(SymairaTokens.ink2)
+            VStack(alignment: .leading, spacing: SymairaSpacing.xSmall) {
                 Text(title)
-                    .symairaText(.body).fontWeight(.medium)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.bodyEmphasized)
                 Text(desc)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
     }
@@ -420,49 +387,34 @@ struct ServerConnectionSheet: View {
 	let connect: (String, String) -> Void
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 22) {
-			HStack(alignment: .top, spacing: 14) {
-				SymairaIconView(.server, size: 20)
-					.foregroundStyle(SymairaTheme.goldPrimary)
-				VStack(alignment: .leading, spacing: 4) {
-					Text("Connect to SymDesk Server").symairaText(.title).bold()
-					Text("Documents stay on your server. This Mac becomes a fast native frontend.")
-						.foregroundStyle(SymairaTheme.textSecondary)
-				}
-			}
+		SymairaSheetScaffold(
+			title: "Connect to SymDesk Server",
+			dismiss: { dismiss() },
+			primaryTitle: "Connect",
+			primaryDisabled: ServerConnectionConfig.normalizedURL(serverURL) == nil || token.count < 32,
+			primary: { connect(serverURL, token) }
+		) {
+			Text("Documents stay on your server. This Mac becomes a fast native frontend.")
+				.symairaText(.secondary)
 
-			VStack(alignment: .leading, spacing: 14) {
-				LabeledContent("Server URL") {
+			SymairaFormSection {
+				SymairaFormRow("Server URL") {
 					TextField("https://symdesk.example.net", text: $serverURL)
 						.textFieldStyle(.symaira)
-						.frame(width: 330)
+						.frame(width: 300)
 				}
-				LabeledContent("Access token") {
+				SymairaFormDivider()
+				SymairaFormRow("Access Token") {
 					SecureField("At least 32 characters", text: $token)
 						.textFieldStyle(.symaira)
-						.frame(width: 330)
+						.frame(width: 300)
 				}
 			}
-			.padding(18)
-			.symairaCard(padding: 0)
 
 			Label("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.", symairaIcon: .lock)
-				.symairaText(.callout)
-				.foregroundStyle(SymairaTheme.textSecondary)
-
-			HStack {
-				Spacer()
-				Button("Cancel") { dismiss() }
-					.buttonStyle(.bordered)
-				Button("Connect") { connect(serverURL, token) }
-					.buttonStyle(.borderedProminent)
-					.tint(SymairaTheme.goldPrimary)
-					.disabled(ServerConnectionConfig.normalizedURL(serverURL) == nil || token.count < 32)
-			}
+				.symairaText(.secondary)
 		}
-		.padding(28)
-		.frame(width: 590)
-		.background(SymairaTheme.bgDark)
+		.frame(width: 590, height: 380)
 	}
 }
 
@@ -473,24 +425,11 @@ private struct MissingVaultNotice: View {
     let path: String
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text("Your last vault is no longer there")
-                .symairaText(.body)
-                .foregroundColor(SymairaTheme.textPrimary)
-            Text(path)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
-                .lineLimit(2)
-                .truncationMode(.middle)
-            Text("SymDesk did not change or delete anything. Pick the folder again if it moved, or choose another vault below.")
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
-                .multilineTextAlignment(.center)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(SymairaTheme.bgCard)
-        .cornerRadius(10)
+        SymairaNotice(
+            title: "Your last vault is no longer there",
+            message: "SymDesk did not change or delete anything. Pick the folder again if it moved, or choose another vault below. Previous location: \(path)",
+            tone: .warning
+        )
         .padding(.horizontal, 40)
     }
 }

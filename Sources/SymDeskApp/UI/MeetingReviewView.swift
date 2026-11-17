@@ -14,8 +14,7 @@ struct MeetingReviewView: View {
         Group {
             switch model.detailState {
             case .idle, .loading:
-                ProgressView("Loading meeting…")
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading meeting…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .failed(let message):
                 failedState(message)
@@ -26,8 +25,8 @@ struct MeetingReviewView: View {
                     // Detail state can briefly read .loaded before selectedDetail
                     // is published on the same run loop tick; treat as loading
                     // rather than showing an empty pane.
-                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .accessibilityLabel("Loading meeting…")
+                    SymairaLoadingState("Loading meeting…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }
@@ -36,45 +35,38 @@ struct MeetingReviewView: View {
     private func failedState(_ message: String) -> some View {
         VStack(spacing: 12) {
             SymairaIconView(.warning, size: 24)
-                .foregroundColor(SymairaTokens.critical)
+                .foregroundStyle(SymairaTokens.critical)
             if let path = model.selectedPath {
                 Text("Couldn't load \(fileName(for: path))")
                     .symairaText(.heading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Text(path)
-                    .symairaText(.caption)
-                    .monospaced()
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.monoSmall)
                     .textSelection(.enabled)
             } else {
                 Text("Couldn't load this meeting")
                     .symairaText(.heading)
-                    .foregroundColor(SymairaTheme.textPrimary)
             }
             Text(message)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
                 .multilineTextAlignment(.center)
             HStack(spacing: 10) {
                 if let path = model.selectedPath {
                     Button("Retry") {
                         Task { await model.selectMeeting(path: path) }
                     }
-                    .buttonStyle(SymairaSecondaryButtonStyle())
+                    .symairaButtonStyle(.secondary)
                     if canRevealFiles {
                         Button("Reveal") { reveal(path: path) }
-                            .buttonStyle(SymairaSecondaryButtonStyle())
+                            .symairaButtonStyle(.secondary)
                     }
                     Button("Skip") { model.clearSelection() }
-                        .buttonStyle(.plain)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaButtonStyle(.secondary)
                 }
             }
         }
-        .padding(20)
-        .background(SymairaTokens.critical.opacity(0.08))
+        .symairaCard(padding: SymairaSpacing.xLarge)
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: SymairaRadius.card)
                 .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
         }
         .frame(maxWidth: 520)
@@ -126,8 +118,8 @@ struct MeetingReviewView: View {
 
             ForEach([model.refreshError, model.reviewSaveError].compactMap { $0 }, id: \.self) { error in
                 Text(error)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.critical)
                     .padding(8)
             }
         }
@@ -182,19 +174,16 @@ struct MeetingReviewView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(detail.title.isEmpty ? detail.frontmatter.meetingID : detail.title)
                     .symairaText(.heading)
-                    .fontWeight(.bold)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 HStack(spacing: 10) {
                     Label(detail.frontmatter.startedAt, symairaIcon: .calendar)
                     if let language = detail.frontmatter.language, !language.isEmpty {
-                        Label(language, systemImage: "globe")
+                        Label(language, symairaIcon: .language)
                     }
                     if let ms = detail.frontmatter.durationMS, ms > 0 {
                         Label(Self.formatDuration(ms), symairaIcon: .time)
                     }
                 }
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
             }
             Spacer()
             reviewStateBadge
@@ -205,12 +194,10 @@ struct MeetingReviewView: View {
                 Button("Refresh Transcript") {
                     Task { await model.refreshSelected(apply: true) }
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
 
                 Button("Publish to Memory…") { showPublishSheet = true }
-                    .buttonStyle(SymairaSecondaryButtonStyle())
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
                     .accessibilityLabel("Review and publish meeting knowledge to Memory")
                     .accessibilityHint("Shows the exact writes before anything is applied")
 
@@ -218,8 +205,7 @@ struct MeetingReviewView: View {
                     Button("Mark Reviewed") {
                         Task { await model.markReviewed() }
                     }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
-                    .controlSize(.small)
+                    .symairaButtonStyle(.primary)
                     .keyboardShortcut("s", modifiers: [.command])
                     .accessibilityLabel("Mark this meeting as reviewed")
                     .accessibilityHint("Saves a recoverable history snapshot of the note first")
@@ -235,14 +221,7 @@ struct MeetingReviewView: View {
 
     private var reviewStateBadge: some View {
         let state = reviewState.isEmpty ? "unreviewed" : reviewState
-        let color: Color = state == "reviewed" ? .green : SymairaTheme.goldSecondary
-        return Text(state)
-            .symairaText(.caption).fontWeight(.semibold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(4)
+        return SymairaBadge(state, tone: state == "reviewed" ? .positive : .warning)
             .accessibilityLabel("Review state: \(state)")
     }
 

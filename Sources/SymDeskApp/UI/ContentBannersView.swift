@@ -36,21 +36,19 @@ struct VersionMismatchBanner: View {
     var body: some View {
         HStack(spacing: 10) {
             SymairaIconView(.warning, size: 16)
-                .foregroundStyle(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 1) {
                 Text("CLI version mismatch")
-                    .symairaText(.caption).fontWeight(.semibold)
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.bodyEmphasized)
                 Text("App v\(appVersion) is driving CLI v\(coreVersion). Run `brew upgrade symdesk` to update.")
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer(minLength: 12)
             Button(action: dismiss) {
                 SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(SymairaTheme.textSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
             .help("Dismiss version mismatch warning")
             .accessibilityLabel("Dismiss version mismatch warning")
         }
@@ -70,15 +68,13 @@ struct NotificationDeniedBanner: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "bell.slash.fill")
-                .foregroundStyle(SymairaTheme.goldPrimary)
+            SymairaIconView(.notificationOff, size: 16)
+                .foregroundStyle(SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Notifications are off")
-                    .symairaText(.caption).fontWeight(.semibold)
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.bodyEmphasized)
                 Text("Enable them in System Settings to receive review reminders.")
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer(minLength: 12)
             Button("Open Settings") {
@@ -86,13 +82,12 @@ struct NotificationDeniedBanner: View {
                     NSWorkspace.shared.open(url)
                 }
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+            .symairaButtonStyle(.secondary)
             Button(action: dismiss) {
                 SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(SymairaTheme.textSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
             .help("Dismiss notification reminder")
             .accessibilityLabel("Dismiss notification reminder")
         }
@@ -114,15 +109,13 @@ struct AppErrorBanner: View {
     var body: some View {
         HStack(spacing: 10) {
             SymairaIconView(.warning, size: 16)
-                .foregroundStyle(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 1) {
                 Text(error.message)
-                    .symairaText(.caption).fontWeight(.semibold)
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.bodyEmphasized)
                 if let detail = error.detail {
                     Text(detail)
-                        .symairaText(.caption)
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
             }
             Spacer(minLength: 12)
@@ -130,7 +123,7 @@ struct AppErrorBanner: View {
                 SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(SymairaTheme.textSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
             .help("Dismiss error")
             .accessibilityLabel("Dismiss error")
         }
@@ -161,28 +154,24 @@ struct LoadErrorBanner: View {
             SymairaIconView(.warning, size: 16)
                 .foregroundStyle(SymairaTokens.critical)
             Text(message)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
             Spacer()
             Button("Retry", action: onRetry)
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
             if showsRemoveAction {
                 Button("Remove from index", action: onRemoveFromIndex)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
             }
             Button(action: onDismiss) {
                 SymairaIconView(.close, size: 16)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(SymairaTheme.textSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
             .accessibilityLabel("Dismiss message")
             .help("Dismiss message")
         }
         .padding(8)
-        .background(SymairaTokens.critical.opacity(0.12))
-        .cornerRadius(6)
+        .background(SymairaTokens.criticalSoft, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.sm))
         .padding(.horizontal)
         .padding(.top, 8)
     }

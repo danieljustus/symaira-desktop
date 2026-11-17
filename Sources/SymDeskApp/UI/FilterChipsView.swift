@@ -170,17 +170,15 @@ struct FilterChipsView: View {
     private func filterChipView(_ filter: SearchFilter) -> some View {
         HStack(spacing: 4) {
             SymairaIconView(filter.field.icon, size: 14)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .foregroundStyle(SymairaTokens.ink2)
             Text(filter.field.label + ":")
-                .symairaText(.caption).fontWeight(.medium)
-                .foregroundColor(SymairaTheme.goldSecondary)
+                .symairaText(.secondary)
             Text(filter.value)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.callout)
                 .lineLimit(1)
             Button(action: { removeFilter(filter) }) {
                 SymairaIconView(.close, size: 14)
-                    .foregroundColor(SymairaTheme.textMuted)
+                    .foregroundStyle(SymairaTokens.ink3)
             }
             .buttonStyle(.plain)
             .help("Remove \(filter.displayLabel)")
@@ -188,11 +186,11 @@ struct FilterChipsView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(SymairaTheme.bgCardHover.opacity(0.7))
+        .background(SymairaTokens.raised)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(SymairaTheme.goldPrimary.opacity(0.25), lineWidth: 1)
+                .stroke(SymairaTokens.line, lineWidth: 1)
         )
         .transition(.scale.combined(with: .opacity))
     }
@@ -210,14 +208,14 @@ struct FilterChipsView: View {
                 Text("Filter")
                     .symairaText(.caption)
             }
-            .foregroundColor(SymairaTheme.goldSecondary)
+            .foregroundStyle(SymairaTokens.ink2)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(SymairaTheme.bgCardHover.opacity(0.4))
+            .background(SymairaTokens.raised)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 0.5)
+                    .stroke(SymairaTokens.line, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -240,14 +238,11 @@ struct FilterChipsView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Add Filter")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
 
             Text("Select a field to filter by")
                 .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
 
-            Divider()
-                .background(SymairaTheme.borderGlassHover)
+            SymairaFormDivider()
 
             ForEach(SearchFilterField.allCases) { field in
                 Button(action: {
@@ -255,13 +250,13 @@ struct FilterChipsView: View {
                 }) {
                     HStack(spacing: 8) {
                         SymairaIconView(field.icon, size: 16)
-                            .foregroundColor(SymairaTheme.goldPrimary)
+                            .foregroundStyle(SymairaTokens.ink2)
                             .frame(width: 16)
                         Text(field.label)
-                            .foregroundColor(SymairaTheme.textPrimary)
+                            .symairaText(.body)
                         Spacer()
                         SymairaIconView(.forward, size: 14)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .padding(.vertical, 6)
                     .padding(.horizontal, 4)
@@ -280,9 +275,9 @@ struct FilterChipsView: View {
                     HStack(spacing: 4) {
                         SymairaIconView(.back, size: 14)
                         Text("Back")
-                            .symairaText(.caption)
+                            .symairaText(.secondary)
                     }
-                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 }
                 .buttonStyle(.plain)
 
@@ -290,11 +285,9 @@ struct FilterChipsView: View {
 
                 Text(field.label)
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.goldPrimary)
             }
 
-            Divider()
-                .background(SymairaTheme.borderGlassHover)
+            SymairaFormDivider()
 
             switch field {
             case .tag, .correspondent, .folder, .path, .filename, .filetype, .created, .modified:
@@ -308,7 +301,6 @@ struct FilterChipsView: View {
             case .date:
                 Text("Date range filter coming soon")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                     .padding(.vertical, 8)
             }
         }
@@ -317,20 +309,11 @@ struct FilterChipsView: View {
     private func customValueField(for field: SearchFilterField) -> some View {
         VStack(spacing: 8) {
             TextField("Enter \(field.label.lowercased()) name…", text: $customText)
-                .textFieldStyle(.plain)
-                .padding(8)
-                .background(SymairaTheme.bgCard.opacity(0.5))
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(SymairaTheme.borderGlassHover, lineWidth: 0.5)
-                )
+                .textFieldStyle(.symaira)
                 .onSubmit { addCustomValue(field: field) }
 
             Button("Add \(field.label)") { addCustomValue(field: field) }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary.opacity(0.8))
-                .controlSize(.small)
+                .symairaButtonStyle(.primary)
                 .disabled(customText.trimmingCharacters(in: .whitespaces).isEmpty)
         }
     }
@@ -348,7 +331,6 @@ struct FilterChipsView: View {
                 if filtered.isEmpty {
                     Text("No values available")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                         .padding(.vertical, 8)
                 } else {
                     ForEach(filtered, id: \.self) { value in
@@ -357,12 +339,11 @@ struct FilterChipsView: View {
                         }) {
                             HStack {
                                 Text(value)
-                                    .foregroundColor(SymairaTheme.textPrimary)
                                     .symairaText(.callout)
                                 Spacer()
                                 if filters.contains(where: { $0.value == value }) {
                                     SymairaIconView(.confirm, size: 14)
-                                        .foregroundColor(SymairaTheme.goldPrimary)
+                                        .foregroundStyle(SymairaTokens.ink)
                                 }
                             }
                             .padding(.vertical, 5)

@@ -46,14 +46,12 @@ struct PropertiesInspector: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Properties")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.goldPrimary)
 
                 if isLoading && properties.isEmpty {
-                    ProgressView().tint(SymairaTheme.goldPrimary)
+                    SymairaLoadingState("Loading properties…")
                 } else if properties.isEmpty {
                     Text("No properties yet.")
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                 }
 
                 ForEach(sortedKeys, id: \.self) { key in
@@ -83,29 +81,25 @@ struct PropertiesInspector: View {
                 }
 
                 if !inverseRelations.isEmpty {
-                    Divider().overlay(SymairaTheme.borderGlass)
+                    Divider().overlay(SymairaTokens.line)
                     Text("Linked From")
                         .symairaText(.subheading)
-                        .foregroundColor(SymairaTheme.goldPrimary)
                     ForEach(inverseRelations) { relation in
                         HStack {
                             SymairaIconView(relation.property == "_link" ? .link : .tag, size: 16)
-                                .foregroundColor(SymairaTheme.textMuted)
+                                .foregroundStyle(SymairaTokens.ink3)
                             VStack(alignment: .leading) {
                                 Text(relation.title.isEmpty ? relation.source : relation.title)
-                                    .foregroundColor(SymairaTheme.textPrimary)
+                                    .symairaText(.body)
                                 Text(relation.property == "_link" ? "wikilink" : "via \(relation.property)")
                                     .symairaText(.caption)
-                                    .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
                     }
                 }
 
                 if let errorMessage {
-                    Text(errorMessage)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.critical)
+                    SymairaNotice(message: errorMessage, tone: .critical, onDismiss: { self.errorMessage = nil })
                 }
             }
             .padding()
@@ -164,7 +158,6 @@ struct PropertiesInspector: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(displayLabel)
                 .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
             switch kind {
             case .select(let options):
                 Picker("", selection: Binding(
@@ -222,7 +215,7 @@ struct PropertiesInspector: View {
                                         .symairaText(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(SymairaTokens.ink.opacity(0.08))
+                                        .background(SymairaTokens.raised)
                                         .cornerRadius(4)
                                 }
                                 .buttonStyle(.plain)
@@ -331,7 +324,7 @@ private struct TagEditField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             TextField("Value", text: $text)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(.symaira)
                 .focused($focused)
                 .onSubmit { commit() }
                 .onChange(of: focused) { _, isFocused in
@@ -352,8 +345,9 @@ private struct TagEditField: View {
                                 .symairaText(.caption)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(SymairaTheme.goldPrimary.opacity(0.18))
+                                .background(SymairaTokens.raised)
                                 .cornerRadius(4)
+                                .overlay(RoundedRectangle(cornerRadius: 4).stroke(SymairaTokens.line, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                         .help("Add tag \"\(tag)\"")

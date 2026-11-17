@@ -33,20 +33,17 @@ struct DbViewCalendar: View {
     var body: some View {
         VStack {
             if isLoading {
-                ProgressView()
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading items…")
             } else if items.isEmpty {
-                Text("No items found.")
-                    .foregroundColor(SymairaTheme.textMuted)
+                SymairaEmptyState(icon: .calendar, title: "No Items Found", message: "This view has no matching documents yet.")
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         ForEach(groupedItems, id: \.key) { group in
                             VStack(alignment: .leading) {
                                 Text(group.key)
+                                    .monospacedDigit()
                                     .symairaText(.title)
-                                    .bold()
-                                    .foregroundColor(SymairaTheme.goldPrimary)
                                     .padding(.vertical, 8)
 
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))], spacing: 12) {
@@ -54,9 +51,8 @@ struct DbViewCalendar: View {
                                         let title = (item.data["_title"] as? String) ?? "Untitled"
                                         let fullDate = (item.data[dateProperty] as? String) ?? ""
                                         VStack(alignment: .leading) {
-                                            Text(title).bold().lineLimit(2)
-                                                .foregroundColor(SymairaTheme.textPrimary)
-                                            Text(fullDate).symairaText(.caption).foregroundColor(SymairaTheme.textSecondary)
+                                            Text(title).symairaText(.bodyEmphasized).lineLimit(2)
+                                            Text(fullDate).monospacedDigit().symairaText(.secondary)
                                         }
                                         .padding()
                                         .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)

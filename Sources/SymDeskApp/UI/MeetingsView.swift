@@ -44,7 +44,7 @@ struct MeetingsView: View {
 
             List {
                 if !model.libraryFailures.isEmpty {
-                    Section("Needs attention") {
+                    Section("Needs Attention") {
                         ForEach(model.libraryFailures) { failure in
                             libraryFailureRow(failure)
                         }
@@ -63,11 +63,9 @@ struct MeetingsView: View {
                     if let error = model.availableMeetingsError {
                         Text(error)
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     } else if model.availableMeetings.isEmpty {
                         Text("No new meetings to import.")
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     } else {
                         ForEach(model.availableMeetings) { meeting in
                             availableRow(meeting)
@@ -80,15 +78,14 @@ struct MeetingsView: View {
 
             if let importError = model.importError {
                 Text(importError)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                    .symairaText(.caption, respectsForeground: false)
+                    .foregroundStyle(SymairaTokens.critical)
                     .padding(8)
             }
         }
         .overlay {
             if case .loading = model.libraryState, model.importedMeetings.isEmpty {
-                ProgressView("Loading meetings…")
-                    .tint(SymairaTheme.goldPrimary)
+                SymairaLoadingState("Loading meetings…")
             }
         }
     }
@@ -98,12 +95,10 @@ struct MeetingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Meetings")
                     .symairaText(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 if case .failed(let message) = model.libraryState {
                     Text(message)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.critical)
+                        .symairaText(.caption, respectsForeground: false)
+                        .foregroundStyle(SymairaTokens.critical)
                 }
             }
             Spacer()
@@ -111,7 +106,7 @@ struct MeetingsView: View {
             Button(action: { Task { await model.loadLibrary() } }) {
                 SymairaIconView(.refresh, size: 16)
             }
-            .buttonStyle(SymairaSecondaryButtonStyle())
+            .symairaButtonStyle(.secondary)
             .accessibilityLabel("Refresh meeting library")
         }
         .padding(16)
@@ -134,7 +129,7 @@ struct MeetingsView: View {
         Button(action: { requestRecording() }) {
             Label("Request Recording", symairaIcon: .record)
         }
-        .buttonStyle(SymairaSecondaryButtonStyle())
+        .symairaButtonStyle(.secondary)
         .accessibilityLabel("Request a recording")
         .accessibilityHint("Opens the SymMeet menu-bar agent, where recording must be confirmed")
         .alert("Recording is confirmed in SymMeet", isPresented: $showRecordingInfo) {
@@ -184,31 +179,25 @@ struct MeetingsView: View {
     private func libraryFailureRow(_ failure: MeetingListFailure) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Label("Could not read \(fileName(for: failure.path))", symairaIcon: .warning)
-                .symairaText(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(SymairaTokens.critical)
+                .symairaText(.caption, respectsForeground: false)
+                .foregroundStyle(SymairaTokens.critical)
             Text(failure.path)
-                .symairaText(.caption)
-                .monospaced()
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.monoSmall)
                 .lineLimit(2)
             Text(failure.message)
                 .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textMuted)
                 .lineLimit(3)
             HStack(spacing: 8) {
                 if canRevealFiles {
                     Button("Reveal") { reveal(path: failure.path) }
-                        .buttonStyle(SymairaSecondaryButtonStyle())
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                 }
                 Button("Skip") { model.skipLibraryFailure(path: failure.path) }
-                    .buttonStyle(.plain)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaButtonStyle(.secondary)
             }
         }
         .padding(8)
-        .background(SymairaTokens.critical.opacity(0.08))
+        .background(SymairaTokens.criticalSoft)
         .overlay {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(SymairaTokens.critical.opacity(0.35), lineWidth: 1)
@@ -237,19 +226,17 @@ struct MeetingsView: View {
                 HStack {
                     Text(meeting.title.isEmpty ? meeting.meetingID : meeting.title)
                         .symairaText(.callout)
-                        .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                     Spacer()
                     reviewBadge(meeting.reviewState)
                 }
                 Text(meeting.startedAt)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
-        .background(model.selectedPath == meeting.path ? SymairaTheme.goldPrimary.opacity(0.12) : Color.clear)
+        .background(model.selectedPath == meeting.path ? SymairaTokens.selection : Color.clear)
         .cornerRadius(6)
     }
 
@@ -257,11 +244,9 @@ struct MeetingsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(meeting.meetingID)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.callout)
                 Text(meeting.source)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()
             if model.isImporting {
@@ -271,32 +256,21 @@ struct MeetingsView: View {
                 Button("Import") {
                     Task { await model.importMeeting(meetingID: meeting.meetingID) }
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
             }
         }
     }
 
     private func reviewBadge(_ state: String) -> some View {
         let label = state.isEmpty ? "unreviewed" : state
-        let color: Color = label == "reviewed" ? .green : SymairaTheme.goldSecondary
-        return Text(label)
-            .symairaText(.caption).fontWeight(.semibold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15))
-            .foregroundColor(color)
-            .cornerRadius(4)
+        return SymairaBadge(label, tone: label == "reviewed" ? .positive : .warning)
     }
 
     private var noSelectionState: some View {
-        VStack(spacing: 12) {
-            SymairaIconView(.team, size: 30)
-                .foregroundColor(SymairaTheme.textMuted)
-            Text("Select a meeting to review")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        SymairaEmptyState(
+            icon: .team,
+            title: "No Meeting Selected",
+            message: "Select a meeting to review its transcript and speakers."
+        )
     }
 }

@@ -60,9 +60,7 @@ struct DiscoverView: View {
                 headerSection
 
                 if isLoadingDoctor {
-                    ProgressView("Checking installed tools…")
-                        .tint(SymairaTheme.goldPrimary)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                    SymairaLoadingState("Checking installed tools…")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
                 } else {
@@ -94,21 +92,18 @@ struct DiscoverView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("SymDesk Capabilities")
-                .symairaText(.title).bold()
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.title)
 
             Text("Explore what your vault can do. Mark each capability as explored to track your progress.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
 
             if !isLoadingDoctor {
                 ProgressView(value: Double(exploredCount), total: Double(max(totalCards, 1))) {
                     Text("\(exploredCount) of \(totalCards) explored")
-                        .symairaText(.caption).bold()
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
+                        .monospacedDigit()
                 }
-                .progressViewStyle(.linear)
-                .tint(SymairaTheme.goldPrimary)
+                .progressViewStyle(SymairaProgressStyle())
                 .frame(maxWidth: 320)
                 .padding(.top, 4)
             }
@@ -121,7 +116,6 @@ struct DiscoverView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(group.rawValue)
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 260, maximum: 400), spacing: 14)], spacing: 14) {
                 ForEach(cards) { card in
@@ -215,22 +209,18 @@ private struct DiscoverCardView: View {
     let isExplored: Bool
     let onExplore: () -> Void
 
-    @State private var isHovering = false
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
                 SymairaIconView(card.icon, size: 24)
-                    .foregroundColor(isExplored ? SymairaTheme.iceSecondary : SymairaTheme.goldPrimary)
+                    .foregroundStyle(isExplored ? SymairaTokens.ink3 : SymairaTokens.ink2)
                     .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(card.title)
-                        .symairaText(.body).fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.bodyEmphasized)
                     Text(card.description)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                         .lineLimit(3)
                 }
 
@@ -238,31 +228,24 @@ private struct DiscoverCardView: View {
 
                 if isExplored {
                     SymairaIconView(.success, size: 20)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.positive)
+                        .accessibilityLabel("Explored")
                 }
             }
 
             Divider()
-                .overlay(SymairaTheme.borderGlass)
+                .overlay(SymairaTokens.line)
 
             HStack {
                 Spacer()
                 Button(action: onExplore) {
                     Text(isExplored ? "Visited" : card.actionLabel)
-                        .symairaText(.caption).fontWeight(.medium)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(isExplored)
             }
         }
-        .padding(14)
-        .glassCard(isHovered: isHovering)
-        .onHover { hovering in
-            withAnimation(SymairaTheme.transitionFast) {
-                isHovering = hovering
-            }
-        }
+        .symairaCard(padding: SymairaSpacing.medium + 2)
     }
 }
 

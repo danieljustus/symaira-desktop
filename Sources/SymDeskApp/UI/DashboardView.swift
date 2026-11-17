@@ -21,7 +21,7 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
                 headerSection
 
                 quickStatsSection
@@ -32,7 +32,7 @@ struct DashboardView: View {
 
                 discoverLinkSection
             }
-            .padding(28)
+            .padding(SymairaSpacing.xLarge)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("Dashboard")
@@ -41,88 +41,53 @@ struct DashboardView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
             HStack {
                 Text("Dashboard")
-                    .symairaText(.title).bold()
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.display)
+                    .topoProtected()
                 Spacer()
                 if let report = doctorReport {
-                    HStack(spacing: 6) {
-                        SymairaIconView(report.overall == "ok" ? .shieldCheck : .shieldAlert, size: 16)
-                            .foregroundColor(report.overall == "ok" ? SymairaTheme.goldPrimary : .orange)
-                        Text(report.overall == "ok" ? "Healthy" : "Issues found")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
-                    }
+                    SymairaStatusLabel(
+                        report.overall == "ok" ? "Healthy" : "Issues found",
+                        tone: report.overall == "ok" ? .positive : .warning
+                    )
+                    .topoProtected()
                 }
             }
             Text("Your vault at a glance.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
+                .topoProtected()
         }
     }
 
     // MARK: - Quick Stats
 
     private var quickStatsSection: some View {
-        HStack(spacing: 14) {
-            statCard(
-                icon: .document,
-                label: "Documents",
-                value: "\(docTotalCount)",
-                color: SymairaTheme.goldPrimary
-            )
-            statCard(
-                icon: .note,
-                label: "Notes",
-                value: "\(notes.count)",
-                color: SymairaTheme.iceSecondary
-            )
+        HStack(spacing: SymairaSpacing.medium) {
+            SymairaStatTile(value: "\(docTotalCount)", label: "Documents")
+            SymairaStatTile(value: "\(notes.count)", label: "Notes")
             if let needsReview = docCounts["needs_review"], needsReview > 0 {
-                statCard(
-                    icon: .warning,
-                    label: "Needs Review",
-                    value: "\(needsReview)",
-                    color: .orange
-                )
+                SymairaStatTile(value: "\(needsReview)", label: "Needs Review")
             }
             if let open = docCounts["open"], open > 0 {
-                statCard(
-                    icon: .pending,
-                    label: "Open",
-                    value: "\(open)",
-                    color: SymairaTheme.goldSecondary
-                )
+                SymairaStatTile(value: "\(open)", label: "Open")
             }
         }
-    }
-
-    private func statCard(icon: SymairaIcon, label: String, value: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            SymairaIconView(icon, size: 24)
-                .foregroundColor(color)
-            Text(value)
-                .symairaText(.title).fontWeight(.bold)
-                .foregroundColor(SymairaTheme.textPrimary)
-            Text(label)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .symairaCard(padding: 0)
     }
 
     // MARK: - Document Status
 
     private var documentStatusSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             Text("Document Status")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .topoProtected()
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 300), spacing: 10)], spacing: 10) {
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 200, maximum: 300), spacing: SymairaSpacing.medium)],
+                spacing: SymairaSpacing.medium
+            ) {
                 ForEach(DocFilterPreset.defaults.dropFirst()) { preset in
                     let count = preset.displayCount(
                         statusCounts: docCounts,
@@ -133,22 +98,20 @@ struct DashboardView: View {
                         onNavigate(.docs)
                     }) {
                         HStack {
-                            SymairaIconView(preset.status?.symairaIcon ?? .document, size: 16)
-                                .foregroundColor(SymairaTheme.goldPrimary)
+                            SymairaIconView(preset.status?.symairaIcon ?? presetTypeIcon(preset.fileType), size: 16)
+                                .foregroundStyle(SymairaTokens.ink2)
                             Text(preset.label)
-                                .foregroundColor(SymairaTheme.textPrimary)
+                                .symairaText(.body)
                             Spacer()
                             Text("\(count)")
-                                .symairaText(.caption).fontWeight(.medium)
-                                .foregroundColor(SymairaTheme.textSecondary)
-                                .padding(.horizontal, 8)
+                                .symairaText(.caption)
+                                .monospacedDigit()
+                                .padding(.horizontal, SymairaSpacing.small)
                                 .padding(.vertical, 3)
-                                .background(SymairaTokens.ink.opacity(0.06))
-                                .cornerRadius(4)
+                                .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.sm))
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .symairaCard(padding: 0)
+                        .symairaCard(padding: SymairaSpacing.medium)
+                        .topoProtected(hill: true)
                     }
                     .buttonStyle(.plain)
                 }
@@ -159,16 +122,16 @@ struct DashboardView: View {
     // MARK: - Recent Notes
 
     private var recentNotesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             Text("Recent Notes")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .topoProtected()
 
             if recentNotes.isEmpty {
                 Text("No notes yet — create one from the sidebar.")
-                    .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textMuted)
-                    .padding(.vertical, 12)
+                    .symairaText(.secondary)
+                    .padding(.vertical, SymairaSpacing.medium)
+                    .topoProtected()
             } else {
                 ForEach(recentNotes) { note in
                     Button(action: {
@@ -181,18 +144,16 @@ struct DashboardView: View {
                     }) {
                         HStack {
                             SymairaIconView(.document, size: 16)
-                                .foregroundColor(SymairaTheme.iceSecondary)
+                                .foregroundStyle(SymairaTokens.ink2)
                             Text(note.title)
-                                .foregroundColor(SymairaTheme.textPrimary)
+                                .symairaText(.body)
                                 .lineLimit(1)
                             Spacer()
                             Text(shortDate(note.modifiedAt))
                                 .symairaText(.caption)
-                                .foregroundColor(SymairaTheme.textMuted)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .symairaCard(padding: 0)
+                        .symairaCard(padding: SymairaSpacing.medium)
+                        .topoProtected(hill: true)
                     }
                     .buttonStyle(.plain)
                 }
@@ -203,26 +164,25 @@ struct DashboardView: View {
     // MARK: - Discover Link
 
     private var discoverLinkSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
             Text("Explore")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
+                .topoProtected()
 
             Button(action: {
                 onNavigate(.discover)
             }) {
                 HStack {
                     SymairaIconView(.ai, size: 16)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text("Discover what SymDesk can do")
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.body)
                     Spacer()
                     SymairaIconView(.forward, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .symairaCard(padding: 0)
+                .symairaCard(padding: SymairaSpacing.medium)
+                .topoProtected(hill: true)
             }
             .buttonStyle(.plain)
         }
@@ -237,5 +197,14 @@ struct DashboardView: View {
         let rel = RelativeDateTimeFormatter()
         rel.unitsStyle = .abbreviated
         return rel.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+/// Icon for a type-only filter preset (no workflow status).
+private func presetTypeIcon(_ fileType: String?) -> SymairaIcon {
+    switch fileType {
+    case "meeting": .team
+    case "note": .note
+    default: .document
     }
 }

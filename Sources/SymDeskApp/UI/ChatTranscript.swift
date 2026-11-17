@@ -120,9 +120,7 @@ struct ChatTranscriptView: View {
 
                     if isThinking {
                         HStack {
-                            ProgressView()
-                                .accessibilityLabel("Waiting for the response…")
-                                .tint(SymairaTheme.goldPrimary)
+                            SymairaLoadingState("Waiting for the response…")
                                 .padding()
                             Spacer()
                         }
@@ -143,12 +141,12 @@ struct ChatTranscriptView: View {
             HStack {
                 Spacer()
                 Text(text)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.body)
                     .padding()
-                    .background(SymairaTheme.goldPrimary.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(SymairaTheme.goldPrimary.opacity(0.3), lineWidth: 1)
+                            .stroke(SymairaTokens.line, lineWidth: 1)
                     }
                     .frame(maxWidth: 250, alignment: .trailing)
             }
@@ -157,16 +155,20 @@ struct ChatTranscriptView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top) {
                     Text(LocalizedStringKey(text))
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.body)
                         .padding()
-                        .symDeskLiquidGlass(cornerRadius: 14)
+                        .background(SymairaTokens.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(SymairaTokens.line, lineWidth: 1)
+                        }
                         .frame(maxWidth: 250, alignment: .leading)
                     Spacer()
                     Button {
                         copyToClipboard(text)
                     } label: {
                         SymairaIconView(.copy, size: 14)
-                            .foregroundColor(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.borderless)
                     .help("Copy answer")
@@ -179,8 +181,7 @@ struct ChatTranscriptView: View {
                         Label("Open AI Settings", symairaIcon: .settings)
                             .symairaText(.caption)
                     }
-                    .buttonStyle(.borderless)
-                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .symairaButtonStyle(.secondary)
                 }
             }
             .id(id)
@@ -189,37 +190,35 @@ struct ChatTranscriptView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     SymairaIconView(.document, size: 14)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text(title.isEmpty ? path : title)
-                        .symairaText(.caption).bold()
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.bodyEmphasized)
                     Spacer()
                     Button {
                         onOpenFile(path)
                     } label: {
                         SymairaIconView(.openExternal, size: 14)
-                            .foregroundColor(SymairaTheme.goldSecondary)
+                            .foregroundStyle(SymairaTokens.ink2)
                     }
                     .buttonStyle(.borderless)
                     .help("Open note")
                     .accessibilityLabel("Open note")
                 }
                 Text(snippet)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                     .lineLimit(3)
                 if let score {
                     Text(String(format: "Score: %.2f", score))
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .monospacedDigit()
                 }
             }
             .padding(8)
-            .background(SymairaTheme.goldPrimary.opacity(0.06))
+            .background(SymairaTokens.raised)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                    .stroke(SymairaTokens.line, lineWidth: 1)
             )
             .frame(maxWidth: 280, alignment: .leading)
 
@@ -229,57 +228,54 @@ struct ChatTranscriptView: View {
                 // tool — show name + inputs instead of a bare spinner.
                 HStack(spacing: 6) {
                     SymairaIconView(.magic, size: 14)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(iterationLabel(iteration, toolName: toolName))
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                         if let inputs, !inputs.isEmpty, inputs != "{}" {
                             Text(inputs)
                                 .font(SymairaTypography.monoSmall)
-                                .foregroundColor(SymairaTheme.textMuted)
+                                .foregroundStyle(SymairaTokens.ink3)
                                 .lineLimit(2)
                                 .truncationMode(.middle)
                         }
                     }
                 }
                 .padding(6)
-                .background(SymairaTheme.bgCard)
+                .background(SymairaTokens.raised)
                 .cornerRadius(6)
             } else if status == "result" {
                 HStack(spacing: 6) {
                     SymairaIconView(.success, size: 14)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.positive)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(iterationLabel(iteration, toolName: toolName))
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                         if let output {
                             Text(output)
                                 .font(SymairaTypography.monoSmall)
-                                .foregroundColor(SymairaTheme.textMuted)
+                                .foregroundStyle(SymairaTokens.ink3)
                                 .lineLimit(3)
                                 .truncationMode(.tail)
                             if truncated == true {
                                 Text("(output truncated for the model)")
-                                    .symairaText(.caption)
-                                    .foregroundColor(SymairaTokens.warning)
+                                    .symairaText(.caption, respectsForeground: false)
+                                    .foregroundStyle(SymairaTokens.warning)
                             }
                         }
                     }
                 }
                 .padding(6)
-                .background(SymairaTheme.bgCard)
+                .background(SymairaTokens.raised)
                 .cornerRadius(6)
             } else if status == "usage" {
                 // Terminal event footer: token usage / context window.
                 HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+                    SymairaIconView(.usage, size: 12)
+                        .foregroundStyle(SymairaTokens.ink3)
                     Text(toolName)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .monospacedDigit()
                 }
                 .padding(4)
             } else {
@@ -288,20 +284,18 @@ struct ChatTranscriptView: View {
                         ProgressView()
                             .accessibilityLabel("Waiting for the response…")
                             .controlSize(.small)
-                            .tint(SymairaTheme.goldPrimary)
                     } else if status == "done" {
                         SymairaIconView(.success, size: 14)
-                            .foregroundColor(SymairaTheme.goldPrimary)
+                            .foregroundStyle(SymairaTokens.positive)
                     } else if status == "error" {
                         SymairaIconView(.warning, size: 14)
-                            .foregroundColor(SymairaTokens.warning)
+                            .foregroundStyle(SymairaTokens.warning)
                     }
                     Text("\(toolName): \(status)")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
                 .padding(6)
-                .background(SymairaTheme.bgCard)
+                .background(SymairaTokens.raised)
                 .cornerRadius(6)
             }
         }

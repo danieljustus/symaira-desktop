@@ -17,14 +17,19 @@ struct NewNoteSheet: View {
     @FocusState private var isTitleFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                SymairaIconView(.documentAdd, size: 24)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+        SymairaSheetScaffold(
+            title: "New Note",
+            dismiss: { if !isCreating { isPresented = false } },
+            primaryTitle: "Create Note",
+            primaryDisabled: title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating,
+            primary: { createNote() }
+        ) {
+            HStack(spacing: SymairaSpacing.small) {
+                SymairaIconView(.documentAdd, size: 20)
+                    .foregroundStyle(SymairaTokens.ink2)
+                    .accessibilityHidden(true)
                 TextField("Note title", text: $title)
-                    .textFieldStyle(.plain)
-                    .symairaText(.title)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .textFieldStyle(.symaira(isFocused: isTitleFocused))
                     .focused($isTitleFocused)
                     .onSubmit { createNote() }
                     .disabled(isCreating)
@@ -33,51 +38,33 @@ struct NewNoteSheet: View {
                         title = ""
                     } label: {
                         SymairaIconView(.close, size: 16)
-                            .foregroundStyle(SymairaTheme.textMuted)
+                            .foregroundStyle(SymairaTokens.ink3)
                     }
                     .buttonStyle(.plain)
                     .help("Clear")
                     .accessibilityLabel("Clear")
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
-            .padding(16)
 
-            HStack {
-                if isCreating {
+            if isCreating {
+                HStack(spacing: SymairaSpacing.small) {
                     ProgressView()
-                        .accessibilityLabel("Creating note…")
                         .controlSize(.small)
-                        .padding(.horizontal, 8)
+                    Text("Creating note…")
+                        .symairaText(.secondary)
                 }
-                if let err = errorMessage {
-                    Text(err)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.critical)
-                }
-                Spacer()
-                Button("Cancel") { isPresented = false }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .disabled(isCreating)
-                Button("Create") { createNote() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                    .tint(SymairaTheme.goldPrimary)
-                    .disabled(title.isEmpty || isCreating)
+                .accessibilityElement(children: .combine)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 16)
+            if let err = errorMessage {
+                SymairaNotice(message: err, tone: .critical, onDismiss: { errorMessage = nil })
+            }
         }
-        .background { SymairaScreen { Color.clear } }
-        .frame(width: 440, height: 160)
+        .frame(width: 440, height: 300)
         .onAppear { isTitleFocused = true }
     }
 
     private func createNote() {
-        guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard !title.trimmingCharacters(in: .whitespaces).isEmpty, !isCreating else { return }
         isCreating = true
         errorMessage = nil
         Task {

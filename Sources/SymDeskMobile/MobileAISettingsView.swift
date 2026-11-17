@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 
 /// In-app AI configuration: provider, model and endpoint are visible and
 /// configurable here — never only an environment variable the app cannot
@@ -28,55 +29,53 @@ struct MobileAISettingsView: View {
                         privacyCard
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Label("Provider", systemImage: "cpu")
-                                .font(.headline)
-                                .foregroundStyle(MobileTheme.textPrimary)
+                            Label("Provider", symairaIcon: .cpu)
+                                .symairaText(.subheading)
 
-                            Picker("Provider", selection: $provider) {
-                                Text("Self-hosted server").tag("server")
-                                Text("Anthropic").tag("anthropic")
-                                Text("Ollama").tag("ollama")
-                            }
-                            .pickerStyle(.segmented)
+                            SymairaSegmentedControl(
+                                "Provider",
+                                selection: $provider,
+                                options: [
+                                    (value: "server", label: "Self-hosted server"),
+                                    (value: "anthropic", label: "Anthropic"),
+                                    (value: "ollama", label: "Ollama")
+                                ]
+                            )
 
                             if provider == "server" {
                                 Text("Uses the server's configured model via \(vault.serverURL?.host ?? "your server"). The server may forward excerpts to its own provider — see your server's AI settings.")
-                                    .font(.caption)
-                                    .foregroundStyle(MobileTheme.textSecondary)
+                                    .font(SymairaTypography.caption)
+                                    .foregroundStyle(SymairaTokens.ink2)
                             }
 
                             if provider != "server" {
                                 TextField("Model (e.g. claude-sonnet-4-5)", text: $model)
-                                    .textFieldStyle(.roundedBorder)
+                                    .textFieldStyle(.symaira)
                                     .textInputAutocapitalization(.never)
                             }
 
                             TextField("Endpoint (https://…)", text: $endpoint)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(.symaira)
                                 .textInputAutocapitalization(.never)
                                 .keyboardType(.URL)
                                 .disabled(provider == "server")
 
                             if provider != "server" && (model.isEmpty || MobileServerConfig.normalizedURL(endpoint) == nil) {
-                                Label("Enter a model and a valid endpoint to enable direct provider mode.", systemImage: "info.circle")
-                                    .font(.caption)
-                                    .foregroundStyle(MobileTheme.goldSoft)
+                                SymairaNotice(message: "Enter a model and a valid endpoint to enable direct provider mode.")
                             }
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .mobileLiquidGlass(elevated: true)
+                        .symairaCard(padding: 0)
 
                         if hasUnsavedChanges {
                             Button {
                                 save()
                             } label: {
-                                Label("Save AI settings", systemImage: "checkmark.circle.fill")
+                                Label("Save AI settings", symairaIcon: .confirm)
                                     .frame(maxWidth: .infinity)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(MobileTheme.gold)
-                            .foregroundStyle(.black)
+                            .symairaButtonStyle(.primary)
                         }
                     }
                     .padding(16)
@@ -99,16 +98,14 @@ struct MobileAISettingsView: View {
 
     private var privacyCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Privacy", systemImage: "hand.raised.fill")
-                .font(.headline)
-                .foregroundStyle(MobileTheme.textPrimary)
+            Label("Privacy", symairaIcon: .shield)
+                .symairaText(.subheading)
             Text("Answers require sending your question and the relevant vault excerpts to the configured AI provider. With “Self-hosted server”, content goes to your server, which forwards it to its configured model. Vault content leaves this device whenever the provider is remote.")
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.textSecondary)
+                .symairaText(.secondary)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .mobileLiquidGlass(cornerRadius: 18)
+        .symairaCard(padding: 0)
     }
 
     private func save() {

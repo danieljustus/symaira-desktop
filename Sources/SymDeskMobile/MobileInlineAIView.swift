@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import UIKit
 
 /// Inline-AI sheet: choose an intent (Summarise / Rewrite / Continue),
@@ -58,9 +59,7 @@ struct MobileInlineAIView: View {
                         }
 
                         if let errorMessage = model.errorMessage {
-                            Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.red)
+                            SymairaNotice(message: errorMessage, tone: .critical)
                         }
 
                         acceptRow
@@ -86,32 +85,30 @@ struct MobileInlineAIView: View {
 
     private var providerRow: some View {
         HStack(spacing: 8) {
-            Image(systemName: model.isOnDevice ? "cpu" : "server.rack")
-                .font(.caption)
-                .foregroundStyle(MobileTheme.textSecondary)
+            SymairaIconView(model.isOnDevice ? .cpu : .server, size: 14)
+                .foregroundStyle(SymairaTokens.ink2)
             Text(model.activeProviderName ?? "No AI provider")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MobileTheme.textSecondary)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink2)
             Spacer()
             if model.phase == .streaming {
                 ProgressView()
                     .controlSize(.small)
+                    .accessibilityLabel("Generating suggestion")
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .background(MobileTheme.card, in: Capsule())
+        .background(SymairaTokens.surface, in: Capsule())
         .accessibilityElement(children: .combine)
     }
 
     private var intentPicker: some View {
-        Picker("Intent", selection: $intent) {
-            ForEach(MobileInlineAIIntent.allCases) { candidate in
-                Label(candidate.displayName, systemImage: candidate.systemImage)
-                    .tag(candidate)
-            }
-        }
-        .pickerStyle(.segmented)
+        SymairaSegmentedControl(
+            "Intent",
+            selection: $intent,
+            options: MobileInlineAIIntent.allCases.map { (value: $0, label: $0.displayName) }
+        )
         .disabled(model.phase == .streaming)
     }
 
@@ -119,25 +116,26 @@ struct MobileInlineAIView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Text to transform")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(MobileTheme.textMuted)
+                    .font(SymairaTypography.label)
+                    .foregroundStyle(SymairaTokens.ink3)
                 Spacer()
                 if let selectedRange, selectedRange.length > 0 {
-                    Label("\(selectedRange.length) chars selected", systemImage: "highlighter")
-                        .font(.caption2)
-                        .foregroundStyle(MobileTheme.goldSoft)
+                    Label("\(selectedRange.length) chars selected", symairaIcon: .edit)
+                        .font(SymairaTypography.caption)
+                        .foregroundStyle(SymairaTokens.ink)
                     Button {
                         self.selectedRange = nil
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(MobileTheme.textMuted)
+                        SymairaIconView(.close, size: 14)
+                            .foregroundStyle(SymairaTokens.ink3)
+                            .frame(minWidth: SymairaMetrics.minimumControlHeight, minHeight: SymairaMetrics.minimumControlHeight)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Use whole text")
                 } else {
                     Text("Whole text")
-                        .font(.caption2)
-                        .foregroundStyle(MobileTheme.textMuted)
+                        .symairaText(.caption)
                 }
             }
             MobileSelectionTextEditor(
@@ -146,12 +144,12 @@ struct MobileInlineAIView: View {
             )
             .frame(minHeight: 120, maxHeight: 220)
             .padding(8)
-            .background(MobileTheme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(SymairaTokens.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay {
                 if editorText.isEmpty {
                     Text("Select text to transform, or leave empty for the whole text…")
-                        .font(.subheadline)
-                        .foregroundStyle(MobileTheme.textMuted)
+                        .font(SymairaTypography.callout)
+                        .foregroundStyle(SymairaTokens.ink3)
                         .padding(.leading, 18)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .allowsHitTesting(false)
@@ -165,12 +163,10 @@ struct MobileInlineAIView: View {
         Button {
             runTransform()
         } label: {
-            Label("\(intent.displayName) text", systemImage: intent.systemImage)
+            Label("\(intent.displayName) text", symairaIcon: intent.symairaIcon)
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(MobileTheme.gold)
-        .foregroundStyle(.black)
+        .symairaButtonStyle(.secondary)
         .disabled(
             model.phase == .streaming
                 || editorText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -180,26 +176,25 @@ struct MobileInlineAIView: View {
     private var comparison: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Original")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MobileTheme.textMuted)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink3)
             Text(model.transformedSource)
-                .font(.footnote)
-                .foregroundStyle(MobileTheme.textSecondary)
+                .font(SymairaTypography.caption)
+                .foregroundStyle(SymairaTokens.ink2)
                 .lineLimit(6)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .background(MobileTheme.backgroundRaised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(SymairaTokens.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             Text("Suggestion")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(MobileTheme.goldSoft)
+                .font(SymairaTypography.label)
+                .foregroundStyle(SymairaTokens.ink)
             Text(model.suggestion)
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.textPrimary)
+                .symairaText(.callout)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .background(MobileTheme.gold.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
@@ -209,21 +204,19 @@ struct MobileInlineAIView: View {
                 Button(role: .destructive) {
                     Task { await model.undo() }
                 } label: {
-                    Label("Undo", systemImage: "arrow.uturn.backward")
+                    Label("Undo", symairaIcon: .undo)
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
                 .disabled(model.phase == .streaming)
             } else {
                 Button {
                     Task { await model.accept(currentText: editorText, selectedRange: selectedRange) }
                 } label: {
-                    Label("Accept & save", systemImage: "checkmark.circle")
+                    Label("Accept & save", symairaIcon: .confirm)
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(MobileTheme.gold)
-                .foregroundStyle(.black)
+                .symairaButtonStyle(.primary)
                 .disabled(!model.hasResult || model.phase == .streaming || model.accepted)
             }
 
@@ -233,7 +226,7 @@ struct MobileInlineAIView: View {
                 Text("Discard")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .symairaButtonStyle(.secondary)
             .disabled(model.phase == .streaming && !model.hasResult)
         }
     }
@@ -252,6 +245,17 @@ struct MobileInlineAIView: View {
     }
 }
 
+extension MobileInlineAIIntent {
+    /// Icon for the intent; the model file stays free of UI types.
+    var symairaIcon: SymairaIcon {
+        switch self {
+        case .summarize: return .quote
+        case .rewrite: return .sync
+        case .continue: return .add
+        }
+    }
+}
+
 /// UITextView-backed editor that reports the current selection, so
 /// transforms can target exactly the selected range.
 struct MobileSelectionTextEditor: UIViewRepresentable {
@@ -264,7 +268,7 @@ struct MobileSelectionTextEditor: UIViewRepresentable {
         let view = UITextView()
         view.font = .preferredFont(forTextStyle: .body)
         view.backgroundColor = .clear
-        view.textColor = UIColor(MobileTheme.textPrimary)
+        view.textColor = UIColor(SymairaTokens.ink)
         view.autocorrectionType = .default
         view.delegate = context.coordinator
         return view

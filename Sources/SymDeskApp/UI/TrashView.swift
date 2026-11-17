@@ -19,10 +19,9 @@ struct TrashView: View {
             // Header
             HStack {
                 SymairaIconView(.delete, size: 16)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Trash")
-                    .symairaText(.title).fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.title)
                 Spacer()
                 if !trashItems.isEmpty {
                     Button(role: .destructive) {
@@ -30,15 +29,12 @@ struct TrashView: View {
                     } label: {
                         Label("Purge All", symairaIcon: .delete)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .tint(SymairaTokens.critical)
+                    .symairaButtonStyle(.secondary)
                 }
                 Button(action: { Task { await loadTrash() } }) {
                     Label("Refresh", symairaIcon: .refresh)
                 }
-                .buttonStyle(.plain)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaButtonStyle(.secondary)
                 .disabled(isLoading)
             }
             .padding(.horizontal, 20)
@@ -46,47 +42,31 @@ struct TrashView: View {
             .padding(.bottom, 12)
 
             Text("Items moved to the trash can be restored to their original location or permanently deleted.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
 
             if let error = errorMessage {
                 HStack(spacing: 8) {
-                    SymairaIconView(.warning, size: 16)
-                        .foregroundStyle(SymairaTokens.critical)
-                    Text(error)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
-                    Spacer()
+                    SymairaNotice(message: error, tone: .critical)
                     Button("Retry") {
                         Task { await loadTrash() }
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
                 }
-                .padding(10)
-                .background(SymairaTokens.critical.opacity(0.12))
-                .cornerRadius(6)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
             }
 
             if isLoading {
-                Spacer()
-                ProgressView("Loading trash…")
-                    .tint(SymairaTheme.goldPrimary)
-                    .foregroundColor(SymairaTheme.textSecondary)
-                Spacer()
+                SymairaLoadingState("Loading trash…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if trashItems.isEmpty {
-                Spacer()
-                ContentUnavailableView {
-                    Label("Trash is Empty", symairaIcon: .delete)
-                } description: {
-                    Text("Deleted notes and documents will appear here so you can restore them.")
-                }
-                .foregroundColor(SymairaTheme.textMuted)
-                Spacer()
+                SymairaEmptyState(
+                    icon: .delete,
+                    title: "Trash Is Empty",
+                    message: "Deleted notes and documents will appear here so you can restore them."
+                )
             } else {
                 ScrollView {
                     VStack(spacing: 6) {
@@ -98,7 +78,7 @@ struct TrashView: View {
                 }
             }
         }
-        .background(SymairaTheme.bgDarker)
+        .background(SymairaTokens.canvas)
         .navigationTitle("Trash")
         .task { await loadTrash() }
         .alert("Confirm Purge", isPresented: $showPurgeAllConfirmation) {
@@ -118,35 +98,32 @@ struct TrashView: View {
 
         return HStack(spacing: 12) {
             SymairaIconView(.document, size: 20)
-                .foregroundColor(SymairaTheme.textMuted)
+                .foregroundStyle(SymairaTokens.ink3)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(displayName(from: item.originalPath))
-                        .symairaText(.body).fontWeight(.medium)
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.bodyEmphasized)
                         .lineLimit(1)
                 }
 
                 HStack(spacing: 8) {
                     Label(item.originalPath, symairaIcon: .folder)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
 
                     Text("·")
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .symairaText(.caption)
 
                     Label(formattedDate(item.deletedAt), symairaIcon: .time)
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
 
                     Text("·")
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .symairaText(.caption)
 
                     Text(formattedSize(item.size))
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .monospacedDigit()
                 }
             }
 
@@ -156,9 +133,7 @@ struct TrashView: View {
                 Button("Restore") {
                     Task { await restoreItem(item) }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.secondary)
                 .disabled(isBusy)
 
                 Button(role: .destructive) {
@@ -168,19 +143,11 @@ struct TrashView: View {
                         .labelStyle(.iconOnly)
                         .accessibilityLabel("Delete")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(SymairaTokens.critical)
+                .symairaButtonStyle(.secondary)
                 .disabled(isBusy)
             }
         }
-        .padding(12)
-        .background(SymairaTheme.bgDark.opacity(0.3))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(SymairaTheme.borderGlassHover, lineWidth: 0.5)
-        )
+        .symairaCard(padding: SymairaSpacing.medium)
         .opacity(isBusy ? 0.6 : 1)
         .overlay {
             if isBusy {

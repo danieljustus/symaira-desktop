@@ -28,7 +28,7 @@ struct CompanionToolsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
                 headerSection
 
                 if let hb = homebrewAvailable, !hb {
@@ -38,13 +38,10 @@ struct CompanionToolsView: View {
                 toolsSection
 
                 if homebrewAvailable == nil {
-                    ProgressView("Checking Homebrew…")
-                        .tint(SymairaTheme.goldPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
+                    SymairaLoadingState("Checking Homebrew…")
                 }
             }
-            .padding(28)
+            .padding(SymairaSpacing.xLarge)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("Companion Tools")
@@ -56,41 +53,35 @@ struct CompanionToolsView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
             Text("Companion Tools")
-                .symairaText(.title).bold()
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.title)
 
             Text("Optional tools that extend SymDesk with search, memory, and OCR capabilities. Install them with one click.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
         }
     }
 
     private var noHomebrewWarning: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: SymairaSpacing.medium) {
             SymairaIconView(.warning, size: 20)
-                .foregroundColor(SymairaTokens.warning)
-            VStack(alignment: .leading, spacing: 4) {
+                .foregroundStyle(SymairaTokens.warning)
+            VStack(alignment: .leading, spacing: SymairaSpacing.xSmall) {
                 Text("Homebrew not found")
-                    .symairaText(.body).fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.bodyEmphasized)
                 Text("Homebrew is required to install companion tools. Install it from [brew.sh](https://brew.sh) and restart SymDesk.")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
-        .padding(14)
-        .symairaCard(padding: 0)
+        .symairaCard()
     }
 
     // MARK: - Tools
 
     private var toolsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             Text("Available Tools")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
 
             ForEach(managedTools, id: \.id) { tool in
                 toolRow(tool)
@@ -110,66 +101,63 @@ struct CompanionToolsView: View {
         let output = installOutput[tool.id]
         let error = installErrors[tool.id]
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: SymairaSpacing.small) {
             HStack {
                 SymairaIconView(isInstalled ? .verified : (isInstalling ? .download : .help), size: 20)
-                    .foregroundColor(isInstalled ? .green : (isInstalling ? SymairaTheme.goldPrimary : SymairaTheme.textMuted))
+                    .foregroundStyle(isInstalled ? SymairaTokens.positive : (isInstalling ? SymairaTokens.ink2 : SymairaTokens.ink3))
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: SymairaSpacing.xSmall) {
                     Text(tool.name)
-                        .symairaText(.body).fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.bodyEmphasized)
                     if let version {
                         Text("v\(version)")
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
                     } else if isUnknown {
-                        Text("could not read the vault health report")
+                        Text("Could not read the vault health report")
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     } else if !isInstalled && !isInstalling {
                         Text("Not installed")
                             .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textMuted)
                     }
                 }
 
                 Spacer()
 
                 if isInstalled {
-                    Label("Installed", symairaIcon: .confirm)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTokens.positive)
+                    SymairaStatusLabel("Installed", tone: .positive)
                 } else if isInstalling {
-                    ProgressView()
-                        .accessibilityLabel("Checking tools…")
-                        .controlSize(.small)
+                    HStack(spacing: SymairaSpacing.small) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Installing…")
+                            .symairaText(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
                 } else {
-                    Button("Install") {
+                    Button("Install \(tool.name)") {
                         installTool(tool)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                    .tint(SymairaTheme.goldPrimary)
+                    .symairaButtonStyle(.secondary)
                     .disabled(homebrewAvailable != true || isUnknown)
                 }
             }
 
             if isInstalling, let output {
                 Text(output)
-                    .symairaText(.caption).monospaced()
-                    .foregroundColor(SymairaTheme.textMuted)
+                    .symairaText(.monoSmall)
                     .lineLimit(4)
             }
 
             if let error {
-                Text(error)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTokens.critical)
+                HStack(alignment: .firstTextBaseline, spacing: SymairaSpacing.xSmall) {
+                    SymairaIconView(.error, size: 14)
+                    Text(error)
+                        .symairaText(.caption, respectsForeground: false)
+                }
+                .foregroundStyle(SymairaTokens.critical)
             }
         }
-        .padding(14)
-        .symairaCard(padding: 0)
+        .symairaCard()
     }
 
     // MARK: - Homebrew check

@@ -15,30 +15,26 @@ struct VaultEditorPaneView: View {
                 if model.isConflicted(note) {
                     HStack(spacing: 8) {
                         SymairaIconView(.warning, size: 16)
-                            .foregroundStyle(SymairaTheme.goldPrimary)
+                            .foregroundStyle(SymairaTokens.warning)
                         Text("iCloud sync conflict detected")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.goldSecondary)
+                            .symairaText(.secondary)
                         Spacer()
                         Button("Keep Mine") {
                             Task { await model.resolveConflict(note: note, action: "keep-mine", core: core) }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                         .disabled(model.mutationTracker.isInFlight(model.conflictActionID(note: note, action: "keep-mine")))
                         Button("Keep Theirs") {
                             Task { await model.resolveConflict(note: note, action: "keep-theirs", core: core) }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                         .disabled(model.mutationTracker.isInFlight(model.conflictActionID(note: note, action: "keep-theirs")))
                     }
                     .padding(8)
-                    .background(SymairaTheme.goldPrimary.opacity(0.12))
-                    .cornerRadius(6)
+                    .background(SymairaTokens.raised, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.sm))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: SymairaTokens.Radius.sm)
+                            .stroke(SymairaTokens.line, lineWidth: 1)
                     )
                     .padding(.horizontal)
                     .padding(.top, 8)
@@ -55,25 +51,22 @@ struct VaultEditorPaneView: View {
                         SymairaIconView(.warning, size: 16)
                             .foregroundStyle(SymairaTokens.critical)
                         Text("Save failed: \(saveError)")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                         Spacer()
                         Button("Retry") {
                             Task { await model.performSave(note: note, content: model.noteContent, core: core) }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                         Button(action: { model.mutationTracker.clearFailure(for: model.saveActionID(note)) }) {
                             SymairaIconView(.close, size: 16)
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .foregroundStyle(SymairaTokens.ink2)
                         .accessibilityLabel("Dismiss Error")
                         .help("Dismiss Error")
                     }
                     .padding(8)
-                    .background(SymairaTokens.critical.opacity(0.12))
-                    .cornerRadius(6)
+                    .background(SymairaTokens.criticalSoft, in: RoundedRectangle(cornerRadius: SymairaTokens.Radius.sm))
                     .padding(.horizontal)
                     .padding(.top, 8)
                 }
@@ -150,17 +143,17 @@ struct VaultEditorPaneView: View {
                 await model.loadBacklinks(for: note, core: core)
             }
         } else {
-            ContentUnavailableView {
-                Label("No Note Selected", symairaIcon: .document)
-            } description: {
-                Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
-            } actions: {
+            SymairaEmptyState(
+                icon: .document,
+                title: "No Note Selected",
+                message: "Choose a note in the list or open Quick Search with ⌘K."
+            ) {
                 Button("Open Quick Search") { model.isShowingPalette = true }
-                    .buttonStyle(SymairaPrimaryButtonStyle())
+                    .symairaButtonStyle(.primary)
             }
             .frame(maxWidth: 460)
-            .padding(32)
-            .symDeskLiquidGlass(cornerRadius: 20)
+            .padding(SymairaSpacing.section)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }

@@ -22,7 +22,7 @@ struct RetrievalStatusView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
                 header
 
                 if let status {
@@ -31,15 +31,12 @@ struct RetrievalStatusView: View {
                 } else if let loadError {
                     errorCard(loadError)
                 } else {
-                    ProgressView("Reading the search index…")
-                        .tint(SymairaTheme.goldPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
+                    SymairaLoadingState("Reading the search index…")
                 }
 
                 reindexCard
             }
-            .padding(28)
+            .padding(SymairaSpacing.xLarge)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("Search Index")
@@ -49,13 +46,11 @@ struct RetrievalStatusView: View {
     // MARK: - Sections
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
             Text("Search Index")
-                .symairaText(.title).bold()
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.title)
             Text("Hybrid keyword and semantic search runs inside SymDesk. When the index is cold or the embedding backend is unreachable, search keeps working with worse ranking — this is where you see it and fix it.")
-                .symairaText(.callout)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
         }
     }
 
@@ -65,29 +60,25 @@ struct RetrievalStatusView: View {
     private func stateBanner(_ status: RetrievalStatus) -> some View {
         if status.isEmpty {
             banner(
-                icon: .inbox,
-                tint: .orange,
+                tone: .warning,
                 title: "The index is empty",
                 detail: "Nothing is indexed yet, so search falls back to plain full-text matching. Run an index pass below."
             )
         } else if status.hasStoredDegradation {
             banner(
-                icon: .warning,
-                tint: .orange,
+                tone: .warning,
                 title: "The stored index needs repair",
                 detail: storedDegradationDetail(status)
             )
         } else if !status.backendAvailable {
             banner(
-                icon: .offline,
-                tint: .orange,
+                tone: .warning,
                 title: "Embedding backend unreachable",
                 detail: "The stored index is healthy, but semantic queries are temporarily unavailable. Start the embedding backend, then reload."
             )
         } else {
             banner(
-                icon: .verified,
-                tint: .green,
+                tone: .positive,
                 title: "Retrieval is healthy",
                 detail: "Indexed and embedding with \(status.embeddingModel)."
             )
@@ -106,26 +97,12 @@ struct RetrievalStatusView: View {
             + ". Start the embedding backend, then run an index pass with re-embed to repair semantic search."
     }
 
-    private func banner(icon: SymairaIcon, tint: Color, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            SymairaIconView(icon, size: 20)
-                .foregroundColor(tint)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .symairaText(.body).fontWeight(.semibold)
-                    .foregroundColor(SymairaTheme.textPrimary)
-                Text(detail)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
-            }
-            Spacer()
-        }
-        .padding(14)
-        .symairaCard(padding: 0)
+    private func banner(tone: SymairaTone, title: String, detail: String) -> some View {
+        SymairaNotice(title: title, message: detail, tone: tone)
     }
 
     private func statsCard(_ status: RetrievalStatus) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             row("Indexed documents", "\(status.documentCount)")
             row("Chunks", "\(status.chunkCount)")
             if status.indexScope == "shared" {
@@ -142,85 +119,86 @@ struct RetrievalStatusView: View {
             row("Last indexed", Self.formatTimestamp(status.lastIndexedAt))
             row("Embedding model", status.embeddingModel)
         }
-        .padding(14)
-        .symairaCard(padding: 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .symairaCard()
     }
 
     private var maintenanceControls: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
+            HStack(spacing: SymairaSpacing.medium) {
                 Button("Back Up…") { chooseBackupDestination() }
-                    .buttonStyle(.bordered)
+                    .symairaButtonStyle(.secondary)
                 Button("Restore…") { chooseRestoreSource() }
-                    .buttonStyle(.bordered)
+                    .symairaButtonStyle(.secondary)
                 Button("Relocate…") { chooseRelocationDestination() }
-                    .buttonStyle(.bordered)
+                    .symairaButtonStyle(.secondary)
             }
-            .controlSize(.small)
             .disabled(isReindexing || isRetrying)
             if let maintenanceSummary {
                 Text(maintenanceSummary)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
     }
 
     private func errorCard(_ message: String) -> some View {
         banner(
-            icon: .warning,
-            tint: .red,
+            tone: .critical,
             title: "The index state could not be read",
             detail: message
         )
     }
 
     private var reindexCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: SymairaSpacing.medium) {
             Text("Re-index the vault")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.goldPrimary)
-            Toggle("Also remove entries for files that no longer exist", isOn: $pruneStale)
-                .symairaText(.caption)
-                .disabled(isReindexing)
-            HStack(spacing: 12) {
+            SymairaFormRow("Also remove entries for files that no longer exist") {
+                Toggle(isOn: $pruneStale) { EmptyView() }
+                    .toggleStyle(.symairaSwitch)
+                    .accessibilityLabel("Also remove entries for files that no longer exist")
+                    .disabled(isReindexing)
+            }
+            HStack(spacing: SymairaSpacing.medium) {
                 Button(isReindexing ? "Indexing…" : "Run Index Pass") {
                     Task { await reindex() }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.primary)
                 .disabled(isReindexing || isRetrying || core.vaultPath == nil)
 
                 Button(isRetrying ? "Retrying…" : "Retry failed") {
                     Task { await retryFailed() }
                 }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
                 .disabled(isReindexing || isRetrying || core.vaultPath == nil)
 
                 if isReindexing || isRetrying {
-                    ProgressView().controlSize(.small)
-                        .accessibilityLabel("Loading retrieval status…")
+                    HStack(spacing: SymairaSpacing.small) {
+                        ProgressView().controlSize(.small)
+                        Text(isReindexing ? "Indexing the vault…" : "Retrying failed files…")
+                            .symairaText(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
             }
             if let reindexSummary {
                 Text(reindexSummary)
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
-        .padding(14)
-        .symairaCard(padding: 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .symairaCard()
     }
 
     private func row(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
             Spacer()
             Text(value)
-                .symairaText(.caption).monospaced()
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.monoSmall, respectsForeground: false)
+                .foregroundStyle(SymairaTokens.ink)
+                .textSelection(.enabled)
         }
     }
 

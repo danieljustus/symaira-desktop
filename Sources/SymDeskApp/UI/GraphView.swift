@@ -41,8 +41,7 @@ struct GraphView: View {
                 } label: {
                     Label("Fit to Window", symairaIcon: .fullscreen)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(filteredData == nil || canvasSize == .zero)
                 .help("Center the graph and fit it to the available window")
 
@@ -51,8 +50,7 @@ struct GraphView: View {
                 } label: {
                     Label("Zoom In", symairaIcon: .zoomIn)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(filteredData == nil)
                 .accessibilityLabel("Zoom in")
 
@@ -61,14 +59,12 @@ struct GraphView: View {
                 } label: {
                     Label("Zoom Out", symairaIcon: .zoomOut)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(filteredData == nil)
                 .accessibilityLabel("Zoom out")
 
                 Text("\(Int(zoomScale * 100))%")
-                    .font(SymairaTypography.mono)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.monoSmall)
                     .frame(minWidth: 42, alignment: .trailing)
                     .accessibilityLabel("Zoom level")
                     .accessibilityValue("\(Int(zoomScale * 100)) percent")
@@ -93,9 +89,7 @@ struct GraphView: View {
                             refitGraph(data: newData, size: canvasSize)
                         }
                 } else {
-                    ProgressView()
-                        .accessibilityLabel("Loading graph…")
-                        .tint(SymairaTheme.goldPrimary)
+                    SymairaLoadingState("Loading graph…")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -120,7 +114,7 @@ struct GraphView: View {
                 path.addLine(to: screenPoint(target, in: canvasSize))
                 context.stroke(
                     path,
-                    with: .color(SymairaTheme.goldPrimary.opacity(0.25)),
+                    with: .color(SymairaTokens.ink3.opacity(0.45)),
                     lineWidth: 1
                 )
             }
@@ -128,13 +122,8 @@ struct GraphView: View {
             for node in data.nodes {
                 guard let position = nodePositions[node.id] else { continue }
                 let point = screenPoint(position, in: canvasSize)
-                let glowRect = CGRect(x: point.x - 8, y: point.y - 8, width: 16, height: 16)
-                context.fill(
-                    Path(ellipseIn: glowRect),
-                    with: .color(SymairaTheme.goldPrimary.opacity(0.18))
-                )
                 let rect = CGRect(x: point.x - 5, y: point.y - 5, width: 10, height: 10)
-                context.fill(Path(ellipseIn: rect), with: .color(SymairaTheme.goldPrimary))
+                context.fill(Path(ellipseIn: rect), with: .color(SymairaTokens.ink2))
 
                 // Labels are canvas symbols: SymairaFontRole is resolved by a
                 // view (live Dynamic Type), so it cannot be applied to a Text
@@ -147,12 +136,11 @@ struct GraphView: View {
             // Truncate before drawing so even long labels stay within the canvas.
             ForEach(data.nodes) { node in
                 Text(GraphLayout.displayLabel(node.label, in: size))
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                     .tag(node.id)
             }
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 0)

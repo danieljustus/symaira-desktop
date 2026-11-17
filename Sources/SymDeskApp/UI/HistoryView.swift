@@ -59,10 +59,9 @@ struct HistoryView: View {
         VStack(spacing: 0) {
             HStack {
                 SymairaIconView(.document, size: 16)
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Notes")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if isLoadingNotes {
                     ProgressView()
@@ -75,45 +74,39 @@ struct HistoryView: View {
 
             HStack {
                 SymairaIconView(.search, size: 16)
-                    .foregroundColor(SymairaTheme.textMuted)
+                    .foregroundStyle(SymairaTokens.ink3)
                 TextField("Filter notes…", text: $searchText)
                     .textFieldStyle(.plain)
                     .symairaText(.callout)
-                    .foregroundColor(SymairaTheme.textPrimary)
             }
             .padding(8)
-            .background(SymairaTheme.bgDark.opacity(0.15))
+            .background(SymairaTokens.raised)
             .cornerRadius(6)
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
 
             if filteredNotes.isEmpty {
-                Spacer()
-                ContentUnavailableView {
-                    Label("No Notes", symairaIcon: .document)
-                } description: {
-                    Text(searchText.isEmpty ? "No notes found in vault." : "No notes match your filter.")
-                }
-                .foregroundColor(SymairaTheme.textMuted)
-                Spacer()
+                SymairaEmptyState(
+                    icon: .document,
+                    title: "No Notes",
+                    message: searchText.isEmpty ? "No notes found in vault." : "No notes match your filter."
+                )
             } else {
                 List(filteredNotes) { note in
                     Button(action: { selectedNote = note }) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(note.title)
-                                    .symairaText(.body).fontWeight(.medium)
-                                    .foregroundColor(SymairaTheme.textPrimary)
+                                    .symairaText(.bodyEmphasized)
                                     .lineLimit(1)
                                 Text(note.path)
                                     .symairaText(.caption)
-                                    .foregroundColor(SymairaTheme.textMuted)
                                     .lineLimit(1)
                             }
                             Spacer()
                             if selectedNote?.id == note.id {
                                 SymairaIconView(.forward, size: 14)
-                                    .foregroundColor(SymairaTheme.goldPrimary)
+                                    .foregroundStyle(SymairaTokens.ink)
                             }
                         }
                         .padding(.vertical, 4)
@@ -124,7 +117,7 @@ struct HistoryView: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.surface)
     }
 
     // MARK: - Version List
@@ -134,10 +127,9 @@ struct HistoryView: View {
             if let note = selectedNote {
                 HStack {
                     SymairaIconView(.history, size: 16)
-                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .foregroundStyle(SymairaTokens.ink2)
                     Text(note.title)
-                        .symairaText(.title).fontWeight(.semibold)
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .symairaText(.title)
                         .lineLimit(1)
                 }
                 .padding(.horizontal, 20)
@@ -146,41 +138,23 @@ struct HistoryView: View {
 
                 Text(note.path)
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
 
                 if let error = errorMessage {
-                    HStack(spacing: 8) {
-                        SymairaIconView(.warning, size: 16)
-                            .foregroundStyle(SymairaTokens.warning)
-                        Text(error)
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(SymairaTokens.warning.opacity(0.12))
-                    .cornerRadius(6)
-                    .padding(.horizontal, 20)
+                    SymairaNotice(message: error, tone: .warning, onDismiss: { errorMessage = nil })
+                        .padding(.horizontal, 20)
                     .padding(.bottom, 8)
                 }
 
                 if isLoadingVersions {
-                    Spacer()
-                    ProgressView("Loading versions…")
-                        .tint(SymairaTheme.goldPrimary)
-                        .foregroundColor(SymairaTheme.textSecondary)
-                    Spacer()
+                    SymairaLoadingState("Loading versions…")
                 } else if versions.isEmpty {
-                    Spacer()
-                    ContentUnavailableView {
-                        Label("No History", symairaIcon: .time)
-                    } description: {
-                        Text("No snapshots recorded for this note.")
-                    }
-                    .foregroundColor(SymairaTheme.textMuted)
-                    Spacer()
+                    SymairaEmptyState(
+                        icon: .time,
+                        title: "No History",
+                        message: "No snapshots recorded for this note."
+                    )
                 } else {
                     HSplitView {
                         ScrollView {
@@ -198,17 +172,14 @@ struct HistoryView: View {
                     }
                 }
             } else {
-                Spacer()
-                ContentUnavailableView {
-                    Label("No Note Selected", symairaIcon: .documentSearch)
-                } description: {
-                    Text("Select a note from the list to see its version history.")
-                }
-                .foregroundColor(SymairaTheme.textMuted)
-                Spacer()
+                SymairaEmptyState(
+                    icon: .documentSearch,
+                    title: "No Note Selected",
+                    message: "Select a note from the list to see its version history."
+                )
             }
         }
-        .background(SymairaTheme.bgDarker)
+        .background(SymairaTokens.canvas)
     }
 
     private func versionRow(_ version: HistoryEntry, isLatest: Bool) -> some View {
@@ -217,28 +188,21 @@ struct HistoryView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     if isLatest {
-                        Text("Current")
-                            .symairaText(.caption).fontWeight(.bold)
-                            .foregroundColor(SymairaTokens.onPrimary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(SymairaTheme.goldPrimary)
-                            .cornerRadius(3)
+                        SymairaBadge("Current", tone: .neutral, icon: .confirm)
                     }
                     Text(formattedTimestamp(version.timestamp))
-                        .symairaText(.body).fontWeight(.medium)
-                        .foregroundColor(SymairaTheme.textPrimary)
+                        .monospacedDigit()
+                        .symairaText(.bodyEmphasized)
                     Spacer()
                 }
                 HStack(spacing: 4) {
                     Text(version.snapshotID.prefix(12))
-                        .symairaText(.caption).monospaced()
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .symairaText(.monoSmall)
                     Text("·")
-                        .foregroundColor(SymairaTheme.textMuted)
-                    Text(formattedSize(version.size))
                         .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+                    Text(formattedSize(version.size))
+                        .monospacedDigit()
+                        .symairaText(.caption)
                 }
             }
 
@@ -246,26 +210,23 @@ struct HistoryView: View {
                 Button("Diff") {
                     selectedVersion = version
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
                 .disabled(isLoadingVersions || isLoadingDiff)
                 .help("Show what changed in this version")
 
                 Button("Restore") {
                     Task { await restoreVersion(version) }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.secondary)
                 .disabled(isLoadingVersions)
             }
         }
         .padding(12)
-        .background(isSelected ? SymairaTheme.goldPrimary.opacity(0.10) : SymairaTheme.bgDark.opacity(0.3))
+        .background(isSelected ? SymairaTokens.selection : SymairaTokens.raised)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? SymairaTheme.goldPrimary.opacity(0.6) : SymairaTheme.borderGlassHover, lineWidth: isSelected ? 1 : 0.5)
+                .stroke(isSelected ? SymairaTokens.focus : SymairaTokens.line, lineWidth: isSelected ? 1 : 0.5)
         )
     }
 
@@ -277,31 +238,29 @@ struct HistoryView: View {
     private var diffPane: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Image(systemName: "plus.forwardslash.minus")
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                SymairaIconView(.diff, size: 16)
+                    .foregroundStyle(SymairaTokens.ink2)
                 Text("Diff vs. current")
                     .symairaText(.subheading)
-                    .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if isLoadingDiff {
                     ProgressView()
-                        .accessibilityLabel("Loading history…")
+                        .accessibilityLabel("Loading diff…")
                         .controlSize(.small)
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
 
-            Divider().overlay(SymairaTheme.borderGlass)
+            SymairaFormDivider()
 
             if let diff = diffContent {
                 if diff.lines.isEmpty {
                     VStack(spacing: 6) {
                         SymairaIconView(.success, size: 16)
-                            .foregroundColor(SymairaTheme.goldSecondary)
+                            .foregroundStyle(SymairaTokens.ink2)
                         Text("No differences — this version matches the current content.")
-                            .symairaText(.caption)
-                            .foregroundColor(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -312,17 +271,16 @@ struct HistoryView: View {
                             }
                         }
                         .padding(10)
-                        .font(.system(.caption, design: .monospaced))
+                        .font(SymairaTypography.monoSmall)
                     }
-                    .background(SymairaTheme.bgDark.opacity(0.35))
+                    .background(SymairaTokens.surface)
                 }
             } else if selectedVersion == nil {
                 VStack(spacing: 6) {
                     SymairaIconView(.documentSearch, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                     Text("Select a version and press Diff to compare it with the current file.")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -330,15 +288,14 @@ struct HistoryView: View {
             } else {
                 VStack(spacing: 6) {
                     SymairaIconView(.history, size: 16)
-                        .foregroundColor(SymairaTheme.textMuted)
+                        .foregroundStyle(SymairaTokens.ink3)
                     Text("Loading diff…")
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .background(SymairaTheme.bgDarker)
+        .background(SymairaTokens.canvas)
     }
 
     @ViewBuilder
@@ -346,19 +303,19 @@ struct HistoryView: View {
         HStack(alignment: .top, spacing: 8) {
             Text(line.kind == .same ? " " : (line.kind == .added ? "+" : "−"))
                 .symairaText(.monoSmall)
-                .foregroundColor(line.kind == .added ? .green : (line.kind == .removed ? .red : .clear))
+                .foregroundStyle(line.kind == .added ? SymairaTokens.positive : (line.kind == .removed ? SymairaTokens.critical : Color.clear))
                 .frame(width: 10)
             Text(line.text.isEmpty ? " " : line.text)
-                .foregroundColor(
-                    line.kind == .added ? Color.green.opacity(0.95)
-                        : (line.kind == .removed ? Color.red.opacity(0.9) : SymairaTheme.textPrimary)
+                .foregroundStyle(
+                    line.kind == .added ? SymairaTokens.positive
+                        : (line.kind == .removed ? SymairaTokens.critical : SymairaTokens.ink)
                 )
             Spacer(minLength: 0)
         }
         .padding(.vertical, 1)
         .background(
-            line.kind == .added ? Color.green.opacity(0.08)
-                : (line.kind == .removed ? Color.red.opacity(0.08) : .clear)
+            line.kind == .added ? SymairaTokens.positive.opacity(0.12)
+                : (line.kind == .removed ? SymairaTokens.critical.opacity(0.12) : Color.clear)
         )
     }
 

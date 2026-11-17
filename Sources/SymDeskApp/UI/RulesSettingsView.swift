@@ -44,7 +44,7 @@ struct RulesSettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xLarge) {
                 header
 				connectionCard
 				displayCard
@@ -60,14 +60,11 @@ struct RulesSettingsView: View {
                     let title = "Rules unavailable"
                     messageCard(title: title, message: error, icon: .warning) {
                         Button("Retry") { Task { await viewModel.load(); await viewModel.loadMail() } }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .symairaButtonStyle(.secondary)
                     }
                 }
                 if let action = viewModel.lastActionMessage {
-                    Label(action, symairaIcon: .success)
-                        .foregroundStyle(SymairaTheme.goldPrimary)
-                        .symairaText(.callout)
+                    SymairaNotice(message: action, tone: .positive)
                 }
                 classificationRulesCard
                 dryRunCard
@@ -78,9 +75,9 @@ struct RulesSettingsView: View {
 				}
             }
             .frame(maxWidth: 960, alignment: .leading)
-            .padding(32)
+            .padding(SymairaSpacing.section)
         }
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
         .navigationTitle("Rules & Settings")
         .task {
 			guard !core.isRemote else { return }
@@ -147,12 +144,11 @@ struct RulesSettingsView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: SymairaSpacing.xSmall) {
                 Text("Rules & Settings")
-                    .symairaText(.display).bold()
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .symairaText(.display)
                 Text("Manage classification and mail-ingest behavior through symdesk's versioned contract.")
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             Spacer()
             Button {
@@ -161,8 +157,7 @@ struct RulesSettingsView: View {
             } label: {
                 Label("New Classification Rule", symairaIcon: .add)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(SymairaTheme.goldPrimary)
+            .symairaButtonStyle(.primary)
         }
     }
 
@@ -170,12 +165,10 @@ struct RulesSettingsView: View {
 	    settingsCard(title: core.isRemote ? "Self-hosted server" : "Local vault", icon: core.isRemote ? .server : .storage) {
 	        HStack(spacing: 14) {
 	            VStack(alignment: .leading, spacing: 5) {
-	                Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
+            Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
 	                    .symairaText(.subheading)
-	                    .foregroundStyle(SymairaTheme.textPrimary)
 	                Text(core.isRemote ? "Vault, originals, index and OCR queue live on this server." : "The app and CLI read this vault directly on your Mac.")
-	                    .symairaText(.callout)
-	                    .foregroundStyle(SymairaTheme.textSecondary)
+	                    .symairaText(.secondary)
 	            }
 	            Spacer()
 	            if core.isRemote {
@@ -184,34 +177,31 @@ struct RulesSettingsView: View {
 	                    core.disconnectServer()
 	                    NSApplication.shared.terminate(nil)
 	                }
-	                .buttonStyle(.bordered)
+	                .symairaButtonStyle(.secondary)
 	            } else if !core.isDemoMode {
 	                Button("Reveal in Finder") {
 	                    if let path = core.vaultPath {
 	                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
 	                    }
 	                }
-	                .buttonStyle(.bordered)
+	                .symairaButtonStyle(.secondary)
 	                Button("Change Vault…") {
 	                    showingChangeVaultConfirmation = true
 	                }
-	                .buttonStyle(.bordered)
+	                .symairaButtonStyle(.secondary)
 	            }
 	        }
 	        if !core.isRemote && !core.isDemoMode {
-	            Divider().overlay(SymairaTheme.borderGlass)
-	            Toggle(isOn: finderFavoritesBinding) {
-	                VStack(alignment: .leading, spacing: 2) {
-	                    Text("Show vault in Finder's Favorites sidebar")
-	                        .symairaText(.body)
-	                        .foregroundStyle(SymairaTheme.textPrimary)
-	                    Text("Adds the vault folder to Finder's sidebar for one-click access. Removing it from Finder's sidebar is respected and not undone automatically.")
-	                        .symairaText(.caption)
-	                        .foregroundStyle(SymairaTheme.textSecondary)
-	                }
+	            SymairaFormDivider()
+	            SymairaFormRow(
+	                "Show vault in Finder's Favorites sidebar",
+	                description: "Adds the vault folder to Finder's sidebar for one-click access. Removing it from Finder's sidebar is respected and not undone automatically."
+	            ) {
+	                Toggle(isOn: finderFavoritesBinding) { EmptyView() }
+	                    .toggleStyle(.symairaSwitch)
+	                    .accessibilityLabel("Show vault in Finder's Favorites sidebar")
+	                    .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
 	            }
-	            .toggleStyle(.switch)
-	            .tint(SymairaTheme.goldPrimary)
 	        }
 	    }
 	}
@@ -227,52 +217,46 @@ struct RulesSettingsView: View {
 
 	private var displayCard: some View {
 	    settingsCard(title: "Display", icon: .visible) {
-	        Toggle(isOn: $showThumbnails) {
-	            VStack(alignment: .leading, spacing: 2) {
-	                Text("Show content preview thumbnails")
-	                    .symairaText(.body)
-	                    .foregroundStyle(SymairaTheme.textPrimary)
-	                Text("When enabled, document and note cards show a text preview of the first content instead of a generic SF Symbol icon.")
-	                    .symairaText(.caption)
-	                    .foregroundStyle(SymairaTheme.textSecondary)
-	            }
+	        SymairaFormRow(
+	            "Show content preview thumbnails",
+	            description: "When enabled, document and note cards show a text preview of the first content instead of a generic SF Symbol icon."
+	        ) {
+	            Toggle(isOn: $showThumbnails) { EmptyView() }
+	                .toggleStyle(.symairaSwitch)
+	                .accessibilityLabel("Show content preview thumbnails")
+	                .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
 	        }
-	        .toggleStyle(.switch)
-	        .tint(SymairaTheme.goldPrimary)
 	    }
 	}
 
     private var classificationRulesCard: some View {
         settingsCard(title: "Classification rules", icon: .filter) {
             if viewModel.isLoading && viewModel.rules.isEmpty {
-                ProgressView("Loading rules…")
+                SymairaLoadingState("Loading rules…")
             } else if viewModel.rules.isEmpty {
                 Text("No classification rules configured.")
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             } else {
                 VStack(spacing: 0) {
                     ForEach(viewModel.rules) { rule in
                         HStack(alignment: .top, spacing: 12) {
                             SymairaIconView(.filter, size: 16)
-                                .foregroundStyle(SymairaTheme.goldPrimary)
+                                .foregroundStyle(SymairaTokens.ink2)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(rule.pattern).symairaText(.subheading)
                                 Text("\(rule.kind) → \(rule.value)")
-                                    .symairaText(.callout)
-                                    .foregroundStyle(SymairaTheme.textSecondary)
+                                    .symairaText(.secondary)
                             }
                             Spacer()
                             Button("Edit") { editingRule = rule; showingRuleEditor = true }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
+                                .symairaButtonStyle(.secondary)
                             Button { pendingDeleteRule = rule } label: { SymairaIconView(.delete, size: 16) }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
+                                .symairaButtonStyle(.secondary)
                                 .accessibilityLabel("Delete Rule")
                                 .help("Delete Rule")
                         }
                         .padding(.vertical, 10)
-                        if rule.id != viewModel.rules.last?.id { Divider().overlay(SymairaTheme.borderGlass) }
+                        if rule.id != viewModel.rules.last?.id { SymairaFormDivider() }
                     }
                 }
             }
@@ -282,40 +266,41 @@ struct RulesSettingsView: View {
     private var dryRunCard: some View {
         settingsCard(title: "Existing-document dry-run", icon: .documentSearch) {
             Text("Scan indexed Markdown notes without writing anything. Results include only safe metadata and matching rule IDs.")
-                .foregroundStyle(SymairaTheme.textSecondary)
-            HStack {
+                .symairaText(.secondary)
+            HStack(spacing: SymairaSpacing.small) {
                 TextField("Pattern", text: $viewModel.dryRunPattern)
+                    .textFieldStyle(.symaira)
                 TextField("Kind", text: $viewModel.dryRunKind)
+                    .textFieldStyle(.symaira)
                     .frame(width: 150)
                 TextField("Value", text: $viewModel.dryRunValue)
+                    .textFieldStyle(.symaira)
             }
             Button {
                 Task { _ = await viewModel.runDryRun() }
             } label: {
                 Label("Run dry-run", symairaIcon: .play)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(SymairaTheme.goldPrimary)
+            .symairaButtonStyle(.secondary)
             .disabled(viewModel.isPerformingOperation)
 
             if let result = viewModel.dryRunResult {
                 Text("\(result.matchedDocuments) of \(result.totalDocuments) documents match")
                     .symairaText(.subheading)
                 ForEach(result.matches) { match in
-                    Label("\(match.title) — \(match.notePath)", symairaIcon: .success)
-                        .symairaText(.callout)
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                Label("\(match.title) — \(match.notePath)", symairaIcon: .success)
+                        .symairaText(.secondary)
                 }
                 ForEach(result.skipped) { skipped in
-                    Label("Skipped: \(skipped.notePath) — \(skipped.reason)", symairaIcon: .warning)
-                        .symairaText(.callout)
-                        .foregroundStyle(SymairaTheme.goldSecondary)
+                Label("Skipped: \(skipped.notePath) — \(skipped.reason)", symairaIcon: .warning)
+                        .symairaText(.callout, respectsForeground: false)
+                        .foregroundStyle(SymairaTokens.warning)
                 }
             }
 
             if let error = viewModel.lastError, viewModel.lastErrorKind == .validation {
-                Text(error)
-                    .symairaText(.callout)
+                Label(error, symairaIcon: .error)
+                    .symairaText(.callout, respectsForeground: false)
                     .foregroundStyle(SymairaTokens.critical)
             }
         }
@@ -326,52 +311,43 @@ struct RulesSettingsView: View {
             if let error = viewModel.mailError {
                 messageCard(title: "Mail configuration unavailable", message: error, icon: .pending) {
                     Button("Retry") { Task { await viewModel.loadMail() } }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                 }
             } else {
                 HStack {
                     Text("Changes apply after restarting the mail watcher.")
-                        .symairaText(.callout)
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                     Spacer()
                     Button("New Mail Account") { editingMail = nil; showingMailEditor = true }
-                        .buttonStyle(.borderedProminent)
-                        .tint(SymairaTheme.goldPrimary)
+                        .symairaButtonStyle(.secondary)
                 }
                 if viewModel.mailAccounts.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Mail import isn't set up yet.")
-                            .symairaText(.callout).fontWeight(.medium)
-                            .foregroundStyle(SymairaTheme.textPrimary)
+                            .symairaText(.bodyEmphasized)
                         Text("Click \"New Mail Account\" above to configure an IMAP account for automated email ingestion.")
-                            .symairaText(.caption)
-                            .foregroundStyle(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                     }
                     .padding(.vertical, 4)
                 } else {
                     ForEach(viewModel.mailAccounts, id: \.stableID) { account in
                         HStack(alignment: .top, spacing: 12) {
                             SymairaIconView(.mail, size: 16)
-                                .foregroundStyle(SymairaTheme.goldPrimary)
+                                .foregroundStyle(SymairaTokens.ink2)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(account.username + "@" + account.host).symairaText(.subheading)
                                 Text("\(account.action) · \(account.folder) · password: \(account.passwordSecretKind ?? "unknown")")
-                                    .symairaText(.callout)
-                                    .foregroundStyle(SymairaTheme.textSecondary)
+                                    .symairaText(.secondary)
                                 if !account.from.isEmpty || !account.subject.isEmpty {
                                     Text("Filters: \((account.from + account.subject).joined(separator: ", "))")
                                         .symairaText(.caption)
-                                        .foregroundStyle(SymairaTheme.textMuted)
                                 }
                             }
                             Spacer()
                             Button("Edit") { editingMail = account; showingMailEditor = true }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
+                                .symairaButtonStyle(.secondary)
                             Button { pendingDeleteMail = account } label: { SymairaIconView(.delete, size: 16) }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
+                                .symairaButtonStyle(.secondary)
                                 .accessibilityLabel("Remove Mail Account")
                                 .help("Remove Mail Account")
                         }
@@ -395,16 +371,13 @@ struct RulesSettingsView: View {
         settingsCard(title: "Paperless-ngx import", icon: .download) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Migrate documents from a Paperless-ngx export into this vault. Notes are created with contract frontmatter and the originals are archived under archive/paperless/.")
-                    .symairaText(.callout)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                 Button {
                     showingPaperlessImport = true
                 } label: {
                     Label("Import from Paperless…", symairaIcon: .download)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
-                .controlSize(.small)
+                .symairaButtonStyle(.secondary)
             }
         }
     }
@@ -417,8 +390,7 @@ struct RulesSettingsView: View {
                     Button("Retry") {
                         Task { await loadConsumeFolderStatus() }
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
                 }
             } else if let status = consumeFolderStatus {
                 VStack(alignment: .leading, spacing: 12) {
@@ -439,14 +411,11 @@ struct RulesSettingsView: View {
                                         }
                                     }
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.small)
-                                .tint(SymairaTheme.goldPrimary)
+                                .symairaButtonStyle(.secondary)
                                 Button("Cancel") {
                                     editingConsumeFolderPath = false
                                 }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
+                                .symairaButtonStyle(.secondary)
                             }
                         }
                     } else {
@@ -454,83 +423,70 @@ struct RulesSettingsView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(status.inboxPath)
                                     .symairaText(.subheading)
-                                    .foregroundStyle(SymairaTheme.textPrimary)
                                 Text(status.configuredPath.isEmpty
                                      ? "Default path (not explicitly configured)"
                                      : "Configured in symdesk config")
                                     .symairaText(.caption)
-                                    .foregroundStyle(SymairaTheme.textMuted)
                             }
                             Spacer()
                             Button("Change") {
                                 editedConsumeFolderPath = status.inboxPath
                                 editingConsumeFolderPath = true
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .symairaButtonStyle(.secondary)
                         }
                     }
 
-                    Divider().overlay(SymairaTheme.borderGlass)
+                    SymairaFormDivider()
 
                     // Watch status and toggle
                     HStack {
-                        Label(watcher.isWatching ? "Running" : "Stopped", symairaIcon: watcher.isWatching ? .play : .stop)
-                            .foregroundStyle(watcher.isWatching ? .green : SymairaTheme.textSecondary)
-                            .symairaText(.callout)
+                        SymairaStatusLabel(watcher.isWatching ? "Running" : "Stopped", tone: watcher.isWatching ? .positive : .neutral)
                         Spacer()
                         if watcher.isWatching {
                             Button("Stop") {
                                 watcher.stop()
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .symairaButtonStyle(.secondary)
                         } else {
                             Button("Start") {
                                 if let tool = core.tool {
                                     watcher.start(tool: tool, vaultPath: core.vaultPath)
                                 }
                             }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .tint(SymairaTheme.goldPrimary)
+                            .symairaButtonStyle(.secondary)
                             .disabled(core.tool == nil)
                         }
                     }
 
                     if !watcher.allEvents.isEmpty {
-                        Divider().overlay(SymairaTheme.borderGlass)
+                        SymairaFormDivider()
 
                         // Recent activity
                         Text("Recent activity")
                             .symairaText(.subheading)
-                            .foregroundStyle(SymairaTheme.textPrimary)
 
                         ForEach(watcher.recentActivity.prefix(5)) { event in
                             HStack(spacing: 8) {
-                                Image(systemName: iconForEvent(event.event))
-                                    .foregroundStyle(SymairaTheme.goldSecondary)
-                                    .symairaText(.caption)
+                                SymairaIconView(iconForEvent(event.event), size: 14)
+                                    .foregroundStyle(SymairaTokens.ink2)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(event.event.replacingOccurrences(of: "_", with: " ").capitalized)
-                                        .symairaText(.caption).fontWeight(.medium)
-                                        .foregroundStyle(SymairaTheme.textPrimary)
+                                    .symairaText(.callout)
                                     Text(URL(fileURLWithPath: event.path).lastPathComponent)
                                         .symairaText(.caption)
-                                        .foregroundStyle(SymairaTheme.textMuted)
                                         .lineLimit(1)
                                 }
                                 Spacer()
                                 Text(formattedTimestamp(event.ts))
                                     .symairaText(.caption)
-                                    .foregroundStyle(SymairaTheme.textMuted)
                             }
                             .padding(.vertical, 2)
                         }
                     }
                 }
             } else {
-                ProgressView("Loading consume folder status…")
+                SymairaLoadingState("Loading consume folder status…")
                     .task { await loadConsumeFolderStatus() }
             }
         }
@@ -553,47 +509,45 @@ struct RulesSettingsView: View {
                     Button("Retry") {
                         Task { await loadAIConfig() }
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .symairaButtonStyle(.secondary)
                 }
             } else if aiConfig == nil {
-                ProgressView("Loading AI configuration…")
+                SymairaLoadingState("Loading AI configuration…")
                     .task { await loadAIConfig() }
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     // AI off is a desk-level state, not a provider: the
                     // shared picker (appkit) manages only real providers,
                     // filtered to the ones the Go core implements.
-                    Toggle("Enable AI", isOn: Binding(
-                        get: { aiProvider != "none" },
-                        set: { setAIProvider($0 ? "ollama" : "none") }
-                    ))
-                    .toggleStyle(.switch)
-                    .symairaText(.body)
-                    .accessibilityLabel("Enable AI")
+                    SymairaFormRow("Enable AI") {
+                        Toggle(isOn: Binding(
+                            get: { aiProvider != "none" },
+                            set: { setAIProvider($0 ? "ollama" : "none") }
+                        )) { EmptyView() }
+                        .toggleStyle(.symairaSwitch)
+                        .accessibilityLabel("Enable AI")
+                        .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
+                    }
 
                     if aiProvider != "none" {
                         if let catalog = aiProviderCatalog {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Provider")
-                                    .symairaText(.caption)
-                                    .foregroundStyle(SymairaTheme.textSecondary)
+                                    .symairaText(.secondary)
                                 SymairaProviderPicker(selection: aiProviderBinding, catalog: catalog, title: "Provider")
                                     .pickerStyle(.segmented)
                                     .accessibilityLabel("AI provider")
                             }
                         } else {
                             Text("Provider catalog unavailable")
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.textSecondary)
+                                .symairaText(.secondary)
                         }
                     }
 
                     if aiProvider == "ollama" {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Ollama endpoint URL")
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.textSecondary)
+                                .symairaText(.secondary)
                             TextField("http://localhost:11434", text: $aiOllamaURL)
                                 .textFieldStyle(.symaira)
                                 .accessibilityLabel("Ollama endpoint URL")
@@ -601,8 +555,7 @@ struct RulesSettingsView: View {
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Model")
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.textSecondary)
+                                .symairaText(.secondary)
                             if aiAvailableModels.isEmpty {
                                 TextField("Enter an Ollama model", text: $aiModel)
                                     .textFieldStyle(.symaira)
@@ -619,8 +572,7 @@ struct RulesSettingsView: View {
                     } else if aiProvider == "anthropic" {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("API key or symvault reference (op://…)")
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.textSecondary)
+                                .symairaText(.secondary)
                             SymairaProviderCredentialField(
                                 providerID: aiProvider,
                                 store: aiCredentialStore,
@@ -632,8 +584,7 @@ struct RulesSettingsView: View {
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Model")
-                                .symairaText(.caption)
-                                .foregroundStyle(SymairaTheme.textSecondary)
+                                .symairaText(.secondary)
                             TextField("Enter an Anthropic model", text: $aiModel)
                                 .textFieldStyle(.symaira)
                                 .accessibilityLabel("Anthropic model")
@@ -642,8 +593,7 @@ struct RulesSettingsView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Max tokens")
-                            .symairaText(.caption)
-                            .foregroundStyle(SymairaTheme.textSecondary)
+                            .symairaText(.secondary)
                         TextField("Maximum response tokens", text: $aiMaxTokens)
                             .textFieldStyle(.symaira)
                             .frame(maxWidth: 160)
@@ -651,25 +601,20 @@ struct RulesSettingsView: View {
                     }
 
                     if let aiModelNotice {
-                        Label(aiModelNotice, symairaIcon: .info)
-                            .foregroundStyle(SymairaTheme.goldSecondary)
-                            .symairaText(.caption)
+                        SymairaNotice(message: aiModelNotice, tone: .informative)
                     }
 
                     HStack {
                         Button("Test connection") {
                             Task { await testAIConnection() }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .symairaButtonStyle(.secondary)
                         .disabled(aiIsTesting)
 
                         Button(aiIsSaving ? "Saving…" : "Save") {
                             Task { await saveAIConfig() }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        .tint(SymairaTheme.goldPrimary)
+                        .symairaButtonStyle(.secondary)
                         .disabled(aiIsSaving)
 
                         Spacer()
@@ -683,20 +628,18 @@ struct RulesSettingsView: View {
                             ? aiModel
                             : "default model"
                         if result.ok {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Label("Connected to \(providerName) using \(modelName).", symairaIcon: .success)
-                                    .foregroundStyle(SymairaTokens.positive)
-                                    .symairaText(.caption)
+                            VStack(alignment: .leading, spacing: SymairaSpacing.small) {
+                                SymairaNotice(message: "Connected to \(providerName) using \(modelName).", tone: .positive)
                                 if let models = result.models, !models.isEmpty {
                                     Text("Available models: \(models.joined(separator: ", "))")
-                                        .foregroundStyle(SymairaTheme.textSecondary)
-                                        .symairaText(.caption)
+                                        .symairaText(.secondary)
                                 }
                             }
                         } else {
-                            Label("Connection failed for \(providerName) using \(modelName): \(result.error ?? "Connection failed.")", symairaIcon: .warning)
-                                .foregroundStyle(SymairaTokens.warning)
-                                .symairaText(.caption)
+                            SymairaNotice(
+                                message: "Connection failed for \(providerName) using \(modelName): \(result.error ?? "Connection failed."). Check the endpoint and credentials, then test again.",
+                                tone: .critical
+                            )
                         }
                     }
                 }
@@ -823,12 +766,12 @@ struct RulesSettingsView: View {
         }
     }
 
-    private func iconForEvent(_ event: String) -> String {
+    private func iconForEvent(_ event: String) -> SymairaIcon {
         switch event {
-        case "file_added", "index_updated": return "doc.badge.plus"
-        case "file_changed": return "doc.badge.gearshape"
-        case "file_removed": return "trash"
-        default: return "circle.fill"
+        case "file_added", "index_updated": return .documentAdd
+        case "file_changed": return .edit
+        case "file_removed": return .delete
+        default: return .info
         }
     }
 
@@ -840,18 +783,10 @@ struct RulesSettingsView: View {
     }
 
     private func messageCard<Content: View>(title: String, message: String, icon: SymairaIcon, @ViewBuilder action: () -> Content) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            SymairaIconView(icon, size: 16).foregroundStyle(SymairaTheme.goldSecondary)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title).symairaText(.subheading).foregroundStyle(SymairaTheme.textPrimary)
-                Text(message).foregroundStyle(SymairaTheme.textSecondary)
-                action()
-            }
-            Spacer()
+        VStack(alignment: .leading, spacing: SymairaSpacing.small) {
+            SymairaNotice(title: title, message: message, tone: icon == .server ? .informative : .warning)
+            action()
         }
-        .padding(14)
-        .background(SymairaTheme.goldPrimary.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -871,10 +806,20 @@ private struct RuleEditorView: View {
         _value = State(initialValue: existing?.value ?? "")
     }
 
+    private var isValid: Bool {
+        !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !kind.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text(existing == nil ? "New Classification Rule" : "Edit Classification Rule")
-                .symairaText(.title).bold()
+        SymairaSheetScaffold(
+            title: existing == nil ? "New Classification Rule" : "Edit Classification Rule",
+            dismiss: { dismiss() },
+            primaryTitle: existing == nil ? "Add Rule" : "Save Rule",
+            primaryDisabled: !isValid,
+            primary: { onSave(pattern, kind, value) }
+        ) {
             SymairaFormSection {
                 SymairaFormRow("Pattern") {
                     TextField("Pattern", text: $pattern, prompt: Text("Text to match"))
@@ -894,18 +839,8 @@ private struct RuleEditorView: View {
                         .frame(maxWidth: 300)
                 }
             }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                Button(existing == nil ? "Add Rule" : "Save Rule") { onSave(pattern, kind, value) }
-                    .buttonStyle(.borderedProminent)
-                    .tint(SymairaTheme.goldPrimary)
-                    .disabled(pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || kind.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
         }
-        .padding(24)
-        .frame(width: 520, height: 300)
-        .background(SymairaTheme.bgDark)
+        .frame(width: 520, height: 380)
     }
 }
 
@@ -942,10 +877,13 @@ private struct MailEditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(existing == nil ? "New Mail Account" : "Edit Mail Account")
-                .symairaText(.title).bold()
-            ScrollView {
+        SymairaSheetScaffold(
+            title: existing == nil ? "New Mail Account" : "Edit Mail Account",
+            dismiss: { dismiss() },
+            primaryTitle: existing == nil ? "Create Account" : "Save Account",
+            primaryDisabled: host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            primary: { save() }
+        ) {
                 SymairaFormSection {
                     SymairaFormRow("IMAP Host") {
                         TextField("IMAP host", text: $host, prompt: Text("imap.example.com"))
@@ -1018,35 +956,26 @@ private struct MailEditorView: View {
                             .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
                     }
                 }
-            }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                Button(existing == nil ? "Create Account" : "Save Account") {
-                    let account = MailAccount(
-                        id: existing?.id,
-                        host: host.trimmingCharacters(in: .whitespacesAndNewlines),
-                        port: Int(port) ?? 993,
-                        username: username.trimmingCharacters(in: .whitespacesAndNewlines),
-                        passwordSecret: passwordSecret.isEmpty ? nil : passwordSecret,
-                        folder: folder,
-                        from: split(from),
-                        subject: split(subject),
-                        hasAttachment: hasAttachment,
-                        action: action,
-                        moveTo: moveTo,
-                        archiveMail: archiveMail
-                    )
-                    onSave(account)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
-                .disabled(host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
         }
-        .padding(24)
         .frame(width: 600, height: 560)
-        .background(SymairaTheme.bgDark)
+    }
+
+    private func save() {
+        let account = MailAccount(
+            id: existing?.id,
+            host: host.trimmingCharacters(in: .whitespacesAndNewlines),
+            port: Int(port) ?? 993,
+            username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+            passwordSecret: passwordSecret.isEmpty ? nil : passwordSecret,
+            folder: folder,
+            from: split(from),
+            subject: split(subject),
+            hasAttachment: hasAttachment,
+            action: action,
+            moveTo: moveTo,
+            archiveMail: archiveMail
+        )
+        onSave(account)
     }
 
     private func split(_ value: String) -> [String] {

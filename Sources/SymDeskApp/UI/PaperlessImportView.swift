@@ -30,19 +30,17 @@ struct PaperlessImportView: View {
                 LabeledContent("Paperless export") {
                     HStack(spacing: 8) {
                         Text(exportDir ?? "Choose the export directory…")
-                            .symairaText(.callout)
-                            .foregroundStyle(exportDir == nil ? SymairaTheme.textSecondary : SymairaTheme.textPrimary)
+                            .symairaText(.callout, respectsForeground: false)
+                            .foregroundStyle(exportDir == nil ? SymairaTokens.ink2 : SymairaTokens.ink)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .frame(width: 300, alignment: .leading)
                         Button("Choose…") { pickDirectory() }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                            .symairaButtonStyle(.secondary)
                     }
                 }
                 Text("A Paperless-ngx export (manifest.json + document files). The import is idempotent — re-running it updates notes instead of duplicating them.")
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
             .padding(18)
             .symairaCard(padding: 0)
@@ -54,7 +52,7 @@ struct PaperlessImportView: View {
                 } label: {
                     Label("Preview (dry-run)", symairaIcon: .visible)
                 }
-                .buttonStyle(.bordered)
+                .symairaButtonStyle(.secondary)
                 .disabled(exportDir == nil || isRunning || !hasVault)
 
                 Button {
@@ -68,35 +66,25 @@ struct PaperlessImportView: View {
                         Label("Start Import", symairaIcon: .download)
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SymairaTheme.goldPrimary)
+                .symairaButtonStyle(.primary)
                 .disabled(exportDir == nil || isRunning || !hasVault)
 
                 Spacer()
 
                 Button("Done") { dismiss() }
-                    .buttonStyle(.bordered)
+                    .symairaButtonStyle(.secondary)
                     .disabled(isRunning)
             }
 
             if let errorMessage {
-                HStack(spacing: 8) {
-                    SymairaIconView(.warning, size: 16)
-                        .foregroundStyle(SymairaTokens.critical)
-                    Text(errorMessage)
-                        .symairaText(.caption)
-                        .foregroundStyle(SymairaTheme.textSecondary)
-                    Spacer()
+                SymairaNotice(message: errorMessage, tone: .critical) {
+                    self.errorMessage = nil
                 }
-                .padding(10)
-                .background(SymairaTokens.critical.opacity(0.12))
-                .cornerRadius(6)
             }
 
             if !progressMessage.isEmpty {
                 Label(progressMessage, symairaIcon: .package)
-                    .symairaText(.callout)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
 
             if let summary {
@@ -107,18 +95,18 @@ struct PaperlessImportView: View {
         }
         .padding(28)
         .frame(width: 640, height: 560)
-        .background(SymairaTheme.bgDark)
+        .background(SymairaTokens.canvas)
     }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
-            SymairaIconView(.download, size: 16)
-                .font(SymairaTypography.display)
-                .foregroundStyle(SymairaTheme.goldPrimary)
+            SymairaIconView(.download, size: 26)
+                .foregroundStyle(SymairaTokens.ink2)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Import from Paperless-ngx").symairaText(.title).bold()
+                Text("Import from Paperless-ngx").symairaText(.title)
                 Text("Migrate your Paperless documents into the vault as contract notes with their original files archived.")
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
     }
@@ -127,23 +115,23 @@ struct PaperlessImportView: View {
 
     @ViewBuilder
     private func resultSummary(_ summary: DeskCore.PaperlessImportSummary) -> some View {
+        let hasErrors = summary.results.contains(where: { $0.action == "error" })
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                SymairaIconView(.verified, size: 16)
-                    .foregroundStyle(SymairaTheme.goldPrimary)
-                Text(summary.results.contains(where: { $0.action == "error" }) ? "Import finished with errors" : "Import complete")
+                SymairaIconView(hasErrors ? .warning : .verified, size: 16)
+                    .foregroundStyle(hasErrors ? SymairaTokens.warning : SymairaTokens.positive)
+                Text(hasErrors ? "Import finished with errors" : "Import complete")
                     .symairaText(.subheading)
-                    .foregroundStyle(SymairaTheme.textPrimary)
                 Spacer()
             }
 
             HStack(spacing: 16) {
-                summaryStat("Total", summary.total, color: SymairaTheme.textPrimary)
-                summaryStat("Created", summary.created, color: .green)
-                summaryStat("Updated", summary.updated, color: SymairaTheme.goldSecondary)
-                summaryStat("Skipped", summary.skipped, color: SymairaTheme.textSecondary)
+                summaryStat("Total", summary.total, color: SymairaTokens.ink)
+                summaryStat("Created", summary.created, color: SymairaTokens.positive)
+                summaryStat("Updated", summary.updated, color: SymairaTokens.ink2)
+                summaryStat("Skipped", summary.skipped, color: SymairaTokens.ink2)
                 if summary.errors > 0 {
-                    summaryStat("Errors", summary.errors, color: .red)
+                    summaryStat("Errors", summary.errors, color: SymairaTokens.critical)
                 }
             }
 
@@ -157,7 +145,7 @@ struct PaperlessImportView: View {
                 }
                 .frame(maxHeight: 190)
                 .padding(8)
-                .background(SymairaTheme.bgDark.opacity(0.4))
+                .background(SymairaTokens.canvas)
                 .cornerRadius(8)
             }
         }
@@ -168,34 +156,32 @@ struct PaperlessImportView: View {
     private func summaryStat(_ label: String, _ value: Int, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)")
-                .symairaText(.subheading).fontWeight(.bold)
+                .symairaText(.subheading, respectsForeground: false)
+                .monospacedDigit()
                 .foregroundStyle(color)
             Text(label)
-                .symairaText(.caption)
-                .foregroundStyle(SymairaTheme.textSecondary)
+                .symairaText(.secondary)
         }
     }
 
     @ViewBuilder
     private func resultRow(_ result: DeskCore.PaperlessImportResult) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: icon(for: result.action))
-                .symairaText(.caption)
+            SymairaIconView(icon(for: result.action), size: 14)
                 .foregroundStyle(color(for: result.action))
             Text("#\(result.paperlessID) \(result.title)")
-                .symairaText(.caption)
-                .foregroundStyle(SymairaTheme.textPrimary)
+                .symairaText(.caption, respectsForeground: false)
+                .foregroundStyle(SymairaTokens.ink)
                 .lineLimit(1)
             Spacer()
             if let error = result.error {
                 Text(error)
-                    .symairaText(.caption)
+                    .symairaText(.caption, respectsForeground: false)
                     .foregroundStyle(SymairaTokens.critical)
                     .lineLimit(1)
             } else if let path = result.notePath {
                 Text(path)
-                    .symairaText(.caption)
-                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -203,23 +189,23 @@ struct PaperlessImportView: View {
         .padding(.vertical, 2)
     }
 
-    private func icon(for action: String) -> String {
+    private func icon(for action: String) -> SymairaIcon {
         switch action {
-        case "created": return "plus.circle"
-        case "updated": return "arrow.triangle.2.circlepath"
-        case "skipped_idempotent": return "equal.circle"
-        case "error": return "xmark.octagon"
-        default: return "circle"
+        case "created": return .add
+        case "updated": return .sync
+        case "skipped_idempotent": return .skipped
+        case "error": return .failure
+        default: return .pending
         }
     }
 
     private func color(for action: String) -> Color {
         switch action {
-        case "created": return .green
-        case "updated": return SymairaTheme.goldSecondary
-        case "skipped_idempotent": return SymairaTheme.textSecondary
-        case "error": return .red
-        default: return SymairaTheme.textSecondary
+        case "created": return SymairaTokens.positive
+        case "updated": return SymairaTokens.ink2
+        case "skipped_idempotent": return SymairaTokens.ink2
+        case "error": return SymairaTokens.critical
+        default: return SymairaTokens.ink2
         }
     }
 

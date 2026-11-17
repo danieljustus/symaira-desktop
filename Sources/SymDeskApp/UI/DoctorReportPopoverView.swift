@@ -11,7 +11,6 @@ struct DoctorReportPopoverView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("System Diagnostics")
                 .symairaText(.subheading)
-                .foregroundColor(SymairaTheme.textPrimary)
 
             if let report {
                 VStack(alignment: .leading, spacing: 8) {
@@ -20,12 +19,12 @@ struct DoctorReportPopoverView: View {
                     statusRow(label: "Contract & ASN", status: report.contract?.status, detail: report.contract?.message ?? (report.contract?.filesFound.map { "\($0) files scanned" }))
                     if let ai = report.ai {
                         HStack {
-                            Text("AI Provider:").symairaText(.caption).fontWeight(.medium).foregroundColor(SymairaTheme.textSecondary)
-                            Text("\(ai.provider ?? "Ollama") \(ai.model ?? "")").symairaText(.caption).foregroundColor(SymairaTheme.textPrimary)
+                            Text("AI Provider:").symairaText(.secondary)
+                            Text("\(ai.provider ?? "Ollama") \(ai.model ?? "")").symairaText(.callout)
                         }
                     }
-                    Divider()
-                    Text("Tools:").symairaText(.caption).fontWeight(.semibold).foregroundColor(SymairaTheme.textSecondary)
+                    Divider().overlay(SymairaTokens.line)
+                    Text("Tools:").symairaText(.secondary)
                     VStack(alignment: .leading, spacing: 4) {
                         toolRow("symmemory", report: report)
                         toolRow("symvault", report: report)
@@ -34,26 +33,23 @@ struct DoctorReportPopoverView: View {
                 }
             } else {
                 Text("Doctor report unavailable.")
-                    .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                    .symairaText(.secondary)
             }
         }
-        .padding(16)
+        .padding(SymairaSpacing.large)
         .frame(width: 280)
     }
 
     private func statusRow(label: String, status: String?, detail: String?) -> some View {
         HStack(alignment: .top) {
             SymairaIconView(status == "ok" ? .success : .warning, size: 14)
-                .foregroundColor(status == "ok" ? .green : .orange)
+                .foregroundStyle(status == "ok" ? SymairaTokens.positive : SymairaTokens.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(label): \(status ?? "unknown")")
-                    .symairaText(.caption).fontWeight(.medium)
-                    .foregroundColor(SymairaTheme.textPrimary)
+                    .symairaText(.callout)
                 if let detail, !detail.isEmpty {
                     Text(detail)
-                        .symairaText(.caption)
-                        .foregroundColor(SymairaTheme.textSecondary)
+                        .symairaText(.secondary)
                 }
             }
         }
@@ -64,15 +60,13 @@ struct DoctorReportPopoverView: View {
         let version = report.versions?[tool] ?? ""
         return HStack {
             SymairaIconView(isAvail ? .confirm : .close, size: 14)
-                .foregroundColor(isAvail ? .green : .secondary)
+                .foregroundStyle(isAvail ? SymairaTokens.positive : SymairaTokens.ink3)
             Text(tool)
-                .symairaText(.caption)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .symairaText(.callout)
             Spacer()
             if !version.isEmpty {
                 Text("v\(version)")
                     .symairaText(.caption)
-                    .foregroundColor(SymairaTheme.textMuted)
             }
         }
     }

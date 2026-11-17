@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 
 /// Vault-grounded AI chat: ask a question, watch the answer stream in,
 /// tap a citation to open the note it came from. Conversations persist
@@ -19,6 +20,8 @@ struct MobileChatView: View {
     @State private var streamError: String?
     @State private var isSettingsPresented = false
     @State private var hasAcknowledgedPrivacy = false
+    @State private var isDeleteActiveConfirmationPresented = false
+    @State private var isDeleteAllConfirmationPresented = false
 
     /// Active provider for the current answer — always visible in the UI.
     @State private var activeProviderName: String?
@@ -45,9 +48,7 @@ struct MobileChatView: View {
                     }
 
                     if let onDeviceCapabilityNote, !isStreaming {
-                        Label(onDeviceCapabilityNote, systemImage: "cpu")
-                            .font(.caption)
-                            .foregroundStyle(MobileTheme.goldSoft)
+                        SymairaNotice(message: onDeviceCapabilityNote)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
                     }
@@ -60,13 +61,17 @@ struct MobileChatView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if let activeProviderName {
-                        Label(activeProviderName, systemImage: activeProviderName == "On-device" ? "cpu" : "server.rack")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(MobileTheme.textSecondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(MobileTheme.card, in: Capsule())
-                            .accessibilityLabel("AI provider: \(activeProviderName)")
+                        Label {
+                            Text(activeProviderName)
+                        } icon: {
+                            Image(symairaIcon: activeProviderName == "On-device" ? .cpu : .server, size: 14)
+                        }
+                        .font(SymairaTypography.label)
+                        .foregroundStyle(SymairaTokens.ink2)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(SymairaTokens.surface, in: Capsule())
+                        .accessibilityLabel("AI provider: \(activeProviderName)")
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -77,7 +82,7 @@ struct MobileChatView: View {
                                 streamError = nil
                             } label: {
                                 if conversation.id == activeConversation?.id {
-                                    Label(conversation.title, systemImage: "checkmark")
+                                    Label { Text(conversation.title) } icon: { Image(symairaIcon: .confirm, size: 16) }
                                 } else {
                                     Text(conversation.title)
                                 }
@@ -86,29 +91,35 @@ struct MobileChatView: View {
                         if !conversations.isEmpty {
                             Divider()
                             Button(role: .destructive) {
-                                deleteActiveConversation()
+                                isDeleteActiveConfirmationPresented = true
                             } label: {
-                                Label("Delete this conversation", systemImage: "trash")
+                                Label { Text("Delete this conversation") } icon: { Image(symairaIcon: .delete, size: 16) }
                             }
                             Button(role: .destructive) {
-                                deleteAllConversations()
+                                isDeleteAllConfirmationPresented = true
                             } label: {
-                                Label("Delete all conversations", systemImage: "trash.fill")
+                                Label { Text("Delete all conversations") } icon: { Image(symairaIcon: .delete, size: 16) }
                             }
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Image(symairaIcon: .more, size: 20)
                     }
                     .accessibilityLabel("Conversations")
                     .disabled(isStreaming)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { isSettingsPresented = true } label: {
-                        Image(systemName: "gearshape")
+                        Image(symairaIcon: .settings, size: 20)
                     }
                     .accessibilityLabel("AI settings")
                     .disabled(isStreaming)
                 }
+            }
+            .confirmationDialog("Delete this conversation?", isPresented: $isDeleteActiveConfirmationPresented, titleVisibility: .visible) {
+                Button("Delete conversation", role: .destructive) { deleteActiveConversation() }
+            }
+            .confirmationDialog("Delete all conversations?", isPresented: $isDeleteAllConfirmationPresented, titleVisibility: .visible) {
+                Button("Delete all conversations", role: .destructive) { deleteAllConversations() }
             }
             .sheet(isPresented: $isSettingsPresented) {
                 MobileAISettingsView()
@@ -142,23 +153,19 @@ struct MobileChatView: View {
 
     private var privacyNotice: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Your vault leaves this device", systemImage: "icloud.and.arrow.up")
-                .font(.headline)
-                .foregroundStyle(MobileTheme.textPrimary)
+            Label("Your vault leaves this device", symairaIcon: .upload)
+                .symairaText(.subheading)
             Text("Questions are answered by the AI provider configured in Settings — the relevant vault excerpts are sent to that provider (or to your self-hosted server, which forwards them). Only ask questions you are comfortable sharing.")
-                .font(.caption)
-                .foregroundStyle(MobileTheme.textSecondary)
+                .font(SymairaTypography.caption)
+                .foregroundStyle(SymairaTokens.ink2)
             Button("I understand") {
                 hasAcknowledgedPrivacy = true
             }
-            .font(.caption.weight(.semibold))
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(MobileTheme.gold)
+            .symairaButtonStyle(.secondary)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .mobileLiquidGlass(cornerRadius: 16)
+        .symairaCard(padding: 0)
         .padding(.horizontal, 16)
         .padding(.top, 10)
     }
@@ -166,27 +173,18 @@ struct MobileChatView: View {
     // MARK: - States
 
     private var emptyState: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "bubble.left.and.bubble.right")
-                .font(.system(size: 40))
-                .foregroundStyle(MobileTheme.gold)
-            Text("Ask your vault")
-                .font(.title3.bold())
-                .foregroundStyle(MobileTheme.textPrimary)
-            Text("“What is due this month?” or “Summarise the open invoice.” Answers stream in with citations you can tap to open the source.")
-                .font(.subheadline)
-                .foregroundStyle(MobileTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+        SymairaEmptyState(
+            icon: .chat,
+            title: "Ask your vault",
+            message: "“What is due this month?” or “Summarise the open invoice.” Answers stream in with citations you can tap to open the source."
+        ) {
             if !vault.isRemote {
                 Text("Tip: this mode uses the Files/iCloud vault — connect a server in Settings to unlock grounded AI answers.")
-                    .font(.caption)
-                    .foregroundStyle(MobileTheme.goldSoft)
+                    .symairaText(.caption)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func messageList(_ conversation: MobileConversation) -> some View {
@@ -213,9 +211,7 @@ struct MobileChatView: View {
     }
 
     private func errorBanner(_ message: String) -> some View {
-        Label(message, systemImage: "exclamationmark.triangle.fill")
-            .font(.caption)
-            .foregroundStyle(.red)
+        SymairaNotice(message: message, tone: .critical, onDismiss: { streamError = nil })
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
     }
@@ -225,11 +221,8 @@ struct MobileChatView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField(contextNote == nil ? "Ask your vault…" : "Ask about “\(contextNote!.title)”…", text: $input, axis: .vertical)
-                .textFieldStyle(.plain)
+                .textFieldStyle(.symaira)
                 .lineLimit(1...4)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-                .background(MobileTheme.card, in: RoundedRectangle(cornerRadius: 14))
                 .disabled(isStreaming)
 
             Button {
@@ -237,20 +230,22 @@ struct MobileChatView: View {
             } label: {
                 if isStreaming {
                     ProgressView()
-                        .frame(width: 34, height: 34)
+                        .frame(width: 44, height: 44)
+                        .accessibilityLabel("Waiting for answer")
                 } else {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 30))
+                    SymairaIconView(.send, size: 24)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
             }
             .buttonStyle(.plain)
-            .foregroundStyle(input.trimmingCharacters(in: .whitespaces).isEmpty || isStreaming ? MobileTheme.textMuted : MobileTheme.gold)
+            .foregroundStyle(input.trimmingCharacters(in: .whitespaces).isEmpty || isStreaming ? SymairaTokens.ink3 : SymairaTokens.ink)
             .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty || isStreaming)
             .accessibilityLabel("Send")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(SymairaTokens.surface)
     }
 
     private func send() async {
@@ -431,47 +426,46 @@ private struct MessageBubble: View {
             VStack(alignment: .leading, spacing: 8) {
                 if message.role == .user {
                     Text(message.text)
-                        .font(.body)
-                        .foregroundStyle(.black)
+                        .font(SymairaTypography.body)
+                        .foregroundStyle(SymairaTokens.onSelected)
                         .padding(12)
-                        .background(MobileTheme.gold, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .background(SymairaTokens.selected, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 } else {
                     if let contextPath = message.contextPath {
-                        Label("Context: \(contextPath)", systemImage: "doc.text")
-                            .font(.caption2)
-                            .foregroundStyle(MobileTheme.textMuted)
+                        Label("Context: \(contextPath)", symairaIcon: .document)
+                            .symairaText(.caption)
                     }
                     if message.text.isEmpty {
                         ProgressView()
                             .controlSize(.small)
+                            .accessibilityLabel("Waiting for answer")
                     } else {
                         Text(renderedMarkdown(message.text))
-                            .font(.body)
-                            .foregroundStyle(MobileTheme.textPrimary)
+                            .symairaText(.body)
                             .textSelection(.enabled)
                     }
                     if !message.citations.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Sources")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(MobileTheme.textMuted)
+                                .font(SymairaTypography.label)
+                                .foregroundStyle(SymairaTokens.ink3)
                             ForEach(message.citations) { citation in
                                 Button {
                                     onCitationTap(citation.path)
                                 } label: {
                                     HStack(spacing: 8) {
-                                        Image(systemName: "doc.text.magnifyingglass")
-                                            .foregroundStyle(MobileTheme.gold)
+                                        SymairaIconView(.documentSearch, size: 16)
+                                            .foregroundStyle(SymairaTokens.ink2)
                                         Text(citation.title.isEmpty ? citation.path : citation.title)
-                                            .font(.caption.weight(.medium))
+                                            .font(SymairaTypography.label)
                                             .lineLimit(1)
                                         Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .font(.caption2)
+                                        SymairaIconView(.forward, size: 12)
                                     }
-                                    .foregroundStyle(MobileTheme.textPrimary)
+                                    .foregroundStyle(SymairaTokens.ink)
                                     .padding(10)
-                                    .background(MobileTheme.card, in: RoundedRectangle(cornerRadius: 12))
+                                    .frame(minHeight: SymairaMetrics.minimumControlHeight)
+                                    .background(SymairaTokens.surface, in: RoundedRectangle(cornerRadius: 12))
                                 }
                                 .buttonStyle(.plain)
                             }

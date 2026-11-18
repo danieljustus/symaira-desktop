@@ -119,6 +119,14 @@ stable `version --json` handshake is:
 {"tool":"symmeet","version":"...","schema_version":1}
 ```
 
+## Dictation
+
+The menu-bar agent has an optional push-to-talk dictation mode, off by default:
+hold Fn (or Right Option) to talk, release to insert the text into the focused
+app. Recognition runs locally with Parakeet Ultra (WhisperKit as fallback); no
+audio or history is stored, and no MCP tool can trigger it. Details, insertion
+rules and permissions: [docs/dictation.md](docs/dictation.md).
+
 ## Why symmeet
 
 - Local-first: meeting content stays on the device by default.

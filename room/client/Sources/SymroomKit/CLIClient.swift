@@ -11,9 +11,10 @@ public enum RoomCLIError: Error, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .binaryNotFound:
-            // danieljustus/tap/symroom is disabled since v0.10.0 — symroom
-            // now ships inside the symdesk formula (#608).
-            return "The symroom binary could not be found in PATH or Homebrew paths. Install it via 'brew install danieljustus/tap/symdesk' (symroom ships with Symaira Desktop since v0.10.0)."
+            // The project journal is part of symdesk (`symdesk room ...`); a
+            // standalone symroom binary is only a fallback. The separate
+            // danieljustus/tap/symroom formula is disabled since v0.10.0 (#608).
+            return "The symdesk binary (project journal: 'symdesk room') could not be found in PATH or Homebrew paths. Install it via 'brew install danieljustus/tap/symdesk'."
         case .notARoom:
             return "The selected folder is not a Project Journal folder (no .symroom found). Initialize Project Journal there first."
         case .executionFailed(let code, let message):
@@ -34,7 +35,8 @@ protocol SymroomLocating: Sendable {
 
 extension BinaryLocator: SymroomLocating {}
 
-/// Thin bridge to the `symroom` CLI. The module renders `--json` output only;
+/// Thin bridge to the project journal CLI: `symdesk room ...`, falling back to
+/// a standalone `symroom` binary when no `symdesk` is found. The module renders `--json` output only;
 /// it never reimplements room logic.
 public final class RoomCLIClient: Sendable {
     private let decoder: JSONDecoder
@@ -43,6 +45,10 @@ public final class RoomCLIClient: Sendable {
     /// Resolved once at init and reused by both `isInstalled` and every
     /// `run(...)` call, so the two can never disagree (#608).
     private let resolved: BinaryLocator.Located?
+
+    /// Arguments placed before every command: `["room"]` when the resolved
+    /// binary is `symdesk`, empty for a standalone `symroom`.
+    let commandPrefix: [String]
 
     /// Non-nil only when the strict search failed and a relaxed search
     /// (`allowUnverified: true`) found the binary instead — e.g. Homebrew's
@@ -77,25 +83,45 @@ public final class RoomCLIClient: Sendable {
         decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        // Strict search first; only fall back to the relaxed search when it
-        // finds nothing. This is exactly the CoreBinaryDiscovery strategy
-        // (#437) that the room module never got — without it, `isInstalled`
-        // was always false on a stock Homebrew install (#608).
-        if let strictHit = locator.locate("symroom", allowUnverified: false) {
-            resolved = strictHit
-            provenanceNote = nil
-            provenanceDirectory = nil
-        } else if let relaxedHit = locator.locate("symroom", allowUnverified: true) {
-            resolved = relaxedHit
-            let directory = relaxedHit.url.deletingLastPathComponent().path
-            provenanceNote = "Loaded symroom from \(directory). "
-                + "That directory is group- or world-writable, so it did not pass the strict provenance check."
-            provenanceDirectory = directory
-        } else {
-            resolved = nil
-            provenanceNote = nil
-            provenanceDirectory = nil
+        // `symdesk` (which carries the journal as `symdesk room`) is preferred
+        // over a standalone `symroom`. Strict search first for both names;
+        // only when nothing is found strictly does the relaxed search run,
+        // the CoreBinaryDiscovery strategy (#437) that the room module
+        // adopted in #608 — without it `isInstalled` was always false on a
+        // stock Homebrew install.
+        let candidates: [(name: String, prefix: [String])] = [
+            ("symdesk", ["room"]),
+            ("symroom", []),
+        ]
+        var hit: (located: BinaryLocator.Located, prefix: [String])?
+        for candidate in candidates {
+            if let strictHit = locator.locate(candidate.name, allowUnverified: false) {
+                hit = (strictHit, candidate.prefix)
+                break
+            }
         }
+        if let hit {
+            resolved = hit.located
+            commandPrefix = hit.prefix
+            provenanceNote = nil
+            provenanceDirectory = nil
+            return
+        }
+        for candidate in candidates {
+            if let relaxedHit = locator.locate(candidate.name, allowUnverified: true) {
+                resolved = relaxedHit
+                commandPrefix = candidate.prefix
+                let directory = relaxedHit.url.deletingLastPathComponent().path
+                provenanceNote = "Loaded \(candidate.name) from \(directory). "
+                    + "That directory is group- or world-writable, so it did not pass the strict provenance check."
+                provenanceDirectory = directory
+                return
+            }
+        }
+        resolved = nil
+        commandPrefix = []
+        provenanceNote = nil
+        provenanceDirectory = nil
     }
 
     public var isInstalled: Bool { resolved != nil }
@@ -109,7 +135,7 @@ public final class RoomCLIClient: Sendable {
             // passed via SYMROOM_ROOM_DIR (the CLI's documented override).
             return try await runner.runChecked(
                 resolved.url,
-                arguments: args,
+                arguments: commandPrefix + args,
                 environment: ["SYMROOM_ROOM_DIR": roomDir]
             )
         } catch let CLIRunnerError.executionFailed(code, stderr) {

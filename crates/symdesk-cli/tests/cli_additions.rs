@@ -12,7 +12,7 @@ use cli_additions::{Addition, Help};
 
 use serde::Deserialize;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -21,12 +21,44 @@ use std::{
 
 /// Every addition the product declares. A new command shows up here in the
 /// diff: (parent help key, name, group heading, short description).
-const DECLARED: &[(&str, &str, &str, &str)] = &[(
-    "",
-    "room",
-    "Maintenance Commands",
-    "Project journal: signed rooms, notes, decisions and runs",
-)];
+const DECLARED: &[(&str, &str, &str, &str)] = &[
+    (
+        "",
+        "room",
+        "Maintenance Commands",
+        "Project journal: signed rooms, notes, decisions and runs",
+    ),
+    (
+        "meeting",
+        "available",
+        "Available Commands",
+        "List Meet recordings that are not yet imported into the vault",
+    ),
+    (
+        "meeting",
+        "import",
+        "Available Commands",
+        "Import a Meet recording into the vault as a meeting note",
+    ),
+    (
+        "meeting",
+        "refresh",
+        "Available Commands",
+        "Preview (or apply) a re-export of a meeting note's transcript",
+    ),
+    (
+        "meeting",
+        "segments",
+        "Available Commands",
+        "List the time-coded transcript segments of a meeting note's recording",
+    ),
+    (
+        "meeting",
+        "speakers",
+        "Available Commands",
+        "List the speakers of a meeting note's recording with their labels",
+    ),
+];
 
 const COBRA_HELP: &str = include_str!("../../../testdata/port/cli/cobra-help.json");
 const COMMAND_TREE: &str = include_str!("../../../testdata/port/cli/symdesk-command-tree.json");
@@ -73,9 +105,11 @@ fn line(name: &str, short: &str) -> String {
     format!("  {name:<11} {short}")
 }
 
-fn declared_lines() -> Vec<String> {
+/// The list lines declared for the document of one parent node.
+fn lines_of(parent: &str) -> Vec<String> {
     DECLARED
         .iter()
+        .filter(|(declared_parent, ..)| *declared_parent == parent)
         .map(|(_, name, _, short)| line(name, short))
         .collect()
 }
@@ -259,13 +293,13 @@ fn untouched_documents_are_byte_identical_and_touched_ones_differ_by_declared_li
     let mut help = frozen.help.clone();
     let mut usage = frozen.root_usage.clone();
     cli_additions::apply(&mut help, &mut usage, cli_additions::declared()).expect("apply");
-    let parents: Vec<&str> = DECLARED.iter().map(|d| d.0).collect();
-    let lines = declared_lines();
+    let parents: BTreeSet<&str> = DECLARED.iter().map(|d| d.0).collect();
     assert_eq!(help.len(), frozen.help.len(), "no key added or removed");
     let mut touched = 0;
     for (key, doc) in &frozen.help {
-        if parents.contains(&key.as_str()) {
+        if parents.contains(key.as_str()) {
             touched += 1;
+            let lines = lines_of(key);
             let kept: Vec<&str> = help[key]
                 .split('\n')
                 .filter(|l| !lines.iter().any(|x| x == l))
@@ -286,7 +320,8 @@ fn untouched_documents_are_byte_identical_and_touched_ones_differ_by_declared_li
             );
         }
     }
-    assert_eq!(touched, 1);
+    assert_eq!(touched, parents.len());
+    let lines = lines_of("");
     let kept: Vec<&str> = usage
         .split('\n')
         .filter(|l| !lines.iter().any(|x| x == l))
@@ -356,8 +391,8 @@ fn run(root: &Path, args: &[&str]) -> Run {
 fn product_help_is_the_recording_plus_the_declared_additions() {
     let frozen = frozen();
     let root = scratch();
-    let lines = declared_lines();
-    let parents: Vec<&str> = DECLARED.iter().map(|d| d.0).collect();
+    let lines = lines_of("");
+    let parents: BTreeSet<&str> = DECLARED.iter().map(|d| d.0).collect();
     let mut checked = 0;
     for (key, doc) in &frozen.help {
         let words: Vec<&str> = key.split(' ').filter(|w| !w.is_empty()).collect();
@@ -367,8 +402,9 @@ fn product_help_is_the_recording_plus_the_declared_additions() {
             let observed = run(&root, &args);
             let stdout = String::from_utf8(observed.stdout).expect("utf-8");
             assert_eq!(observed.code, Some(0), "{args:?} exit");
-            if parents.contains(&key.as_str()) {
+            if parents.contains(key.as_str()) {
                 // Only the declared lines may differ from the recording.
+                let lines = lines_of(key);
                 let kept: Vec<&str> = stdout
                     .split('\n')
                     .filter(|l| !lines.iter().any(|x| x == l))
@@ -390,7 +426,7 @@ fn product_help_is_the_recording_plus_the_declared_additions() {
     // Bare `symdesk` prints the root document, `help <unknown>` the root usage.
     let bare = run(&root, &[]);
     let bare = String::from_utf8(bare.stdout).unwrap();
-    assert!(declared_lines().iter().all(|l| bare.contains(l.as_str())));
+    assert!(lines_of("").iter().all(|l| bare.contains(l.as_str())));
     let unknown = run(&root, &["help", "not-a-command"]);
     let stderr = String::from_utf8(unknown.stderr).unwrap();
     let kept: Vec<&str> = stderr
@@ -423,7 +459,9 @@ fn completion_scripts_stay_the_go_recording() {
         let observed = run(&root, &args);
         assert_eq!(observed.code, Some(0), "{key}");
         assert_eq!(observed.stdout, script.as_bytes(), "{key}");
-        for (_, name, _, _) in DECLARED {
+        // Root commands are the ones a script could name; the words of added
+        // `meeting` subcommands are ordinary English in Cobra's generic text.
+        for (_, name, _, _) in DECLARED.iter().filter(|declared| declared.0.is_empty()) {
             assert!(!script.contains(&format!(" {name} ")), "{key}");
         }
     }

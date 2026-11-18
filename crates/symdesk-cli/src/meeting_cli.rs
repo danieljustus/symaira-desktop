@@ -811,6 +811,51 @@ fn encode(fm: &MeetingFrontmatter) -> Result<String, String> {
     Ok(rendered)
 }
 
+/// The frontmatter `meeting import` writes for a new note (Go `MeetingImport`):
+/// `symmeet_source.review_state` is always `unreviewed`, a participant carries
+/// its label and one speaker id, and no `entity_id`/`contact_ref` is set.
+pub(crate) struct NewMeetingNote {
+    pub(crate) title: String,
+    pub(crate) created: String,
+    pub(crate) meeting_id: String,
+    pub(crate) started_at: String,
+    pub(crate) ended_at: String,
+    pub(crate) duration_ms: i64,
+    pub(crate) language: String,
+    /// `(label, speaker_id)` in speaker-id order.
+    pub(crate) participants: Vec<(String, String)>,
+    pub(crate) artifact_schema_version: i64,
+}
+
+/// The YAML block (without the `---` fences) of a freshly imported meeting note,
+/// encoded exactly like every later `meeting review|participant` rewrite.
+pub(crate) fn encode_new_note(note: &NewMeetingNote) -> Result<String, String> {
+    encode(&MeetingFrontmatter {
+        kind: "meeting".to_owned(),
+        title: note.title.clone(),
+        created: note.created.clone(),
+        tags: vec!["meeting".to_owned()],
+        meeting_id: note.meeting_id.clone(),
+        started_at: note.started_at.clone(),
+        ended_at: note.ended_at.clone(),
+        duration_ms: note.duration_ms,
+        language: note.language.clone(),
+        participants: note
+            .participants
+            .iter()
+            .map(|(label, speaker)| Participant {
+                label: label.clone(),
+                speaker_ids: vec![speaker.clone()],
+                ..Participant::default()
+            })
+            .collect(),
+        artifact_schema_version: note.artifact_schema_version,
+        review_state: "unreviewed".to_owned(),
+        extras: Vec::new(),
+        stamp_extras: Vec::new(),
+    })
+}
+
 /// Go `writeMeetingFrontmatter`: replaces the frontmatter block, keeps the
 /// body byte for byte, refuses when the file changed since it was read.
 fn write(

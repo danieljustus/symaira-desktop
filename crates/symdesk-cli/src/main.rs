@@ -36,6 +36,7 @@ mod mail_cli;
 mod mail_rules_cli;
 mod mcp;
 mod meeting_cli;
+mod meeting_import_cli;
 mod mutate_cli;
 mod notebook_cli;
 mod paperless_cli;
@@ -121,6 +122,12 @@ fn main() -> ExitCode {
     // Hidden RUST-018 restore command; it must run before the one-time backup
     // gate below and is not part of the Go-recorded cobra tree.
     if let Some(code) = backup_cli::intercept(&args) {
+        return code;
+    }
+    // `meeting available|import|refresh|segments|speakers` are newer than the Go
+    // oracle (docs/rust-port/cli-additions.md): the recorded tree would print the
+    // `meeting` help for them, so they are routed before the Cobra front half.
+    if let Some(code) = meeting_import_cli::intercept(&args) {
         return code;
     }
     // Cobra/pflag front half: command resolution, flag grammar, help,

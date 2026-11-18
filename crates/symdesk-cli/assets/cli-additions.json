@@ -6,7 +6,59 @@
       "name": "room",
       "group": "Maintenance Commands",
       "short": "Project journal: signed rooms, notes, decisions and runs",
-      "help": { "source": "symroom" }
+      "help": {
+        "source": "symroom"
+      }
+    },
+    {
+      "parent": "meeting",
+      "name": "available",
+      "group": "Available Commands",
+      "short": "List Meet recordings that are not yet imported into the vault",
+      "help": {
+        "source": "text",
+        "text": "List Meet recordings that are not yet imported into the vault\n\nReads the Meet store ($XDG_DATA_HOME/symmeet, default ~/.local/share/symmeet) and\nlists recordings that no vault meeting note refers to. A missing or empty store\nis an empty list. Nothing is modified.\n\nUsage:\n  symdesk meeting available [flags]\n\nFlags:\n  -h, --help   help for available\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n"
+      }
+    },
+    {
+      "parent": "meeting",
+      "name": "import",
+      "group": "Available Commands",
+      "short": "Import a Meet recording into the vault as a meeting note",
+      "help": {
+        "source": "text",
+        "text": "Import a Meet recording into the vault as a meeting note\n\nCreates meetings/meeting-<id>.md from the recording's manifest, transcript and\nspeaker labels. A recording that is already imported is left untouched\n(use 'meeting refresh --apply' to update its transcript). The recording is only read.\n\nUsage:\n  symdesk meeting import <meeting-id> [flags]\n\nFlags:\n  -h, --help   help for import\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n"
+      }
+    },
+    {
+      "parent": "meeting",
+      "name": "refresh",
+      "group": "Available Commands",
+      "short": "Preview (or apply) a re-export of a meeting note's transcript",
+      "help": {
+        "source": "text",
+        "text": "Preview (or apply) a re-export of a meeting note's transcript\n\nRe-derives the transcript of an imported meeting note from its recording and\nshows the difference. Only the block between the symmeet-transcript markers is\nreplaced, and only with --apply; frontmatter and notes outside the block stay.\n\nUsage:\n  symdesk meeting refresh <vault-note> [flags]\n\nFlags:\n      --apply   write the refreshed transcript instead of only previewing it\n  -h, --help    help for refresh\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n"
+      }
+    },
+    {
+      "parent": "meeting",
+      "name": "segments",
+      "group": "Available Commands",
+      "short": "List the time-coded transcript segments of a meeting note's recording",
+      "help": {
+        "source": "text",
+        "text": "List the time-coded transcript segments of a meeting note's recording\n\nPrints the segments (edited text preferred) of the recording an imported\nmeeting note came from, in chronological order.\n\nUsage:\n  symdesk meeting segments <vault-note> [flags]\n\nFlags:\n  -h, --help   help for segments\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n"
+      }
+    },
+    {
+      "parent": "meeting",
+      "name": "speakers",
+      "group": "Available Commands",
+      "short": "List the speakers of a meeting note's recording with their labels",
+      "help": {
+        "source": "text",
+        "text": "List the speakers of a meeting note's recording with their labels\n\nPrints each speaker of the recording an imported meeting note came from with\nits current display label (the speaker id when unlabeled).\n\nUsage:\n  symdesk meeting speakers <vault-note> [flags]\n\nFlags:\n  -h, --help   help for speakers\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n"
+      }
     }
   ]
 }

@@ -49,7 +49,8 @@ fn every_command_help_and_completion_match_go_process() {
     assert_eq!(fixture.commands, 207);
     assert_eq!(fixture.cases.len(), 424);
     // Expected text: the Go bytes, with the declared additions applied to the
-    // two documents that list the root commands and to nothing else.
+    // documents that list commands of a parent node (the root and `meeting`)
+    // and to nothing else.
     let frozen: Documents = serde_json::from_slice(fixture_bytes).expect("Go documents");
     let (mut help, mut usage) = (frozen.help.clone(), frozen.root_usage.clone());
     cli_additions::apply(&mut help, &mut usage, cli_additions::declared()).expect("additions");
@@ -58,6 +59,9 @@ fn every_command_help_and_completion_match_go_process() {
         if recorded == frozen.help[""] {
             rewritten += 1;
             help[""].clone()
+        } else if recorded == frozen.help["meeting"] {
+            rewritten += 1;
+            help["meeting"].clone()
         } else if let Some(prefix) = recorded.strip_suffix(frozen.root_usage.as_str()) {
             rewritten += 1;
             format!("{prefix}{usage}")
@@ -112,8 +116,9 @@ fn every_command_help_and_completion_match_go_process() {
         executed += 1;
     }
     assert_eq!(executed, 424);
-    // `--help`, `help`, no arguments (stdout) and `help not-a-command` (stderr):
-    // every other case is still compared with the Go bytes unchanged.
-    assert_eq!(rewritten, 4, "cases whose expectation carries additions");
+    // Every other case is still compared with the Go bytes unchanged.
+    // Root: `--help`, `help`, no arguments (stdout) and `help not-a-command` (stderr);
+    // `meeting`: `meeting --help` and `help meeting`.
+    assert_eq!(rewritten, 6, "cases whose expectation carries additions");
     fs::remove_dir_all(root).unwrap();
 }

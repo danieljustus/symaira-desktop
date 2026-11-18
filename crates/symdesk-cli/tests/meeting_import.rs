@@ -1558,3 +1558,123 @@ fn a_completed_job_is_still_imported_available_and_refreshed() {
         0
     );
 }
+
+// ------------------------------------------------------------- flag grammar
+
+#[test]
+fn inline_boolean_flags_follow_the_json_flag_grammar() {
+    // (args after `meeting`, expected exit code, what must hold)
+    struct Case {
+        args: &'static [&'static str],
+        code: i32,
+        applied: Option<bool>,
+        note: &'static str,
+    }
+    let cases = [
+        Case {
+            args: &["refresh", "--apply=true", "--json"],
+            code: 0,
+            applied: Some(true),
+            note: "applied",
+        },
+        Case {
+            args: &["refresh", "--apply=1", "--json"],
+            code: 0,
+            applied: Some(true),
+            note: "applied",
+        },
+        Case {
+            args: &["refresh", "--apply=false", "--json"],
+            code: 0,
+            applied: Some(false),
+            note: "preview",
+        },
+        Case {
+            args: &["refresh", "--apply=F", "--json"],
+            code: 0,
+            applied: Some(false),
+            note: "preview",
+        },
+        Case {
+            args: &["refresh", "--apply", "--json=false"],
+            code: 0,
+            applied: Some(true),
+            note: "text output, applied",
+        },
+        Case {
+            args: &["refresh", "--apply=maybe", "--json"],
+            code: 1,
+            applied: None,
+            note: "invalid boolean",
+        },
+        Case {
+            args: &["refresh", "--help=false", "--apply", "--json"],
+            code: 0,
+            applied: Some(true),
+            note: "--help=false is not help",
+        },
+        Case {
+            args: &["refresh", "--help=true", "--apply", "--json"],
+            code: 0,
+            applied: None,
+            note: "help, nothing written",
+        },
+        Case {
+            args: &["refresh", "--help=maybe"],
+            code: 1,
+            applied: None,
+            note: "invalid boolean",
+        },
+    ];
+    for case in cases {
+        let sandbox = Sandbox::new();
+        let note = imported_and_edited(&sandbox);
+        change_transcript(&sandbox);
+        let rel = sandbox.rel(KITCHEN);
+        let mut args = vec!["meeting"];
+        args.extend_from_slice(case.args);
+        args.push(&rel);
+        let run = sandbox.run(&args);
+        let label = format!("{:?} ({})", case.args, case.note);
+        assert_eq!(
+            run.code, case.code,
+            "{label}: {} {}",
+            run.stdout, run.stderr
+        );
+        let after = fs::read_to_string(sandbox.note(KITCHEN)).unwrap();
+        match case.applied {
+            Some(true) => {
+                assert_ne!(after, note, "{label}");
+                if run.stdout.starts_with('{') {
+                    assert_eq!(run.json()["applied"], true, "{label}");
+                } else {
+                    assert!(run.stdout.contains("Applied."), "{label}: {}", run.stdout);
+                }
+            }
+            Some(false) => {
+                assert_eq!(after, note, "{label}");
+                assert_eq!(run.json()["applied"], false, "{label}");
+                assert_eq!(run.json()["changed"], true, "{label}");
+            }
+            None if case.code == 0 => {
+                assert_eq!(after, note, "{label}");
+                assert!(run.stdout.contains("Usage:"), "{label}: {}", run.stdout);
+            }
+            None => {
+                assert_eq!(after, note, "{label}");
+                assert!(
+                    run.stderr.contains("invalid argument \"maybe\"")
+                        || run.stdout.contains("invalid argument \"maybe\""),
+                    "{label}: {} {}",
+                    run.stdout,
+                    run.stderr
+                );
+            }
+        }
+    }
+    // `--apply` stays refresh-only, in either spelling.
+    let sandbox = Sandbox::new();
+    let run = sandbox.run(&["meeting", "import", KITCHEN, "--apply=false"]);
+    assert_eq!(run.code, 1);
+    assert_eq!(run.stderr, "unknown flag: --apply\n");
+}

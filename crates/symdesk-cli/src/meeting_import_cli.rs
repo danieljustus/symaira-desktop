@@ -67,6 +67,17 @@ struct UsageError {
     json: bool,
 }
 
+/// pflag's boolean flag: bare means true, `=value` is `strconv.ParseBool`.
+fn parse_bool(flag: &str, inline: Option<&str>) -> Result<bool, String> {
+    match inline {
+        None | Some("true" | "1" | "t" | "T" | "TRUE" | "True") => Ok(true),
+        Some("false" | "0" | "f" | "F" | "FALSE" | "False") => Ok(false),
+        Some(other) => Err(format!(
+            "invalid argument {other:?} for \"{flag}\" flag: strconv.ParseBool: parsing {other:?}: invalid syntax"
+        )),
+    }
+}
+
 /// `Some` when `args` is `symdesk [global flags] meeting <one of the five> ...`.
 /// Anything else (including every other `meeting` word) stays with Cobra.
 fn parse(args: &[OsString]) -> Option<Result<Invocation, UsageError>> {
@@ -125,23 +136,31 @@ fn parse(args: &[OsString]) -> Option<Result<Invocation, UsageError>> {
             Ok((*next).to_owned())
         };
         let known = match name {
-            "--json" => {
-                inv.json = match inline {
-                    None | Some("true" | "1" | "t" | "T" | "TRUE" | "True") => true,
-                    Some("false" | "0" | "f" | "F" | "FALSE" | "False") => false,
-                    Some(other) => {
-                        return command.map(|_| {
-                            Err(UsageError {
-                                message: format!(
-                                    "invalid argument {other:?} for \"--json\" flag: strconv.ParseBool: parsing {other:?}: invalid syntax"
-                                ),
-                                json: false,
-                            })
-                        });
+            "--json" | "--apply" | "--help" => match parse_bool(
+                // pflag names a flag with a shorthand like `-h, --help`.
+                if name == "--help" { "-h, --help" } else { name },
+                inline,
+            ) {
+                Ok(on) => {
+                    match name {
+                        "--json" => inv.json = on,
+                        "--apply" => {
+                            apply_seen = true;
+                            inv.apply = on;
+                        }
+                        _ => inv.help = on,
                     }
-                };
-                true
-            }
+                    true
+                }
+                Err(message) => {
+                    return command.map(|_| {
+                        Err(UsageError {
+                            message,
+                            json: false,
+                        })
+                    });
+                }
+            },
             "--vault" | "--output" => match value(name) {
                 Ok(text) => {
                     if name == "--vault" {
@@ -160,12 +179,7 @@ fn parse(args: &[OsString]) -> Option<Result<Invocation, UsageError>> {
                     });
                 }
             },
-            "--apply" if inline.is_none() => {
-                apply_seen = true;
-                inv.apply = true;
-                true
-            }
-            "-h" | "--help" => {
+            "-h" => {
                 inv.help = true;
                 true
             }

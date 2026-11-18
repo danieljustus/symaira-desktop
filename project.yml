@@ -75,6 +75,16 @@ targets:
         product: SymairaKeychain
       - package: symaira-corekit
         product: SymairaProviderKit
+      - package: symaira-meet
+        product: SymMeetCore
+      - package: symaira-meet
+        product: SymMeetCapture
+      - package: symaira-meet
+        product: SymDictationCore
+      - package: symaira-meet
+        product: SymMeetParakeet
+      - package: symaira-meet
+        product: SymMeetWhisperKit
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
@@ -144,6 +154,16 @@ targets:
         product: SymairaKeychain
       - package: symaira-corekit
         product: SymairaProviderKit
+      - package: symaira-meet
+        product: SymMeetCore
+      - package: symaira-meet
+        product: SymMeetCapture
+      - package: symaira-meet
+        product: SymDictationCore
+      - package: symaira-meet
+        product: SymMeetParakeet
+      - package: symaira-meet
+        product: SymMeetWhisperKit
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "meeting_id": "11111111-1111-1111-1111-111111111111",
+  "source": "imported",
+  "created_at": "2025-01-15T10:00:00Z",
+  "updated_at": "2025-01-15T10:05:00Z",
+  "audio_tracks": [
+    {
+      "track_id": "AAAAAAAA-0000-0000-0000-00000000000A",
+      "kind": "original",
+      "relative_path": "audio.m4a"
+    }
+  ],
+  "language": "multi",
+  "job": {
+    "job_id": "00000000-0000-0000-0000-000000000020",
+    "state": "completed",
+    "engine": {
+      "engine_id": "whisperkit",
+      "model_id": "tiny",
+      "model_version": "openai_whisper-tiny"
+    }
+  },
+  "consent": {
+    "status": "required"
+  },
+  "retention": {
+    "policy": "keep"
+  }
+}

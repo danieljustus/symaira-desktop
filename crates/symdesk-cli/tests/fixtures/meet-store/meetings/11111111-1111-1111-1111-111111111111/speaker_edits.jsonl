@@ -1,0 +1,2 @@
+{"schema_version":1,"event_id":"00000000-0000-0000-0000-000000000201","meeting_id":"11111111-1111-1111-1111-111111111111","kind":"label","speaker_id":"speaker_1","label":"Alice","sequence_number":1,"occurred_at":"2025-01-15T10:06:01Z"}
+{"schema_version":1,"event_id":"00000000-0000-0000-0000-000000000202","meeting_id":"11111111-1111-1111-1111-111111111111","kind":"label","speaker_id":"speaker_2","label":"Bob","sequence_number":2,"occurred_at":"2025-01-15T10:06:02Z"}

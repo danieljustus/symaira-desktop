@@ -6,6 +6,7 @@ mod ai_cli;
 mod ai_secrets;
 mod asset_export_cli;
 mod backup_cli;
+mod cli_additions;
 mod clip_cli;
 mod cobra;
 mod config_cli;

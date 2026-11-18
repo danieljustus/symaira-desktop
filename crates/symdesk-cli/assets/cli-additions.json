@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "additions": [
+    {
+      "parent": "",
+      "name": "room",
+      "group": "Maintenance Commands",
+      "short": "Project journal: signed rooms, notes, decisions and runs",
+      "help": { "source": "symroom" }
+    }
+  ]
+}

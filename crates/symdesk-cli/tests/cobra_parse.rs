@@ -6,6 +6,12 @@
 mod process_env;
 use process_env::IsolatedEnvironment;
 
+// The Go recording plus the additions declared after the oracle
+// (docs/rust-port/cli-additions.md): the root document is the only one touched.
+#[path = "../src/cli_additions.rs"]
+#[allow(dead_code)]
+mod cli_additions;
+
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
@@ -127,10 +133,19 @@ fn load() -> (Fixture, Documents) {
         "../../../testdata/port/cli/cobra-parse-process.json"
     ))
     .expect("Go process fixture");
-    let documents: Documents = serde_json::from_slice(include_bytes!(
+    let mut documents: Documents = serde_json::from_slice(include_bytes!(
         "../../../testdata/port/cli/help-process.json"
     ))
     .expect("Go help documents");
+    // `@help:<key>` and `@root_usage` in the recorded cases name these documents:
+    // Go's bytes with the declared additions applied (root document and root
+    // usage only); the literal text of every case stays as recorded.
+    cli_additions::apply(
+        &mut documents.help,
+        &mut documents.root_usage,
+        cli_additions::declared(),
+    )
+    .expect("declared additions apply to the recorded documents");
     (fixture, documents)
 }
 

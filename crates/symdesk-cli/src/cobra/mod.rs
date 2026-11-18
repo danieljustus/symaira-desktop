@@ -313,6 +313,11 @@ fn validate_flags(state: &State) -> Option<String> {
 
 /// The generated `help [command]`.
 fn run_help(tree: &Tree, topics: &[String]) -> ExitCode {
+    // Commands that came after the Go oracle are not in the recorded tree;
+    // none may share a name with one that is (tests/cli_additions.rs).
+    if let Some(code) = crate::help_cli::added_help(topics) {
+        return code;
+    }
     let found = find(tree, topics, false);
     if found.error.is_some() {
         let shown = topics

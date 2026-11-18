@@ -1693,3 +1693,45 @@ fn import_creates_the_meetings_directory_without_world_access() {
     assert_eq!(mode & 0o007, 0, "no access for others: {mode:o}");
     assert_eq!(mode & 0o700, 0o700, "owner keeps full access: {mode:o}");
 }
+
+// ------------------------------------------------------ refresh: oversized diff
+
+#[test]
+fn refresh_text_says_when_the_diff_was_omitted_for_size() {
+    let sandbox = Sandbox::new();
+    sandbox.seed(&[COMPLETE]);
+    // ~4 transcript lines per segment: 700 segments exceed the 4M-cell diff table.
+    let log = |text: &str| -> String {
+        (0..700)
+            .map(|index| {
+                format!(
+                    "{{\"end_ms\":{},\"engine_text\":\"{text} {index}\",\"revision\":\"engine\",\"schema_version\":1,\"segment_id\":\"AAAAAAAA-0000-0000-0000-{index:012}\",\"speaker_id\":\"speaker_1\",\"start_ms\":{},\"track_id\":\"BBBBBBBB-0000-0000-0000-00000000000B\"}}\n",
+                    index * 1000 + 500,
+                    index * 1000
+                )
+            })
+            .collect()
+    };
+    let raw = sandbox.recording(COMPLETE).join("segments.raw.jsonl");
+    fs::write(&raw, log("line")).unwrap();
+    assert_eq!(sandbox.run(&["meeting", "import", COMPLETE]).code, 0);
+    let rel = sandbox.rel(COMPLETE);
+    fs::write(&raw, log("changed")).unwrap();
+
+    let text = sandbox.run(&["meeting", "refresh", &rel]);
+    assert_eq!(text.code, 0, "{}", text.stderr);
+    assert_eq!(
+        text.stdout,
+        "Diff omitted: the transcript is too large to compare line by line.\n\
+         Preview only; re-run with --apply to write these changes.\n"
+    );
+    let json = sandbox.run(&["meeting", "refresh", &rel, "--json"]);
+    assert_eq!(keys(&json.json()), ["applied", "changed", "path"]);
+    assert_eq!(json.json()["changed"], true);
+
+    let applied = sandbox.run(&["meeting", "refresh", &rel, "--apply"]);
+    assert_eq!(
+        applied.stdout,
+        "Diff omitted: the transcript is too large to compare line by line.\nApplied.\n"
+    );
+}

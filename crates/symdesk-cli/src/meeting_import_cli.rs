@@ -1263,10 +1263,13 @@ fn refresh(
         diff_lines: Vec::new(),
         applied: false,
     };
-    if changed
-        && (old.matches('\n').count() + 1) * (new.matches('\n').count() + 1) <= MAX_DIFF_CELLS
-    {
-        result.diff_lines = diff_lines(old, &new);
+    let mut diff_omitted = false;
+    if changed {
+        if (old.matches('\n').count() + 1) * (new.matches('\n').count() + 1) <= MAX_DIFF_CELLS {
+            result.diff_lines = diff_lines(old, &new);
+        } else {
+            diff_omitted = true;
+        }
     }
     if apply && changed {
         let path = secure_path(root, note).map_err(|error| error.to_string())?;
@@ -1302,6 +1305,9 @@ fn refresh(
         .filter(|line| line.starts_with("- ") || line.starts_with("+ "))
         .map(|line| format!("{line}\n"))
         .collect();
+    if diff_omitted {
+        text.push_str("Diff omitted: the transcript is too large to compare line by line.\n");
+    }
     text.push_str(if result.applied {
         "Applied.\n"
     } else {

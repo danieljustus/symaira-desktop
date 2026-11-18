@@ -4,10 +4,12 @@ import PackageDescription
 let package = Package(
   name: "symaira-meet",
   platforms: [
-    .macOS(.v15)
+    .macOS(.v15),
+    .iOS(.v18),
   ],
   products: [
     .library(name: "SymMeetCore", targets: ["SymMeetCore"]),
+    .library(name: "SymDictationCore", targets: ["SymDictationCore"]),
     .library(name: "SymMeetCapture", targets: ["SymMeetCapture"]),
     .library(name: "SymMeetMCP", targets: ["SymMeetMCP"]),
     .library(name: "SymMeetWhisperKit", targets: ["SymMeetWhisperKit"]),
@@ -21,6 +23,7 @@ let package = Package(
   ],
   targets: [
     .target(name: "SymMeetCore"),
+    .target(name: "SymDictationCore"),
     .target(
       name: "SymMeetCapture",
       dependencies: ["SymMeetCore"],
@@ -78,10 +81,15 @@ let package = Package(
       path: "Tests",
       exclude: [
         "SymMeetCLITests", "SymMeetMCPTests", "SymMeetWhisperKitTests",
-        "SymMeetCaptureTests", "SymMeetSpeakerKitTests",
+        "SymMeetCaptureTests", "SymMeetSpeakerKitTests", "SymDictationCoreTests",
       ],
       sources: ["Support/FakeTranscriptionEngine.swift", "SymMeetCoreTests"],
       resources: [.copy("Fixtures/contracts"), .copy("Fixtures/exports"), .copy("Fixtures/integration")]
+    ),
+    .testTarget(
+      name: "SymDictationCoreTests",
+      dependencies: ["SymDictationCore"],
+      path: "Tests/SymDictationCoreTests"
     ),
     .testTarget(
       name: "SymMeetMCPTests",

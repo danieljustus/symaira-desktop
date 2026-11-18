@@ -1326,3 +1326,94 @@ fn json_output_matches_the_files_the_swift_decoder_test_reads() {
         );
     }
 }
+
+// ------------------------------------------------- refresh --apply data safety
+
+/// Names of everything directly inside the vault's `meetings/` directory.
+fn meetings_entries(sandbox: &Sandbox) -> Vec<String> {
+    let mut names: Vec<String> = fs::read_dir(sandbox.vault().join("meetings"))
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    names
+}
+
+#[cfg(unix)]
+fn mode_of(path: &Path) -> u32 {
+    use std::os::unix::fs::PermissionsExt;
+    fs::metadata(path).unwrap().permissions().mode() & 0o777
+}
+
+#[cfg(unix)]
+#[test]
+fn refresh_apply_stops_before_touching_the_note_when_the_history_cannot_be_written() {
+    let sandbox = Sandbox::new();
+    let note = imported_and_edited(&sandbox);
+    change_transcript(&sandbox);
+    // The history store needs `.symdesk/history` to be a directory.
+    let history = sandbox.vault().join(".symdesk/history");
+    let _ = fs::remove_dir_all(&history);
+    fs::create_dir_all(sandbox.vault().join(".symdesk")).unwrap();
+    fs::write(&history, "not a directory").unwrap();
+    let before = fs::read(sandbox.note(KITCHEN)).unwrap();
+
+    for json in [false, true] {
+        let mut args = vec!["meeting", "refresh"];
+        let rel = sandbox.rel(KITCHEN);
+        args.push(&rel);
+        args.push("--apply");
+        if json {
+            args.push("--json");
+        }
+        let run = sandbox.run(&args);
+        assert_ne!(run.code, 0, "{}", run.stdout);
+        // `--json` errors are reported on the other stream, as everywhere.
+        let message = if json { &run.stdout } else { &run.stderr };
+        assert_eq!(message.lines().count(), 1, "{message}");
+        assert!(message.contains("history"), "{message}");
+        assert_eq!(
+            fs::read(sandbox.note(KITCHEN)).unwrap(),
+            before,
+            "the note is byte-identical"
+        );
+    }
+    assert_eq!(fs::read_to_string(sandbox.note(KITCHEN)).unwrap(), note);
+    assert_eq!(
+        meetings_entries(&sandbox),
+        [format!("meeting-{KITCHEN}.md")]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn refresh_apply_replaces_the_note_atomically_and_never_widens_its_mode() {
+    use std::os::unix::fs::PermissionsExt;
+    // (mode before, mode after): stricter or equal is kept, wider is narrowed to 0600.
+    for (before, after) in [(0o600, 0o600), (0o400, 0o400), (0o644, 0o600)] {
+        let sandbox = Sandbox::new();
+        let note = imported_and_edited(&sandbox);
+        change_transcript(&sandbox);
+        fs::set_permissions(sandbox.note(KITCHEN), fs::Permissions::from_mode(before)).unwrap();
+        let run = sandbox.run(&[
+            "meeting",
+            "refresh",
+            &sandbox.rel(KITCHEN),
+            "--apply",
+            "--json",
+        ]);
+        assert_eq!(run.code, 0, "mode {before:o}: {}", run.stderr);
+        assert_eq!(run.json()["applied"], true, "mode {before:o}");
+        assert_eq!(
+            fs::read_to_string(sandbox.note(KITCHEN)).unwrap(),
+            note.replace("Hello, world!", "Hello, there!"),
+            "mode {before:o}"
+        );
+        assert_eq!(mode_of(&sandbox.note(KITCHEN)), after, "mode {before:o}");
+        assert_eq!(
+            meetings_entries(&sandbox),
+            [format!("meeting-{KITCHEN}.md")],
+            "no temp file is left behind (mode {before:o})"
+        );
+    }
+}

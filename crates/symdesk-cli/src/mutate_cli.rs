@@ -265,6 +265,19 @@ pub(crate) fn snapshot(root: &Path, path: &Path) {
         let _ = HistoryStore::new(root).snapshot(&rel.to_string_lossy());
     }
 }
+/// Like [`snapshot`], but a failure is reported instead of discarded: for
+/// callers that must not touch the file unless its previous content is
+/// recoverable from the vault history.
+pub(crate) fn try_snapshot(root: &Path, path: &Path) -> Result<(), String> {
+    let root = fs::canonicalize(root).map_err(|error| format!("history snapshot: {error}"))?;
+    let rel = path
+        .strip_prefix(&root)
+        .map_err(|_| format!("history snapshot: {} is outside the vault", path.display()))?;
+    HistoryStore::new(&root)
+        .snapshot(&rel.to_string_lossy())
+        .map(|_| ())
+        .map_err(|error| format!("history snapshot failed: {error}"))
+}
 fn mutate(
     root: &Path,
     db: &mut Sidecar,

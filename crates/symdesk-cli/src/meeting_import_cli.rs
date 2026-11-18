@@ -36,7 +36,7 @@ use crate::{
     ingest_cli::init_service_deps,
     mcp::read::meetings,
     meeting_cli::{NewMeetingNote, encode_new_note},
-    mutate_cli::{reindex, snapshot},
+    mutate_cli::{reindex, try_snapshot},
     write_go_json, write_stdout,
 };
 
@@ -1108,6 +1108,28 @@ fn import(
     Ok(import_result(&relative, "imported", &id, json))
 }
 
+/// Atomic replacement of an existing note (`symdesk_ingest::writer::atomic_write_file`:
+/// 0600 temp file next to it, fsync, rename; the temp file is removed on any
+/// error). Transcripts are sensitive, so the mode never widens: the note keeps
+/// its owner bits (0600 at most), group/other bits are dropped.
+fn replace_note(path: &Path, content: &str) -> Result<(), String> {
+    #[cfg(unix)]
+    let mode = {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::metadata(path)
+            .map_err(|error| error.to_string())?
+            .permissions()
+            .mode()
+            & 0o600
+    };
+    #[cfg(not(unix))]
+    let mode = 0o600;
+    let path = path
+        .to_str()
+        .ok_or_else(|| format!("{}: path is not valid UTF-8", path.display()))?;
+    symdesk_ingest::writer::atomic_write_file(path, content.as_bytes(), mode)
+}
+
 /// Meeting transcripts are sensitive: owner-only, and never over an existing file.
 fn write_new_note(path: &Path, content: &str) -> std::io::Result<()> {
     use std::io::Write;
@@ -1202,8 +1224,9 @@ fn refresh(
             .strip_suffix(&doc.body)
             .ok_or_else(|| format!("{note} changed on disk since it was read; re-run refresh"))?;
         let content = format!("{prefix}{}{new}{}", &doc.body[..start], &doc.body[end..]);
-        snapshot(root, &path);
-        std::fs::write(&path, content.as_bytes())
+        // The previous note must be recoverable before it is replaced.
+        try_snapshot(root, &path).map_err(|error| format!("{note} not refreshed: {error}"))?;
+        replace_note(&path, &content)
             .map_err(|error| format!("failed to write refreshed meeting note: {error}"))?;
         reindex(db, &path)
             .map_err(|error| format!("failed to re-index refreshed meeting note: {error}"))?;

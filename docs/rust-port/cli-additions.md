@@ -33,6 +33,20 @@ Declared today: `room` (root, `Maintenance Commands`, between `retention` and
 `symdesk help room [words]` runs the same journal usage as
 `symdesk room [words] --help`.
 
+Also declared: `meeting available|import|refresh|segments|speakers` (parent
+`meeting`, `Available Commands`; issue #1404). `meeting_import_cli::intercept`
+runs before `cobra::front` (after `backup_cli::intercept`), parses
+`[global flags] meeting <name> ...` itself, answers `meeting <name> --help` with
+the declared text and runs the RUST-018 backup gate before touching state. Any
+other `meeting` word still goes to Cobra.
+
+**Open point (frozen Go behaviour, deliberately not changed):** an unknown
+`meeting` subcommand (`symdesk meeting frobnicate`) prints the `meeting` help and
+exits 0, as the recorded tree does. Issue #1404 asks for a non-zero exit. That
+changes recorded behaviour and needs its own decision; the current behaviour is
+pinned by `unknown_meeting_subcommand_keeps_the_frozen_help_with_exit_zero` in
+`tests/meeting_import.rs`.
+
 ## Add a root command
 
 1. Implement it; route it before Cobra if the recorded tree would reject it
@@ -68,12 +82,15 @@ worker must also intercept `meeting import ...` (including `--help`) before
 
 - `tests/help.rs`, `every_command_help_and_completion_match_go_process`: the
   four cases printing the root document or root usage (`--help`, `help`, no
-  arguments, `help not-a-command`) expect the recorded text with the additions
-  applied; a counter asserts exactly these four were rewritten. The other 420
+  arguments, `help not-a-command`) and the two printing the `meeting` document
+  (`meeting --help`, `help meeting`) expect the recorded text with the additions
+  applied; a counter asserts exactly these six were rewritten. The other 418
   cases and the 424/207 counts are unchanged.
 - `tests/cobra_parse.rs`, `load()`: the documents behind `@help:<key>` and
-  `@root_usage` get the additions applied (110 root-document and 30 root-usage
-  cases); literal text of every case, test count and case count are unchanged.
+  `@root_usage` get the additions applied (110 root-document, 30 root-usage and
+  `@help:meeting` cases); literal text of every case, test count and case count are unchanged.
+- New `tests/meeting_import.rs` and `tests/fixtures/` (outside the frozen manifest):
+  process tests of the five `meeting` commands against a temp vault and Meet store.
 - New `tests/cli_additions.rs` (outside the frozen manifest): reviewed list,
   no shadowing, rejection of shadowing/malformed entries, insertion under
   `meeting`, byte identity of every untouched key through the process,

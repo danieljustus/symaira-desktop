@@ -163,10 +163,13 @@ symdesk ingest reocr <archive-path>  # re-run OCR/extraction for an already-inge
 symdesk rules list|add|update|delete|test|dry-run  # manage document classification rules
 symdesk mail rules list|create|update|delete       # manage configured IMAP mail accounts (create/update read JSON from stdin)
 symdesk ask "question?"        # AI answer grounded in vault search results
-symdesk meeting import <id>    # import a reviewed SymMeet meeting as a vault note (runtime-only, optional)
+symdesk meeting available      # list Meet recordings ($XDG_DATA_HOME/symmeet) not yet imported into the vault
+symdesk meeting import <id>    # import one Meet recording as a vault meeting note (importing again is a no-op)
 symdesk meeting list           # list imported meeting notes
 symdesk meeting show <file>    # show one imported meeting note
-symdesk meeting refresh <file> [--apply]  # preview (or apply) a transcript re-export
+symdesk meeting refresh <file> [--apply]  # preview (or apply) a transcript re-export from the recording
+symdesk meeting segments <file>  # time-coded transcript segments of the note's recording
+symdesk meeting speakers <file>  # speakers of the note's recording with their labels
 symdesk events --json          # NDJSON change stream (used by the app)
 symdesk recipe validate .symdesk/recipes/daily.yml  # validate automation without running it
 symdesk recipe run .symdesk/recipes/daily.yml       # stage runner proposals for review

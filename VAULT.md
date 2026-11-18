@@ -163,10 +163,19 @@ This is an additive representation change: old index rows remain searchable and 
   - `trash_retention_days` / `SYMDESK_TRASH_RETENTION_DAYS` — default age threshold for `trash purge` (default 30).
 
 ## 8. Meeting Notes (contract_version 2)
-`symdesk meeting import` creates a reviewed meeting note from a `symmeet` artifact. Integration is runtime-only (PATH detection, no compile-time or bundling dependency on `symmeet`) and entirely optional: a vault with no meeting notes, or opened where `symmeet` is absent, behaves exactly as a v1/v2 vault always has.
+`symdesk meeting import <id>` creates a meeting note from a finished Meet recording. The recording is read directly from the Meet store (`$XDG_DATA_HOME/symmeet`, default `~/.local/share/symmeet`; `meetings/<uuid>/` with `manifest.json`, `segments.raw.jsonl`, optional `segments.edited.jsonl`, `turns.raw.jsonl` and `speaker_edits.jsonl`, the layout of `meet/Sources/SymMeetCore/Storage/ArtifactLayout.swift`); no `symmeet` binary is needed. A vault with no meeting notes, or a machine without a Meet store, behaves exactly as a v1/v2 vault always has.
+
+The commands, all taking `--json`:
+- `meeting available`: recordings in the Meet store that no vault note names by `meeting_id`, as `[{"meeting_id","source"}]` sorted by id. A missing or empty store is `[]`; recordings with an unreadable manifest are skipped (named on stderr without `--json`).
+- `meeting import <id>`: writes `meetings/meeting-<id>.md` (mode `0600`) and prints `{"path","status"}` with `status` `imported`. A recording that any vault note already names is left untouched and reported as `already_imported` with that note's path, so re-importing never duplicates a note and never overwrites a reviewed one; an unrelated file at the target path is an error, never overwritten.
+- `meeting refresh <note> [--apply]`: re-derives the transcript block from the recording and prints `{"path","changed","diff_lines","applied"}`; without `--apply` nothing is written.
+- `meeting segments <note>`: `[{"segment_id","speaker_id","start_ms","end_ms","engine_text","edited_text"?,"revision"}]` in chronological order.
+- `meeting speakers <note>`: `[{"speaker_id","label"}]`, the label from replaying `speaker_edits.jsonl` (the speaker id when unlabeled).
+
+Ids must be UUIDs, file names inside a manifest must be relative paths without `..`, nothing inside a recording directory is followed through a symbolic link, manifests are limited to 1 MiB and logs to 64 MiB; the Meet store is never modified. Speaker label edits (`meeting speaker label|merge|split|reset`) are not implemented by the CLI.
 
 - `type` (string, `"meeting"`): marks a note as an imported meeting. Notes without this field are unaffected by any meeting-specific behavior.
-- `meeting_id` (string): the source `symmeet` meeting UUID. Re-importing the same ID updates the same note (`meetings/meeting-<id>.md`).
+- `meeting_id` (string): the source `symmeet` meeting UUID. The note lives at `meetings/meeting-<id>.md`; importing the same ID again does not touch it (use `refresh --apply` to update the transcript).
 - `started_at` / `ended_at` (string, ISO-8601): the meeting's recorded time range.
 - `duration_ms` (integer): `ended_at - started_at` in milliseconds.
 - `language` (string): the transcript language, when known.
@@ -175,19 +184,19 @@ This is an additive representation change: old index rows remain searchable and 
   - `speaker_ids` (array of strings): the meeting-local anonymous speaker ID(s) this participant covers.
   - `entity_id` (string, optional): set only by an explicit, separately reviewed participant-confirmation step. SymDesk never writes this automatically.
   - `contact_ref` (object, optional): an opaque reference to the authoritative `symrelate` contact, set only by an explicit, reviewed link step (`symdesk meeting participant link-contact`). It follows symrelate's published reference-only contract: `provider` (`"symrelate"`), `schema_version` (integer), `id` (stable opaque contact ID), `kind` (`"person"`/`"organization"`), and `display_name` as a refreshable rendering cache — identity is `id` + `kind`. It never contains contact points (email/phone/address/URL/handle), notes, transcript text, or local paths, and unknown additive fields are preserved on round-trip. Linking never creates a contact in `symrelate`; unlinking (`unlink-contact`) removes only the reference. The contact store ships inside SymDesk (nested `relate/` module) and is linked in-process, so the reference schema cannot drift between producer and consumer. Resolution stays optional: with the store unreadable or a contact erased, the note and its stored reference simply keep rendering as-is.
-- `symmeet_source` (object): artifact provenance.
+- `symmeet_source` (object): artifact provenance (the Meet recording the note was imported from).
   - `artifact_schema_version` (integer): the meeting artifact schema version the note was imported from.
   - `review_state` (string): `"unreviewed"` on import; set to `"reviewed"` by the user's own workflow (SymDesk does not change it automatically).
 
 The note body wraps the transcript in a pair of markers:
 ```text
 <!-- symmeet-transcript:start -->
-...transcript markdown from `symmeet export --format markdown`...
+...transcript Markdown rendered from the recording (the `symmeet export --format markdown` layout)...
 <!-- symmeet-transcript:end -->
 ```
-`symdesk meeting refresh` only ever replaces the content strictly between these markers with a freshly exported transcript (which itself prefers `symmeet`-side edited segments over raw engine output). Anything written outside the markers — meeting notes, follow-ups, links — and the note's frontmatter (including any reviewed `entity_id`/`review_state`) survive a refresh untouched. If the markers are missing (e.g. the block was manually restructured), refresh fails safely instead of guessing where the transcript is. Refresh previews its diff by default; a `--apply` flag is required to write it.
+`symdesk meeting refresh` only ever replaces the content strictly between these markers with a freshly rendered transcript (which prefers `segments.edited.jsonl` over raw engine output when it holds segments). Anything written outside the markers — meeting notes, follow-ups, links — and the note's frontmatter (including any reviewed `entity_id`/`review_state`) survive a refresh untouched. If the markers are missing (e.g. the block was manually restructured), refresh fails safely instead of guessing where the transcript is. Refresh previews its diff by default; a `--apply` flag is required to write it.
 
-SymDesk never mutates the raw `symmeet` artifact directory: corrections to speaker labels or transcript text happen through `symmeet` itself, and the next import or refresh picks them up.
+SymDesk never mutates the Meet recording directory: corrections to speaker labels or transcript text happen on the Meet side, and the next refresh picks them up.
 - Trashing a file snapshots its final content first, so even a purged trash item stays recoverable until history retention drops it.
 
 ## 9. Meeting Knowledge Publishing (contract_version 2)

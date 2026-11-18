@@ -176,6 +176,7 @@ symdesk mcp                    # stdio MCP server for agents
 symdesk serve                  # authenticated self-hosted API + durable queue
 symdesk worker --server ...    # remote Tesseract/Ollama OCR worker
 symdesk doctor                 # health check
+symdesk room ...                # project journal (signed rooms, notes, decisions, runs); see `symdesk room --help`
 symdesk config path            # resolved config file path
 symdesk config get [key]       # print resolved configuration (all keys or one)
 symdesk config set <key> <value>  # update a config value

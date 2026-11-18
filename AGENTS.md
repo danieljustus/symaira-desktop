@@ -87,6 +87,7 @@ The absorbed tools (`print`, `seek`, `relate`, `ingest`, `room`) are Rust crates
 - **GUI work follows the Symaira Interface Guidelines** in `symaira-corekit/swift`: read `swift/GUIDELINES.md`, then `swift/DESIGN.md` and `swift/docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-corekit>/swift/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
 - **XcodeGen**: `SymDesk.xcodeproj` is generated from `project.yml` — edit `project.yml`, never the `.xcodeproj`.
 - **Frozen fixtures:** `testdata/port/**` is Go-recorded and byte-identical; do not normalize, hand-edit or regenerate it. `make port-contract` fails on any drift.
+- **CLI commands newer than the Go oracle** (such as `room` in `symdesk --help`) are never added to the recorded help/completion/tree fixtures. Declare them in `crates/symdesk-cli/assets/cli-additions.json` and extend `tests/cli_additions.rs`; the replay tests compare against the recording plus those additions. Rules and how-to: `docs/rust-port/cli-additions.md`.
 - **Self-host API is authenticated** — see `docs/SELF_HOSTING.md`; do not add unauthenticated endpoints.
 - CI: `.github/workflows/{ci,codeql,container,macos-routing-check,macos-runner,release}.yml` (Rust + Swift only; no `setup-go`).
 

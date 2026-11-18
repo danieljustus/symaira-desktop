@@ -3159,6 +3159,7 @@ dependencies = [
  "symdesk-render",
  "symdesk-service",
  "symdesk-vault",
+ "symroom-cli",
  "time",
  "tokio",
  "toml",

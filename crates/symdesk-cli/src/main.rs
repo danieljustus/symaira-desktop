@@ -90,8 +90,30 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
     None => "devel",
 };
 
+/// The project journal (`symroom`) is linked into this binary. It runs for
+/// `symdesk room <args>` and when the program is invoked under the name
+/// `symroom` (also through a symlink). The arguments go to symroom untouched,
+/// before any symdesk flag parsing, so both forms behave like `symroom <args>`.
+fn dispatch_room(args: &[OsString]) -> Option<ExitCode> {
+    let invoked_as_symroom = args
+        .first()
+        .and_then(|program| Path::new(program).file_name())
+        .is_some_and(|name| name == "symroom");
+    if invoked_as_symroom {
+        return Some(symroom_cli::run(args.iter().cloned()));
+    }
+    if args.get(1).is_some_and(|command| command == "room") {
+        let forwarded = std::iter::once(OsString::from("symroom")).chain(args[2..].iter().cloned());
+        return Some(symroom_cli::run(forwarded));
+    }
+    None
+}
+
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
+    if let Some(code) = dispatch_room(&args) {
+        return code;
+    }
     serve_cli::take_internal_options_path(&mut args);
     // Go logs every lazy retrieval-index migration through slog on stderr.
     symdesk_index::set_retrieval_migration_hook(conflict_cli::log_retrieval_migration);

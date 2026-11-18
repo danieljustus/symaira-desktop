@@ -37,6 +37,7 @@ symdesk-protocol = { path = "crates/symdesk-protocol", version = "=0.0.0" }
 symdesk-render = { path = "crates/symdesk-render", version = "=0.0.0" }
 symdesk-service = { path = "crates/symdesk-service", version = "=0.0.0" }
 symdesk-storage = { path = "crates/symdesk-storage", version = "=0.0.0" }
+symroom-cli = { path = "crates/symroom-cli", version = "=0.0.0" }
 symroom-core = { path = "crates/symroom-core", version = "=0.0.0" }
 ed25519-dalek = { version = "=3.0.0" }
 curve25519-dalek = { version = "=5.0.0" }

@@ -27,6 +27,7 @@ symdesk-protocol.workspace = true
 symdesk-render.workspace = true
 symdesk-service.workspace = true
 symdesk-vault.workspace = true
+symroom-cli.workspace = true
 symaira-core-llm.workspace = true
 time.workspace = true
 tokio.workspace = true

@@ -7,6 +7,10 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[lib]
+name = "symroom_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "symroom"
 path = "src/main.rs"

@@ -1428,7 +1428,9 @@ fn refresh_apply_replaces_the_note_atomically_and_never_widens_its_mode() {
 /// `(manifest edit, state named in the message)`: every state but `completed`
 /// and a manifest without a job (`symmeet export`: `job?.state != .completed`,
 /// shown as `not_started`).
-fn unfinished_jobs() -> Vec<(&'static str, Box<dyn Fn(&mut Value)>, &'static str)> {
+type UnfinishedJob = (&'static str, Box<dyn Fn(&mut Value)>, &'static str);
+
+fn unfinished_jobs() -> Vec<UnfinishedJob> {
     let set = |state: &'static str| -> Box<dyn Fn(&mut Value)> {
         Box::new(move |manifest| manifest["job"]["state"] = Value::from(state))
     };

@@ -21,6 +21,12 @@ targets:
         product: SymMeetCore
       - package: symaira-meet
         product: SymMeetCapture
+      - package: symaira-meet
+        product: SymDictationCore
+      - package: symaira-meet
+        product: SymMeetParakeet
+      - package: symaira-meet
+        product: SymMeetWhisperKit
       - package: symaira-corekit
         product: SymairaTheme
       - package: symaira-corekit
@@ -39,7 +45,7 @@ targets:
         CFBundleIdentifier: dev.symaira.symmeet.agent
         CFBundleDisplayName: Symaira Meet
         CFBundleName: Symaira Meet
-        NSMicrophoneUsageDescription: "Symaira Meet requires microphone access to record meetings."
+        NSMicrophoneUsageDescription: "Symaira Meet requires microphone access to record meetings and, if you turn it on, for push-to-talk dictation."
         NSScreenCaptureUsageDescription: "Symaira Meet requires Screen Recording permission to capture system audio."
         LSUIElement: false
   SymMeetAgentTests:
@@ -50,3 +56,6 @@ targets:
       - path: Tests/SymMeetAgentTests
     dependencies:
       - target: SymMeetAgent
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES

@@ -57,6 +57,8 @@ struct SymMeetAgentApp: App {
     let model = AgentModel()
     _model = StateObject(wrappedValue: model)
     _appDelegate = NSApplicationDelegateAdaptor(AppDelegate.self)
+    // Dictation is off by default; this only resumes it if the user enabled it earlier.
+    Task { @MainActor in DictationService.shared.resumeIfEnabled() }
   }
 
   var body: some Scene {

@@ -3,8 +3,18 @@ import SymairaTheme
 
 struct AgentSettingsView: View {
   @ObservedObject var updateChecker: AgentUpdateChecker
+  @ObservedObject private var dictationSettings = DictationSettings.shared
+  @ObservedObject private var dictationService = DictationService.shared
 
   var body: some View {
+    ScrollView {
+      content
+    }
+    .frame(width: 560, height: 560)
+    .background(SymairaTheme.bgDark)
+  }
+
+  private var content: some View {
     VStack(alignment: .leading, spacing: SymairaSpacing.large) {
       Text("Settings")
         .symairaText(.heading, respectsForeground: false)
@@ -48,9 +58,10 @@ struct AgentSettingsView: View {
           .disabled(!updateChecker.autoCheckEnabled)
         }
       }
+
+      DictationSettingsSection(settings: dictationSettings, service: dictationService)
     }
     .padding(SymairaSpacing.xLarge)
-    .frame(width: 560, height: 280, alignment: .topLeading)
-    .background(SymairaTheme.bgDark)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
   }
 }

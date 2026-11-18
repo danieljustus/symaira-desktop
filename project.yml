@@ -87,6 +87,9 @@ targets:
         PRODUCT_NAME: SymDesk
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "-"
+        # Microphone capture under the hardened runtime. The release workflow
+        # re-signs the bundle and must pass the same file via --entitlements.
+        CODE_SIGN_ENTITLEMENTS: Sources/SymDeskApp/SymDesk.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"

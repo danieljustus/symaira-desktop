@@ -278,13 +278,39 @@ jobs:
           set -euo pipefail
           APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
           test -d "$APP_PATH"
+          test -f Sources/SymDeskApp/SymDesk.entitlements
+          # Nested Mach-O files are signed without entitlements. Only the main
+          # executable and the bundle carry them; `codesign --force` without
+          # --entitlements would drop the ones embedded by the archive step.
+          MAIN_EXECUTABLE="$APP_PATH/Contents/MacOS/SymDesk"
+          test -f "$MAIN_EXECUTABLE"
           while IFS= read -r -d '' item; do
             if file "$item" | grep -q "Mach-O"; then
-              codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime "$item"
+              if [ "$item" = "$MAIN_EXECUTABLE" ]; then
+                codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime --entitlements Sources/SymDeskApp/SymDesk.entitlements "$item"
+              else
+                codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime "$item"
+              fi
             fi
           done < <(find "$APP_PATH/Contents" -type f -print0)
-          codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime "$APP_PATH"
+          codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime --entitlements Sources/SymDeskApp/SymDesk.entitlements "$APP_PATH"
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Verify app keeps the audio-input entitlement
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          ENTITLEMENTS="$(codesign -d --entitlements :- "$APP_PATH" 2>/dev/null)"
+          echo "$ENTITLEMENTS"
+          if ! printf '%s' "$ENTITLEMENTS" | grep -q "com.apple.security.device.audio-input"; then
+            echo "::error::Signed app bundle lost the com.apple.security.device.audio-input entitlement."
+            exit 1
+          fi
+          MAIN_ENTITLEMENTS="$(codesign -d --entitlements :- "$APP_PATH/Contents/MacOS/SymDesk" 2>/dev/null)"
+          if ! printf '%s' "$MAIN_ENTITLEMENTS" | grep -q "com.apple.security.device.audio-input"; then
+            echo "::error::Signed main executable lost the com.apple.security.device.audio-input entitlement."
+            exit 1
+          fi
 
       - name: Notarize and staple app
         env:

@@ -48,6 +48,18 @@ require_fixed "$WORKFLOW" 'xcrun stapler validate "$DMG_PATH"' "DMG stapling val
 require_fixed "$WORKFLOW" 'spctl --assess --type open --context context:primary-signature' "DMG Gatekeeper assessment"
 require_fixed "$WORKFLOW" 'gh release download "$GITHUB_REF_NAME"' "published DMG redownload"
 require_fixed "$WORKFLOW" 'test "$PUBLISHED_SHA256" = "$DMG_SHA256"' "published-byte digest verification"
+# The app re-sign must keep the entitlements: `codesign --force` without
+# --entitlements replaces the ones the archive embedded (microphone capture
+# needs com.apple.security.device.audio-input under the hardened runtime).
+require_fixed "$WORKFLOW" 'codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime --entitlements Sources/SymDeskApp/SymDesk.entitlements "$APP_PATH"' "app bundle signed with --entitlements"
+require_fixed "$WORKFLOW" 'codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime --entitlements Sources/SymDeskApp/SymDesk.entitlements "$item"' "main executable signed with --entitlements"
+require_fixed "$WORKFLOW" 'codesign -d --entitlements :- "$APP_PATH"' "post-sign entitlement check"
+require_fixed "$WORKFLOW" "com.apple.security.device.audio-input" "audio-input entitlement assertion"
+require_fixed "$ROOT_DIR/Sources/SymDeskApp/SymDesk.entitlements" "com.apple.security.device.audio-input" "audio-input key in the entitlements file"
+if grep -Fq "app-sandbox" "$ROOT_DIR/Sources/SymDeskApp/SymDesk.entitlements"; then
+  printf "the Desktop app must not be sandboxed (event taps and Accessibility insertion)\n" >&2
+  exit 1
+fi
 require_fixed "$README" "cosign verify-blob" "consumer verification command"
 require_fixed "$README" "https://token.actions.githubusercontent.com" "OIDC issuer"
 

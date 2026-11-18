@@ -430,6 +430,7 @@
 		B19FB8752DF2B7914F917FAE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B4045690FD4927A2DE0932BA /* MobileSearchQueryParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSearchQueryParser.swift; sourceTree = "<group>"; };
 		B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
+		B5A89C70CA433177281997C3 /* SymDesk.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SymDesk.entitlements; sourceTree = "<group>"; };
 		B652D24B94E01B080A5139C0 /* IngestQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngestQueueView.swift; sourceTree = "<group>"; };
 		B9BAB2ADA2A1F0FDAFA121EF /* RetrievalStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrievalStatusTests.swift; sourceTree = "<group>"; };
 		BA3B285E81D1179F9DC8C4E5 /* MobileComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileComposerView.swift; sourceTree = "<group>"; };
@@ -636,6 +637,7 @@
 				DC987A20ACFBC40ECC154307 /* NoteFolderTree.swift */,
 				C65122A6938268B750A79E55 /* NotificationCenterProviding.swift */,
 				23EBE73852F5829E6BB25B82 /* NotificationManager.swift */,
+				B5A89C70CA433177281997C3 /* SymDesk.entitlements */,
 				BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */,
 				362E9BEEFFBA097C15F5579C /* Models */,
 				4EC33A4FB80D80BF52DF3EBF /* UI */,
@@ -1550,6 +1552,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/SymDeskApp/SymDesk.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1917,6 +1920,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/SymDeskApp/SymDesk.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

@@ -441,6 +441,19 @@ enum JobState {
     Cancelled,
 }
 
+impl JobState {
+    /// `MeetingJobState.rawValue`.
+    fn name(&self) -> &'static str {
+        match self {
+            Self::Queued => "queued",
+            Self::Processing => "processing",
+            Self::Completed => "completed",
+            Self::Failed => "failed",
+            Self::Cancelled => "cancelled",
+        }
+    }
+}
+
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct Engine {
@@ -820,6 +833,24 @@ fn load_recording(id: &str) -> Result<Recording, String> {
     Ok(Recording { manifest, dir })
 }
 
+/// Like [`load_recording`], for the commands that read a recording to build a
+/// note (`available`, `import`, `refresh`): its transcription job must have
+/// completed. This is the rule of `symmeet export` without `--allow-incomplete`
+/// (`meet/Sources/symmeet/Commands/ExportCommand.swift:147-149`): refused when
+/// `manifest.job?.state != .completed`, and a manifest without a job counts as
+/// `not_started` (`ExportError.meetingIncomplete`, `ExportError.swift:35-38`).
+fn load_completed_recording(id: &str) -> Result<Recording, String> {
+    let recording = load_recording(id)?;
+    let state = match &recording.manifest.job {
+        Some(job) if matches!(job.state, JobState::Completed) => return Ok(recording),
+        Some(job) => job.state.name(),
+        None => "not_started",
+    };
+    Err(format!(
+        "recording {id}: the transcription job has not completed (current state: {state})"
+    ))
+}
+
 // ------------------------------------------------------------- transcript
 
 /// `TimestampFormatter.format(_, separator: ".")`.
@@ -977,7 +1008,7 @@ fn available(root: &Path, json: bool) -> Result<ExitCode, String> {
                 skip("directory name is not a lowercase UUID".to_owned());
                 continue;
             }
-            match load_recording(&id) {
+            match load_completed_recording(&id) {
                 Ok(recording) if !imported.contains_key(&id) => found.push(AvailableMeeting {
                     meeting_id: id,
                     source: recording.manifest.source.name().to_owned(),
@@ -1089,7 +1120,7 @@ fn import(
     if let Some(path) = imported_ids(root)?.get(&id) {
         return Ok(import_result(path, "already_imported", &id, json));
     }
-    let recording = load_recording(&id)?;
+    let recording = load_completed_recording(&id)?;
     let content = build_note(&id, &recording)?;
     let relative = note_path(&id);
     let absolute = secure_path(root, &relative).map_err(|error| error.to_string())?;
@@ -1194,7 +1225,7 @@ fn refresh(
     let (start, end) = find_markers(&doc.body)
         .map_err(|error| format!("cannot safely refresh {note}: {error}"))?;
     let old = &doc.body[start..end];
-    let recording = load_recording(&id)?;
+    let recording = load_completed_recording(&id)?;
     let segments =
         load_segments(&recording.dir).map_err(|error| format!("recording {id}: {error}"))?;
     let new = format!("\n{}\n", render_markdown(&segments).trim_end_matches('\n'));

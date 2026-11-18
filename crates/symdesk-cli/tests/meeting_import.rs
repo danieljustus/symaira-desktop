@@ -18,6 +18,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
+    sync::atomic::{AtomicUsize, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -98,9 +99,13 @@ fn snapshot_tree(dir: &Path) -> BTreeMap<String, Vec<u8>> {
 
 impl Sandbox {
     fn new() -> Self {
+        // The counter keeps concurrent tests apart when the clock ticks coarsely:
+        // two sandboxes with one name would delete each other on drop.
+        static NEXT: AtomicUsize = AtomicUsize::new(0);
         let root = std::env::temp_dir().join(format!(
-            "symdesk-meeting-import-{}-{}",
+            "symdesk-meeting-import-{}-{}-{}",
             std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -1416,4 +1421,140 @@ fn refresh_apply_replaces_the_note_atomically_and_never_widens_its_mode() {
             "no temp file is left behind (mode {before:o})"
         );
     }
+}
+
+// ---------------------------------------------------------------- job state
+
+/// `(manifest edit, state named in the message)`: every state but `completed`
+/// and a manifest without a job (`symmeet export`: `job?.state != .completed`,
+/// shown as `not_started`).
+fn unfinished_jobs() -> Vec<(&'static str, Box<dyn Fn(&mut Value)>, &'static str)> {
+    let set = |state: &'static str| -> Box<dyn Fn(&mut Value)> {
+        Box::new(move |manifest| manifest["job"]["state"] = Value::from(state))
+    };
+    vec![
+        ("queued", set("queued"), "queued"),
+        ("processing", set("processing"), "processing"),
+        ("failed", set("failed"), "failed"),
+        ("cancelled", set("cancelled"), "cancelled"),
+        (
+            "missing job",
+            Box::new(|manifest| {
+                manifest.as_object_mut().unwrap().remove("job");
+            }),
+            "not_started",
+        ),
+        (
+            "null job",
+            Box::new(|manifest| manifest["job"] = Value::Null),
+            "not_started",
+        ),
+    ]
+}
+
+#[test]
+fn import_refuses_a_recording_whose_job_has_not_completed() {
+    for (case, edit, state) in unfinished_jobs() {
+        let sandbox = Sandbox::new();
+        sandbox.seed(&[KITCHEN]);
+        rewrite_manifest(&sandbox, KITCHEN, edit);
+        for json in [false, true] {
+            let mut args = vec!["meeting", "import", KITCHEN];
+            if json {
+                args.push("--json");
+            }
+            let run = sandbox.run(&args);
+            assert_eq!(run.code, 1, "{case}: {}", run.stdout);
+            let message = if json { &run.stdout } else { &run.stderr };
+            assert_eq!(message.lines().count(), 1, "{case}: {message}");
+            assert!(
+                message.contains(&format!("current state: {state})")) && message.contains(KITCHEN),
+                "{case}: {message}"
+            );
+            assert!(
+                !sandbox.vault().join("meetings").exists(),
+                "{case}: nothing is written"
+            );
+        }
+    }
+}
+
+#[test]
+fn available_lists_only_what_import_accepts() {
+    for (case, edit, state) in unfinished_jobs() {
+        let sandbox = Sandbox::new();
+        sandbox.seed(&[KITCHEN, COMPLETE]);
+        rewrite_manifest(&sandbox, KITCHEN, edit);
+        let json = sandbox.run(&["meeting", "available", "--json"]);
+        assert_eq!(json.code, 0, "{case}: {}", json.stderr);
+        let list = json.json();
+        let ids: Vec<&str> = list
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|item| item["meeting_id"].as_str().unwrap())
+            .collect();
+        assert_eq!(ids, [COMPLETE], "{case}");
+        let text = sandbox.run(&["meeting", "available"]);
+        assert_eq!(text.stdout, format!("{COMPLETE}  imported\n"), "{case}");
+        assert!(
+            text.stderr.contains(KITCHEN) && text.stderr.contains(state),
+            "{case}: the skipped recording is named: {}",
+            text.stderr
+        );
+        // Everything `available` offers can be imported.
+        assert_eq!(sandbox.run(&["meeting", "import", COMPLETE]).code, 0);
+    }
+}
+
+#[test]
+fn refresh_refuses_a_recording_that_is_no_longer_completed() {
+    for (case, edit, state) in unfinished_jobs() {
+        let sandbox = Sandbox::new();
+        let note = imported_and_edited(&sandbox);
+        change_transcript(&sandbox);
+        rewrite_manifest(&sandbox, KITCHEN, edit);
+        for apply in [false, true] {
+            let rel = sandbox.rel(KITCHEN);
+            let mut args = vec!["meeting", "refresh", rel.as_str()];
+            if apply {
+                args.push("--apply");
+            }
+            let run = sandbox.run(&args);
+            assert_eq!(run.code, 1, "{case} apply={apply}: {}", run.stdout);
+            assert_eq!(run.stderr.lines().count(), 1, "{case}: {}", run.stderr);
+            assert!(
+                run.stderr.contains(&format!("current state: {state})")),
+                "{case}: {}",
+                run.stderr
+            );
+            assert_eq!(
+                fs::read_to_string(sandbox.note(KITCHEN)).unwrap(),
+                note,
+                "{case} apply={apply}: the note is unchanged"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_completed_job_is_still_imported_available_and_refreshed() {
+    let sandbox = Sandbox::new();
+    sandbox.seed(&[KITCHEN, COMPLETE]);
+    assert_eq!(
+        sandbox
+            .run(&["meeting", "available", "--json"])
+            .json()
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(sandbox.run(&["meeting", "import", KITCHEN]).code, 0);
+    assert_eq!(
+        sandbox
+            .run(&["meeting", "refresh", &sandbox.rel(KITCHEN), "--apply"])
+            .code,
+        0
+    );
 }

@@ -1678,3 +1678,18 @@ fn inline_boolean_flags_follow_the_json_flag_grammar() {
     assert_eq!(run.code, 1);
     assert_eq!(run.stderr, "unknown flag: --apply\n");
 }
+
+// ------------------------------------------------------- meetings/ directory
+
+#[cfg(unix)]
+#[test]
+fn import_creates_the_meetings_directory_without_world_access() {
+    // The vault's own writers (notebooks/, bases/, `.symdesk/history`) create
+    // their directories 0750; the process umask may only remove bits.
+    let sandbox = Sandbox::new();
+    sandbox.seed(&[KITCHEN]);
+    assert_eq!(sandbox.run(&["meeting", "import", KITCHEN]).code, 0);
+    let mode = mode_of(&sandbox.vault().join("meetings"));
+    assert_eq!(mode & 0o007, 0, "no access for others: {mode:o}");
+    assert_eq!(mode & 0o700, 0o700, "owner keeps full access: {mode:o}");
+}

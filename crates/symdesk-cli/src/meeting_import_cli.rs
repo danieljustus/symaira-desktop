@@ -1139,7 +1139,7 @@ fn import(
     let relative = note_path(&id);
     let absolute = secure_path(root, &relative).map_err(|error| error.to_string())?;
     if let Some(parent) = absolute.parent() {
-        std::fs::create_dir_all(parent)
+        create_dir_all_0750(parent)
             .map_err(|error| format!("failed to create the meetings directory: {error}"))?;
     }
     write_new_note(&absolute, &content).map_err(|error| {
@@ -1151,6 +1151,19 @@ fn import(
     })?;
     reindex(db, &absolute).map_err(|error| format!("failed to index meeting note: {error}"))?;
     Ok(import_result(&relative, "imported", &id, json))
+}
+
+/// Vault content directories are created 0750, as `notebooks/` and `bases/`
+/// are (`symdesk-vault` `create_dir_all_0750`), not with the umask default.
+fn create_dir_all_0750(path: &Path) -> std::io::Result<()> {
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o750);
+    }
+    builder.create(path)
 }
 
 /// Atomic replacement of an existing note (`symdesk_ingest::writer::atomic_write_file`:

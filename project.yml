@@ -2,7 +2,7 @@ name: SymDesk
 options:
   bundleIdPrefix: com.symaira
   deploymentTarget:
-    macOS: "14.0"
+    macOS: "15.0"
   xcodeVersion: "26.0"
   fileTypes:
     "icon":
@@ -46,7 +46,7 @@ targets:
         product: SymairaKeychain
     settings:
       base:
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
         SWIFT_VERSION: "6.0"
 
   SymDesk:
@@ -91,7 +91,7 @@ targets:
         # re-signs the bundle and must pass the same file via --entitlements.
         CODE_SIGN_ENTITLEMENTS: Sources/SymDeskApp/SymDesk.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
         MARKETING_VERSION: "0.13.3"
@@ -119,7 +119,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
         SWIFT_VERSION: "6.0"
 
   SymDeskAppTests:
@@ -147,7 +147,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
         SWIFT_VERSION: "6.0"
 
   SymDeskMobile:

@@ -601,7 +601,7 @@ jobs:
               regex(/Symaira-Desktop-(\d+(?:\.\d+)*)-macos\.dmg/i)
             end
 
-            depends_on macos: :sonoma
+            depends_on macos: :sequoia
 
             app "SymDesk.app"
 

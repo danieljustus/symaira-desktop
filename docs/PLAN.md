@@ -143,7 +143,7 @@ CI grün auf main.
 **Ziel:** Native App-Hülle, die den Core findet und live sieht.
 
 **Aufgaben:**
-1. `project.yml` (XcodeGen) nach Vorbild `../symaira-tune` bzw. `../symaira-terminal`; App-Target `SymDesk` (macOS 14+, Swift 6 strict concurrency). Kein Mac App Store; Distribution später als notarisiertes DMG/Cask.
+1. `project.yml` (XcodeGen) nach Vorbild `../symaira-tune` bzw. `../symaira-terminal`; App-Target `SymDesk` (macOS 15+, Swift 6 strict concurrency). Kein Mac App Store; Distribution später als notarisiertes DMG/Cask.
 2. `symaira-corekit` (Swift-Package AppKit) **exakt** pinnen (`.package(url:…, exact: "x.y.z")`: aktuellste Version nehmen; lokale Entwicklung darf `path:` nutzen, gemergter Stand muss auf einen Tag zeigen).
 3. Core-Anbindung: `SymairaToolRegistry`/`BinaryLocator` zum Auffinden von `symdesk` (dazu **appkit-PR: `symdesk`-Eintrag in die Registry**, `mcpArgs: ["mcp"]` — inkl. Test-Update `testRegistryContainsAllKnownTools`); Aufrufe via `SymairaCLIRunner` (`runDecoding`, snake_case). `requireSchemaVersion(1)` gegen `symdesk version --json`.
 4. Events: ein langlaufender `Process` für `symdesk events --json`, Zeilen als `AsyncSequence` in einen `@Observable`-Store.

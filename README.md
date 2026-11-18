@@ -102,7 +102,7 @@ cargo install --locked --git https://github.com/danieljustus/symaira-desktop sym
 
 ### Native macOS app from source
 
-The SwiftUI app currently builds from source on Apple Silicon with macOS 14 or newer:
+The SwiftUI app currently builds from source on Apple Silicon with macOS 15 or newer:
 
 ```sh
 brew install xcodegen
@@ -318,7 +318,7 @@ The API key (`SYMDESK_LLM_API_KEY`) is resolved dynamically in priority order:
 | SymDesk Server container | Docker/Compose on Mac mini, Raspberry Pi 4/5 (64-bit), Linux server or NAS | Owns vault, originals, FTS index and durable OCR queue | Mac app, iOS app, workers |
 | Home Assistant app/add-on | Home Assistant OS on aarch64/amd64 | Persistent `/data/vault`; optional in-container Tesseract | Mac app, iOS app, remote workers |
 | Remote OCR worker | macOS or Linux | Downloads one leased original, runs Tesseract or local Ollama, returns text | One SymDesk Server |
-| `SymDesk.app` | macOS 14+ | Direct local vault **or** native server frontend; edits and uploads | Local CLI or SymDesk Server |
+| `SymDesk.app` | macOS 15+ | Direct local vault **or** native server frontend; edits and uploads | Local CLI or SymDesk Server |
 | SymDesk for iPhone/iPad | iOS/iPadOS 18+ | Direct Files/iCloud reader **or** cached server frontend | Files provider or SymDesk Server |
 
 The server and clients use the same versioned `/api/v1` contract. Access tokens

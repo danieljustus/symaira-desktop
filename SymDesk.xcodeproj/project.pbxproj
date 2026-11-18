@@ -211,6 +211,7 @@
 		E05DC3B5AB184EB15CD2104F /* SymMeetCore in Frameworks */ = {isa = PBXBuildFile; productRef = A9205C2B416E764E8F387893 /* SymMeetCore */; };
 		E076AC657C26853240193B11 /* MobileAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA776EFDE9606A0A931C0DA0 /* MobileAIClient.swift */; };
 		E0949CE5566FE358143A90F3 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 5B81234FBF41E06530F2A5C1 /* SymairaCLIRunner */; };
+		E16136994F80B094661ED83E /* MeetingImportJSONTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B21D2C7B08F9592721794F3 /* MeetingImportJSONTests.swift */; };
 		E378C6CBDC1AF52733D787EB /* DeskCoreHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FE24DC9C606DD4B58A988FC /* DeskCoreHistory.swift */; };
 		E3A6D0541CF0A18BFAE79477 /* DeskCoreConsume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A229FB109C64F994E04199 /* DeskCoreConsume.swift */; };
 		E7F37628AA6BA48A0D4A37C1 /* DeskCoreAISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD64170836DF79250BEEF3E8 /* DeskCoreAISettings.swift */; };
@@ -400,6 +401,7 @@
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
 		7946F6B3E83FEFA35F91B69F /* SpeakerReviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerReviewPanel.swift; sourceTree = "<group>"; };
 		7A6AAD155CC4C1EF993C0DE1 /* DeskCoreInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreInspector.swift; sourceTree = "<group>"; };
+		7B21D2C7B08F9592721794F3 /* MeetingImportJSONTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingImportJSONTests.swift; sourceTree = "<group>"; };
 		7EA00C0D8DE76C96A639F05A /* MobileServerAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileServerAIProvider.swift; sourceTree = "<group>"; };
 		805FBABA01057AAEA77CCF0D /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8077CE2926CEA76A0D164647 /* MobileAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileAIProvider.swift; sourceTree = "<group>"; };
@@ -870,6 +872,7 @@
 				ABCA585E8E919CA03416333C /* DuplicateThresholdTests.swift */,
 				93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */,
 				BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */,
+				7B21D2C7B08F9592721794F3 /* MeetingImportJSONTests.swift */,
 				CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */,
 				B9BAB2ADA2A1F0FDAFA121EF /* RetrievalStatusTests.swift */,
 				677B56B0F0F5C5EBF5379BB2 /* RustBackendConsumerTests.swift */,
@@ -1328,6 +1331,7 @@
 				D5F122B5D1506D4E55970477 /* DuplicateThresholdTests.swift in Sources */,
 				8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */,
 				62EF7665587A0B5275D86D6F /* MarkdownTableTests.swift in Sources */,
+				E16136994F80B094661ED83E /* MeetingImportJSONTests.swift in Sources */,
 				B30A7969A90708A80F8EC725 /* ModelDownloadManagerTests.swift in Sources */,
 				6B73103C2097D1655E0BB1B7 /* RetrievalStatusTests.swift in Sources */,
 				41C2B975145B05095586B693 /* RustBackendConsumerTests.swift in Sources */,

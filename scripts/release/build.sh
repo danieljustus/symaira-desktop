@@ -3,6 +3,9 @@
 #
 #   scripts/release/build.sh <os> <arch> <version> [out-dir]
 #
+# The archive ships one binary, symdesk; `symroom` is a symlink to it (the
+# project journal is linked in, product contract revision 8).
+#
 # Replaces the GoReleaser `builds` + `archives` stanzas (DIST-001/002). Linux
 # targets are static musl binaries, matching the CGO_ENABLED=0 Go binaries
 # they replace. CODESIGN_IDENTITY signs the darwin binaries with the hardened
@@ -20,17 +23,15 @@ target_dir="${CARGO_TARGET_DIR:-$root/target}"
 rustup target add --toolchain "$(sed -n 's/^channel = "\(.*\)"/\1/p' "$root/rust-toolchain.toml")" "$triple" >/dev/null
 SYMDESK_VERSION="$version" SYMROOM_VERSION="$version" \
   cargo build --manifest-path "$root/Cargo.toml" --release --locked --target "$triple" \
-  -p symdesk-cli -p symroom-cli --bin symdesk --bin symroom
+  -p symdesk-cli --bin symdesk
 
 bin_dir="$target_dir/$triple/release"
 if [ "$os_name" = darwin ] && [ -n "${CODESIGN_IDENTITY:-}" ]; then
-  for binary in symdesk symroom; do
-    codesign -s "$CODESIGN_IDENTITY" --timestamp --options runtime --force "$bin_dir/$binary"
-    codesign --verify --strict "$bin_dir/$binary"
-    echo "Signed $bin_dir/$binary"
-  done
+  codesign -s "$CODESIGN_IDENTITY" --timestamp --options runtime --force "$bin_dir/symdesk"
+  codesign --verify --strict "$bin_dir/symdesk"
+  echo "Signed $bin_dir/symdesk"
 fi
 
 archive=$(python3 "$root/scripts/release/package.py" archive --version "$version" --os "$os_name" --arch "$arch" \
-  --symdesk "$bin_dir/symdesk" --symroom "$bin_dir/symroom" --out "$out")
+  --symdesk "$bin_dir/symdesk" --out "$out")
 python3 "$root/scripts/release/package.py" verify --version "$version" "$archive"

@@ -4,12 +4,15 @@
 The archive contract is the one GoReleaser shipped up to v0.12.2, read back
 from the published assets: one flat `.tar.gz` per target named
 `symaira-desktop_<version>_<os>_<arch>.tar.gz` with exactly the members
-LICENSE, README.md, VAULT.md (0644) and symdesk, symroom (0755), plus a
-`checksums.txt` of `<sha256>  <name>` lines sorted by name, and the Homebrew
-formula `symdesk` that installs both binaries.
+LICENSE, README.md, VAULT.md (0644), symdesk (0755) and symroom, a symlink to
+symdesk (the project journal is linked into symdesk; `symdesk` answers as
+`symroom` when invoked under that name), plus a `checksums.txt` of
+`<sha256>  <name>` lines sorted by name, and the Homebrew formula `symdesk`
+that installs symdesk and the symroom link. Product contract revision 8: no
+separately shipped module binary inside a product.
 
 Subcommands:
-  archive   build one archive from two release binaries
+  archive   build one archive from the symdesk release binary
   verify    check an archive against the member contract (and run `version`)
   checksums write checksums.txt for every archive in a directory
   formula   render Formula/symdesk.rb from checksums.txt
@@ -30,7 +33,9 @@ from pathlib import Path
 
 PROJECT = "symaira-desktop"
 DOCS = ("LICENSE", "README.md", "VAULT.md")
-BINARIES = ("symdesk", "symroom")
+BINARIES = ("symdesk",)
+# Archive members that are symlinks to a sibling binary: name -> target.
+LINKS = {"symroom": "symdesk"}
 # Platform scope 2026-10-29 (#1364): macOS arm64 plus Linux amd64/arm64.
 TARGETS = {
     ("darwin", "arm64"): "aarch64-apple-darwin",
@@ -55,6 +60,18 @@ def _member(name: str, data: bytes, mode: int, mtime: int) -> tuple[tarfile.TarI
     return info, data
 
 
+def _link_member(name: str, target: str, mtime: int) -> tuple[tarfile.TarInfo, bytes]:
+    info = tarfile.TarInfo(name)
+    info.size = 0
+    info.mode = 0o755
+    info.mtime = mtime
+    info.uid = info.gid = 0
+    info.uname = info.gname = ""
+    info.type = tarfile.SYMTYPE
+    info.linkname = target
+    return info, b""
+
+
 def build_archive(root: Path, version: str, os_name: str, arch: str,
                   binaries: dict[str, Path], out_dir: Path, mtime: int) -> Path:
     if (os_name, arch) not in TARGETS:
@@ -62,6 +79,8 @@ def build_archive(root: Path, version: str, os_name: str, arch: str,
     members = [_member(doc, (root / doc).read_bytes(), 0o644, mtime) for doc in DOCS]
     for name in BINARIES:
         members.append(_member(name, binaries[name].read_bytes(), 0o755, mtime))
+    for name, target in LINKS.items():
+        members.append(_link_member(name, target, mtime))
     raw = io.BytesIO()
     with tarfile.open(fileobj=raw, mode="w", format=tarfile.PAX_FORMAT) as tar:
         for info, data in members:
@@ -92,12 +111,15 @@ def verify_archive(path: Path, version: str, run: bool) -> list[str]:
     with tarfile.open(path) as tar:
         members = tar.getmembers()
         names = [m.name for m in members]
-        expected = list(DOCS + BINARIES)
+        expected = list(DOCS + BINARIES + tuple(LINKS))
         if sorted(names) != sorted(expected) or len(names) != len(set(names)):
             errors.append(f"{stem}: members {names}, want exactly {expected}")
         for m in members:
-            want = 0o755 if m.name in BINARIES else 0o644
-            if not m.isreg():
+            want = 0o755 if m.name in BINARIES or m.name in LINKS else 0o644
+            if m.name in LINKS:
+                if not m.issym() or m.linkname != LINKS[m.name]:
+                    errors.append(f"{stem}: {m.name} must be a symlink to {LINKS[m.name]}")
+            elif not m.isreg():
                 errors.append(f"{stem}: {m.name} is not a regular file")
             if m.mode & 0o7777 != want:
                 errors.append(f"{stem}: {m.name} mode {oct(m.mode)}, want {oct(want)}")
@@ -109,7 +131,7 @@ def verify_archive(path: Path, version: str, run: bool) -> list[str]:
                     tar.extractall(tmp, filter="data")
                 else:
                     tar.extractall(tmp)  # noqa: S202 - members validated above
-                for name in BINARIES:
+                for name in BINARIES + tuple(LINKS):
                     out = subprocess.run([os.path.join(tmp, name), "version"], capture_output=True, text=True, timeout=60)
                     got = out.stdout.strip()
                     if out.returncode != 0 or got != f"{name} {version}":
@@ -148,7 +170,7 @@ def render_formula(version: str, checksums: Path) -> str:
                 f'      sha256 "{sums[name]}"\n'
                 "      define_method(:install) do\n"
                 '        bin.install "symdesk"\n'
-                '        bin.install "symroom"\n'
+                '        bin.install_symlink "symdesk" => "symroom"\n'
                 "      end\n")
 
     return ("# typed: false\n"
@@ -183,7 +205,6 @@ def main() -> int:
     a.add_argument("--os", required=True, choices=sorted({t[0] for t in TARGETS}))
     a.add_argument("--arch", required=True, choices=sorted({t[1] for t in TARGETS}))
     a.add_argument("--symdesk", required=True, type=Path)
-    a.add_argument("--symroom", required=True, type=Path)
     a.add_argument("--out", required=True, type=Path)
     a.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
     a.add_argument("--mtime", type=int, default=int(os.environ.get("SOURCE_DATE_EPOCH", "0")))
@@ -204,7 +225,7 @@ def main() -> int:
 
     if args.cmd == "archive":
         path = build_archive(args.root, args.version, args.os, args.arch,
-                             {"symdesk": args.symdesk, "symroom": args.symroom}, args.out, args.mtime)
+                             {"symdesk": args.symdesk}, args.out, args.mtime)
         print(path)
     elif args.cmd == "verify":
         errors = [e for p in args.archives for e in verify_archive(p, args.version, not args.no_run)]

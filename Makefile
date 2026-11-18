@@ -216,13 +216,17 @@ FUZZ_RUNS ?= 10000
 
 # RUST-019: the Go core is retired (last Go commit 36aad3d4, branch
 # oracle-pins/last-go-36aad3d4; last Go release tag v0.12.2 = 29520267); build,
-# test and lint map to the Rust workspace. `build` stamps both binaries with
-# VERSION and copies them to bin/.
+# test and lint map to the Rust workspace. `build` stamps symdesk with VERSION and
+# copies it to bin/. The project journal is linked into symdesk (`symdesk room
+# ...`); bin/symroom is a symlink to symdesk that answers as `symroom`
+# (product contract revision 8).
 build:
 	SYMDESK_VERSION="$(if $(VERSION),$(VERSION),devel)" SYMROOM_VERSION="$(if $(VERSION),$(VERSION),dev)" \
-		$(CARGO) build --release --locked -p symdesk-cli -p symroom-cli --bin symdesk --bin symroom
+		$(CARGO) build --release --locked -p symdesk-cli --bin symdesk
 	@mkdir -p bin
-	cp "$(RUST_TARGET_DIR)/release/symdesk" "$(RUST_TARGET_DIR)/release/symroom" bin/
+	rm -f bin/symdesk bin/symroom
+	cp "$(RUST_TARGET_DIR)/release/symdesk" bin/symdesk
+	ln -s symdesk bin/symroom
 
 test: rust-test
 
@@ -1146,6 +1150,7 @@ rust-version-contract:
 	SYMDESK_VERSION=0.12.2 SYMROOM_VERSION=0.12.2 $(CARGO) build --release --workspace --locked
 	test "$$("$(RUST_TARGET_DIR)/release/symdesk" version --json)" = '{"tool":"symdesk","version":"0.12.2","schema_version":1}'
 	test "$$("$(RUST_TARGET_DIR)/release/symroom" version --json)" = '{"tool":"symroom","version":"0.12.2","schema_version":1}'
+	test "$$("$(RUST_TARGET_DIR)/release/symdesk" room version --json)" = '{"tool":"symroom","version":"0.12.2","schema_version":1}'
 
 rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536

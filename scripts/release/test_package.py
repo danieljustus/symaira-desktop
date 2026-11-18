@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def fake_binary(directory: Path, name: str, version: str) -> Path:
     path = directory / name
-    path.write_text(f"#!/bin/sh\necho '{name} {version}'\n")
+    # Like the real symdesk, the script answers under the name it was invoked as.
+    path.write_text(f"#!/bin/sh\necho \"$(basename \"$0\") {version}\"\n")
     path.chmod(0o755)
     return path
 
@@ -40,6 +41,10 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(package.verify_archive(first, "1.2.3", run=False), [])
         with tarfile.open(first) as tar:
             self.assertEqual([m.name for m in tar.getmembers()], ["LICENSE", "README.md", "VAULT.md", "symdesk", "symroom"])
+            link = tar.getmember("symroom")
+            self.assertTrue(link.issym())
+            self.assertEqual(link.linkname, "symdesk")
+            self.assertTrue(tar.getmember("symdesk").isreg())
 
     def test_version_check_runs_host_binaries(self):
         host = package.host_target()
@@ -47,9 +52,11 @@ class PackageTests(unittest.TestCase):
             self.skipTest("host is outside the release scope")
         path = self.build(*host)
         self.assertEqual(package.verify_archive(path, "1.2.3", run=True), [])
-        self.bins["symroom"].write_text("#!/bin/sh\necho 'symroom 0.0.0'\n")
+        self.bins["symdesk"].write_text("#!/bin/sh\necho \"$(basename \"$0\") 0.0.0\"\n")
         bad = self.build(*host, out="bad")
-        self.assertTrue(any("symroom version" in e for e in package.verify_archive(bad, "1.2.3", run=True)))
+        errors = package.verify_archive(bad, "1.2.3", run=True)
+        self.assertTrue(any("`symdesk version`" in e for e in errors), errors)
+        self.assertTrue(any("`symroom version`" in e for e in errors), errors)
 
     def rewrite(self, path: Path, mutate) -> Path:
         with tarfile.open(path) as tar:
@@ -79,7 +86,14 @@ class PackageTests(unittest.TestCase):
                     info.mode = 0o644
             return members
 
-        for mutate, needle in ((extra, "members"), (missing, "members"), (mode, "mode")):
+        def thin_symroom(members):
+            # A separately shipped symroom binary instead of the symlink.
+            for info, _ in members:
+                if info.name == "symroom":
+                    info.type, info.linkname, info.size = tarfile.REGTYPE, "", 1
+            return [(i, b"x" if i.name == "symroom" else d) for i, d in members]
+
+        for mutate, needle in ((extra, "members"), (missing, "members"), (mode, "mode"), (thin_symroom, "symlink")):
             errors = package.verify_archive(self.rewrite(good, mutate), "1.2.3", run=False)
             self.assertTrue(any(needle in e for e in errors), (mutate.__name__, errors))
         renamed = good.with_name("symaira-desktop_1.2.4_linux_arm64.tar.gz")
@@ -103,7 +117,7 @@ class PackageTests(unittest.TestCase):
             self.assertIn(f'sha256 "{digest}"', formula)
             self.assertIn(f"/releases/download/v1.2.3/{name}", formula)
         self.assertNotIn("darwin_amd64", formula)
-        self.assertIn('bin.install "symroom"', formula)
+        self.assertIn('bin.install_symlink "symdesk" => "symroom"', formula)
         # brew audit --strict: the version comes from the URLs only.
         self.assertNotRegex(formula, r'(?m)^\s*version "')
 

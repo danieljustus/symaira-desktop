@@ -27,7 +27,7 @@ rule; this section accounts for them (issue #519).
 | Contact references | `relate/` | Meeting participant confirmation; document context menu → Contact References (#516) | Resolve-only. No app path creates or implicitly matches a contact — an identity is asserted only by explicit confirmation. |
 | OCR / document ingest | `ingest/` | Ingest Queue, Review Lane, Rules, Paperless import, Duplicates | In-process since #507. |
 | Meeting capture | `meet/` | Meetings, transcript timeline, speaker and participant review | Recording itself stays in the separate SymMeet agent, which SymDesk brings forward; SymDesk never captures audio. |
-| Signed project journal, approvals, participants | `room/` | Project Journal (sidebar → Discover) | #517. `symroom` is the one absorbed tool with no in-process call site, so the surface bridges the CLI and degrades to an install tile when the binary is absent. |
+| Signed project journal, approvals, participants | `room/` | Project Journal (sidebar → Discover) | #517. The journal is linked into `symdesk` (`symdesk room ...`); it has no in-process call site in the Swift app, so the surface bridges that CLI (falling back to a standalone `symroom`) and degrades to an install tile when neither is found. |
 | Mail accounts, barcode split, retention of originals | `ingest/`, core | see the CLI-only table above where applicable | Server- and automation-scoped paths keep their existing rationale. |
 
 ## What the app does surface (complementary)
@@ -49,7 +49,7 @@ rule; this section accounts for them (issue #519).
   (`symdesk export --profile`, list from `symdesk export profiles`).
 - **Contact references** — document context menu → Contact References
   (`symdesk relations contact <name>`).
-- **Project journal** — sidebar → Project Journal (the embedded `symroom`
+- **Project journal** — sidebar → Project Journal (the embedded `symdesk room`
   module).
 
 The CLI-only capabilities above are intentionally not duplicated in the app:

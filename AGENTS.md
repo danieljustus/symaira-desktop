@@ -12,7 +12,7 @@ Identity: **Markdown-vault workspace product, and the human shell of the ecosyst
 
 ```bash
 # Rust core (CLI/MCP/API/worker) — no Go toolchain anywhere (RUST-019)
-make build              # → bin/symdesk, bin/symroom (cargo build --release --locked)
+make build              # → bin/symdesk, bin/symroom -> symdesk (cargo build --release --locked)
 make test               # cargo nextest + doc tests for the whole workspace
 make lint               # cargo fmt --check, clippy -D warnings, release-signing contract
 make rust-gates         # check, lint, test, features, coverage, audit/deny, unsafe inventory, version contract
@@ -33,10 +33,10 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 # iOS app: open SymDesk.xcodeproj in Xcode, target SymDeskMobile (iOS 18+)
 
-# Release: scripts/release/build.sh → Linux amd64/arm64 (musl) + macOS arm64 archives (.github/workflows/release.yml). Windows and macOS Intel are no longer required (platform scope decision 2026-10-29, #1364).
+# Release: scripts/release/build.sh → Linux amd64/arm64 (musl) + macOS arm64 archives (symdesk plus a symroom symlink) (.github/workflows/release.yml). Windows and macOS Intel are no longer required (platform scope decision 2026-10-29, #1364).
 ```
 
-Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (`symroom`). `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
+Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (the project journal, a library linked into `symdesk` as `symdesk room <args>`; its thin `symroom` binary is a build/test artifact, and a `symroom` name — also via symlink — makes `symdesk` behave like it, dispatched before symdesk's own flag parsing). `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.
 
 **Go history.** The Go implementation (CLI, MCP, API, generators, GoReleaser) was removed in RUST-019. The last commit containing Go is `36aad3d4`, kept on GitHub as branch `oracle-pins/last-go-36aad3d4` (`git show 36aad3d4:cmd/symdesk/main.go`). The last Go release tag is `v0.12.2` (`29520267b84a2293ba20501002cf4deb7f1c93b0`), an ancestor of `36aad3d4`. The committed fixtures under `testdata/port/` and `crates/*/tests/data/` are Go-recorded and byte-frozen; `testdata/port/provenance.json` pins their checksums and the oracle identity.
 
@@ -45,7 +45,7 @@ Entry points: `crates/symdesk-cli` (`symdesk`) and `crates/symroom-cli` (`symroo
 ```
 crates/                 # Rust workspace (see Cargo.toml)
   symdesk-cli/          #   `symdesk` binary: CLI, stdio MCP server, HTTP API, OCR worker
-  symroom-cli/          #   `symroom` binary (signed project journal)
+  symroom-cli/          #   signed project journal: library behind `symdesk room`, plus a thin `symroom` test binary
   symdesk-core/         #   config, paths, shared contracts
   symdesk-vault/        #   vault contract — Markdown files are the SSOT; history, retention, permissions
   symdesk-index/        #   SQLite/FTS5 sidecar + hybrid retrieval (migrations/) — derived, rebuildable
@@ -74,7 +74,7 @@ docs/            # ARCHITECTURE.md, PLAN.md, SELF_HOSTING.md, rust-port/
 The absorbed tools (`print`, `seek`, `relate`, `ingest`, `room`) are Rust crates in this workspace and are linked in-process; the former Go facades (`internal/pdf`, `internal/retrieval`, `internal/contacts`, `internal/ingest`) map to `symdesk-render`, `symdesk-index`, `symdesk-contacts`, `symdesk-ingest`.
 
 - Depend on a crate only through its public API; never reach into another crate's private modules or copy its assets. Assets belong to the owning crate (`crates/symdesk-render/assets`, `crates/*/migrations`).
-- `symdesk` is the single unified binary and human shell of the ecosystem; `symroom` exists only because the Project Journal surface bridges a separate binary (issue #541). `meet/` stays a standalone Swift menu-bar agent (not linked into the core).
+- `symdesk` is the single unified binary and human shell of the ecosystem; the journal is linked in as `symdesk room` (the release archive ships `symroom` only as a symlink to `symdesk`), and the Project Journal surface calls `symdesk room`, falling back to a standalone `symroom` if present (issue #541). `meet/` stays a standalone Swift menu-bar agent (not linked into the core).
 - Do not add compile-time dependencies on **separately released** Symaira tools — those are found at runtime with graceful fallback.
 - Enforced by the Cargo workspace layout, `cargo clippy -D warnings`, `cargo deny` and the unsafe inventory (`make rust-gates`).
 

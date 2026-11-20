@@ -72,7 +72,7 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal
+        run: rustup toolchain install 1.98.1 --profile minimal
 
       - name: Install musl toolchain
         if: matrix.os == 'linux'

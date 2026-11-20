@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Rust server image (DIST-004). The build stage runs natively per platform
 # (.github/workflows/container.yml builds each architecture on its own runner).
-ARG RUST_VERSION=1.98.0
+ARG RUST_VERSION=1.98.1
 FROM rust:${RUST_VERSION}-bookworm AS build
 ARG RUST_VERSION
 ARG VERSION=dev

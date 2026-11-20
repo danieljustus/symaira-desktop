@@ -87,7 +87,7 @@ jobs:
 
 
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal
+        run: rustup toolchain install 1.98.1 --profile minimal
 
       # The render contracts measure their output with Poppler, qpdf and the
       # pinned Typst.
@@ -114,7 +114,7 @@ jobs:
 
       - name: Install pinned Rust toolchain
         run: |
-          rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
+          rustup toolchain install 1.98.1 --profile minimal --component clippy,rustfmt,llvm-tools-preview
           rustup toolchain install nightly-2026-09-03 --profile minimal
 
       # The render contracts measure their output with Poppler, qpdf and the
@@ -168,7 +168,7 @@ jobs:
           if command -v go; then exit 1; fi
 
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal
+        run: rustup toolchain install 1.98.1 --profile minimal
 
       # The render contracts measure their output with Poppler, qpdf and the
       # pinned Typst.
@@ -190,7 +190,7 @@ jobs:
 
       - name: Install pinned Rust toolchain and nightly with Miri
         run: |
-          rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
+          rustup toolchain install 1.98.1 --profile minimal --component clippy,rustfmt,llvm-tools-preview
           rustup toolchain install nightly-2026-09-03 --profile minimal --component miri,rust-src
 
       - name: Run Miri on CORE contracts
@@ -223,7 +223,7 @@ jobs:
 
 
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+        run: rustup toolchain install 1.98.1 --profile minimal --component clippy,rustfmt
 
       # The render contracts measure their output with Poppler, qpdf and the
       # pinned Typst.

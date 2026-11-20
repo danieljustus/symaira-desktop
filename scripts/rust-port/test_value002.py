@@ -66,8 +66,8 @@ class QuietHostTests(unittest.TestCase):
     PS = "\n".join(
         [
             "  100 /bin/zsh -lic cd repo; cargo build --release; xcodebuild test",
-            "  101 /Users/daniel/.rustup/toolchains/1.98.0/bin/cargo test -p symdesk-ingest",
-            "  102 /Users/daniel/.rustup/toolchains/1.98.0/bin/rustc --crate-name x",
+            "  101 /Users/daniel/.rustup/toolchains/1.98.1/bin/cargo test -p symdesk-ingest",
+            "  102 /Users/daniel/.rustup/toolchains/1.98.1/bin/rustc --crate-name x",
             "  103 /usr/bin/xcodebuild -scheme SymDesk",
             "  104 /Users/daniel/Library/Caches/go-build/46/abc-d/portgen --check",
             "  105 /usr/bin/swift-frontend -frontend",

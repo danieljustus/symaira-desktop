@@ -1,13 +1,13 @@
 {
-  "originHash" : "292598924ba67b4a27dfca96ce1aeb51c911367bb5ca0489b5164060066742cf",
+  "originHash" : "70def1228c5e836c7e077878623cbb6211215cad4f978b3973170b5cb09bad67",
   "pins" : [
     {
       "identity" : "symaira-corekit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/danieljustus/symaira-corekit.git",
       "state" : {
-        "revision" : "a5b0c631b97d4472f7ea4eb145f67468f366340e",
-        "version" : "0.23.0"
+        "revision" : "85ad081898e2a240dc0d3d25159615be3d72ad6d",
+        "version" : "0.24.0"
       }
     }
   ],

@@ -16,8 +16,8 @@ symaira-core-sqlite = { git = "https://github.com/danieljustus/symaira-corekit",
 symaira-core-config = { git = "https://github.com/danieljustus/symaira-corekit", tag = "v0.23.0", version = "=0.0.0" }
 symaira-core-llm = { git = "https://github.com/danieljustus/symaira-corekit", tag = "v0.23.0", version = "=0.0.0" }
 symaira-core-mcp = { git = "https://github.com/danieljustus/symaira-corekit", tag = "v0.23.0", version = "=0.0.0" }
-clap = { version = "=4.6.7" }
-regex = "=1.13.1"
+clap = { version = "=4.6.9" }
+regex = "=1.13.2"
 serde = { version = "=1.0.229", features = ["derive"] }
 # preserve_order is workspace-wide so crate-isolated and workspace builds
 # serialize identically: write json! literals in the exact Go output order.
@@ -25,7 +25,7 @@ serde_json = { version = "=1.0.154", features = ["preserve_order"] }
 thiserror = "=2.0.20"
 time = { version = "=0.3.55", features = ["formatting", "large-dates", "local-offset", "macros", "parsing"] }
 toml = "=1.1.5"
-noyalib = "=0.0.60"
+noyalib = "=0.0.63"
 rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled"] }
 unicode-general-category = "=1.1.0"
 symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
@@ -50,7 +50,7 @@ axum = { version = "=0.8.9", default-features = false, features = ["http1", "jso
 flate2 = "=1.1.11"
 httpdate = "=1.0.3"
 http-body-util = "=0.1.5"
-notify = "=8.2.2"
+notify = "=9.0.0"
 tokio-postgres = { version = "=0.7.18" }
 tokio = { version = "=1.53.3", default-features = false, features = ["io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
 tower = { version = "=0.5.3", default-features = false, features = ["timeout"] }

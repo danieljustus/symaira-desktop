@@ -3048,7 +3048,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "symaira-core-config"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "serde",
  "serde_json",
@@ -3059,26 +3059,23 @@ dependencies = [
 [[package]]
 name = "symaira-core-exit"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 
 [[package]]
 name = "symaira-core-fs"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
- "cap-primitives",
- "cap-std",
  "fs2",
  "nix 0.30.1",
  "rustix",
- "same-file",
  "thiserror",
 ]
 
 [[package]]
 name = "symaira-core-llm"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "reqwest",
  "serde",
@@ -3093,7 +3090,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-mcp"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "schemars",
  "serde",
@@ -3105,7 +3102,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-secretref"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "rustix",
  "serde",
@@ -3115,7 +3112,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-sqlite"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "rusqlite",
  "symaira-core-fs",
@@ -3125,7 +3122,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-version"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "serde",
  "serde_json",

@@ -22,7 +22,7 @@ let package = Package(
     .package(url: "https://github.com/argmaxinc/argmax-oss-swift", exact: "1.1.1"),
     .package(url: "https://github.com/danieljustus/symaira-corekit.git", exact: "0.27.0"),
     // Pinned to 0.18.3 (revision c8b41f98eae668794dd0083bbe028fe7e6585051); Apache-2.0.
-    .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.18.3"),
+    .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.18.4"),
   ],
   targets: [
     .target(name: "SymMeetCore"),

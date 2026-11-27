@@ -8,7 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-bytes = "=1.12.1"
+bytes = "=1.12.2"
 tokio.workspace = true
 # Pure-Rust PostgreSQL client (no libpq, no native TLS): the Go store uses the
 # pure-Go pgx, and the Linux/macOS gates must not need a system PostgreSQL

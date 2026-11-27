@@ -719,9 +719,9 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "form_urlencoded"
-version = "1.2.2"
+version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
+checksum = "afa489199eaffb1211795df1c6236ce1ad0d41a6fa45250add73e3b02420f06e"
 dependencies = [
  "percent-encoding",
 ]
@@ -2553,7 +2553,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "symaira-core-config"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "serde",
  "serde_json",
@@ -2564,26 +2564,23 @@ dependencies = [
 [[package]]
 name = "symaira-core-exit"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 
 [[package]]
 name = "symaira-core-fs"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
- "cap-primitives",
- "cap-std",
  "fs2",
  "nix 0.30.1",
  "rustix",
- "same-file",
  "thiserror",
 ]
 
 [[package]]
 name = "symaira-core-llm"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "reqwest",
  "serde",
@@ -2598,7 +2595,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-secretref"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "rustix",
  "serde",
@@ -2608,7 +2605,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-sqlite"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "rusqlite",
  "symaira-core-fs",
@@ -2618,7 +2615,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-version"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.23.0#a5b0c631b97d4472f7ea4eb145f67468f366340e"
+source = "git+https://github.com/danieljustus/symaira-corekit?tag=v0.27.0#a589c3ec5f227097fe11524508e598583373daf4"
 dependencies = [
  "serde",
  "serde_json",
@@ -3213,9 +3210,9 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.5.8"
+version = "2.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff67a8a4397373c3ef660812acab3268222035010ab8680ec4215f38ba3d0eed"
+checksum = "f00cd2407bb42c0ef17be88d4cf020f5cceffd121665bac9b8b9493a369b3b1a"
 dependencies = [
  "form_urlencoded",
  "idna",

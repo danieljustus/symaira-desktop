@@ -3,8 +3,7 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     # Own library: report a CoreKit release at once instead of after the
     # default 3-day cooldown; third-party crates keep the cooldown.
     cooldown:
@@ -29,9 +28,15 @@ updates:
       interval: "weekly"
       day: "monday"
     groups:
+      # Land the composite action that syncs Dependabot's CoreKit bumps.
+      symaira-corekit:
+        patterns:
+          - "danieljustus/symaira-corekit*"
       github-actions:
         patterns:
           - "*"
+        exclude-patterns:
+          - "danieljustus/symaira-corekit*"
     open-pull-requests-limit: 10
 
   # Swift packages plus SymDesk.xcodeproj ("/": project.pbxproj and
@@ -44,13 +49,19 @@ updates:
       - "/meet"
       - "/room/client"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     cooldown:
       exclude:
         - "*symaira-corekit*"
     groups:
+      # Dependabot can see Package.swift and the tracked Xcode project; the
+      # group keeps CoreKit separate from third-party Swift updates.
+      symaira-corekit:
+        patterns:
+          - "*symaira-corekit*"
       swift-dependencies:
         patterns:
           - "*"
+        exclude-patterns:
+          - "*symaira-corekit*"
     open-pull-requests-limit: 5
